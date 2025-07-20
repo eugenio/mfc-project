@@ -1,0 +1,91 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abdelaziz et~al.(2023)Abdelaziz, Malik, Youssef, and
+  Elbakly]{ieee2023survey}
+Mohamed Abdelaziz, Aamir Malik, Amr Youssef, and Omar Elbakly.
+\newblock Survey on ai and machine learning techniques for microgrid energy
+  management systems.
+\newblock \emph{IEEE/CAA Journal of Automatica Sinica}, 10\penalty0
+  (7):\penalty0 1513--1533, 2023.
+\newblock \doi{10.1109/JAS.2023.123657}.
+\newblock URL
+  \url{https://www.ieee-jas.net/article/doi/10.1109/JAS.2023.123657}.
+
+\bibitem[Chen et~al.(2024)Chen, Guo, Ngo, Liu, Ren, and Zhang]{chen2024scaling}
+Xiuping Chen, Wangwang Guo, Huu~Hao Ngo, Yiwen Liu, Nanqi Ren, and Xinbo Zhang.
+\newblock Recent advances in scaling up bioelectrochemical systems: A review.
+\newblock \emph{Biotechnology and Bioengineering}, 121\penalty0 (4):\penalty0
+  1245--1262, 2024.
+\newblock \doi{10.1002/bit.28632}.
+\newblock URL \url{https://pmc.ncbi.nlm.nih.gov/articles/PMC11843991/}.
+
+\bibitem[Kim et~al.(2024)Kim, Hur, Kang, and Park]{kim2024electrogenetic}
+Tae~Seok Kim, Sung~Ho Hur, Yong~Hwan Kang, and Sung~Jun Park.
+\newblock Synthetic biology and bioelectrochemical tools for electrogenetic
+  system engineering.
+\newblock \emph{Science Advances}, 10\penalty0 (8):\penalty0 eabm5091, 2024.
+\newblock \doi{10.1126/sciadv.abm5091}.
+\newblock URL \url{https://www.science.org/doi/10.1126/sciadv.abm5091}.
+
+\bibitem[Li et~al.(2024)Li, Wang, Yang, and Chen]{li2024reinforcement}
+Xiaodong Li, Yue Wang, Dianguo Yang, and Zhe Chen.
+\newblock Reinforcement learning-based energy management for hybrid power
+  systems: State-of-the-art survey, review, and perspectives.
+\newblock \emph{Chinese Journal of Mechanical Engineering}, 37\penalty0
+  (1):\penalty0 1--26, 2024.
+\newblock \doi{10.1186/s10033-024-01026-4}.
+\newblock URL
+  \url{https://cjme.springeropen.com/articles/10.1186/s10033-024-01026-4}.
+
+\bibitem[{Modular Inc.}(2024)]{modular2024mojo}
+{Modular Inc.}
+\newblock \emph{Mojo Programming Language Documentation}, 2024.
+\newblock URL \url{https://docs.modular.com/mojo/}.
+\newblock Official documentation for the Mojo programming language for
+  scientific computing and hardware acceleration.
+
+\bibitem[Saleem et~al.(2024)Saleem, Al-Ghussain, Ahmad, and
+  Kazem]{saleem2024machine}
+Khaled Saleem, Loiy Al-Ghussain, Adnan Ahmad, and Hussein~A. Kazem.
+\newblock Machine learning solutions for enhanced performance in plant-based
+  microbial fuel cells.
+\newblock \emph{International Journal of Hydrogen Energy}, 71:\penalty0
+  1094--1106, 2024.
+\newblock \doi{10.1016/j.ijhydene.2024.05.334}.
+\newblock URL
+  \url{https://www.sciencedirect.com/science/article/abs/pii/S0360319924026569}.
+
+\bibitem[Wang et~al.(2024)Wang, Liu, Chen, Zhang, and Li]{wang2024circular}
+Hao Wang, Jia Liu, Wei Chen, Yue Zhang, and Ming Li.
+\newblock Prospects and trends in bioelectrochemical systems: Transitioning
+  from co2 towards a low-carbon circular bioeconomy.
+\newblock \emph{Bioresource Technology}, 362:\penalty0 127845, 2024.
+\newblock \doi{10.1016/j.biortech.2022.127845}.
+\newblock URL
+  \url{https://www.sciencedirect.com/science/article/pii/S0960852422013736}.
+
+\bibitem[Wu et~al.(2024)Wu, Patel, Chen, and Zhang]{wu2024deep}
+Fanlin Wu, Raj Patel, Xiaoming Chen, and Lei Zhang.
+\newblock Time-series forecasting of microbial fuel cell energy generation
+  using deep learning, 2024.
+\newblock URL
+  \url{https://www.frontiersin.org/journals/computer-science/articles/10.3389/fcomp.2024.1447745/full}.
+
+\bibitem[Zhang et~al.(2024)Zhang, Angelidaki, Skovgaard, Zhu, Cai, Treu,
+  Palomo, Smidt, and Cheng]{zhang2024progress}
+Yifeng Zhang, Irini Angelidaki, Thomas Skovgaard, Xinxin Zhu, Weiwei Cai, Laura
+  Treu, Alejandro Palomo, Hauke Smidt, and Shaoan Cheng.
+\newblock Progress and prospects of bioelectrochemical systems: Electron
+  transfer and its applications in the microbial metabolism.
+\newblock \emph{Frontiers in Bioengineering and Biotechnology}, 8:\penalty0 10,
+  2024.
+\newblock \doi{10.3389/fbioe.2020.00010}.
+\newblock URL
+  \url{https://www.frontiersin.org/journals/bioengineering-and-biotechnology/articles/10.3389/fbioe.2020.00010/full}.
+
+\end{thebibliography}
