@@ -1,0 +1,24 @@
+[
+  {
+    "session_id": "cf930f68-0071-4e73-b2d4-56917ccfc7e0",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/cf930f68-0071-4e73-b2d4-56917ccfc7e0.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "pixi run mojo debug q-learning-mfcs/mfc_100h_gpu.mojo",
+      "description": "Run mojo debug on the GPU MFC simulation file"
+    }
+  },
+  {
+    "session_id": "cf930f68-0071-4e73-b2d4-56917ccfc7e0",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/cf930f68-0071-4e73-b2d4-56917ccfc7e0.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "pixi run mojo build q-learning-mfcs/mfc_100h_gpu.mojo -o /tmp/test_mfc",
+      "description": "Try to build the mojo file to check for syntax errors"
+    }
+  }
+]

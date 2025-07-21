@@ -10,7 +10,7 @@
 \contentsline {subsubsection}{\numberline {2.2.2}Actuator Systems}{4}{subsubsection.2.2.2}%
 \contentsline {section}{\numberline {3}Q-Learning Implementation}{4}{section.3}%
 \contentsline {subsection}{\numberline {3.1}State Space Representation}{4}{subsection.3.1}%
-\contentsline {subsubsection}{\numberline {3.1.1}Per-Cell Features (7 × 5 = 35 dimensions)}{4}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Per-Cell Features (7 × 5 = 35 dimensions)}{5}{subsubsection.3.1.1}%
 \contentsline {subsubsection}{\numberline {3.1.2}Stack-Level Features (5 dimensions)}{5}{subsubsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.2}Action Space Definition}{5}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Reward Function}{5}{subsection.3.3}%

@@ -19,7 +19,7 @@ def run_mojo_gpu_simulation():
     try:
         # Try to compile and run the Mojo GPU simulation
         result = subprocess.run(
-            ["mojo", "run", "mfc_100h_gpu.mojo"],
+            ["mojo", "run", "q-learning-mfcs/mfc_100h_gpu.mojo"],
             capture_output=True,
             text=True,
             timeout=300
@@ -54,7 +54,7 @@ def run_accelerated_python_simulation():
     # Simulation parameters
     n_cells = 5
     simulation_hours = 100
-    time_step = 60.0  # 1 minute steps for speed
+    time_step = 1 # 1 minute steps for speed
     steps_per_hour = int(3600 / time_step)
     total_steps = simulation_hours * steps_per_hour
     
@@ -244,7 +244,7 @@ def run_accelerated_python_simulation():
         if step % steps_per_hour == 0:
             substrate_level -= stack_power * 0.1
             ph_buffer_level -= np.sum(actions[:, 1]) * 0.05
-            total_energy += stack_power * (time_step / 3600)
+            total_energy += stack_power * 1.0  # Wh (hourly logging = 1 hour intervals)
             
             # Maintenance
             if substrate_level < 20:

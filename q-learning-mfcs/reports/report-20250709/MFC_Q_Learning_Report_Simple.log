@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.7.8)  9 JUL 2025 11:35
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.7.8)  20 JUL 2025 21:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -360,45 +360,73 @@ Package: natbib 2010/09/13 8.31b (PWD, AO)
 LaTeX Info: Redefining \cite on input line 694.
 \c@NAT@ctr=\count295
 )
+(/usr/share/texlive/texmf-dist/tex/latex/caption/subcaption.sty
+Package: subcaption 2023/07/28 v1.6b Sub-captions (AR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen180
+\captionmargin=\dimen181
+\caption@leftmargin=\dimen182
+\caption@rightmargin=\dimen183
+\caption@width=\dimen184
+\caption@indent=\dimen185
+\caption@parindent=\dimen186
+\caption@hangindent=\dimen187
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count296
+\c@continuedfloat=\count297
+Package caption Info: float package is loaded.
+Package caption Info: hyperref package is loaded.
+)
+Package caption Info: New subtype `subfigure' on input line 238.
+\c@subfigure=\count298
+Package caption Info: New subtype `subtable' on input line 238.
+\c@subtable=\count299
+)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count296
+\l__color_backend_stack_int=\count300
 \l__pdf_internal_box=\box57
 )
 (./MFC_Q_Learning_Report_Simple.aux)
 \openout1 = `MFC_Q_Learning_Report_Simple.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 37.
-LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count297
-\scratchdimen=\dimen180
+\scratchcounter=\count301
+\scratchdimen=\dimen188
 \scratchbox=\box58
-\nofMPsegments=\count298
-\nofMParguments=\count299
+\nofMPsegments=\count302
+\nofMParguments=\count303
 \everyMPshowfont=\toks29
-\MPscratchCnt=\count300
-\MPscratchDim=\dimen181
-\MPnumerator=\count301
-\makeMPintoPDFobject=\count302
+\MPscratchCnt=\count304
+\MPscratchDim=\dimen189
+\MPnumerator=\count305
+\makeMPintoPDFobject=\count306
 \everyMPtoPDFconversion=\toks30
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -443,18 +471,20 @@ e
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-Package hyperref Info: Link coloring OFF on input line 37.
+Package hyperref Info: Link coloring OFF on input line 39.
 (./MFC_Q_Learning_Report_Simple.out) (./MFC_Q_Learning_Report_Simple.out)
 \@outlinefile=\write3
 \openout3 = `MFC_Q_Learning_Report_Simple.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 40.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 42.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 40.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 42.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -466,151 +496,90 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \tf@toc=\write4
 \openout4 = `MFC_Q_Learning_Report_Simple.toc'.
 
- [2] [3] [4
-pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.135 \end{itemize}
-                   ]
-<../../figures/mfc_stack_technical_diagram.png, id=235, 1149.5748pt x 589.7232p
+ [2] [3] [4] [5]
+<../../figures/mfc_stack_technical_diagram.png, id=243, 1149.5748pt x 589.7232p
 t>
 File: ../../figures/mfc_stack_technical_diagram.png Graphic file (type png)
 <use ../../figures/mfc_stack_technical_diagram.png>
 Package pdftex.def Info: ../../figures/mfc_stack_technical_diagram.png  used on
- input line 189.
+ input line 195.
 (pdftex.def)             Requested size: 409.71692pt x 210.17656pt.
- [5
-pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.193 
-      ]
-<../../figures/mfc_100h_comprehensive_analysis.png, id=252, 1253.8845pt x 1555.
+<../../figures/mfc_100h_comprehensive_analysis.png, id=246, 1253.8845pt x 1555.
 4913pt>
 File: ../../figures/mfc_100h_comprehensive_analysis.png Graphic file (type png)
 
 <use ../../figures/mfc_100h_comprehensive_analysis.png>
 Package pdftex.def Info: ../../figures/mfc_100h_comprehensive_analysis.png  use
-d on input line 202.
+d on input line 208.
 (pdftex.def)             Requested size: 455.24411pt x 564.74716pt.
- [6
-pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.206 
-       <../../figures/mfc_stack_technical_diagram.png>]
-Overfull \vbox (60.46408pt too high) has occurred while \output is active []
+ [6 <../../figures/mfc_stack_technical_diagram.png>]
+Overfull \vbox (89.46407pt too high) has occurred while \output is active []
 
 
-[7
-pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.206 
-       <../../figures/mfc_100h_comprehensive_analysis.png>]
+[7 <../../figures/mfc_100h_comprehensive_analysis.png>]
 <../../figures/mfc_100h_detailed_analysis.png, id=267, 1290.9831pt x 859.5312pt
 >
 File: ../../figures/mfc_100h_detailed_analysis.png Graphic file (type png)
 <use ../../figures/mfc_100h_detailed_analysis.png>
 Package pdftex.def Info: ../../figures/mfc_100h_detailed_analysis.png  used on 
-input line 213.
+input line 219.
 (pdftex.def)             Requested size: 455.24411pt x 303.09627pt.
 <../../figures/mfc_100h_gpu_results.png, id=269, 1003.8303pt x 714.9912pt>
 File: ../../figures/mfc_100h_gpu_results.png Graphic file (type png)
 <use ../../figures/mfc_100h_gpu_results.png>
 Package pdftex.def Info: ../../figures/mfc_100h_gpu_results.png  used on input 
-line 224.
+line 230.
 (pdftex.def)             Requested size: 455.24411pt x 324.25233pt.
- [8
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.228 
-       <../../figures/mfc_100h_detailed_analysis.png>]
+ [8 <../../figures/mfc_100h_detailed_analysis.png>]
 <../../figures/mfc_100h_summary_performance.png, id=278, 1131.9891pt x 831.105p
 t>
 File: ../../figures/mfc_100h_summary_performance.png Graphic file (type png)
 <use ../../figures/mfc_100h_summary_performance.png>
 Package pdftex.def Info: ../../figures/mfc_100h_summary_performance.png  used o
-n input line 235.
+n input line 241.
 (pdftex.def)             Requested size: 455.24411pt x 334.2369pt.
- [9
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.239 
-       <../../figures/mfc_100h_gpu_results.png>]
+ [9 <../../figures/mfc_100h_gpu_results.png>]
 <../../figures/mfc_100h_technical_summary.png, id=286, 1149.5748pt x 714.9912pt
 >
 File: ../../figures/mfc_100h_technical_summary.png Graphic file (type png)
 <use ../../figures/mfc_100h_technical_summary.png>
 Package pdftex.def Info: ../../figures/mfc_100h_technical_summary.png  used on 
-input line 246.
+input line 253.
 (pdftex.def)             Requested size: 455.24411pt x 283.14394pt.
- [10
-pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.250 
-       <../../figures/mfc_100h_summary_performance.png>]
+
+[10 <../../figures/mfc_100h_summary_performance.png>]
 <../../figures/mfc_energy_sustainability_analysis.png, id=294, 1149.5748pt x 86
 0.013pt>
 File: ../../figures/mfc_energy_sustainability_analysis.png Graphic file (type p
 ng)
 <use ../../figures/mfc_energy_sustainability_analysis.png>
 Package pdftex.def Info: ../../figures/mfc_energy_sustainability_analysis.png  
-used on input line 257.
+used on input line 264.
 (pdftex.def)             Requested size: 455.24411pt x 340.57407pt.
- [11
-pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.261 
-       <../../figures/mfc_100h_technical_summary.png>] [12
-pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) ha
-s been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.280 
-       <../../figures/mfc_energy_sustainability_analysis.png>] [13
-pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.330     \item R
-                 apid initial learning phase (first 200 episodes)
-pdfTeX warning (ext4): destination with the same identifier (name{table.4}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.330     \item R
-                 apid initial learning phase (first 200 episodes)] [14]
-(./MFC_Q_Learning_Report_Simple.bbl [15]) [16]
+ [11 <../../figures/mfc_100h_technical_summary.png>] [12 <../../figures/mfc_ene
+rgy_sustainability_analysis.png>] [13] [14] (./MFC_Q_Learning_Report_Simple.bbl
+ [15]) [16]
 (./MFC_Q_Learning_Report_Simple.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `MFC_Q_Learning_Report_Simple.out' has not ch
 anged.
 (rerunfilecheck)             Checksum: 73A2007FF2D781C49F36843C6CA6A02A;6106.
  ) 
 Here is how much of TeX's memory you used:
- 11865 strings out of 476182
- 184521 string characters out of 5795596
+ 13300 strings out of 476182
+ 212354 string characters out of 5795596
  1938975 words of memory out of 5000000
- 33627 multiletter control sequences out of 15000+600000
+ 35053 multiletter control sequences out of 15000+600000
  569288 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,9n,79p,1370b,584s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,9n,79p,1493b,584s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/uge/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcbx1200.600pk
 > </home/uge/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.600pk>
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/
@@ -627,7 +596,7 @@ cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.p
 fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on MFC_Q_Learning_Report_Simple.pdf (16 pages, 5406884 bytes).
+Output written on MFC_Q_Learning_Report_Simple.pdf (16 pages, 5407476 bytes).
 PDF statistics:
  452 PDF objects out of 1000 (max. 8388607)
  381 compressed objects within 4 object streams
