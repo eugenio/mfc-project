@@ -1,0 +1,16 @@
+[
+  {
+    "session_id": "072bbe55-4795-45c1-ac64-464d34932989",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/072bbe55-4795-45c1-ac64-464d34932989.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "072bbe55-4795-45c1-ac64-464d34932989",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/072bbe55-4795-45c1-ac64-464d34932989.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  }
+]

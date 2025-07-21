@@ -1,0 +1,16 @@
+[
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "run mojo debug @q-learning-mfcs/mfc_100h_gpu.mojo "
+  },
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "run mojo debug @q-learning-mfcs/mfc_100h_gpu.mojo "
+  }
+]

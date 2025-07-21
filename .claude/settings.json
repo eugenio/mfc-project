@@ -10,7 +10,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type PreToolUse --summarize"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type PreToolUse --summarize"
           }
         ]
       }
@@ -25,7 +25,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type PostToolUse --summarize"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type PostToolUse --summarize"
           }
         ]
       }
@@ -40,7 +40,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type Notification --summarize"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type Notification --summarize"
           }
         ]
       }
@@ -55,7 +55,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type Stop --add-chat"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type Stop --add-chat"
           }
         ]
       }
@@ -70,7 +70,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type SubagentStop"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type SubagentStop"
           }
         ]
       }
@@ -81,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type PreCompact"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type PreCompact"
           }
         ]
       }
@@ -95,7 +95,7 @@
           },
           {
             "type": "command",
-            "command": "pixi run .claude/hooks/send_event.py --source-app kicad-python --event-type UserPromptSubmit --summarize"
+            "command": "pixi run .claude/hooks/send_event.py --source-app mfc-project --event-type UserPromptSubmit --summarize"
           }
         ]
       }

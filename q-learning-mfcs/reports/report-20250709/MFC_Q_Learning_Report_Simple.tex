@@ -12,6 +12,8 @@
 \usepackage{float}
 \usepackage{url}
 \usepackage{natbib}
+\usepackage{subcaption}
+\usepackage{caption}
 
 % Page setup
 \geometry{
@@ -92,6 +94,10 @@ Stack voltage range & 0.5 - 4.0 V \\
 Power output & 0.2 - 2.0 W \\
 pH operating range & 6.5 - 8.5 \\
 Acetate concentration & 0.5 - 2.0 g/L \\
+Initial acetate volume & 250 mL per cell \\
+Initial pH buffer volume & 50 mL per cell \\
+Biofilm thickness & 0.1 - 0.8 (dimensionless factor) \\
+Aging factor & 0.7 - 1.0 (dimensionless) \\
 Temperature & 25°C (controlled) \\
 \bottomrule
 \end{tabular}
@@ -187,7 +193,7 @@ Figure \ref{fig:stack_diagram} illustrates the comprehensive technical architect
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{../../figures/mfc_stack_technical_diagram.png}
-\caption{MFC Stack Technical Architecture - Side view showing 5-cell configuration with anodic chambers (red), cathodic chambers (blue), proton exchange membranes (yellow), and current collectors (gray). Single cell top view details the 2.24 cm × 6 cm cell dimensions with anolyte/catholyte inlet/outlet ports. The stack spans 11.6 cm total length with individual cells measuring 2.3 cm width each. This configuration enables optimal electrolyte flow distribution and electrical connection topology for maximum power density while maintaining cell-to-cell isolation for independent monitoring and control. The modular design facilitates scalability and maintenance operations essential for practical deployment scenarios.}
+\caption{MFC Stack Technical Architecture and Cell Design - \textbf{Top panel}: Side view of 5-cell stack configuration showing anodic chambers (red), cathodic chambers (blue), proton exchange membranes (yellow), and current collectors (gray). \textbf{Bottom panel}: Single cell top view with detailed dimensions (2.24 cm × 6 cm) and anolyte/catholyte inlet/outlet ports. Stack specifications: 11.6 cm total length, 2.3 cm individual cell width. The modular design ensures optimal electrolyte flow distribution, electrical isolation between cells, and scalable architecture for independent monitoring and control.}
 \label{fig:stack_diagram}
 \end{figure}
 
@@ -200,7 +206,7 @@ Figure \ref{fig:comprehensive_analysis} presents the complete 100-hour simulatio
 \begin{figure}[H]
 \centering
 \includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_comprehensive_analysis.png}
-\caption{100-Hour MFC Stack Comprehensive Analysis - Multi-panel visualization demonstrating: (1) Stack power evolution achieving 1.903W peak with distinct operational phases (initialization, optimization, adaptation, stability), (2) Individual cell voltage tracking showing coordinated performance across all 5 cells, (3) Cell power distribution maintaining balanced output, (4) Cumulative energy production reaching 123.35 Wh over 100 hours, (5) Cell degradation curves with aging factor progression, (6) Resource consumption tracking for substrate and pH buffer optimization, (7) Q-learning progress with exploration rate decay from 0.3 to 0.01, (8) System health heatmap indicating optimal efficiency/stability/substrate/pH buffer metrics, (9) Q-learning reward evolution from -50 to -1.5 demonstrating algorithm convergence, (10) Power distribution histogram, and (11) Final cell state comparison showing voltage, power, and aging factor balance across all cells.}
+\caption{100-Hour MFC Stack Comprehensive Analysis - Multi-panel visualization demonstrating: (1) Stack power evolution achieving 1.903W peak with distinct operational phases (initialization, optimization, adaptation, stability), (2) Individual cell voltage tracking showing coordinated performance across all 5 cells, (3) Cell power distribution maintaining balanced output, (4) Cumulative energy production reaching 123.35 Wh over 100 hours, (5) Cell degradation curves with aging factor progression, (6) Resource consumption tracking for substrate and pH buffer optimization, (7) Q-learning progress with exploration rate decay from 0.3 to 0.01, (8) \textbf{System health heatmap}: Color-coded performance matrix showing normalized metrics (efficiency, stability, substrate levels, pH buffer status) where green indicates optimal performance (0.8-1.0), yellow shows moderate performance (0.5-0.8), and red indicates suboptimal conditions (<0.5), (9) Q-learning reward evolution from -50 to -1.5 demonstrating algorithm convergence, (10) Power distribution histogram, and (11) Final cell state comparison showing voltage, power, and aging factor balance across all cells. \textbf{Final efficiency} refers to the Coulombic efficiency: the ratio of electrons harvested to theoretical maximum based on substrate consumption.}
 \label{fig:comprehensive_analysis}
 \end{figure}
 
@@ -233,6 +239,7 @@ Figure \ref{fig:summary_performance} presents a comprehensive dashboard view of 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_summary_performance.png}
+\vspace{0.5cm}
 \caption{Key Performance Summary Dashboard - Comprehensive overview featuring: (1) Power evolution timeline with annotated operational phases (Initialization: 0-20h, Optimization: 20-40h, Adaptation: 40-60h, Stability: 60-100h) achieving peak power of 1.903W and demonstrating Q-learning adaptation capabilities, (2) Energy production progression reaching final total of 123.0Wh with milestone markers at 17.2Wh (25h), 52.7Wh (50h), and 89.9Wh (75h), (3) Final cell performance comparison showing balanced voltage (0.67-0.76V), power (0.153-0.300W), and aging factors (0.849-0.906) across all 5 cells, and (4) Performance summary dashboard displaying critical metrics: 122.98 Wh total energy, 1.903W peak power, 1.156W average power, 100-hour simulation time, 0.5-second real-time execution, 709,917x speedup factor, 5/5 active cells, 0 cell reversals, 16 Q-states learned, and 87\% resource efficiency, demonstrating the system's exceptional performance and the effectiveness of the Q-learning control strategy.}
 \label{fig:summary_performance}
 \end{figure}
@@ -294,7 +301,7 @@ Cell & Voltage (V) & Power (W) & pH & Acetate (g/L) & Status \\
 3 & 0.197 & 0.014 & 7.9 & 1.569 & Normal \\
 4 & 0.195 & 0.017 & 8.2 & 1.622 & Normal \\
 \midrule
-Total & 0.947 & 0.075 & 8.04 & 1.566 & - \\
+Total & 0.947 & 0.075 & 8.04/Avg & 1.566/Avg & - \\
 \bottomrule
 \end{tabular}
 \end{table}
