@@ -1,0 +1,1 @@
+- Before running any Mojo file, run `mojo format` to the file in question, and fix obvious errors
