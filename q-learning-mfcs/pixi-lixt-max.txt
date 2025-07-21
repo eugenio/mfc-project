@@ -1,0 +1,4 @@
+Package        Version  Build    Size       Kind   Source
+max-core       25.4.0   release  212.5 MiB  conda  https://conda.modular.com/max-nightly/
+max-pipelines  25.4.0   release  9.7 KiB    conda  https://conda.modular.com/max-nightly/
+max-python     25.4.0   release  14.7 MiB   conda  https://conda.modular.com/max-nightly/

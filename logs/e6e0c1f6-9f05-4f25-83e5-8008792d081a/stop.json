@@ -1,0 +1,16 @@
+[
+  {
+    "session_id": "e6e0c1f6-9f05-4f25-83e5-8008792d081a",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mojo-practice/e6e0c1f6-9f05-4f25-83e5-8008792d081a.jsonl",
+    "cwd": "/home/uge/modular/mojo-practice",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "e6e0c1f6-9f05-4f25-83e5-8008792d081a",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mojo-practice/e6e0c1f6-9f05-4f25-83e5-8008792d081a.jsonl",
+    "cwd": "/home/uge/modular/mojo-practice",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "session_id": "d330c02d-feea-4774-85a9-e98471f90e5e",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/d330c02d-feea-4774-85a9-e98471f90e5e.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Notification",
+    "message": "Claude Code login successful"
+  }
+]
