@@ -1,0 +1,9 @@
+[
+  {
+    "session_id": "5276358b-fc32-4f77-900c-791e48a3dae4",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/5276358b-fc32-4f77-900c-791e48a3dae4.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  }
+]

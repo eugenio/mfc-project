@@ -1,0 +1,30 @@
+[
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Notification",
+    "message": "Claude needs your permission to use Update"
+  },
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Notification",
+    "message": "Claude needs your permission to use Update"
+  },
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Notification",
+    "message": "Claude needs your permission to use Update"
+  },
+  {
+    "session_id": "321eb827-801a-4531-a124-41f905b74efb",
+    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/321eb827-801a-4531-a124-41f905b74efb.jsonl",
+    "cwd": "/home/uge/modular/mfc-project",
+    "hook_event_name": "Notification",
+    "message": "Claude needs your permission to use Bash"
+  }
+]
