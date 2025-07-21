@@ -2,4 +2,7 @@
 .vscode
 .env
 .pixi
+#VSCode files
 .code-workspace
+#figures
+.png
