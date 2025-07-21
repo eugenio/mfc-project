@@ -1,8 +1,109 @@
-# pixi environments
-.vscode
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 .env
-.pixi
-#VSCode files
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pixi/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .code-workspace
-#figures
-.png
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and runtime data
+logs/*/
+*.log
+*.txt
+simulation_benchmark_log.txt
+
+# Generated images and plots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.eps
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Documentation build artifacts
+_build/
+.doctrees/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Project-specific ignores
+mfc_*_results.png
+mfc_simulation_comparison.png
+*_benchmark_log.txt
+run_simulation_comparison.py
+
+# Pixi package manager
+pixi.lock
+.pixi/
