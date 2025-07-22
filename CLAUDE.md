@@ -1,1 +1,2 @@
 - Before running any Mojo file, run `mojo format` to the file in question, and fix obvious errors
+- From now stage one file per commit, and if there's any modification of any file done by you or me with more than 50 lines, do a commit for each 50 lines of modifications
