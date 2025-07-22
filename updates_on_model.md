@@ -208,7 +208,83 @@ q-learning-mfcs/
 - **Q-learning convergence** stability
 - **Multi-objective** optimization balance
 
-## **10. PROSSIMI SVILUPPI POTENZIALI**
+## **10. CONTROLLO DINAMICO SUBSTRATO**
+
+### **🎮 Dual Control System** (`mfc_dynamic_substrate_control.py`)
+- **Q-Learning**: Controllo portata (flow rate)
+- **PID Controller**: Controllo concentrazione substrato inlet
+- **Target**: Mantenere concentrazione outlet a 8.0 mmol/L
+- **Parametri PID**: Kp=2.0, Ki=0.05, Kd=0.1
+- **Range substrato**: 5-50 mmol/L
+
+### **📉 Risultati Dual Control:**
+- **Controllo outlet**: RMSE = 3.00 mmol/L
+- **Efficienza substrato**: 0.003% (limitata dal PID)
+- **Stabilità**: Sistema stabile ma poco efficiente
+- **Limitazione**: PID non ottimizza per multi-obiettivo
+
+## **11. UNIFIED Q-LEARNING CONTROL**
+
+### **🧠 Controller Unificato** (`mfc_unified_qlearning_control.py`)
+- **Elimina necessità di PID** separato
+- **Controllo simultaneo**: Flow rate + Substrate concentration
+- **Spazio stati esteso**: 6D invece di 4D
+  - Power output
+  - Biofilm deviation
+  - Substrate utilization
+  - Outlet concentration error
+  - Current flow rate
+  - Time phase
+- **Spazio azioni duale**: 63 combinazioni (9 flow × 7 substrate)
+
+### **🎯 Advanced Features:**
+```python
+# EXTENDED STATE SPACE (6 dimensions)
+self.state_bins = {
+    'power': np.linspace(0, 0.03, 10),
+    'biofilm_deviation': np.linspace(0, 2.0, 10),
+    'substrate_utilization': np.linspace(0, 100, 10),
+    'outlet_conc_error': np.linspace(-10, 10, 10),
+    'flow_rate': np.linspace(5, 50, 10),
+    'time_phase': np.linspace(0, 1000, 10)
+}
+
+# EXTENDED ACTION SPACE - Dual actions
+flow_actions = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+substrate_actions = [-3, -2, -1, 0, 1, 2, 3]
+self.actions = [(f, s) for f in flow_actions for s in substrate_actions]
+```
+
+### **💡 Unified Reward Function:**
+```python
+# 1. Power component (unchanged)
+# 2. Substrate consumption component (unchanged)
+# 3. Biofilm optimal thickness component (unchanged)
+# 4. CONCENTRATION TRACKING COMPONENT (NEW)
+conc_error = abs(outlet_concentration - target_outlet_conc)
+if conc_error <= 0.5:  # Within 0.5 mmol/L
+    conc_reward = 20.0 - (conc_error * 10.0)
+elif conc_error <= 2.0:  # Within 2 mmol/L
+    conc_reward = 5.0 - (conc_error * 2.5)
+else:  # Outside acceptable range
+    conc_reward = -10.0 - (conc_error * 5.0)
+```
+
+### **📊 Visualizzazione Estesa:**
+- **16 subplot dashboard** completo
+- **Dual control visualization**: Flow + Substrate
+- **Performance metrics** per entrambi i controlli
+- **Learning progress** tracking migliorato
+- **Action heatmap** 2D per decisioni congiunte
+
+### **🔬 Vantaggi del Controller Unificato:**
+- **Ottimizzazione congiunta** multi-obiettivo
+- **Apprendimento correlazioni** flow-substrate
+- **Eliminazione conflitti** tra controller separati
+- **Maggiore efficienza** computazionale
+- **Convergenza più rapida** verso optimum globale
+
+## **12. PROSSIMI SVILUPPI POTENZIALI**
 
 ### **🔮 Estensioni Possibili:**
 - **Deep Q-Learning** (DQN) implementation
@@ -219,6 +295,8 @@ q-learning-mfcs/
 - **Different substrates** (glucose, lactate, etc.)
 - **Membrane fouling** effects
 - **Economic optimization** (cost/benefit analysis)
+- **Model Predictive Control** (MPC) comparison
+- **Reinforcement Learning** avanzato (PPO, SAC)
 
 ### **📈 Ottimizzazioni Tecniche:**
 - **Parallelization** of cell calculations
@@ -227,6 +305,8 @@ q-learning-mfcs/
 - **Real-time learning** capability
 - **Online parameter** adaptation
 - **Hyperparameter** auto-tuning
+- **Transfer learning** tra configurazioni
+- **Continual learning** per adattamento
 
 ---
 
@@ -242,7 +322,14 @@ Il modello MFC Q-Learning è **completo, robusto e pronto per analisi avanzate**
 
 Il confronto sequenziale vs parallelo dimostra chiaramente l'efficacia del sistema nell'identificare configurazioni ottimali per massimizzare produzione energetica e utilizzazione substrato. 🎯
 
+### **📈 Evoluzione del Sistema:**
+1. **Modello base** con Q-learning per flow control
+2. **Dual control** con Q-learning + PID (limitato)
+3. **Unified Q-learning** con controllo completo integrato
+
+Il controller unificato rappresenta l'**evoluzione finale** del sistema, eliminando le limitazioni del PID e permettendo ottimizzazione congiunta di tutti gli obiettivi.
+
 ---
 *Generated on: 2025-07-22*  
-*Version: v1.0*  
+*Version: v1.1*  
 *Status: ✅ Production Ready*
