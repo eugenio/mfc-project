@@ -67,6 +67,10 @@ simulation_benchmark_log.txt
 *.pdf
 *.eps
 
+# Allow figures in q-learning-mfcs/figures directory
+!q-learning-mfcs/figures/
+!q-learning-mfcs/figures/*.png
+
 # Temporary files
 *.tmp
 *.temp
@@ -114,6 +118,9 @@ pixi.lock
 !pixi.lock
 data/
 *_data_report.json
+
+# Allow JSON files in q-learning-mfcs directories
+!q-learning-mfcs/simulation_data/*.json
 
 # Node.js
 node_modules/
