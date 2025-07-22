@@ -75,8 +75,8 @@ class UnifiedQLearningController:
         
         # EXTENDED ACTION SPACE - Dual actions [flow_adjustment, substrate_adjustment]
         # Each action is a tuple: (flow_change_ml_h, substrate_change_mmol_l)
-        flow_actions = [-10, -5, -2, -1, 0, 1, 2, 5, 10]  # mL/h adjustments
-        substrate_actions = [-5, -2, -1, 0, 1, 2, 5]  # mmol/L adjustments
+        flow_actions = [-8, -4, -2, -1, 0, 1, 2, 3, 4]  # mL/h adjustments (reduced max increase)
+        substrate_actions = [-2, -1, -0.5, 0, 0.5, 1, 1.5]  # mmol/L adjustments (70% reduced increases)
         
         # Create combined action space
         self.actions = []
@@ -150,6 +150,9 @@ class UnifiedQLearningController:
         # Apply flow rate change with bounds (convert to L/h)
         flow_change_lh = flow_adjustment * 1e-3  # mL/h to L/h
         new_flow_rate = np.clip(current_flow_rate + flow_change_lh, 0.005, 0.050)
+        
+        # Track current flow rate for reward calculation (in mL/h)
+        self.current_flow_rate = new_flow_rate * 1000  # L/h to mL/h
         
         # Apply substrate concentration change with bounds
         new_inlet_conc = np.clip(current_inlet_conc + substrate_adjustment, 
@@ -233,14 +236,14 @@ class UnifiedQLearningController:
         deviation_threshold = 0.05 * optimal_thickness
         
         if biofilm_deviation <= deviation_threshold:
-            biofilm_reward = 30.0 - (biofilm_deviation / deviation_threshold) * 15.0
+            biofilm_reward = 38.0 - (biofilm_deviation / deviation_threshold) * 15.0
             
             if biofilm_thickness_history is not None and len(biofilm_thickness_history) >= 3:
                 recent_thickness = biofilm_thickness_history[-3:]
                 if len(recent_thickness) >= 2:
                     growth_rate = abs(recent_thickness[-1] - recent_thickness[-2])
                     if growth_rate < 0.01:
-                        biofilm_reward += 20.0  # Steady state bonus
+                        biofilm_reward += 25.0  # Steady state bonus (+25% total)
         else:
             excess_deviation = biofilm_deviation - deviation_threshold
             biofilm_reward = -70.0 * (excess_deviation / deviation_threshold)
@@ -272,18 +275,27 @@ class UnifiedQLearningController:
             outlet_error < 1.0 and biofilm_deviation <= deviation_threshold):
             stability_bonus = 30.0  # Bonus for stable, on-target operation
         
-        # 6. COMBINED PENALTY for poor performance
+        # 6. FLOW RATE PENALTY when biofilm is below optimal (NEW)
+        flow_penalty = 0
+        current_flow_rate = getattr(self, 'current_flow_rate', 10.0)  # Default if not set
+        if biofilm_thickness_history is not None and len(biofilm_thickness_history) > 0:
+            avg_biofilm = np.mean(biofilm_thickness_history[-5:])  # Last 5 measurements
+            if avg_biofilm < optimal_thickness * 0.9:  # If biofilm is significantly below optimal
+                if current_flow_rate > 20.0:  # High flow rate creating excessive shear
+                    flow_penalty = -25.0 * (current_flow_rate - 20.0) / 10.0  # Penalty for high flow
+        
+        # 7. COMBINED PENALTY for poor performance
         combined_penalty = 0
         if (power_change < 0 and substrate_change < 0 and 
             error_improvement < 0 and biofilm_deviation > deviation_threshold):
             combined_penalty = -200.0  # Severe penalty when everything goes wrong
         
-        # 7. TOTAL UNIFIED REWARD
+        # 8. TOTAL UNIFIED REWARD
         total_reward = (power_reward + power_base + 
                        substrate_reward + substrate_base + 
                        biofilm_reward + 
                        concentration_reward + concentration_base +
-                       stability_bonus + combined_penalty)
+                       stability_bonus + flow_penalty + combined_penalty)
         
         return total_reward
     
