@@ -81,7 +81,7 @@ def get_llm_completion_message():
         if anth_script.exists():
             try:
                 result = subprocess.run(
-                    ["uv", "run", str(anth_script), "--completion"],
+                    ["pixi", "run", str(anth_script), "--completion"],
                     capture_output=True,
                     text=True,
                     timeout=10,
@@ -97,7 +97,7 @@ def get_llm_completion_message():
         if oai_script.exists():
             try:
                 result = subprocess.run(
-                    ["uv", "run", str(oai_script), "--completion"],
+                    ["pixi", "run", str(oai_script), "--completion"],
                     capture_output=True,
                     text=True,
                     timeout=10,
@@ -124,7 +124,7 @@ def announce_completion():
 
         # Call the TTS script with the completion message
         subprocess.run(
-            ["uv", "run", tts_script, completion_message],
+            ["pixi", "run", tts_script, completion_message],
             capture_output=True,  # Suppress output
             timeout=10,  # 10-second timeout
         )
