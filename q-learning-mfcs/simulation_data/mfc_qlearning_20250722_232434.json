@@ -1,0 +1,28 @@
+{
+  "simulation_info": {
+    "timestamp": "20250722_232434",
+    "duration_hours": 1000,
+    "timestep_seconds": 10,
+    "num_cells": 5,
+    "gpu_acceleration": false,
+    "control_method": "Q-Learning",
+    "initial_flow_rate_ml_h": 10.0,
+    "q_learning_params": {
+      "learning_rate": 0.1,
+      "discount_factor": 0.95,
+      "final_epsilon": 0.05,
+      "total_reward": 302069.6804238316
+    }
+  },
+  "results": {
+    "total_energy_wh": 17.216712228142043,
+    "average_power_w": 0.01721673613382629,
+    "final_stack_voltage_v": 4.76189390651599,
+    "final_stack_power_w": 0.017212092657935302,
+    "final_flow_rate_ml_h": 18000.0,
+    "final_substrate_utilization_percent": 23.411962689907142,
+    "final_objective_value": 0.49855013716253904,
+    "q_learning_total_reward": 302069.6804238316,
+    "q_table_size": 10
+  }
+}
