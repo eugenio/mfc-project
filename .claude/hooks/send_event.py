@@ -93,6 +93,9 @@ def main():
     # Handle --add-chat option
     if args.add_chat and "transcript_path" in input_data:
         transcript_path = input_data["transcript_path"]
+        # Convert relative paths to absolute paths
+        if not os.path.isabs(transcript_path):
+            transcript_path = os.path.abspath(transcript_path)
         if os.path.exists(transcript_path):
             # Read .jsonl file and convert to JSON array
             chat_data = []
