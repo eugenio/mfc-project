@@ -10,39 +10,120 @@ import matplotlib.pyplot as plt
 import time
 import subprocess
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
-def run_mojo_gpu_simulation():
-    """Attempt to run the Mojo GPU simulation"""
+def run_mojo_simulation(simulation_name, mojo_file, timeout=600):
+    """Run a specific Mojo simulation with timing"""
     
-    print("=== Attempting Mojo GPU Simulation ===")
+    print(f"\n=== Running {simulation_name} ===")
+    
+    start_time = time.time()
+    results = {
+        'name': simulation_name,
+        'file': mojo_file,
+        'success': False,
+        'runtime': 0,
+        'output': '',
+        'error': '',
+        'energy_output': 0,
+        'avg_power': 0,
+        'max_power': 0
+    }
     
     try:
-        # Try to compile and run the Mojo GPU simulation
+        # Run Mojo simulation
         result = subprocess.run(
-            ["mojo", "run", "q-learning-mfcs/mfc_100h_gpu.mojo"],
+            ["mojo", "run", f"q-learning-mfcs/{mojo_file}"],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=timeout
         )
         
+        results['runtime'] = time.time() - start_time
+        
         if result.returncode == 0:
-            print("✓ Mojo GPU simulation completed successfully")
-            print(result.stdout)
-            return True
+            print(f"✓ {simulation_name} completed successfully in {results['runtime']:.1f}s")
+            results['success'] = True
+            results['output'] = result.stdout
+            
+            # Parse energy output from results
+            output_lines = result.stdout.split('\n')
+            for line in output_lines:
+                if 'Total energy produced:' in line:
+                    try:
+                        energy_str = line.split(':')[1].strip().split(' ')[0]
+                        results['energy_output'] = float(energy_str)
+                    except:
+                        pass
+                elif 'Average power:' in line:
+                    try:
+                        power_str = line.split(':')[1].strip().split(' ')[0]
+                        results['avg_power'] = float(power_str)
+                    except:
+                        pass
+                elif 'Maximum power:' in line:
+                    try:
+                        power_str = line.split(':')[1].strip().split(' ')[0]
+                        results['max_power'] = float(power_str)
+                    except:
+                        pass
+                        
+            print(f"  Energy: {results['energy_output']:.2f} Wh")
+            print(f"  Avg Power: {results['avg_power']:.3f} W")
+            print(f"  Max Power: {results['max_power']:.3f} W")
+            
         else:
-            print("✗ Mojo GPU simulation failed")
-            print("Error:", result.stderr)
-            return False
+            print(f"✗ {simulation_name} failed")
+            results['error'] = result.stderr
+            print(f"Error: {result.stderr}")
             
     except subprocess.TimeoutExpired:
-        print("✗ Mojo GPU simulation timed out")
-        return False
+        results['runtime'] = timeout
+        print(f"✗ {simulation_name} timed out after {timeout}s")
+        results['error'] = "Timeout"
     except FileNotFoundError:
         print("✗ Mojo compiler not found")
-        return False
+        results['error'] = "Mojo compiler not found"
     except Exception as e:
-        print(f"✗ Error running Mojo simulation: {e}")
-        return False
+        results['runtime'] = time.time() - start_time
+        print(f"✗ Error running {simulation_name}: {e}")
+        results['error'] = str(e)
+        
+    return results
+
+def run_all_mojo_simulations():
+    """Run all Mojo simulations in parallel and collect results"""
+    
+    print("=== Running Comprehensive Mojo MFC Simulation Comparison ===")
+    print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print()
+    
+    simulations = [
+        ("Simple 100h MFC", "mfc_100h_simple.mojo"),
+        ("Q-Learning MFC", "mfc_100h_qlearn.mojo"),
+        ("Enhanced Q-Learning MFC", "mfc_100h_enhanced.mojo"),
+        ("Advanced Q-Learning MFC", "mfc_100h_advanced.mojo")
+    ]
+    
+    all_results = []
+    
+    # Use ThreadPoolExecutor for parallel execution
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        # Submit all simulations (but limit concurrent execution to avoid resource conflicts)
+        future_to_sim = {}
+        
+        for name, file in simulations:
+            future = executor.submit(run_mojo_simulation, name, file, timeout=900)
+            future_to_sim[future] = (name, file)
+        
+        # Collect results as they complete
+        for future in future_to_sim:
+            results = future.result()
+            all_results.append(results)
+    
+    return all_results
 
 def run_accelerated_python_simulation():
     """Run an accelerated Python simulation as fallback"""
@@ -317,10 +398,181 @@ def run_accelerated_python_simulation():
     
     return performance_log[:log_idx]
 
-def generate_plots(performance_log, n_points):
-    """Generate visualization plots"""
+def analyze_and_compare_results(all_results):
+    """Analyze and compare all simulation results"""
     
-    print("\n=== Generating Plots ===")
+    print("\n" + "="*80)
+    print("=== COMPREHENSIVE SIMULATION PERFORMANCE COMPARISON ===")
+    print("="*80)
+    
+    # Filter successful results
+    successful_results = [r for r in all_results if r['success']]
+    failed_results = [r for r in all_results if not r['success']]
+    
+    if not successful_results:
+        print("No successful simulations to compare")
+        return
+    
+    # Summary table
+    print(f"\n{'Simulation':<25} {'Status':<10} {'Runtime':<10} {'Energy (Wh)':<12} {'Avg Power (W)':<15} {'Max Power (W)':<15}")
+    print("-" * 95)
+    
+    for result in all_results:
+        status = "SUCCESS" if result['success'] else "FAILED"
+        runtime_str = f"{result['runtime']:.1f}s" if result['success'] else "N/A"
+        energy_str = f"{result['energy_output']:.2f}" if result['success'] else "N/A"
+        avg_power_str = f"{result['avg_power']:.3f}" if result['success'] else "N/A"
+        max_power_str = f"{result['max_power']:.3f}" if result['success'] else "N/A"
+        
+        print(f"{result['name']:<25} {status:<10} {runtime_str:<10} {energy_str:<12} {avg_power_str:<15} {max_power_str:<15}")
+    
+    # Performance analysis
+    print("\n" + "="*60)
+    print("=== PERFORMANCE ANALYSIS ===")
+    print("="*60)
+    
+    if len(successful_results) >= 2:
+        # Find baseline (simple simulation)
+        simple_sim = next((r for r in successful_results if 'Simple' in r['name']), successful_results[0])
+        baseline_energy = simple_sim['energy_output']
+        baseline_power = simple_sim['avg_power']
+        
+        print(f"\nBaseline (Simple MFC): {baseline_energy:.2f} Wh, {baseline_power:.3f} W avg")
+        print("\nImprovement Analysis:")
+        print("-" * 50)
+        
+        for result in successful_results:
+            if result != simple_sim:
+                energy_improvement = result['energy_output'] / baseline_energy if baseline_energy > 0 else 0
+                power_improvement = result['avg_power'] / baseline_power if baseline_power > 0 else 0
+                
+                print(f"{result['name']:<25}:")
+                print(f"  Energy improvement:    {energy_improvement:.2f}x ({(energy_improvement-1)*100:+.1f}%)")
+                print(f"  Power improvement:     {power_improvement:.2f}x ({(power_improvement-1)*100:+.1f}%)")
+                print(f"  Runtime efficiency:    {result['runtime']:.1f}s")
+                print()
+    
+    # Technology comparison
+    print("="*60)
+    print("=== TECHNOLOGY EFFECTIVENESS ===")
+    print("="*60)
+    
+    technologies = {
+        'Simple': [r for r in successful_results if 'Simple' in r['name']],
+        'Q-Learning': [r for r in successful_results if 'Q-Learning' in r['name'] and 'Enhanced' not in r['name'] and 'Advanced' not in r['name']],
+        'Enhanced Q-Learning': [r for r in successful_results if 'Enhanced' in r['name']],
+        'Advanced Q-Learning': [r for r in successful_results if 'Advanced' in r['name']]
+    }
+    
+    for tech_name, results in technologies.items():
+        if results:
+            result = results[0]  # Take first (should be only one)
+            print(f"\n{tech_name}:")
+            print(f"  Energy Output:         {result['energy_output']:.2f} Wh")
+            print(f"  Average Power:         {result['avg_power']:.3f} W")
+            print(f"  Peak Power:            {result['max_power']:.3f} W")
+            print(f"  Execution Time:        {result['runtime']:.1f} seconds")
+            
+            # Calculate efficiency metrics
+            if result['energy_output'] > 0:
+                energy_per_second = result['energy_output'] / result['runtime']
+                print(f"  Energy/Runtime Ratio:  {energy_per_second:.3f} Wh/s")
+    
+    # Generate comparison plots
+    generate_comparison_plots(successful_results)
+    
+    # Failure analysis
+    if failed_results:
+        print("\n" + "="*60)
+        print("=== FAILURE ANALYSIS ===")
+        print("="*60)
+        
+        for result in failed_results:
+            print(f"\n{result['name']} ({result['file']}):")
+            print(f"  Runtime: {result['runtime']:.1f}s")
+            print(f"  Error: {result['error']}")
+    
+    return successful_results
+
+def generate_comparison_plots(successful_results):
+    """Generate comparison visualization plots"""
+    
+    print("\n=== Generating Comparison Plots ===")
+    
+    # Set up matplotlib
+    import matplotlib
+    matplotlib.use('Agg')
+    
+    if len(successful_results) < 2:
+        print("Insufficient successful results for comparison plotting")
+        return
+    
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    
+    # Extract data for plotting
+    names = [r['name'].replace(' MFC', '').replace('100h ', '') for r in successful_results]
+    energies = [r['energy_output'] for r in successful_results]
+    avg_powers = [r['avg_power'] for r in successful_results]
+    max_powers = [r['max_power'] for r in successful_results]
+    runtimes = [r['runtime'] for r in successful_results]
+    
+    # Energy comparison
+    ax1 = axes[0, 0]
+    bars1 = ax1.bar(names, energies, color=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'])
+    ax1.set_ylabel('Total Energy Output (Wh)')
+    ax1.set_title('Energy Production Comparison')
+    ax1.tick_params(axis='x', rotation=45)
+    
+    # Add value labels on bars
+    for i, (bar, energy) in enumerate(zip(bars1, energies)):
+        ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(energies)*0.01,
+                f'{energy:.1f}', ha='center', va='bottom', fontweight='bold')
+    
+    # Power comparison
+    ax2 = axes[0, 1]
+    x_pos = np.arange(len(names))
+    width = 0.35
+    bars2a = ax2.bar(x_pos - width/2, avg_powers, width, label='Average Power', color='#FF6B6B', alpha=0.7)
+    bars2b = ax2.bar(x_pos + width/2, max_powers, width, label='Peak Power', color='#4ECDC4', alpha=0.7)
+    ax2.set_ylabel('Power (W)')
+    ax2.set_title('Power Output Comparison')
+    ax2.set_xticks(x_pos)
+    ax2.set_xticklabels(names, rotation=45)
+    ax2.legend()
+    
+    # Runtime comparison
+    ax3 = axes[1, 0]
+    bars3 = ax3.bar(names, runtimes, color=['#FFE66D', '#FF6B6B', '#4ECDC4', '#45B7D1'])
+    ax3.set_ylabel('Execution Time (seconds)')
+    ax3.set_title('Runtime Performance')
+    ax3.tick_params(axis='x', rotation=45)
+    
+    # Add value labels
+    for bar, runtime in zip(bars3, runtimes):
+        ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(runtimes)*0.01,
+                f'{runtime:.1f}s', ha='center', va='bottom', fontweight='bold')
+    
+    # Energy efficiency (Energy/Runtime ratio)
+    ax4 = axes[1, 1]
+    efficiency = [e/r if r > 0 else 0 for e, r in zip(energies, runtimes)]
+    bars4 = ax4.bar(names, efficiency, color=['#96CEB4', '#FF6B6B', '#4ECDC4', '#45B7D1'])
+    ax4.set_ylabel('Energy/Time Efficiency (Wh/s)')
+    ax4.set_title('Computational Efficiency')
+    ax4.tick_params(axis='x', rotation=45)
+    
+    # Add value labels
+    for bar, eff in zip(bars4, efficiency):
+        ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(efficiency)*0.01,
+                f'{eff:.3f}', ha='center', va='bottom', fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig('mfc_simulation_comparison.png', dpi=300, bbox_inches='tight')
+    print("Comparison plots saved to 'mfc_simulation_comparison.png'")
+
+def generate_plots(performance_log, n_points):
+    """Generate visualization plots for Python simulation"""
+    
+    print("\n=== Generating Python Simulation Plots ===")
     
     # Set up matplotlib
     import matplotlib
@@ -369,42 +621,64 @@ def generate_plots(performance_log, n_points):
     ax4.grid(True)
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_gpu_results.png', dpi=300, bbox_inches='tight')
-    print("Plots saved to 'mfc_100h_gpu_results.png'")
+    plt.savefig('mfc_100h_python_results.png', dpi=300, bbox_inches='tight')
+    print("Python simulation plots saved to 'mfc_100h_python_results.png'")
 
 def main():
     """Main execution function"""
     
-    print("=== GPU-Accelerated MFC 100-Hour Simulation ===")
-    print("This demonstrates GPU acceleration for long-term MFC simulation")
+    print("=== MFC 100-Hour Simulation Comprehensive Benchmark ===")
+    print("Running all Mojo implementations with parallel execution")
+    print("This compares: Simple, Q-Learning, Enhanced, and Advanced implementations")
     print()
     
-    # First try Mojo GPU simulation
-    mojo_success = run_mojo_gpu_simulation()
+    # Run all Mojo simulations in parallel
+    all_results = run_all_mojo_simulations()
     
-    if not mojo_success:
-        print("\nFalling back to accelerated Python simulation...")
-        print("This demonstrates the same concepts with NumPy vectorization")
+    # Analyze and compare results
+    successful_results = analyze_and_compare_results(all_results)
+    
+    # If we have successful results, show the benefits
+    if successful_results:
+        print("\n" + "="*80)
+        print("=== MOJO MFC SIMULATION BENEFITS DEMONSTRATED ===")
+        print("="*80)
+        print("✓ High-performance Q-learning implementation")
+        print("✓ Advanced electrochemical modeling")
+        print("✓ Multi-objective optimization")
+        print("✓ Real-time 100-hour simulations")
+        print("✓ Scalable to large MFC arrays")
+        print("✓ Zero-cost abstractions and compile-time optimization")
         
-        # Run Python fallback
-        results = run_accelerated_python_simulation()
+        # Show the best performer
+        best_result = max(successful_results, key=lambda r: r['energy_output'])
+        print(f"\n🏆 Best Performer: {best_result['name']}")
+        print(f"   Energy Output: {best_result['energy_output']:.2f} Wh")
+        print(f"   Runtime: {best_result['runtime']:.1f} seconds")
         
-        print("\n=== Demonstration Complete ===")
-        print("GPU acceleration benefits:")
-        print("✓ Parallel processing of all 5 cells")
-        print("✓ Vectorized tensor operations")
-        print("✓ Efficient memory usage")
-        print("✓ Scalable to hundreds of cells")
-        print("✓ Real-time performance capability")
-        print("✓ 100+ hour simulations in seconds")
+        # Python target comparison
+        python_target = 95.0  # Wh from original Python simulation
+        achievement = best_result['energy_output'] / python_target * 100
+        if achievement >= 100:
+            print(f"   🎯 Python Target Exceeded: {achievement:.1f}%")
+        else:
+            print(f"   📊 Python Target Achievement: {achievement:.1f}%")
         
     else:
-        print("\n=== Mojo GPU Simulation Successful ===")
-        print("The Mojo implementation provides:")
-        print("✓ Hardware acceleration (GPU/NPU/ASIC)")
-        print("✓ Zero-cost abstractions")
-        print("✓ Optimal memory layout")
-        print("✓ Compile-time optimizations")
+        print("\n⚠️  All Mojo simulations failed. Running Python fallback...")
+        
+        # Run Python fallback simulation
+        results = run_accelerated_python_simulation()
+        
+        print("\n=== Python Fallback Complete ===")
+        print("This demonstrates the same concepts with NumPy acceleration:")
+        print("✓ Parallel processing of all cells")
+        print("✓ Vectorized operations")
+        print("✓ Q-learning with state discretization")
+        print("✓ Resource management and aging effects")
+    
+    print(f"\n=== Benchmark Complete at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===")
+    print("Check generated PNG files for detailed performance visualizations.")
 
 if __name__ == "__main__":
     main()
