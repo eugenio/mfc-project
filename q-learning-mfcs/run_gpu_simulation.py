@@ -134,8 +134,8 @@ def run_accelerated_python_simulation():
     
     # Simulation parameters
     n_cells = 5
-    simulation_hours = 100
-    time_step = 1 # 1 minute steps for speed
+    simulation_hours = 1000
+    time_step = 60 # 1 minute steps for speed
     steps_per_hour = int(3600 / time_step)
     total_steps = simulation_hours * steps_per_hour
     
@@ -393,6 +393,9 @@ def run_accelerated_python_simulation():
         
         print(f"Cell {i}: V={voltage:.3f}V, P={power:.3f}W, Age={aging:.3f}, Biofilm={biofilm:.2f}x")
     
+    # Save data to JSON
+    save_performance_data(performance_log, log_idx)
+    
     # Generate plots
     generate_plots(performance_log, log_idx)
     
@@ -569,6 +572,41 @@ def generate_comparison_plots(successful_results):
     plt.savefig('mfc_simulation_comparison.png', dpi=300, bbox_inches='tight')
     print("Comparison plots saved to 'mfc_simulation_comparison.png'")
 
+def save_performance_data(performance_log, n_points):
+    """Save performance data to JSON file"""
+    import json
+    
+    print("\n=== Saving Performance Data ===")
+    
+    # Prepare data for JSON serialization
+    performance_data = {
+        'metadata': {
+            'simulation_type': 'GPU-Accelerated MFC Performance Analysis',
+            'total_hours': performance_log[n_points-1, 0] if n_points > 0 else 0,
+            'data_points': n_points,
+            'final_energy': performance_log[n_points-1, 4] if n_points > 0 else 0,
+            'final_power': performance_log[n_points-1, 3] if n_points > 0 else 0
+        },
+        'time_series': {
+            'hours': performance_log[:n_points, 0].tolist(),
+            'stack_voltage': performance_log[:n_points, 1].tolist(),
+            'stack_current': performance_log[:n_points, 2].tolist(),
+            'stack_power': performance_log[:n_points, 3].tolist(),
+            'cumulative_energy': performance_log[:n_points, 4].tolist(),
+            'substrate_level': performance_log[:n_points, 5].tolist(),
+            'ph_buffer_level': performance_log[:n_points, 6].tolist(),
+            'maintenance_cycles': performance_log[:n_points, 7].tolist()
+        }
+    }
+    
+    # Save to JSON file
+    filename = 'mfc_performance_data.json'
+    with open(filename, 'w') as f:
+        json.dump(performance_data, f, indent=2)
+    
+    print(f"Performance data saved to '{filename}'")
+    return performance_data
+
 def generate_plots(performance_log, n_points):
     """Generate visualization plots for Python simulation"""
     
@@ -584,6 +622,9 @@ def generate_plots(performance_log, n_points):
     
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
+    # Subplot tags (alphabetic order: left to right, top to bottom)
+    subplot_tags = ['(a)', '(b)', '(c)', '(d)']
+    
     hours = performance_log[:n_points, 0]
     
     # Power evolution
@@ -591,7 +632,7 @@ def generate_plots(performance_log, n_points):
     ax1.plot(hours, performance_log[:n_points, 3], 'b-', linewidth=2)
     ax1.set_xlabel('Time (hours)')
     ax1.set_ylabel('Stack Power (W)')
-    ax1.set_title('Power Evolution Over 100 Hours')
+    ax1.set_title(f'{subplot_tags[0]} Power Evolution Over 1000 Hours')
     ax1.grid(True)
     
     # Cumulative energy
@@ -599,7 +640,7 @@ def generate_plots(performance_log, n_points):
     ax2.plot(hours, performance_log[:n_points, 4], 'g-', linewidth=2)
     ax2.set_xlabel('Time (hours)')
     ax2.set_ylabel('Cumulative Energy (Wh)')
-    ax2.set_title('Total Energy Production')
+    ax2.set_title(f'{subplot_tags[1]} Total Energy Production')
     ax2.grid(True)
     
     # Resource levels
@@ -608,7 +649,7 @@ def generate_plots(performance_log, n_points):
     ax3.plot(hours, performance_log[:n_points, 6], 'b-', label='pH Buffer', linewidth=2)
     ax3.set_xlabel('Time (hours)')
     ax3.set_ylabel('Resource Level (%)')
-    ax3.set_title('Resource Consumption')
+    ax3.set_title(f'{subplot_tags[2]} Resource Consumption')
     ax3.legend()
     ax3.grid(True)
     
@@ -617,7 +658,7 @@ def generate_plots(performance_log, n_points):
     ax4.step(hours, performance_log[:n_points, 7], 'orange', linewidth=2, where='post')
     ax4.set_xlabel('Time (hours)')
     ax4.set_ylabel('Maintenance Events')
-    ax4.set_title('Maintenance Schedule')
+    ax4.set_title(f'{subplot_tags[3]} Maintenance Schedule')
     ax4.grid(True)
     
     plt.tight_layout()

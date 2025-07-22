@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.7.8)  20 JUL 2025 21:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.7.8)  22 JUL 2025 19:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -497,89 +497,85 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \openout4 = `MFC_Q_Learning_Report_Simple.toc'.
 
  [2] [3] [4] [5]
-<../../figures/mfc_stack_technical_diagram.png, id=243, 1149.5748pt x 589.7232p
-t>
-File: ../../figures/mfc_stack_technical_diagram.png Graphic file (type png)
-<use ../../figures/mfc_stack_technical_diagram.png>
-Package pdftex.def Info: ../../figures/mfc_stack_technical_diagram.png  used on
- input line 195.
-(pdftex.def)             Requested size: 409.71692pt x 210.17656pt.
-<../../figures/mfc_100h_comprehensive_analysis.png, id=246, 1253.8845pt x 1555.
-4913pt>
-File: ../../figures/mfc_100h_comprehensive_analysis.png Graphic file (type png)
+<../../figures/mfc_stack_architecture.png, id=278, 1002.6258pt x 381.8265pt>
+File: ../../figures/mfc_stack_architecture.png Graphic file (type png)
+<use ../../figures/mfc_stack_architecture.png>
+Package pdftex.def Info: ../../figures/mfc_stack_architecture.png  used on inpu
+t line 195.
+(pdftex.def)             Requested size: 409.71692pt x 156.03134pt.
+<../../figures/mfc_cumulative_energy_production.png, id=281, 1017.0798pt x 572.
+6193pt>
+File: ../../figures/mfc_cumulative_energy_production.png Graphic file (type png
+)
+<use ../../figures/mfc_cumulative_energy_production.png>
+Package pdftex.def Info: ../../figures/mfc_cumulative_energy_production.png  us
+ed on input line 208.
+(pdftex.def)             Requested size: 455.24411pt x 256.30452pt.
+ [6 <../../figures/mfc_stack_architecture.png>]
+<../../figures/mfc_simulation_comparison.png, id=296, 1081.641pt x 866.5173pt>
+File: ../../figures/mfc_simulation_comparison.png Graphic file (type png)
+<use ../../figures/mfc_simulation_comparison.png>
+Package pdftex.def Info: ../../figures/mfc_simulation_comparison.png  used on i
+nput line 219.
+(pdftex.def)             Requested size: 455.24411pt x 364.70166pt.
 
-<use ../../figures/mfc_100h_comprehensive_analysis.png>
-Package pdftex.def Info: ../../figures/mfc_100h_comprehensive_analysis.png  use
-d on input line 208.
-(pdftex.def)             Requested size: 455.24411pt x 564.74716pt.
- [6 <../../figures/mfc_stack_technical_diagram.png>]
-Overfull \vbox (89.46407pt too high) has occurred while \output is active []
+[7 <../../figures/mfc_cumulative_energy_production.png>]
+<../../figures/mfc_power_evolution.png, id=306, 1017.0798pt x 572.6193pt>
+File: ../../figures/mfc_power_evolution.png Graphic file (type png)
+<use ../../figures/mfc_power_evolution.png>
+Package pdftex.def Info: ../../figures/mfc_power_evolution.png  used on input l
+ine 230.
+(pdftex.def)             Requested size: 455.24411pt x 256.30452pt.
+ [8 <../../figures/mfc_simulation_comparison.png>]
+<../../figures/mfc_energy_production.png, id=314, 870.6126pt x 572.6193pt>
+File: ../../figures/mfc_energy_production.png Graphic file (type png)
+<use ../../figures/mfc_energy_production.png>
+Package pdftex.def Info: ../../figures/mfc_energy_production.png  used on input
+ line 241.
+(pdftex.def)             Requested size: 455.24411pt x 299.42386pt.
+ [9 <../../figures/mfc_power_evolution.png>]
+<../../figures/mfc_qlearning_progress.png, id=322, 1149.093pt x 425.9112pt>
+File: ../../figures/mfc_qlearning_progress.png Graphic file (type png)
+<use ../../figures/mfc_qlearning_progress.png>
+Package pdftex.def Info: ../../figures/mfc_qlearning_progress.png  used on inpu
+t line 253.
+(pdftex.def)             Requested size: 455.24411pt x 168.73672pt.
 
+[10 <../../figures/mfc_energy_production.png>]
+<../../figures/mfc_energy_sustainability.png, id=330, 1157.7654pt x 863.1447pt>
 
-[7 <../../figures/mfc_100h_comprehensive_analysis.png>]
-<../../figures/mfc_100h_detailed_analysis.png, id=267, 1290.9831pt x 859.5312pt
->
-File: ../../figures/mfc_100h_detailed_analysis.png Graphic file (type png)
-<use ../../figures/mfc_100h_detailed_analysis.png>
-Package pdftex.def Info: ../../figures/mfc_100h_detailed_analysis.png  used on 
-input line 219.
-(pdftex.def)             Requested size: 455.24411pt x 303.09627pt.
-<../../figures/mfc_100h_gpu_results.png, id=269, 1003.8303pt x 714.9912pt>
-File: ../../figures/mfc_100h_gpu_results.png Graphic file (type png)
-<use ../../figures/mfc_100h_gpu_results.png>
-Package pdftex.def Info: ../../figures/mfc_100h_gpu_results.png  used on input 
-line 230.
-(pdftex.def)             Requested size: 455.24411pt x 324.25233pt.
- [8 <../../figures/mfc_100h_detailed_analysis.png>]
-<../../figures/mfc_100h_summary_performance.png, id=278, 1131.9891pt x 831.105p
-t>
-File: ../../figures/mfc_100h_summary_performance.png Graphic file (type png)
-<use ../../figures/mfc_100h_summary_performance.png>
-Package pdftex.def Info: ../../figures/mfc_100h_summary_performance.png  used o
-n input line 241.
-(pdftex.def)             Requested size: 455.24411pt x 334.2369pt.
- [9 <../../figures/mfc_100h_gpu_results.png>]
-<../../figures/mfc_100h_technical_summary.png, id=286, 1149.5748pt x 714.9912pt
->
-File: ../../figures/mfc_100h_technical_summary.png Graphic file (type png)
-<use ../../figures/mfc_100h_technical_summary.png>
-Package pdftex.def Info: ../../figures/mfc_100h_technical_summary.png  used on 
-input line 253.
-(pdftex.def)             Requested size: 455.24411pt x 283.14394pt.
-
-[10 <../../figures/mfc_100h_summary_performance.png>]
-<../../figures/mfc_energy_sustainability_analysis.png, id=294, 1149.5748pt x 86
-0.013pt>
-File: ../../figures/mfc_energy_sustainability_analysis.png Graphic file (type p
-ng)
-<use ../../figures/mfc_energy_sustainability_analysis.png>
-Package pdftex.def Info: ../../figures/mfc_energy_sustainability_analysis.png  
-used on input line 264.
-(pdftex.def)             Requested size: 455.24411pt x 340.57407pt.
- [11 <../../figures/mfc_100h_technical_summary.png>] [12 <../../figures/mfc_ene
-rgy_sustainability_analysis.png>] [13] [14] (./MFC_Q_Learning_Report_Simple.bbl
- [15]) [16]
+File: ../../figures/mfc_energy_sustainability.png Graphic file (type png)
+<use ../../figures/mfc_energy_sustainability.png>
+Package pdftex.def Info: ../../figures/mfc_energy_sustainability.png  used on i
+nput line 264.
+(pdftex.def)             Requested size: 455.24411pt x 339.39088pt.
+ [11 <../../figures/mfc_qlearning_progress.png>]
+<../../figures/mfc_maintenance_schedule.png, id=338, 1155.3564pt x 865.0719pt>
+File: ../../figures/mfc_maintenance_schedule.png Graphic file (type png)
+<use ../../figures/mfc_maintenance_schedule.png>
+Package pdftex.def Info: ../../figures/mfc_maintenance_schedule.png  used on in
+put line 275.
+(pdftex.def)             Requested size: 455.24411pt x 340.86147pt.
+ [12 <../../figures/mfc_energy_sustainability.png>] [13 <../../figures/mfc_main
+tenance_schedule.png>] [14] [15] [16]
+(./MFC_Q_Learning_Report_Simple.bbl [17]) [18]
 (./MFC_Q_Learning_Report_Simple.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `MFC_Q_Learning_Report_Simple.out' has not ch
 anged.
-(rerunfilecheck)             Checksum: 73A2007FF2D781C49F36843C6CA6A02A;6106.
+(rerunfilecheck)             Checksum: 18B3BD1681007166BCFF27749EF1A797;7665.
  ) 
 Here is how much of TeX's memory you used:
- 13300 strings out of 476182
- 212354 string characters out of 5795596
+ 13302 strings out of 476182
+ 212425 string characters out of 5795596
  1938975 words of memory out of 5000000
- 35053 multiletter control sequences out of 15000+600000
+ 35042 multiletter control sequences out of 15000+600000
  569288 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,9n,79p,1493b,584s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,9n,79p,1185b,584s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/uge/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcbx1200.600pk
 > </home/uge/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.600pk>
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/
@@ -596,10 +592,10 @@ cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.p
 fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on MFC_Q_Learning_Report_Simple.pdf (16 pages, 5407476 bytes).
+Output written on MFC_Q_Learning_Report_Simple.pdf (18 pages, 3495584 bytes).
 PDF statistics:
- 452 PDF objects out of 1000 (max. 8388607)
- 381 compressed objects within 4 object streams
- 87 named destinations out of 1000 (max. 500000)
- 316 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 508 PDF objects out of 1000 (max. 8388607)
+ 429 compressed objects within 5 object streams
+ 100 named destinations out of 1000 (max. 500000)
+ 377 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -465,11 +465,11 @@ def run_stack_simulation():
     controller = MFCStackQLearningController(stack)
     
     # Simulation parameters
-    simulation_time = 1000  # seconds
+    simulation_time = 1000 * 3600  # 1000 hours in seconds
     dt = 1.0  # time step
     steps = int(simulation_time / dt)
     
-    print(f"Starting simulation for {simulation_time} seconds...")
+    print(f"Starting simulation for {simulation_time/3600:.0f} hours ({simulation_time} seconds)...")
     print(f"Time step: {dt}s, Total steps: {steps}")
     print()
     
@@ -508,10 +508,72 @@ def run_stack_simulation():
               f"pH={readings['pH']:.1f}, Acetate={readings['acetate']:.3f}, "
               f"Reversed={cell.is_reversed}")
     
+    # Save data to JSON
+    save_simulation_data(stack, controller)
+    
     # Plot results
     plot_simulation_results(stack, controller)
     
     return stack, controller
+
+def save_simulation_data(stack, controller):
+    """Save simulation data to JSON file"""
+    import json
+    
+    print("\n=== Saving Data ===")
+    
+    # Prepare data for JSON serialization
+    simulation_data = {
+        'metadata': {
+            'simulation_type': '5-Cell MFC Stack with Q-Learning',
+            'total_time': stack.data_log['time'][-1] if stack.data_log['time'] else 0,
+            'total_steps': len(stack.data_log['time']),
+            'final_stack_power': stack.stack_power,
+            'final_stack_voltage': stack.stack_voltage,
+            'final_stack_current': stack.stack_current,
+            'q_table_size': len(controller.q_table)
+        },
+        'time_series': {
+            'time': stack.data_log['time'],
+            'stack_voltage': stack.data_log['stack_voltage'],
+            'stack_current': stack.data_log['stack_current'],
+            'stack_power': stack.data_log['stack_power'],
+            'cell_voltages': stack.data_log['cell_voltages'],
+            'cell_powers': stack.data_log['cell_powers'],
+            'cell_reversals': stack.data_log['cell_reversals'],
+            'duty_cycles': stack.data_log['duty_cycles'],
+            'ph_buffers': stack.data_log['ph_buffers'],
+            'acetate_additions': stack.data_log['acetate_additions']
+        },
+        'final_states': {
+            'cells': []
+        }
+    }
+    
+    # Add final cell states
+    for i, cell in enumerate(stack.cells):
+        readings = cell.get_sensor_readings()
+        power = cell.get_power()
+        simulation_data['final_states']['cells'].append({
+            'cell_id': i,
+            'voltage': readings['voltage'],
+            'current': readings['current'],
+            'power': power,
+            'pH': readings['pH'],
+            'acetate': readings['acetate'],
+            'reversed': cell.is_reversed,
+            'duty_cycle': cell.actuators['duty_cycle'].get_value(),
+            'ph_buffer': cell.actuators['ph_buffer'].get_value(),
+            'acetate_pump': cell.actuators['acetate_pump'].get_value()
+        })
+    
+    # Save to JSON file
+    filename = 'mfc_stack_simulation_data.json'
+    with open(filename, 'w') as f:
+        json.dump(simulation_data, f, indent=2)
+    
+    print(f"Data saved to '{filename}'")
+    return simulation_data
 
 def plot_simulation_results(stack, controller):
     """Plot simulation results"""
@@ -525,12 +587,15 @@ def plot_simulation_results(stack, controller):
     
     fig, axes = plt.subplots(3, 2, figsize=(15, 12))
     
+    # Subplot tags (alphabetic order: left to right, top to bottom)
+    subplot_tags = ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
+    
     # Stack power and voltage
     ax1 = axes[0, 0]
     ax1.plot(stack.data_log['time'], stack.data_log['stack_power'], 'b-', linewidth=2, label='Stack Power')
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('Power (W)')
-    ax1.set_title('Stack Power Output')
+    ax1.set_title(f'{subplot_tags[0]} Stack Power Output')
     ax1.grid(True)
     ax1.legend()
     
@@ -538,7 +603,7 @@ def plot_simulation_results(stack, controller):
     ax2.plot(stack.data_log['time'], stack.data_log['stack_voltage'], 'g-', linewidth=2, label='Stack Voltage')
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Voltage (V)')
-    ax2.set_title('Stack Voltage')
+    ax2.set_title(f'{subplot_tags[1]} Stack Voltage')
     ax2.grid(True)
     ax2.legend()
     
@@ -549,7 +614,7 @@ def plot_simulation_results(stack, controller):
                 label=f'Cell {i}', alpha=0.8)
     ax3.set_xlabel('Time (s)')
     ax3.set_ylabel('Voltage (V)')
-    ax3.set_title('Individual Cell Voltages')
+    ax3.set_title(f'{subplot_tags[2]} Individual Cell Voltages')
     ax3.grid(True)
     ax3.legend()
     
@@ -560,7 +625,7 @@ def plot_simulation_results(stack, controller):
                 label=f'Cell {i}', alpha=0.8)
     ax4.set_xlabel('Time (s)')
     ax4.set_ylabel('Power (W)')
-    ax4.set_title('Individual Cell Powers')
+    ax4.set_title(f'{subplot_tags[3]} Individual Cell Powers')
     ax4.grid(True)
     ax4.legend()
     
@@ -571,7 +636,7 @@ def plot_simulation_results(stack, controller):
                 label=f'Cell {i}', alpha=0.8)
     ax5.set_xlabel('Time (s)')
     ax5.set_ylabel('Duty Cycle')
-    ax5.set_title('Duty Cycle Control')
+    ax5.set_title(f'{subplot_tags[4]} Duty Cycle Control')
     ax5.grid(True)
     ax5.legend()
     
@@ -586,7 +651,7 @@ def plot_simulation_results(stack, controller):
         ax6.plot(range(window_size-1, len(rewards)), moving_avg, 'r-', linewidth=2, label='Moving Average')
     ax6.set_xlabel('Step')
     ax6.set_ylabel('Reward')
-    ax6.set_title('Q-Learning Rewards')
+    ax6.set_title(f'{subplot_tags[5]} Q-Learning Rewards')
     ax6.grid(True)
     ax6.legend()
     

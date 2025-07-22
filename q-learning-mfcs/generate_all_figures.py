@@ -42,6 +42,15 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
+# Numbrte of simulation hours
+NUM_H_SIM=100
+#Number of seconds in 1 hour
+NUM_SEC_IN_H = 3600
+
+
+
+
+
 # Panel counter for each figure (resets for each figure)
 PANEL_COUNTER = 0
 
@@ -475,7 +484,7 @@ def generate_cumulative_energy():
     fig, ax = plt.subplots(1, 1, figsize=(14, 8))
     
     # Simulate 100-hour operation with different scenarios
-    time_hours = np.linspace(0, 100, 1000)
+    time_hours = np.linspace(0, NUM_H_SIM, NUM_SEC_IN_H * NUM_H_SIM)
     
     # Scenario 1: Simple MFC - constant low power
     power_simple = 0.03 + 0.005 * np.sin(time_hours * 0.1) + np.random.normal(0, 0.002, len(time_hours))
