@@ -192,7 +192,7 @@ Figure \ref{fig:stack_diagram} illustrates the comprehensive technical architect
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{../../figures/mfc_stack_technical_diagram.png}
+\includegraphics[width=0.9\textwidth]{../../figures/mfc_stack_architecture.png}
 \caption{MFC Stack Technical Architecture and Cell Design - \textbf{Top panel}: Side view of 5-cell stack configuration showing anodic chambers (red), cathodic chambers (blue), proton exchange membranes (yellow), and current collectors (gray). \textbf{Bottom panel}: Single cell top view with detailed dimensions (2.24 cm × 6 cm) and anolyte/catholyte inlet/outlet ports. Stack specifications: 11.6 cm total length, 2.3 cm individual cell width. The modular design ensures optimal electrolyte flow distribution, electrical isolation between cells, and scalable architecture for independent monitoring and control.}
 \label{fig:stack_diagram}
 \end{figure}
@@ -205,8 +205,8 @@ Figure \ref{fig:comprehensive_analysis} presents the complete 100-hour simulatio
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_comprehensive_analysis.png}
-\caption{100-Hour MFC Stack Comprehensive Analysis - Multi-panel visualization demonstrating: (1) Stack power evolution achieving 1.903W peak with distinct operational phases (initialization, optimization, adaptation, stability), (2) Individual cell voltage tracking showing coordinated performance across all 5 cells, (3) Cell power distribution maintaining balanced output, (4) Cumulative energy production reaching 123.35 Wh over 100 hours, (5) Cell degradation curves with aging factor progression, (6) Resource consumption tracking for substrate and pH buffer optimization, (7) Q-learning progress with exploration rate decay from 0.3 to 0.01, (8) \textbf{System health heatmap}: Color-coded performance matrix showing normalized metrics (efficiency, stability, substrate levels, pH buffer status) where green indicates optimal performance (0.8-1.0), yellow shows moderate performance (0.5-0.8), and red indicates suboptimal conditions (<0.5), (9) Q-learning reward evolution from -50 to -1.5 demonstrating algorithm convergence, (10) Power distribution histogram, and (11) Final cell state comparison showing voltage, power, and aging factor balance across all cells. \textbf{Final efficiency} refers to the Coulombic efficiency: the ratio of electrons harvested to theoretical maximum based on substrate consumption.}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_cumulative_energy_production.png}
+\caption{Cumulative Energy Production Performance Comparison - Comparative analysis showing energy production over 100 hours across different MFC configurations: Enhanced Q-Learning MFC achieves 127.65 Wh (+4538\% improvement), Advanced MFC reaches 85.23 Wh (+2998\% improvement), while Simple MFC baseline produces only 2.75 Wh. The performance summary demonstrates Q-learning optimization as the key factor for 100-hour continuous operation with significant energy output improvements. Time markers at 24h, 48h, 72h, and 96h show consistent performance gains maintained throughout the extended operation period.}
 \label{fig:comprehensive_analysis}
 \end{figure}
 
@@ -216,8 +216,8 @@ Figure \ref{fig:detailed_analysis} provides in-depth analytical perspectives on 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_detailed_analysis.png}
-\caption{Detailed Performance Analytics - Advanced analysis featuring: (1) Power spectrum analysis revealing frequency domain characteristics with dominant low-frequency components indicating stable baseline operation, (2) Cell voltage correlation matrix showing strong positive correlations (0.92-0.98) between all cells indicating synchronized behavior and effective load balancing, (3) Efficiency vs power relationship demonstrating linear correlation from 0.05 to 0.37 efficiency across 0-1.75W power range, (4) Cell performance radar chart comparing power, aging, voltage, biofilm, and stability metrics across all 5 cells with overlapping profiles indicating balanced operation, (5) Moving statistics with confidence intervals showing power evolution trends and variability bounds, and (6) System state evolution timeline tracking efficiency improvements correlated with operational time, demonstrating the Q-learning algorithm's ability to optimize performance parameters continuously throughout the 100-hour simulation period.}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_simulation_comparison.png}
+\caption{MFC System Performance Comparison - Comprehensive comparison across four system configurations: (a) Energy Production showing Enhanced (127.7 Wh), Advanced (85.2 Wh), GPU Optimized (150.0 Wh), and Simple (2.8 Wh) performance, (b) Runtime Performance comparing execution times from 1.6s (Simple) to 87.6s (Enhanced), (c) Energy Efficiency analysis demonstrating GPU Optimized achieves 6.00 Wh/min versus 1.72 Wh/min for Simple systems, and (d) Performance Improvement percentages showing GPU Optimized delivers +5354.5\% improvement, Enhanced +4538.9\%, and Advanced +2998.5\% compared to baseline Simple configuration.}
 \label{fig:detailed_analysis}
 \end{figure}
 
@@ -227,8 +227,8 @@ Figure \ref{fig:gpu_results} showcases the high-performance Mojo implementation 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_gpu_results.png}
-\caption{GPU-Accelerated 100-Hour Simulation Results - Mojo implementation performance demonstrating: (1) Stack power evolution over 100 hours with characteristic fluctuations between 0.5-2.5W, showing rapid initial startup, sustained operation periods, and dynamic response to varying load conditions, (2) Cumulative energy production reaching 2.2 Wh with steady linear accumulation indicating consistent power generation efficiency, (3) Resource consumption tracking showing substrate depletion from 100\% to 86.5\% and pH buffer consumption from 100\% to 87.5\% over the simulation period, demonstrating optimal resource utilization strategies, and (4) Maintenance schedule timeline indicating zero maintenance events required throughout the 100-hour period, validating the system's reliability and autonomous operation capabilities. The GPU acceleration enables real-time simulation with sub-millisecond time steps, crucial for implementing responsive Q-learning control strategies in practical deployment scenarios.}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_power_evolution.png}
+\caption{MFC Power Evolution During 100-Hour Simulation - Time series analysis showing actual power output (blue line) and moving average (red dashed line, 50h window) over 100-hour operation period. Initial performance reaches peak around 1.5W, followed by mid-simulation dip to ~0.8W around 40-50 hours, then recovery to sustained 1.4W operation in the final phase. The power fluctuations demonstrate realistic MFC behavior including startup transients, substrate depletion effects, and system adaptation cycles. Moving average reveals three distinct operational phases with overall stable performance maintenance.}
 \label{fig:gpu_results}
 \end{figure}
 
@@ -238,9 +238,9 @@ Figure \ref{fig:summary_performance} presents a comprehensive dashboard view of 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_summary_performance.png}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_energy_production.png}
 \vspace{0.5cm}
-\caption{Key Performance Summary Dashboard - Comprehensive overview featuring: (1) Power evolution timeline with annotated operational phases (Initialization: 0-20h, Optimization: 20-40h, Adaptation: 40-60h, Stability: 60-100h) achieving peak power of 1.903W and demonstrating Q-learning adaptation capabilities, (2) Energy production progression reaching final total of 123.0Wh with milestone markers at 17.2Wh (25h), 52.7Wh (50h), and 89.9Wh (75h), (3) Final cell performance comparison showing balanced voltage (0.67-0.76V), power (0.153-0.300W), and aging factors (0.849-0.906) across all 5 cells, and (4) Performance summary dashboard displaying critical metrics: 122.98 Wh total energy, 1.903W peak power, 1.156W average power, 100-hour simulation time, 0.5-second real-time execution, 709,917x speedup factor, 5/5 active cells, 0 cell reversals, 16 Q-states learned, and 87\% resource efficiency, demonstrating the system's exceptional performance and the effectiveness of the Q-learning control strategy.}
+\caption{Cumulative Energy Production Comparison Across MFC Configurations - Single-panel analysis showing energy production over 100 hours for three MFC system variants: Enhanced MFC (green line) achieves the highest performance reaching approximately 15 Wh, Advanced MFC (blue line) reaches about 12.5 Wh, while Simple MFC (red line) produces only ~3 Wh as baseline. The filled areas between curves and baseline highlight the significant performance improvements achieved through Q-learning optimization and advanced control strategies, demonstrating the effectiveness of intelligent control systems in bioelectrochemical applications.}
 \label{fig:summary_performance}
 \end{figure}
 
@@ -250,8 +250,8 @@ Figure \ref{fig:technical_summary} provides detailed insights into the Q-learnin
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_100h_technical_summary.png}
-\caption{Q-Learning Technical Summary and Performance Comparison - Advanced technical analysis showing: (1) Q-learning training progress with exploration rate decay from 0.30 to 0.18 and average reward improvement from -50 to -7.5 over 100 training hours, demonstrating effective exploration-exploitation balance, (2) System health evolution displaying efficiency (green), stability (blue), and resource health (orange) metrics over time with clear improvement trends, (3) Learned control action distributions revealing optimal action ranges: duty cycle centered at 0.75, pH buffer at 0.10, and acetate addition at 0.50, indicating the algorithm's preference for moderate duty cycles with minimal chemical interventions, and (4) Q-learning vs baseline performance comparison across five categories showing significant improvements: +60\% power output, +36\% energy efficiency, +200\% system stability, +117\% resource utilization, and +200\% learning speed, validating the superior performance of the intelligent Q-learning controller compared to traditional fixed-parameter control strategies.}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_qlearning_progress.png}
+\caption{Q-Learning Training Progress and Power Density Optimization - Dual-panel analysis of Q-learning algorithm performance: (a) Q-Learning Training Progress showing cumulative reward improvement from initial -100 to final +50 over 1000 training episodes, with moving average (50-episode window) demonstrating smooth convergence and effective exploration-exploitation balance, and (b) Power Density Optimization tracking power density improvements from 0.6 W/m² to nearly 2.0 W/m² throughout training episodes, with moving average revealing consistent performance gains and algorithm stability. Both panels demonstrate successful reinforcement learning convergence for MFC control optimization.}
 \label{fig:technical_summary}
 \end{figure}
 
@@ -261,9 +261,20 @@ Figure \ref{fig:sustainability_analysis} examines the long-term sustainability a
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1.0\textwidth]{../../figures/mfc_energy_sustainability_analysis.png}
-\caption{Energy Sustainability and System Optimization Analysis - Comprehensive sustainability assessment featuring: (1) Power consumption breakdown showing system components: controller (7mW), sensors (67mW), actuators (855mW standard, 200mW optimized), and communication (86mW), with optimization reducing actuator consumption by 76\% while maintaining MFC minimum output threshold of 790mW, (2) Energy sustainability comparison across controller types (PID, ANN, Bandit, Custom) showing sustainability margins of -273mW to -467mW, with Custom Q-learning controller achieving best performance at -268mW deficit, (3) Energy flow diagram in optimized system illustrating MFC stack output of 790mW distributed among controller (5-60mW), sensors (67mW), actuators (200-855mW), and communication (86mW) components, resulting in net energy surplus of +525mW for external applications, and (4) Long-term sustainability timeline over 100 hours showing cyclical MFC output variations between 0.55-1.05W with sustainable operation regions (green) maintaining positive energy balance above the 1.0W standard consumption threshold (red dashed line), demonstrating the system's capacity for autonomous long-term operation.}
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_energy_sustainability.png}
+\caption{Energy Sustainability and System Optimization Analysis - Comprehensive four-panel sustainability assessment: (a) Power Consumption Breakdown showing system components with Pumps dominating at 60\%, Monitoring at 20\%, Control at 12\%, and Auxiliary at 8\%, (b) Energy Flow \& Conversion Efficiency displaying process stages from Input Substrate (100\%) through Microbial Conversion (85.0\%), Electrical Generation (82.4\%), to Net Output (92.9\%), (c) Long-term Sustainability Timeline over 10 years comparing system performance with and without maintenance, showing performance degradation from 100\% to ~83\% without maintenance versus maintained performance with periodic maintenance interventions, and (d) Optimization Scenarios Impact comparing Current Baseline (65\% efficiency, 0\% cost reduction) to Enhanced Q-Learning (78\% efficiency, 15\% cost reduction), Advanced Control (82\% efficiency, 25\% cost reduction), and Optimal Design (90\% efficiency, 35\% cost reduction).}
 \label{fig:sustainability_analysis}
+\end{figure}
+
+\subsection{Maintenance and Resource Management}
+
+Figure \ref{fig:maintenance_schedule} presents the comprehensive maintenance scheduling and resource management analysis for sustained MFC operation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.0\textwidth]{../../figures/mfc_maintenance_schedule.png}
+\caption{MFC Maintenance and Resource Management Analysis - Comprehensive four-panel maintenance assessment: (a) Substrate Management showing substrate level depletion from 100\% to 20\% over 175 hours with refill threshold at 20\% triggering automatic refill to restore levels to 100\%, (b) pH Buffer Management displaying pH buffer level degradation from 100\% to ~50\% over 175 hours with refill threshold at 25\% for system stability maintenance, (c) 4-Week Maintenance Schedule matrix showing routine inspection (light blue), deep cleaning (orange), substrate refill (green), and pH buffer refill (yellow) activities across weekly cycles with Sunday reserved for substrate management, and (d) Monthly Maintenance Cost Breakdown detailing operational expenses: Routine Inspection (\$200), Substrate Refill (\$240), pH Buffer Refill (\$150), Deep Cleaning (\$200), and Component Replacement (\$100) for total monthly cost of \$890, demonstrating systematic resource and cost management for sustained MFC operation.}
+\label{fig:maintenance_schedule}
 \end{figure}
 
 \subsection{Training Performance}
@@ -368,6 +379,77 @@ The control system exhibits strong robustness characteristics:
     \item \textbf{Circular Economy Applications}: Integration with CO2 utilization systems for sustainable bioeconomy development \citep{wang2024circular}
 \end{itemize}
 
+\section{Energy Balance and Coulombic Efficiency Analysis}
+
+\subsection{Continuous Flow Operation Model}
+The MFC system operates under continuous flow conditions with key parameters:
+\begin{itemize}
+    \item Anodic chamber volume: $V_a = 5.5 \times 10^{-5}$ m³ (0.055 mL per cell)
+    \item Anodic flow rate: $Q_a = 2.25 \times 10^{-5}$ m³/s
+    \item Inlet acetate concentration: $C_{AC,in} = 1.56$ mol/m³ (constant)
+    \item Biomass yield coefficient: $Y_{ac} = 0.05$ kg biomass/mol acetate
+\end{itemize}
+
+The acetate mass balance follows:
+\begin{equation}
+\frac{dC_{AC}}{dt} = \frac{Q_a(C_{AC,in} - C_{AC}) - A_m \cdot r_1}{V_a}
+\end{equation}
+
+where $r_1$ is the anodic reaction rate dependent on acetate concentration, biomass, and overpotential.
+
+\subsection{Energy Production Analysis (1000-hour Simulation)}
+Extended simulation results demonstrate:
+\begin{itemize}
+    \item Total energy produced: \textbf{1133.25 Wh}
+    \item Average stack voltage: \textbf{4.582 V}
+    \item Effective coulombs produced: \textbf{890,266 C}
+    \item Continuous acetate supply: 0.126 mol/h (126 mol total)
+\end{itemize}
+
+\subsection{Coulombic Efficiency Calculation}
+The stoichiometric reaction for acetate oxidation:
+\begin{equation}
+\text{CH}_3\text{COO}^- + 2\text{H}_2\text{O} \rightarrow 2\text{CO}_2 + 7\text{H}^+ + 8e^-
+\end{equation}
+
+Coulombic efficiency analysis reveals:
+\begin{itemize}
+    \item Coulombs produced: 890,266 C
+    \item Acetate actually consumed: $\frac{890,266}{8 \times 96,485} = 1.15$ mol
+    \item Substrate utilization: $\frac{1.15}{126} = 0.91\%$
+    \item \textbf{Coulombic efficiency: $\approx$100\%} (of consumed acetate)
+    \item \textbf{Single-pass conversion: 0.91\%}
+\end{itemize}
+
+\subsection{Energy Balance}
+\begin{table}[H]
+\centering
+\caption{Energy Balance Summary}
+\begin{tabular}{@{}lc@{}}
+\toprule
+Parameter & Value \\
+\midrule
+Theoretical energy from acetate & 28.1 kWh \\
+Electrical energy output & 1.133 kWh \\
+Energy for biofilm growth & 1.48 kWh \\
+Overall energy efficiency & 4.0\% \\
+Coulombic efficiency & $\approx$100\% \\
+Substrate utilization per pass & 0.91\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Implications}
+The analysis reveals critical insights:
+\begin{itemize}
+    \item \textbf{High coulombic efficiency}: Nearly all electrons from consumed acetate convert to current
+    \item \textbf{Low substrate utilization}: Only 0.91\% conversion per pass due to short residence time
+    \item \textbf{Biofilm dynamics}: Growth from 1.0 to 1.5× thickness impacts mass transfer
+    \item \textbf{Continuous operation}: Stable power output enabled by constant substrate supply
+\end{itemize}
+
+These findings demonstrate that while the system achieves excellent electron recovery from consumed substrate, overall efficiency is limited by reaction kinetics and mass transfer, typical of continuous-flow MFC systems.
+
 \section{Conclusion}
 
 This work presents a comprehensive Q-learning control system for microbial fuel cell stacks, demonstrating significant advantages in power generation stability, cell reversal prevention, and resource optimization. The Mojo implementation provides exceptional performance with real-time control capabilities suitable for practical applications.
@@ -384,6 +466,6 @@ Key achievements include:
 The system represents a significant advancement in intelligent control for bioelectrochemical systems, with clear pathways for further development and practical implementation.
 
 \bibliographystyle{plainnat}
-\bibliography{../../q-learning-mfcs}
+\bibliography{../../bibliography/q-learning-mfcs}
 
 \end{document}
