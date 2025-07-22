@@ -54,7 +54,7 @@ ehthumbs.db
 Thumbs.db
 
 # Logs and runtime data
-logs/*/
+logs/
 *.log
 *.txt
 simulation_benchmark_log.txt
@@ -107,3 +107,30 @@ run_simulation_comparison.py
 # Pixi package manager
 pixi.lock
 .pixi/
+
+# Data files and reports
+*.json
+!package.json
+!pixi.lock
+data/
+*_data_report.json
+
+# Node.js
+node_modules/
+package-lock.json
+
+# LaTeX build files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
+texput.log
+
+#.claude directory
+.claude/*
+!.claude/settings.json
+

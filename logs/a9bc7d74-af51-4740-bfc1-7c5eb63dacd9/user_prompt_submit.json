@@ -1,9 +1,0 @@
-[
-  {
-    "session_id": "a9bc7d74-af51-4740-bfc1-7c5eb63dacd9",
-    "transcript_path": "/home/uge/.claude/projects/-home-uge-modular-mfc-project/a9bc7d74-af51-4740-bfc1-7c5eb63dacd9.jsonl",
-    "cwd": "/home/uge/modular/mfc-project",
-    "hook_event_name": "UserPromptSubmit",
-    "prompt": "stage all and committ"
-  }
-]
