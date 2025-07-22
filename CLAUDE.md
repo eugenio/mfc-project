@@ -1,2 +1,3 @@
 - Before running any Mojo file, run `mojo format` to the file in question, and fix obvious errors
 - From now stage one file per commit, and if there's any modification of any file done by you or me with more than 50 lines, do a commit for each 50 lines of modifications
+- From now on write all the commands you want to execute, in a way that all the commands are visible in the prompt area, and if a command is blocked by the hooks you have to stop, print the command in full and ask me to review it. If I think it's ok, I'll execute the command in another terminal and then I'll tell you to continue
