@@ -1,0 +1,44 @@
+{
+  "simulation_info": {
+    "timestamp": "20250722_234845",
+    "duration_hours": 1000,
+    "timestep_seconds": 10,
+    "num_cells": 5,
+    "gpu_acceleration": false,
+    "control_method": "Dual Control: Q-Learning (flow) + PID (substrate)",
+    "target_outlet_concentration_mmol_l": 2.0,
+    "initial_flow_rate_ml_h": 10.0,
+    "pid_parameters": {
+      "kp": 0.5,
+      "ki": 0.1,
+      "kd": 0.02,
+      "min_substrate": 5.0,
+      "max_substrate": 50.0
+    },
+    "q_learning_params": {
+      "learning_rate": 0.1,
+      "discount_factor": 0.95,
+      "final_epsilon": 0.05,
+      "total_reward": -3570484.3585103764
+    }
+  },
+  "results": {
+    "total_energy_wh": 6.136112398365397,
+    "average_power_w": 0.006136120920539944,
+    "final_stack_voltage_v": 4.146554418317065,
+    "final_stack_power_w": 0.006135965674787612,
+    "final_flow_rate_ml_h": 10.000000000000009,
+    "final_inlet_concentration_mmol_l": 5.0,
+    "final_outlet_concentration_mmol_l": 4.999424861328545,
+    "final_substrate_utilization_percent": 0.019171043998671422,
+    "final_objective_value": 0.060682587693969704,
+    "q_learning_total_reward": -3570484.3585103764,
+    "q_table_size": 3,
+    "substrate_control_performance": {
+      "rmse": 2.9994248613285444,
+      "mean_error": -2.999424861328544,
+      "std_error": 8.881784197001252e-16,
+      "integral_error": -10799181.519421542
+    }
+  }
+}
