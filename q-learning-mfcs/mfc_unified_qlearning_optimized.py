@@ -175,10 +175,10 @@ class OptimizedUnifiedQController:
             avg_recent_reward = np.mean(self.performance_history[-100:])
             
             # Adaptive decay based on performance
-            if avg_recent_reward > -50:  # Good performance
-                decay_factor = self.epsilon_decay * 0.995
-            else:  # Poor performance
-                decay_factor = self.epsilon_decay * 1.005  # Slower decay
+            if avg_recent_reward > -50:  # Good performance - faster decay
+                decay_factor = self.epsilon_decay * 0.995  # More aggressive decay
+            else:  # Poor performance - slower decay  
+                decay_factor = self.epsilon_decay / 0.995  # Slower decay (divide, not multiply)
             
             self.epsilon = max(self.epsilon_min, self.epsilon * decay_factor)
         else:
