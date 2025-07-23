@@ -1,0 +1,8 @@
+---
+# Example vault file - copy to vault.yml and encrypt with ansible-vault
+# ansible-vault create vault.yml
+# ansible-vault edit vault.yml
+
+vault_minio_root_password: "SuperSecurePassword123!"
+vault_gitlab_lfs_password: "GitLabLFS2025!"
+vault_tailscale_auth_key: "tskey-auth-xxxxxxxxxxxxxx-yyyyyyyyyyyyyyyy"

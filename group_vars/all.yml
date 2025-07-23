@@ -1,0 +1,18 @@
+---
+# Default variables for all hosts
+minio_user: minio
+minio_uid: 1001
+minio_gid: 1001
+minio_data_path: /mnt/external-ssd/minio-data
+minio_config_path: /mnt/external-ssd/minio-config
+minio_certs_path: /mnt/external-ssd/minio-certs
+
+# Default credentials (override with vault in production)
+minio_root_user: gitlab-lfs-admin
+minio_root_password: SuperSecurePassword123!
+gitlab_lfs_user: gitlab-lfs-user
+gitlab_lfs_password: GitLabLFS2025!
+lfs_bucket_name: mfc-project-lfs
+
+# Tailscale (use vault for auth key)
+tailscale_auth_key: "your-tailscale-auth-key-here"

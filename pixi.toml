@@ -16,6 +16,7 @@ modular = "25.4.*"
 magic = ">=8.3.486,<9"
 tectonic = ">=0.15.0,<0.16"
 optuna = ">=4.4.0,<5"
+git-lfs = ">=3.7.0,<4"
 
 [environments]
 dev = ["dev"]
