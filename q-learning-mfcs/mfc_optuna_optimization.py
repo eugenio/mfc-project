@@ -162,9 +162,39 @@ class MFCOptunaOptimizer:
         )
         
         # Override simulation parameters for optimization speed
-        sim.duration_hours = 120  # Shorter duration for parallel efficiency
-        sim.timestep = 10
-        sim.num_cells = 5
+        sim.total_time = 120 * 3600  # 120 hours in seconds for parallel efficiency
+        sim.num_steps = int(sim.total_time / sim.dt)
+        
+        # Reinitialize arrays with new dimensions
+        array_func = np.zeros if not sim.use_gpu else (lambda shape: np.zeros(shape))
+        
+        # Cell state arrays [time_step, cell_index]
+        sim.cell_voltages = array_func((sim.num_steps, sim.num_cells))
+        sim.biofilm_thickness = array_func((sim.num_steps, sim.num_cells))
+        sim.acetate_concentrations = array_func((sim.num_steps, sim.num_cells))
+        sim.current_densities = array_func((sim.num_steps, sim.num_cells))
+        sim.power_outputs = array_func((sim.num_steps, sim.num_cells))
+        sim.substrate_consumptions = array_func((sim.num_steps, sim.num_cells))
+        
+        # Stack-level arrays [time_step]
+        sim.stack_voltages = array_func(sim.num_steps)
+        sim.stack_powers = array_func(sim.num_steps)
+        sim.flow_rates = array_func(sim.num_steps)
+        sim.objective_values = array_func(sim.num_steps)
+        sim.substrate_utilizations = array_func(sim.num_steps)
+        sim.q_rewards = array_func(sim.num_steps)
+        sim.q_actions = array_func(sim.num_steps)
+        
+        # Unified control arrays
+        sim.inlet_concentrations = array_func(sim.num_steps)
+        sim.outlet_concentrations = array_func(sim.num_steps)
+        sim.concentration_errors = array_func(sim.num_steps)
+        
+        # Reinitialize starting conditions
+        sim.biofilm_thickness[0, :] = 1.0
+        sim.acetate_concentrations[0, :] = 20.0
+        sim.flow_rates[0] = 0.010  # 10 mL/h in L/h
+        sim.inlet_concentrations[0] = 20.0
         
         # Override reward calculation method with optimized parameters
         original_calculate_reward = sim.unified_controller.calculate_unified_reward
@@ -574,7 +604,7 @@ class MFCOptunaOptimizer:
                 for future in concurrent.futures.as_completed(future_to_config):
                     config = future_to_config[future]
                     try:
-                        result = future.get(timeout=3600)  # 1 hour timeout per validation
+                        result = future.result(timeout=3600)  # 1 hour timeout per validation
                         validation_results.append(result)
                         self.logger.info(f"Validation completed for config {config['trial_number']}")
                     except Exception as e:
@@ -630,9 +660,39 @@ class MFCOptunaOptimizer:
             )
             
             # Override simulation parameters for extended validation
-            sim.duration_hours = 600  # Full extended duration
-            sim.timestep = 10
-            sim.num_cells = 5
+            sim.total_time = 600 * 3600  # 600 hours in seconds for extended validation
+            sim.num_steps = int(sim.total_time / sim.dt)
+            
+            # Reinitialize arrays with new dimensions for extended simulation
+            array_func = np.zeros if not sim.use_gpu else (lambda shape: np.zeros(shape))
+            
+            # Cell state arrays [time_step, cell_index]
+            sim.cell_voltages = array_func((sim.num_steps, sim.num_cells))
+            sim.biofilm_thickness = array_func((sim.num_steps, sim.num_cells))
+            sim.acetate_concentrations = array_func((sim.num_steps, sim.num_cells))
+            sim.current_densities = array_func((sim.num_steps, sim.num_cells))
+            sim.power_outputs = array_func((sim.num_steps, sim.num_cells))
+            sim.substrate_consumptions = array_func((sim.num_steps, sim.num_cells))
+            
+            # Stack-level arrays [time_step]
+            sim.stack_voltages = array_func(sim.num_steps)
+            sim.stack_powers = array_func(sim.num_steps)
+            sim.flow_rates = array_func(sim.num_steps)
+            sim.objective_values = array_func(sim.num_steps)
+            sim.substrate_utilizations = array_func(sim.num_steps)
+            sim.q_rewards = array_func(sim.num_steps)
+            sim.q_actions = array_func(sim.num_steps)
+            
+            # Unified control arrays
+            sim.inlet_concentrations = array_func(sim.num_steps)
+            sim.outlet_concentrations = array_func(sim.num_steps)
+            sim.concentration_errors = array_func(sim.num_steps)
+            
+            # Reinitialize starting conditions
+            sim.biofilm_thickness[0, :] = 1.0
+            sim.acetate_concentrations[0, :] = 20.0
+            sim.flow_rates[0] = 0.010  # 10 mL/h in L/h
+            sim.inlet_concentrations[0] = 20.0
             
             # Apply the optimized parameters (reuse the same logic from optimization)
             self._apply_parameters_to_simulation(sim, config['params'])
