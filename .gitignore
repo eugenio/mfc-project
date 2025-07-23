@@ -119,8 +119,7 @@ pixi.lock
 data/
 *_data_report.json
 
-# Exclude large simulation data files (use compressed archive instead)
-q-learning-mfcs/simulation_data/*.csv
+# Exclude JSON data files (CSV handled by Git LFS)
 q-learning-mfcs/simulation_data/*.json
 
 # Include compressed data archive
