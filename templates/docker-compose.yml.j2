@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-01-16T16-07-38Z
+    container_name: minio-lfs
+    restart: always
+    user: "{{ minio_uid }}:{{ minio_gid }}"
+    ports:
+      - "9000:9000"   # API HTTPS
+      - "9001:9001"   # Console HTTPS
+    volumes:
+      - {{ minio_data_path }}:/data
+      - {{ minio_config_path }}:/root/.minio
+      - {{ minio_certs_path }}:/root/.minio/certs
+    environment:
+      MINIO_ROOT_USER: {{ minio_root_user }}
+      MINIO_ROOT_PASSWORD: {{ minio_root_password }}
+      MINIO_BROWSER_REDIRECT_URL: https://{{ tailscale_hostname }}:9001
+      MINIO_SERVER_URL: https://{{ tailscale_hostname }}:9000
+      MINIO_DOMAIN: {{ tailscale_hostname }}
+    command: server /data --console-address ":9001" --certs-dir /root/.minio/certs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+    networks:
+      - minio-network
+
+networks:
+  minio-network:
+    driver: bridge

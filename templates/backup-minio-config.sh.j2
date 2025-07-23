@@ -1,0 +1,23 @@
+#!/bin/bash
+BACKUP_DIR="{{ minio_data_path }}/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p $BACKUP_DIR
+
+# Backup MinIO configuration
+tar -czf $BACKUP_DIR/minio-config-$DATE.tar.gz \
+  -C {{ minio_config_path }} . \
+  -C ~/minio-setup docker-compose.yml \
+  -C ~ update-minio-certs.sh minio-health-check.sh backup-minio-config.sh
+
+# Keep only last 7 backups
+ls -t $BACKUP_DIR/minio-config-*.tar.gz | tail -n +8 | xargs rm -f 2>/dev/null
+
+echo "Configuration backup completed: minio-config-$DATE.tar.gz at $(date)"
+
+# Backup bucket list and policies
+mc ls minio-secure/ > $BACKUP_DIR/buckets-$DATE.txt 2>/dev/null
+mc admin policy list minio-secure > $BACKUP_DIR/policies-$DATE.txt 2>/dev/null
+mc admin user list minio-secure > $BACKUP_DIR/users-$DATE.txt 2>/dev/null
+
+echo "MinIO metadata backup completed"
