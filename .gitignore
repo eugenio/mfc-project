@@ -119,8 +119,12 @@ pixi.lock
 data/
 *_data_report.json
 
-# Allow JSON files in q-learning-mfcs directories
-!q-learning-mfcs/simulation_data/*.json
+# Exclude large simulation data files (use compressed archive instead)
+q-learning-mfcs/simulation_data/*.csv
+q-learning-mfcs/simulation_data/*.json
+
+# Include compressed data archive
+!q-learning-mfcs/simulation_data_archive.tar.gz
 
 # Node.js
 node_modules/
