@@ -350,16 +350,26 @@ class MFCOptunaOptimizer:
             
             # Run simulation
             start_time = time.time()
-            results = sim.run_simulation()
+            sim.run_simulation()  # This method doesn't return anything
             elapsed_time = time.time() - start_time
             
-            # Extract key metrics
-            energy_total = results.get('total_energy_wh', 0)
-            final_power = results.get('final_stack_power_w', 0)
-            control_rmse = results.get('control_rmse', 100.0)  # Default high if missing
-            control_mae = results.get('control_mae', 100.0)
-            substrate_utilization = results.get('final_substrate_utilization_percent', 0)
-            q_reward = results.get('q_learning_total_reward', -1e6)
+            # Extract key metrics directly from simulation object
+            energy_total = float(np.trapezoid(sim.stack_powers, dx=sim.dt/3600))
+            final_power = float(sim.stack_powers[-1])
+            
+            # Calculate control metrics
+            valid_errors = sim.concentration_errors[sim.concentration_errors != 0]
+            if len(valid_errors) > 0:
+                control_rmse = float(np.sqrt(np.mean(valid_errors**2)))
+                control_mae = float(np.mean(np.abs(valid_errors)))
+            else:
+                control_rmse = 100.0
+                control_mae = 100.0
+                
+            substrate_utilization = float(sim.substrate_utilizations[-1])
+            
+            # Get Q-learning reward from controller
+            q_reward = float(np.sum(sim.q_rewards))
             
             # Calculate biofilm deviation (if available)
             final_biofilm = getattr(sim, 'biofilm_thickness', np.array([[0.5]]))
@@ -699,16 +709,26 @@ class MFCOptunaOptimizer:
             
             # Run extended simulation
             start_time = time.time()
-            results = sim.run_simulation()
+            sim.run_simulation()  # This method doesn't return anything
             elapsed_time = time.time() - start_time
             
-            # Calculate extended metrics
-            energy_total = results.get('total_energy_wh', 0)
-            final_power = results.get('final_stack_power_w', 0)
-            control_rmse = results.get('control_rmse', 100.0)
-            control_mae = results.get('control_mae', 100.0)
-            substrate_utilization = results.get('final_substrate_utilization_percent', 0)
-            q_reward = results.get('q_learning_total_reward', -1e6)
+            # Calculate extended metrics directly from simulation object
+            energy_total = float(np.trapezoid(sim.stack_powers, dx=sim.dt/3600))
+            final_power = float(sim.stack_powers[-1])
+            
+            # Calculate control metrics
+            valid_errors = sim.concentration_errors[sim.concentration_errors != 0]
+            if len(valid_errors) > 0:
+                control_rmse = float(np.sqrt(np.mean(valid_errors**2)))
+                control_mae = float(np.mean(np.abs(valid_errors)))
+            else:
+                control_rmse = 100.0
+                control_mae = 100.0
+                
+            substrate_utilization = float(sim.substrate_utilizations[-1])
+            
+            # Get Q-learning reward from controller
+            q_reward = float(np.sum(sim.q_rewards))
             
             # Calculate biofilm performance
             final_biofilm = getattr(sim, 'biofilm_thickness', np.array([[0.5]]))
