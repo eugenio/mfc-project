@@ -56,6 +56,7 @@ class OptimizedUnifiedQController:
         # Performance tracking
         self.performance_history = []
         self.action_history = []
+        self.total_rewards = 0  # Track total accumulated rewards
         
         # OPTIMIZED ACTION SPACE from Optuna
         flow_actions = list(range(-12, 7))  # -12 to +6 mL/h
@@ -169,6 +170,9 @@ class OptimizedUnifiedQController:
         # Q-learning update with optimized parameters
         new_q = current_q + self.learning_rate * (reward + self.discount_factor * next_max_q - current_q)
         self.q_table[state][action] = new_q
+        
+        # Update statistics
+        self.total_rewards += reward
         
         # Update exploration rate with optimized decay
         if len(self.performance_history) > 0 and len(self.performance_history) % 100 == 0:
@@ -296,7 +300,8 @@ class OptimizedUnifiedQController:
             'reward_trend': trend,
             'exploration_rate': self.epsilon,
             'q_table_size': len(self.q_table),
-            'total_actions': len(self.action_history)
+            'total_actions': len(self.action_history),
+            'total_reward': self.total_rewards
         }
 
 
@@ -333,6 +338,13 @@ def main():
     # Create and run optimized simulation
     sim = OptimizedMFCSimulation(use_gpu=False, target_outlet_conc=12.0)
     sim.run_simulation()
+    
+    # Save simulation data and results
+    sim.save_data()
+    
+    # Generate visualization dashboard
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    sim.generate_plots(timestamp)
     
     print("\n=== OPTIMIZED SIMULATION COMPLETE ===")
     print("Results saved with optimized parameters from Optuna")
