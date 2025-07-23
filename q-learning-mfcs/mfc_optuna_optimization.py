@@ -155,13 +155,16 @@ class MFCOptunaOptimizer:
         Returns:
             Modified MFC simulation instance
         """
-        # Create simulation instance
+        # Create simulation instance with correct parameters
         sim = MFCUnifiedQLearningSimulation(
-            duration_hours=120,  # Even shorter for 14-thread parallel efficiency
-            timestep=10,
-            num_cells=5,
-            gpu=False  # CPU for stability during optimization
+            use_gpu=False,  # CPU for stability during optimization
+            target_outlet_conc=self.target_outlet_conc
         )
+        
+        # Override simulation parameters for optimization speed
+        sim.duration_hours = 120  # Shorter duration for parallel efficiency
+        sim.timestep = 10
+        sim.num_cells = 5
         
         # Override reward calculation method with optimized parameters
         original_calculate_reward = sim.unified_controller.calculate_unified_reward
@@ -622,11 +625,14 @@ class MFCOptunaOptimizer:
         try:
             # Create extended simulation (600 hours)
             sim = MFCUnifiedQLearningSimulation(
-                duration_hours=600,  # Full extended duration
-                timestep=10,
-                num_cells=5,
-                gpu=False
+                use_gpu=False,
+                target_outlet_conc=self.target_outlet_conc
             )
+            
+            # Override simulation parameters for extended validation
+            sim.duration_hours = 600  # Full extended duration
+            sim.timestep = 10
+            sim.num_cells = 5
             
             # Apply the optimized parameters (reuse the same logic from optimization)
             self._apply_parameters_to_simulation(sim, config['params'])
