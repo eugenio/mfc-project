@@ -1,0 +1,57 @@
+{
+  "simulation_info": {
+    "timestamp": "20250723_065637",
+    "duration_hours": 1000,
+    "timestep_seconds": 10,
+    "num_cells": 5,
+    "gpu_acceleration": false,
+    "control_method": "Unified Q-Learning (Flow + Substrate Concentration)",
+    "target_outlet_concentration_mmol_l": 12.0,
+    "initial_flow_rate_ml_h": 10.0,
+    "initial_inlet_concentration_mmol_l": 20.0,
+    "unified_qlearning_params": {
+      "learning_rate": 0.0987,
+      "discount_factor": 0.9517,
+      "final_epsilon": 0.102,
+      "epsilon_decay": 0.9978,
+      "epsilon_min": 0.102,
+      "action_space_size": 57,
+      "state_dimensions": 6,
+      "min_substrate": 5.0,
+      "max_substrate": 50.0
+    }
+  },
+  "results": {
+    "total_energy_wh": 8.293290207937776,
+    "average_power_w": 0.008293302095999197,
+    "final_stack_voltage_v": 4.347201039987293,
+    "final_stack_power_w": 0.008559404222722368,
+    "final_flow_rate_ml_h": 5.0,
+    "final_inlet_concentration_mmol_l": 9.938000000000109,
+    "final_outlet_concentration_mmol_l": 9.936469475628286,
+    "final_concentration_error_mmol_l": -2.063530524371714,
+    "final_substrate_utilization_percent": 0.025667586309601902,
+    "final_objective_value": 0.16831461318381802,
+    "unified_control_performance": {
+      "avg_reward": -1065.0745153859225,
+      "reward_trend": 0.7945700384729854,
+      "exploration_rate": 0.102,
+      "q_table_size": 157,
+      "total_actions": 1000
+    }
+  },
+  "control_analysis": {
+    "outlet_concentration_stats": {
+      "mean": 10.124788043908483,
+      "std": 4.38739261108371,
+      "min": 4.998849752064618,
+      "max": 27.662051559306974
+    },
+    "concentration_error_stats": {
+      "mean_abs_error": 4.066472615495235,
+      "rmse": 4.771327966739325,
+      "std_error": 4.38738763064755,
+      "max_error": 15.662051559306974
+    }
+  }
+}
