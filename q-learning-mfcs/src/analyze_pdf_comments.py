@@ -8,6 +8,7 @@ import fitz  # PyMuPDF
 import sys
 import json
 from pathlib import Path
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 
 def analyze_pdf_annotations(pdf_path):
@@ -172,7 +173,7 @@ def main():
     print_analysis_report(analysis)
     
     # Optionally save to JSON
-    json_output = pdf_path.replace('.pdf', '_analysis.json')
+    json_output = get_simulation_data_path(Path(pdf_path).stem + '_analysis.json')
     with open(json_output, 'w', encoding='utf-8') as f:
         json.dump(analysis, f, indent=2, ensure_ascii=False)
     
