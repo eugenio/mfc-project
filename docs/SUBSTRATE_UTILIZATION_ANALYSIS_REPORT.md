@@ -6,8 +6,9 @@ This analysis compares the substrate utilization performance between unified and
 
 ## Data Sources
 
-- **Unified Model**: `/home/uge/mfc-project/q-learning-mfcs/simulation_data/mfc_unified_qlearning_20250724_022416.csv`
-- **Non-Unified Model**: `/home/uge/mfc-project/q-learning-mfcs/simulation_data/mfc_qlearning_20250724_022231.csv`
+- **Unified Model**: `q-learning-mfcs/data/simulation_data/mfc_unified_qlearning_20250724_022416.csv`
+- **Non-Unified Model**: `q-learning-mfcs/data/simulation_data/mfc_qlearning_20250724_022231.csv`
+- **Note**: These are example timestamped files from specific simulation runs. Actual file names will vary based on execution time.
 - **Simulation Duration**: 1000 hours (360,000 timesteps)
 - **System Configuration**: 5-cell MFC stack
 
