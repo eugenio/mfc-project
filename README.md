@@ -64,6 +64,8 @@ mypy .
 - Mojo SDK (for high-performance simulations)
 - Ansible (for infrastructure deployment)
 - GPU support (optional, for accelerated simulations)
+  - NVIDIA CUDA (via CuPy) or AMD ROCm (via PyTorch)
+  - Automatic CPU fallback if no GPU available
 
 ## Project Structure
 
@@ -102,10 +104,17 @@ mypy .
   - `odes.mojo`: Differential equation solvers
 
 - **Python Implementations**: Analysis and visualization tools
-  - `mfc_unified_qlearning_control.py`: Unified control system
-  - `mfc_recirculation_control.py`: Recirculation optimization
+  - `mfc_unified_qlearning_control.py`: Unified control system with universal GPU acceleration
+  - `mfc_qlearning_optimization.py`: Q-learning flow control with GPU support
+  - `mfc_dynamic_substrate_control.py`: Dynamic substrate control with GPU acceleration
+  - `mfc_optimization_gpu.py`: Multi-objective optimization with GPU support
   - `energy_sustainability_analysis.py`: Energy efficiency analysis
   - `literature_validation_comparison_plots.py`: Validation against published data
+
+- **GPU Acceleration Module**: Universal GPU support
+  - `gpu_acceleration.py`: Unified interface for NVIDIA CUDA and AMD ROCm
+  - Automatic CPU fallback for systems without GPU
+  - Comprehensive mathematical operations with hardware acceleration
 
 - **Stack Simulation**: Multi-cell MFC stack modeling
   - `mfc_stack_simulation.py`: Complete 5-cell stack simulation
@@ -129,7 +138,11 @@ mypy .
 ### Simulation Capabilities
 
 - **Multi-timescale Simulations**: 100-hour and 1000-hour continuous operation
-- **GPU Acceleration**: CUDA-optimized simulations for real-time control
+- **Universal GPU Acceleration**: 
+  - Support for both NVIDIA CUDA and AMD ROCm
+  - Automatic backend detection and selection
+  - CPU fallback for systems without GPU
+  - Unified API for all mathematical operations
 - **Comprehensive Modeling**: Electrochemical, biofilm, and substrate dynamics
 - **Noise Modeling**: Realistic sensor noise and environmental variations
 
@@ -169,6 +182,14 @@ mypy .
 4. **Generate analysis plots**:
    ```bash
    python generate_all_figures.py
+   ```
+
+5. **Run tests** (including GPU capability tests):
+   ```bash
+   python q-learning-mfcs/tests/run_tests.py
+   # Or run specific test suites:
+   python q-learning-mfcs/tests/run_tests.py -c gpu_capability
+   python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
    ```
 
 ## Contributing
