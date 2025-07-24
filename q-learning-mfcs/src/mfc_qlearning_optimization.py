@@ -18,14 +18,12 @@ from collections import defaultdict
 import pickle
 from path_config import get_figure_path, get_simulation_data_path, get_model_path
 
-# Try to import GPU acceleration libraries
-try:
-    import cupy as cp
-    GPU_AVAILABLE = True
-    print("GPU acceleration enabled (CuPy)")
-except ImportError:
-    GPU_AVAILABLE = False
-    print("GPU acceleration not available, using CPU")
+# Import universal GPU acceleration
+from gpu_acceleration import get_gpu_accelerator
+
+# Initialize GPU accelerator
+gpu_accelerator = get_gpu_accelerator()
+GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class QLearningFlowController:
     def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702):
@@ -263,7 +261,7 @@ class MFCQLearningSimulation:
         
     def initialize_arrays(self):
         """Initialize simulation state arrays"""
-        array_func = cp.zeros if self.use_gpu else np.zeros
+        array_func = gpu_accelerator.zeros if self.use_gpu else np.zeros
         
         # Cell state arrays [time_step, cell_index]
         self.cell_voltages = array_func((self.num_steps, self.num_cells))
@@ -290,7 +288,7 @@ class MFCQLearningSimulation:
     def biofilm_factor(self, thickness):
         """Calculate biofilm factor affecting mass transfer"""
         if self.use_gpu:
-            delta_opt = cp.abs(thickness - self.optimal_biofilm_thickness)
+            delta_opt = gpu_accelerator.abs(thickness - self.optimal_biofilm_thickness)
             return 1.0 + 0.3 * delta_opt + 0.1 * delta_opt * delta_opt
         else:
             delta_opt = np.abs(thickness - self.optimal_biofilm_thickness)
@@ -306,8 +304,8 @@ class MFCQLearningSimulation:
         
         # Optimal biofilm enhancement for electron transfer
         if self.use_gpu:
-            electron_enhancement = cp.where(
-                cp.abs(biofilm - self.optimal_biofilm_thickness) < 0.1,
+            electron_enhancement = gpu_accelerator.where(
+                gpu_accelerator.abs(biofilm - self.optimal_biofilm_thickness) < 0.1,
                 1.2,  # 20% boost at optimal thickness
                 1.0
             )
@@ -339,7 +337,7 @@ class MFCQLearningSimulation:
                 self.debug_counter += 1
         
         if self.use_gpu:
-            outlet_concentration = cp.maximum(0.001, inlet_concentration - acetate_consumed)  # Reduced minimum
+            outlet_concentration = gpu_accelerator.maximum(0.001, inlet_concentration - acetate_consumed)  # Reduced minimum
         else:
             outlet_concentration = np.maximum(0.001, inlet_concentration - acetate_consumed)  # Reduced minimum
         
@@ -349,9 +347,9 @@ class MFCQLearningSimulation:
         # Voltage calculation with improved model
         voltage_base = 0.8  # Base voltage
         if self.use_gpu:
-            concentration_factor = cp.log(1.0 + inlet_concentration / self.K_AC)
-            biofilm_voltage_loss = 0.05 * cp.abs(biofilm - self.optimal_biofilm_thickness)
-            cell_voltage = cp.maximum(0.1, voltage_base + 0.1 * concentration_factor - biofilm_voltage_loss)
+            concentration_factor = gpu_accelerator.log(1.0 + inlet_concentration / self.K_AC)
+            biofilm_voltage_loss = 0.05 * gpu_accelerator.abs(biofilm - self.optimal_biofilm_thickness)
+            cell_voltage = gpu_accelerator.maximum(0.1, voltage_base + 0.1 * concentration_factor - biofilm_voltage_loss)
         else:
             concentration_factor = np.log(1.0 + inlet_concentration / self.K_AC)
             biofilm_voltage_loss = 0.05 * np.abs(biofilm - self.optimal_biofilm_thickness)
@@ -381,10 +379,10 @@ class MFCQLearningSimulation:
             
             # Control growth near optimal thickness
             if self.use_gpu:
-                control_factor = cp.where(
+                control_factor = gpu_accelerator.where(
                     current_thickness > self.optimal_biofilm_thickness,
                     0.5,  # Reduce growth above optimal
-                    cp.where(current_thickness < self.optimal_biofilm_thickness * 0.8,
+                    gpu_accelerator.where(current_thickness < self.optimal_biofilm_thickness * 0.8,
                             1.5,  # Enhance growth below optimal
                             1.0)
                 )
@@ -398,7 +396,7 @@ class MFCQLearningSimulation:
             net_growth = (growth_rate * control_factor - decay_rate - shear_rate) * dt
             
             if self.use_gpu:
-                new_thickness = cp.clip(current_thickness + net_growth, 0.5, 3.0)
+                new_thickness = gpu_accelerator.clip(current_thickness + net_growth, 0.5, 3.0)
             else:
                 new_thickness = np.clip(current_thickness + net_growth, 0.5, 3.0)
             
@@ -444,7 +442,7 @@ class MFCQLearningSimulation:
         substrate_utilization = (20.0 - final_conc) / 20.0 * 100.0
         
         if self.use_gpu:
-            biofilm_deviation = float(cp.mean(cp.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness)))
+            biofilm_deviation = float(gpu_accelerator.mean(gpu_accelerator.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness)))
         else:
             biofilm_deviation = float(np.mean(np.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness)))
         
@@ -538,19 +536,19 @@ class MFCQLearningSimulation:
         
         # Convert GPU arrays to CPU if needed
         if self.use_gpu:
-            self.cell_voltages = cp.asnumpy(self.cell_voltages)
-            self.biofilm_thickness = cp.asnumpy(self.biofilm_thickness)
-            self.acetate_concentrations = cp.asnumpy(self.acetate_concentrations)
-            self.current_densities = cp.asnumpy(self.current_densities)
-            self.power_outputs = cp.asnumpy(self.power_outputs)
-            self.substrate_consumptions = cp.asnumpy(self.substrate_consumptions)
-            self.stack_voltages = cp.asnumpy(self.stack_voltages)
-            self.stack_powers = cp.asnumpy(self.stack_powers)
-            self.flow_rates = cp.asnumpy(self.flow_rates)
-            self.objective_values = cp.asnumpy(self.objective_values)
-            self.substrate_utilizations = cp.asnumpy(self.substrate_utilizations)
-            self.q_rewards = cp.asnumpy(self.q_rewards)
-            self.q_actions = cp.asnumpy(self.q_actions)
+            self.cell_voltages = gpu_accelerator.to_cpu(self.cell_voltages)
+            self.biofilm_thickness = gpu_accelerator.to_cpu(self.biofilm_thickness)
+            self.acetate_concentrations = gpu_accelerator.to_cpu(self.acetate_concentrations)
+            self.current_densities = gpu_accelerator.to_cpu(self.current_densities)
+            self.power_outputs = gpu_accelerator.to_cpu(self.power_outputs)
+            self.substrate_consumptions = gpu_accelerator.to_cpu(self.substrate_consumptions)
+            self.stack_voltages = gpu_accelerator.to_cpu(self.stack_voltages)
+            self.stack_powers = gpu_accelerator.to_cpu(self.stack_powers)
+            self.flow_rates = gpu_accelerator.to_cpu(self.flow_rates)
+            self.objective_values = gpu_accelerator.to_cpu(self.objective_values)
+            self.substrate_utilizations = gpu_accelerator.to_cpu(self.substrate_utilizations)
+            self.q_rewards = gpu_accelerator.to_cpu(self.q_rewards)
+            self.q_actions = gpu_accelerator.to_cpu(self.q_actions)
     
     def save_data(self):
         """Save simulation data and Q-learning model"""
