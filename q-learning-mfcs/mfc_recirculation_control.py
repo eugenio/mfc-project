@@ -122,6 +122,19 @@ class AnolytereservoirSystem:
     def get_inlet_concentration(self):
         """Get current substrate concentration for stack inlet"""
         return self.substrate_concentration
+    
+    def get_sensor_readings(self):
+        """Get comprehensive sensor readings from reservoir system"""
+        return {
+            'substrate_concentration': self.substrate_concentration,
+            'total_substrate_added': self.total_substrate_added,
+            'total_volume_circulated': self.total_volume_circulated,
+            'circulation_cycles': self.circulation_cycles,
+            'pump_operation_time': self.total_pump_time,
+            'current_mixing_efficiency': (self.mixing_efficiency_history[-1]['overall_efficiency'] 
+                                        if self.mixing_efficiency_history else 1.0),
+            'substrate_addition_active': not self.substrate_halt
+        }
 
 class SubstrateConcentrationController:
     """Advanced feedback controller for substrate concentration management"""
@@ -161,7 +174,7 @@ class SubstrateConcentrationController:
         self.control_mode = "normal"  # normal, emergency, conservation
         self.control_history = []
         
-    def calculate_substrate_addition(self, outlet_conc, reservoir_conc, cell_concentrations, dt_hours):
+    def calculate_substrate_addition(self, outlet_conc, reservoir_conc, cell_concentrations, reservoir_sensors, dt_hours):
         """Calculate substrate addition rate based on multi-sensor feedback"""
         
         # 1. Outlet concentration PID control
@@ -239,14 +252,34 @@ class SubstrateConcentrationController:
         else:
             addition_rate = np.clip(base_addition_rate, self.min_addition_rate, self.max_addition_rate)
         
-        # Log control decision
+        # 6. Integrate reservoir sensor feedback for advanced control
+        mixing_efficiency = reservoir_sensors['current_mixing_efficiency']
+        circulation_cycles = reservoir_sensors['circulation_cycles']
+        pump_time = reservoir_sensors['pump_operation_time']
+        
+        # Adjust addition rate based on mixing efficiency
+        if mixing_efficiency < 0.7:  # Poor mixing detected
+            addition_rate *= 0.8  # Reduce rate to prevent stratification
+        elif mixing_efficiency > 0.95:  # Excellent mixing
+            addition_rate *= 1.1  # Can increase rate safely
+        
+        # Consider circulation dynamics
+        if circulation_cycles > 0:
+            circulation_factor = min(1.2, 1.0 + 0.1 * np.log(circulation_cycles + 1))
+            addition_rate *= circulation_factor
+        
+        # Log comprehensive control decision with sensor data
         control_decision = {
             'mode': self.control_mode,
             'outlet_error': outlet_error,
             'reservoir_error': reservoir_error,
             'min_cell_conc': min_cell_conc,
             'addition_rate': addition_rate,
-            'halt': halt_addition
+            'halt': halt_addition,
+            'reservoir_sensors': reservoir_sensors.copy(),
+            'mixing_efficiency': mixing_efficiency,
+            'circulation_factor': circulation_cycles,
+            'pump_operation_time': pump_time
         }
         self.control_history.append(control_decision)
         
@@ -425,11 +458,15 @@ def simulate_mfc_with_recirculation():
         
         outlet_concentration = current_conc
         
-        # Calculate substrate addition using feedback controller
+        # Get reservoir sensor readings
+        reservoir_sensors = reservoir.get_sensor_readings()
+        
+        # Calculate substrate addition using feedback controller with sensor data
         addition_rate, halt_flag = controller.calculate_substrate_addition(
             outlet_concentration, 
             reservoir.substrate_concentration,
             cell_concentrations,
+            reservoir_sensors,
             dt_hours
         )
         
