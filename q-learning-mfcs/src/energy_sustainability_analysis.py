@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 def analyze_energy_sustainability():
     """Analyze complete energy balance of the MFC control system"""
@@ -368,10 +369,10 @@ def create_sustainability_visualization(results, optimization_scenarios):
     ax4.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('mfc_energy_sustainability_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_energy_sustainability_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Sustainability analysis saved to 'mfc_energy_sustainability_analysis.png'")
+    print(f"Sustainability analysis saved to '{get_figure_path('mfc_energy_sustainability_analysis.png')}'")
 
 def create_sustainability_summary():
     """Create a summary table of sustainability conclusions"""
@@ -457,10 +458,10 @@ def create_sustainability_summary():
                           transform=ax.transAxes)
     ax.add_patch(border)
     
-    plt.savefig('mfc_sustainability_summary.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_sustainability_summary.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Sustainability summary saved to 'mfc_sustainability_summary.png'")
+    print(f"Sustainability summary saved to '{get_figure_path('mfc_sustainability_summary.png')}'")
 
 def main():
     """Main function for energy sustainability analysis"""
@@ -480,8 +481,8 @@ def main():
     print("✓ Suitable for autonomous operation with adequate feed supply")
     
     print("\nGenerated files:")
-    print("1. mfc_energy_sustainability_analysis.png - Detailed analysis")
-    print("2. mfc_sustainability_summary.png - Executive summary")
+    print(f"1. {get_figure_path('mfc_energy_sustainability_analysis.png')} - Detailed analysis")
+    print(f"2. {get_figure_path('mfc_sustainability_summary.png')} - Executive summary")
 
 if __name__ == "__main__":
     main()
