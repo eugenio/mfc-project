@@ -414,8 +414,8 @@ def simulate_mfc_with_recirculation():
     n_cells = 5
     cells = [MFCCellWithMonitoring(i+1, initial_biofilm=1.0) for i in range(n_cells)]
     
-    # Simulation parameters
-    duration_hours = 100
+    # Simulation parameters  
+    duration_hours = 1000
     dt_hours = 10.0 / 3600.0  # 10 seconds
     n_steps = int(duration_hours / dt_hours)
     
@@ -542,10 +542,42 @@ if __name__ == "__main__":
     
     df = pd.DataFrame(df_data)
     csv_file = f"simulation_data/mfc_recirculation_control_{timestamp}.csv"
+    json_file = f"simulation_data/mfc_recirculation_control_{timestamp}.json"
+    
+    # Save CSV
     df.to_csv(csv_file, index=False)
+    
+    # Save JSON with comprehensive data
+    json_data = {
+        'simulation_metadata': {
+            'timestamp': timestamp,
+            'duration_hours': 1000,
+            'n_cells': 5,
+            'target_outlet_conc': controller.target_outlet_conc,
+            'reservoir_volume_L': reservoir.volume,
+            'dt_hours': 10.0 / 3600.0,
+            'n_steps': len(results['time_hours'])
+        },
+        'performance_summary': {
+            'final_reservoir_concentration': reservoir.substrate_concentration,
+            'final_outlet_concentration': results['outlet_concentration'][-1],
+            'total_substrate_added': reservoir.total_substrate_added,
+            'average_biofilm_thickness': np.mean([cell.biofilm_thickness for cell in cells]),
+            'final_biofilm_thicknesses': [cell.biofilm_thickness for cell in cells],
+            'total_circulation_cycles': reservoir.circulation_cycles,
+            'total_pump_time': reservoir.total_pump_time
+        },
+        'time_series_data': df_data,
+        'controller_history': controller.control_history[-100:] if len(controller.control_history) > 100 else controller.control_history,  # Last 100 entries
+        'reservoir_mixing_history': reservoir.mixing_efficiency_history[-50:] if len(reservoir.mixing_efficiency_history) > 50 else reservoir.mixing_efficiency_history  # Last 50 entries
+    }
+    
+    with open(json_file, 'w') as f:
+        json.dump(json_data, f, indent=2)
     
     print(f"\n=== SIMULATION COMPLETE ===")
     print(f"Results saved to: {csv_file}")
+    print(f"JSON data saved to: {json_file}")
     print(f"Final reservoir concentration: {reservoir.substrate_concentration:.2f} mmol/L")
     print(f"Final outlet concentration: {results['outlet_concentration'][-1]:.2f} mmol/L")
     print(f"Total substrate added: {reservoir.total_substrate_added:.2f} mmol")
