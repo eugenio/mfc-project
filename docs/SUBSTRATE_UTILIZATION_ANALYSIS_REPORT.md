@@ -39,11 +39,13 @@ This analysis compares the substrate utilization performance between unified and
 
 ### 4. System Stability and Dynamics
 
-- **Time to Steady State**: 
+- **Time to Steady State**:
+
   - Unified: Did not reach steady state
   - Non-Unified: 9.8 hours
-  
+
 - **Performance Trends**:
+
   - Unified: Slight upward trend (+4.0×10⁻⁸ %/timestep)
   - Non-Unified: Slight downward trend (-3.8×10⁻⁷ %/timestep)
 
@@ -54,18 +56,20 @@ This analysis compares the substrate utilization performance between unified and
 The most striking difference between the models is in substrate utilization efficiency:
 
 1. **Non-Unified Model**: Achieves significantly higher substrate utilization (~23%), indicating efficient conversion of substrate to energy
-2. **Unified Model**: Shows very low substrate utilization (~0.009%), suggesting most substrate passes through unconverted
+1. **Unified Model**: Shows very low substrate utilization (~0.009%), suggesting most substrate passes through unconverted
 
 ### Biofilm Development Dynamics
 
 The models show fundamentally different biofilm development patterns:
 
-1. **Non-Unified Model**: 
+1. **Non-Unified Model**:
+
    - Progressive biofilm growth from 1.17 to 1.31 thickness
    - Negative correlation between biofilm thickness and substrate utilization (-0.47)
    - Suggests biofilm may become a diffusion barrier over time
 
-2. **Unified Model**:
+1. **Unified Model**:
+
    - Constant biofilm thickness maintained at 0.5
    - Weak positive correlation between biofilm and utilization (+0.09)
    - Indicates controlled biofilm management
@@ -82,12 +86,14 @@ The non-unified model demonstrates superior electrical performance:
 
 Different control philosophies are evident:
 
-1. **Unified Model**: 
+1. **Unified Model**:
+
    - Maintains system stability (constant biofilm, low variation)
    - Potentially over-conservative approach
    - More stable substrate utilization (lower standard deviation)
 
-2. **Non-Unified Model**:
+1. **Non-Unified Model**:
+
    - Allows natural system evolution
    - Achieves higher performance but with more variation
    - Reaches steady state faster (9.8 hours)
@@ -106,30 +112,33 @@ Different control philosophies are evident:
 ## Conclusions and Recommendations
 
 ### Primary Conclusion
+
 **The Non-Unified model demonstrates superior overall performance**, achieving significantly higher substrate utilization efficiency and electrical power output.
 
 ### Key Insights
 
 1. **Substrate Utilization Efficiency**: The unified model appears to have a fundamental issue with substrate conversion, achieving less than 0.01% utilization compared to the non-unified model's 23% utilization.
 
-2. **Control Strategy Impact**: The unified model's conservative control approach (maintaining constant biofilm thickness) may be preventing the system from reaching optimal performance conditions.
+1. **Control Strategy Impact**: The unified model's conservative control approach (maintaining constant biofilm thickness) may be preventing the system from reaching optimal performance conditions.
 
-3. **Biofilm Management**: The non-unified model's natural biofilm development, while causing some performance decline over time, still results in much higher overall efficiency.
+1. **Biofilm Management**: The non-unified model's natural biofilm development, while causing some performance decline over time, still results in much higher overall efficiency.
 
-4. **System Trade-offs**: The unified model offers better stability and predictability, while the non-unified model achieves better performance at the cost of some variability.
+1. **System Trade-offs**: The unified model offers better stability and predictability, while the non-unified model achieves better performance at the cost of some variability.
 
 ### Recommendations
 
 1. **For Maximum Performance**: Use the non-unified model approach for applications where substrate utilization efficiency is the primary concern.
 
-2. **For System Stability**: Consider the unified model where predictable, stable operation is more important than peak performance.
+1. **For System Stability**: Consider the unified model where predictable, stable operation is more important than peak performance.
 
-3. **Model Improvement Opportunities**:
+1. **Model Improvement Opportunities**:
+
    - Investigate why the unified model has such low substrate utilization
    - Consider hybrid approaches that combine the stability of unified control with the performance of non-unified operation
    - Optimize biofilm management strategies in the unified model
 
-4. **Further Research**: 
+1. **Further Research**:
+
    - Analyze the Q-learning policies to understand the control differences
    - Investigate intermediate biofilm thickness targets for the unified model
    - Examine longer-term performance trends (beyond 1000 hours)
@@ -145,7 +154,7 @@ The analysis reveals that the unified model may be over-constraining the system,
 - Substrate utilization calculations were normalized to ensure fair comparison
 - All analyses used the same statistical methods for both models
 
----
+______________________________________________________________________
 
-*Analysis generated on July 24, 2025*  
+*Analysis generated on July 24, 2025*\
 *Data files: mfc_unified_qlearning_20250724_022416.csv, mfc_qlearning_20250724_022231.csv*
