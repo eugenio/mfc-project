@@ -12,6 +12,7 @@ import numpy as np
 import datetime
 import matplotlib
 matplotlib.use('Agg')
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 def create_cover_page(pdf):
     """Create professional cover page"""
@@ -898,7 +899,7 @@ def generate_comprehensive_pdf_report():
     print("This may take a few moments to compile all sections...")
     
     # Create PDF file
-    filename = f'MFC_Q-Learning_Comprehensive_Report_{datetime.datetime.now().strftime("%Y%m%d")}.pdf'
+    filename = get_report_path(f'MFC_Q-Learning_Comprehensive_Report_{datetime.datetime.now().strftime("%Y%m%d")}.pdf')
     
     with PdfPages(filename) as pdf:
         # Create each page
