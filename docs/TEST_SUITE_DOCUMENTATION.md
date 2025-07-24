@@ -8,7 +8,7 @@ The MFC Q-learning project includes a comprehensive test suite that validates fu
 
 The test suite is located in `q-learning-mfcs/tests/` and consists of:
 
-```
+```text
 tests/
 ├── run_tests.py                   # Main test runner
 ├── test_path_config.py           # Path configuration tests
@@ -58,6 +58,7 @@ Tests the centralized path configuration system:
 - **Subdirectory Handling**: Tests path functions with subdirectories
 
 Example test:
+
 ```python
 def test_get_figure_path(self):
     """Test figure path generation."""
@@ -98,24 +99,28 @@ Tests actual code execution:
 Comprehensive GPU hardware and software detection:
 
 #### NVIDIA Tests
+
 - **Hardware Detection**: Uses `nvidia-smi` to detect NVIDIA GPUs
 - **CUDA Availability**: Checks CUDA toolkit installation
 - **CuPy Functionality**: Tests CuPy import and GPU operations
 - **PyTorch CUDA**: Validates PyTorch CUDA support
 
 #### AMD Tests
+
 - **Hardware Detection**: Uses `rocm-smi` to detect AMD GPUs
 - **ROCm Availability**: Checks ROCm installation
 - **PyTorch ROCm**: Tests PyTorch with ROCm backend
 - **HIP Detection**: Validates HIP compiler availability
 
 #### Framework Tests
+
 - **TensorFlow GPU**: Tests TensorFlow GPU support
 - **JAX GPU**: Validates JAX GPU backend
 - **Numba CUDA**: Tests Numba CUDA JIT compilation
 
 Example output:
-```
+
+```text
 test_amd_gpu_hardware ... ok
 test_pytorch_rocm_availability ... ok
   ✅ PyTorch ROCm support detected
@@ -128,11 +133,13 @@ test_pytorch_rocm_availability ... ok
 Tests the universal GPU acceleration module functionality:
 
 #### Core Tests
+
 - **Initialization**: GPU accelerator initialization
 - **Backend Detection**: Automatic backend selection
 - **Device Info**: Device information retrieval
 
 #### Operation Tests
+
 - **Array Creation**: Array creation on appropriate device
 - **Mathematical Operations**: abs, log, exp, sqrt, power
 - **Conditional Operations**: where, maximum, minimum, clip
@@ -140,11 +147,13 @@ Tests the universal GPU acceleration module functionality:
 - **Random Generation**: Normal distribution generation
 
 #### Fallback Tests
+
 - **CPU Fallback**: Tests CPU fallback mode
 - **Error Handling**: Validates graceful degradation
 - **Memory Management**: Tests memory transfer operations
 
 Example test:
+
 ```python
 def test_mathematical_operations(self):
     """Test mathematical operations work correctly."""
@@ -165,7 +174,7 @@ def test_mathematical_operations(self):
 
 A typical test run produces:
 
-```
+```text
 🧪 MFC Q-Learning Project - Comprehensive Test Suite
 ============================================================
 Running tests from: /home/user/mfc-project/q-learning-mfcs/tests
@@ -189,7 +198,7 @@ Skipped: 10
 
 The test suite validates that simulation outputs follow the standardized directory structure:
 
-```
+```text
 q-learning-mfcs/
 ├── data/
 │   ├── figures/          # Plot outputs (.png, .pdf)
@@ -224,11 +233,12 @@ test:
 To add new tests:
 
 1. Create test class inheriting from `unittest.TestCase`
-2. Add to appropriate test module or create new module
-3. Import in `run_tests.py`
-4. Add to `create_test_suite()` function
+1. Add to appropriate test module or create new module
+1. Import in `run_tests.py`
+1. Add to `create_test_suite()` function
 
 Example:
+
 ```python
 class TestNewFeature(unittest.TestCase):
     def setUp(self):
@@ -244,23 +254,24 @@ class TestNewFeature(unittest.TestCase):
 ## Best Practices
 
 1. **Use Descriptive Names**: Test method names should clearly describe what is being tested
-2. **Test Isolation**: Each test should be independent and not rely on other tests
-3. **Clean Up**: Use `tearDown()` to clean up test artifacts
-4. **Mock External Dependencies**: Use mocking for external services or hardware
-5. **Test Edge Cases**: Include tests for boundary conditions and error cases
+1. **Test Isolation**: Each test should be independent and not rely on other tests
+1. **Clean Up**: Use `tearDown()` to clean up test artifacts
+1. **Mock External Dependencies**: Use mocking for external services or hardware
+1. **Test Edge Cases**: Include tests for boundary conditions and error cases
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Import Errors**: Ensure the source directory is in Python path
-2. **GPU Tests Failing**: May indicate missing GPU drivers or libraries
-3. **File Permission Errors**: Check write permissions for output directories
-4. **Skipped Tests**: Some tests are skipped based on available hardware/software
+1. **GPU Tests Failing**: May indicate missing GPU drivers or libraries
+1. **File Permission Errors**: Check write permissions for output directories
+1. **Skipped Tests**: Some tests are skipped based on available hardware/software
 
 ### Debug Mode
 
 Run tests with increased verbosity for debugging:
+
 ```bash
 python q-learning-mfcs/tests/run_tests.py -v
 ```
@@ -268,7 +279,7 @@ python q-learning-mfcs/tests/run_tests.py -v
 ## Future Enhancements
 
 1. **Performance Benchmarks**: Add timing tests for critical operations
-2. **Integration Tests**: Test complete workflows end-to-end
-3. **Parametrized Tests**: Use pytest parametrization for test variations
-4. **Coverage Reports**: Add code coverage measurement
-5. **Parallel Execution**: Run tests in parallel for faster execution
+1. **Integration Tests**: Test complete workflows end-to-end
+1. **Parametrized Tests**: Use pytest parametrization for test variations
+1. **Coverage Reports**: Add code coverage measurement
+1. **Parallel Execution**: Run tests in parallel for faster execution
