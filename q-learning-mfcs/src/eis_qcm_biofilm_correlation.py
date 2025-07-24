@@ -18,6 +18,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 from typing import Dict, List, Tuple, Optional
 import json
 import pandas as pd
@@ -495,10 +496,10 @@ Literature Validation:
             bbox=dict(boxstyle='round,pad=0.5', facecolor='lightblue', alpha=0.8))
     
     plt.tight_layout()
-    plt.savefig('eis_qcm_biofilm_correlation_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('eis_qcm_biofilm_correlation_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("EIS-QCM correlation analysis plot saved to 'eis_qcm_biofilm_correlation_analysis.png'")
+    print(f"EIS-QCM correlation analysis plot saved to '{get_figure_path('eis_qcm_biofilm_correlation_analysis.png')}'")
 
 def main():
     """Run complete EIS-QCM correlation analysis"""
@@ -511,9 +512,9 @@ def main():
     
     # Save data
     df = pd.DataFrame(results)
-    df.to_csv('eis_qcm_correlation_data.csv', index=False)
+    df.to_csv(get_simulation_data_path('eis_qcm_correlation_data.csv'), index=False)
     
-    with open('eis_qcm_correlation_data.json', 'w') as f:
+    with open(get_simulation_data_path('eis_qcm_correlation_data.json'), 'w') as f:
         json.dump(results, f, indent=2, default=str)
     
     # Calculate final statistics
@@ -535,9 +536,9 @@ def main():
     print(f"EIS-QCM Correlation R²:    {correlation_eis_qcm**2:.3f}")
     
     print(f"\nData saved to:")
-    print(f"- eis_qcm_correlation_data.csv")
-    print(f"- eis_qcm_correlation_data.json")
-    print(f"- eis_qcm_biofilm_correlation_analysis.png")
+    print(f"- {get_simulation_data_path('eis_qcm_correlation_data.csv')}")
+    print(f"- {get_simulation_data_path('eis_qcm_correlation_data.json')}")
+    print(f"- {get_figure_path('eis_qcm_biofilm_correlation_analysis.png')}")
     print("="*70)
 
 if __name__ == "__main__":
