@@ -36,6 +36,17 @@ class AnolytereservoirSystem:
         # Mixing dynamics
         self.mixing_time_constant = 0.1  # hours for complete mixing
         
+        # Recirculation system parameters
+        self.pump_efficiency = 0.95  # Pump efficiency
+        self.pipe_dead_volume = 0.05  # L dead volume in pipes
+        self.heat_loss_coefficient = 0.02  # Temperature effects
+        
+        # Advanced tracking
+        self.circulation_cycles = 0
+        self.total_pump_time = 0.0  # hours
+        self.substrate_balance_history = []
+        self.mixing_efficiency_history = []
+        
     def add_substrate(self, amount_mmol, dt_hours):
         """Add substrate to reservoir"""
         if not self.substrate_halt:
@@ -47,19 +58,66 @@ class AnolytereservoirSystem:
             self.substrate_concentration = new_total_substrate / self.volume
     
     def circulate_anolyte(self, flow_rate_ml_h, stack_outlet_conc, dt_hours):
-        """Simulate anolyte recirculation from stack"""
+        """Enhanced anolyte recirculation simulation with detailed system modeling"""
         flow_rate_l_h = flow_rate_ml_h / 1000.0
-        volume_returned = flow_rate_l_h * dt_hours
+        
+        # Account for pump efficiency and dead volume effects
+        effective_flow_rate = flow_rate_l_h * self.pump_efficiency
+        volume_returned = effective_flow_rate * dt_hours
+        
+        # Track pump operation time
+        if flow_rate_ml_h > 0:
+            self.total_pump_time += dt_hours
+            self.circulation_cycles += 1
         
         # Track circulation
         self.total_volume_circulated += volume_returned
         
-        # Mix returned anolyte with reservoir
+        # Enhanced mixing model with dead volume effects
         if volume_returned > 0:
-            # Exponential mixing model
-            mixing_factor = 1.0 - np.exp(-dt_hours / self.mixing_time_constant)
+            # Calculate effective mixing considering dead volume
+            effective_volume_fraction = volume_returned / (self.volume + self.pipe_dead_volume)
+            
+            # Multi-stage mixing model (more realistic)
+            # Stage 1: Initial contact mixing
+            initial_mixing_factor = min(1.0, effective_volume_fraction * 2.0)
+            
+            # Stage 2: Exponential approach to equilibrium
+            time_mixing_factor = 1.0 - np.exp(-dt_hours / self.mixing_time_constant)
+            
+            # Stage 3: Temperature and density effects
+            density_factor = 1.0 - self.heat_loss_coefficient * dt_hours
+            
+            # Combined mixing efficiency
+            overall_mixing_efficiency = initial_mixing_factor * time_mixing_factor * density_factor
+            
+            # Calculate concentration change
             concentration_difference = stack_outlet_conc - self.substrate_concentration
-            self.substrate_concentration += concentration_difference * mixing_factor * (volume_returned / self.volume)
+            concentration_change = concentration_difference * overall_mixing_efficiency * effective_volume_fraction
+            
+            # Apply concentration change with bounds checking
+            old_concentration = self.substrate_concentration
+            self.substrate_concentration = max(0.0, self.substrate_concentration + concentration_change)
+            
+            # Track substrate balance and mixing efficiency
+            substrate_balance = {
+                'time': self.total_pump_time,
+                'inlet_conc': stack_outlet_conc,
+                'reservoir_conc_before': old_concentration,
+                'reservoir_conc_after': self.substrate_concentration,
+                'volume_returned': volume_returned,
+                'concentration_change': concentration_change
+            }
+            self.substrate_balance_history.append(substrate_balance)
+            
+            mixing_efficiency = {
+                'time': self.total_pump_time,
+                'initial_mixing': initial_mixing_factor,
+                'time_mixing': time_mixing_factor,
+                'density_factor': density_factor,
+                'overall_efficiency': overall_mixing_efficiency
+            }
+            self.mixing_efficiency_history.append(mixing_efficiency)
     
     def get_inlet_concentration(self):
         """Get current substrate concentration for stack inlet"""
