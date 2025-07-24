@@ -16,6 +16,7 @@ from scipy.optimize import minimize_scalar
 import time
 from collections import defaultdict
 import pickle
+from path_config import get_figure_path, get_simulation_data_path, get_model_path
 
 # Try to import GPU acceleration libraries
 try:
@@ -581,12 +582,12 @@ class MFCQLearningSimulation:
         
         # Save CSV
         df = pd.DataFrame(csv_data)
-        csv_filename = f'simulation_data/mfc_qlearning_{timestamp}.csv'
+        csv_filename = get_simulation_data_path(f'mfc_qlearning_{timestamp}.csv')
         df.to_csv(csv_filename, index=False)
         print(f"CSV data saved to {csv_filename}")
         
         # Save Q-learning model
-        q_model_filename = f'q_learning_models/q_table_{timestamp}.pkl'
+        q_model_filename = get_model_path(f'q_table_{timestamp}.pkl')
         self.q_controller.save_q_table(q_model_filename)
         print(f"Q-table saved to {q_model_filename}")
         
@@ -621,7 +622,7 @@ class MFCQLearningSimulation:
         }
         
         # Save JSON
-        json_filename = f'simulation_data/mfc_qlearning_{timestamp}.json'
+        json_filename = get_simulation_data_path(f'mfc_qlearning_{timestamp}.json')
         with open(json_filename, 'w') as f:
             json.dump(json_data, f, indent=2)
         print(f"JSON data saved to {json_filename}")
@@ -804,7 +805,7 @@ class MFCQLearningSimulation:
         plt.tight_layout()
         
         # Save flow rate figure
-        flow_filename = f'figures/mfc_flow_rate_analysis_{timestamp}.png'
+        flow_filename = get_figure_path(f'mfc_flow_rate_analysis_{timestamp}.png')
         plt.savefig(flow_filename, dpi=300, bbox_inches='tight')
         print(f"Flow rate analysis saved to {flow_filename}")
         
@@ -907,7 +908,7 @@ class MFCQLearningSimulation:
         plt.tight_layout()
         
         # Save flow vs utilization analysis figure
-        flow_util_filename = f'figures/mfc_flow_vs_utilization_{timestamp}.png'
+        flow_util_filename = get_figure_path(f'mfc_flow_vs_utilization_{timestamp}.png')
         plt.savefig(flow_util_filename, dpi=300, bbox_inches='tight')
         print(f"Flow rate vs utilization analysis saved to {flow_util_filename}")
         
@@ -922,7 +923,7 @@ class MFCQLearningSimulation:
         plt.tight_layout()
         
         # Save dashboard
-        dashboard_filename = f'figures/mfc_qlearning_dashboard_{timestamp}.png'
+        dashboard_filename = get_figure_path(f'mfc_qlearning_dashboard_{timestamp}.png')
         plt.savefig(dashboard_filename, dpi=300, bbox_inches='tight')
         print(f"Q-Learning dashboard saved to {dashboard_filename}")
         
@@ -952,8 +953,9 @@ def main():
     
     print("\n=== Q-LEARNING SIMULATION COMPLETE ===")
     print(f"Results saved with timestamp: {timestamp}")
-    print("Check 'simulation_data/' for CSV, JSON files and Q-learning model")
-    print("Check 'figures/' for Q-learning visualization dashboard")
+    print(f"Data saved to: {get_simulation_data_path('')}")
+    print(f"Figures saved to: {get_figure_path('')}")
+    print(f"Models saved to: {get_model_path('')}")
     
     # Final summary
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)

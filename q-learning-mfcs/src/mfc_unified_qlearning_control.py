@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import time
 from collections import defaultdict
 import pickle
+from path_config import get_figure_path, get_simulation_data_path, get_model_path
 
 # Try to import GPU acceleration libraries
 try:
@@ -748,12 +749,12 @@ class MFCUnifiedQLearningSimulation:
         
         # Save CSV
         df = pd.DataFrame(csv_data)
-        csv_filename = f'simulation_data/mfc_unified_qlearning_{timestamp}.csv'
+        csv_filename = get_simulation_data_path(f'mfc_unified_qlearning_{timestamp}.csv')
         df.to_csv(csv_filename, index=False)
         print(f"CSV data saved to {csv_filename}")
         
         # Save unified Q-learning model
-        q_model_filename = f'q_learning_models/q_table_unified_{timestamp}.pkl'
+        q_model_filename = get_model_path(f'q_table_unified_{timestamp}.pkl')
         with open(q_model_filename, 'wb') as f:
             pickle.dump(dict(self.unified_controller.q_table), f)
         print(f"Unified Q-table saved to {q_model_filename}")
@@ -812,7 +813,7 @@ class MFCUnifiedQLearningSimulation:
         }
         
         # Save JSON
-        json_filename = f'simulation_data/mfc_unified_qlearning_{timestamp}.json'
+        json_filename = get_simulation_data_path(f'mfc_unified_qlearning_{timestamp}.json')
         with open(json_filename, 'w') as f:
             json.dump(json_data, f, indent=2)
         print(f"JSON data saved to {json_filename}")
@@ -1078,7 +1079,7 @@ class MFCUnifiedQLearningSimulation:
         plt.tight_layout()
         
         # Save main dashboard
-        dashboard_filename = f'figures/mfc_unified_qlearning_dashboard_{timestamp}.png'
+        dashboard_filename = get_figure_path(f'mfc_unified_qlearning_dashboard_{timestamp}.png')
         plt.savefig(dashboard_filename, dpi=300, bbox_inches='tight')
         print(f"Unified Q-learning dashboard saved to {dashboard_filename}")
         
@@ -1114,8 +1115,9 @@ def main():
     
     print("\n=== UNIFIED Q-LEARNING CONTROL SIMULATION COMPLETE ===")
     print(f"Results saved with timestamp: {timestamp}")
-    print("Check 'simulation_data/' for comprehensive CSV, JSON data and Q-learning model")
-    print("Check 'figures/' for unified control visualization dashboard")
+    print(f"Data saved to: {get_simulation_data_path('')}")
+    print(f"Figures saved to: {get_figure_path('')}")
+    print(f"Models saved to: {get_model_path('')}")
     
     # Comprehensive final summary
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)

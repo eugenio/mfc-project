@@ -1,12 +1,19 @@
 # MFC Project
 
-A comprehensive microbial fuel cell (MFC) research and development project featuring Q-learning control systems and advanced simulation capabilities.
+A comprehensive microbial fuel cell (MFC) research and development project featuring Q-learning control systems, advanced simulation capabilities, and infrastructure automation.
+
+## Overview
+
+This project implements a complete ecosystem for MFC research, including:
+
+- **Q-Learning Control System**: Advanced reinforcement learning for real-time MFC optimization
+- **High-Performance Computing**: Mojo-accelerated simulations with GPU/NPU/ASIC support
+- **Infrastructure Automation**: Ansible-based deployment and configuration management
+- **Comprehensive Analysis**: Multiple simulation models, performance analysis, and validation tools
 
 ## Project Status
 
-This project contains a complete Q-learning control system for microbial fuel cell stacks, implemented with Mojo acceleration for high-performance real-time control.
-
-### Q-Learning MFC Subproject
+### Q-Learning MFC Control System
 
 **Status**: ✅ Complete and functional
 
@@ -45,19 +52,133 @@ pixi run -e dev detect-secrets scan --exclude-files '.pixi/.*'
 
 # Format markdown files
 pixi run -e dev mdformat .
+
+# Run linting and type checking
+ruff check .
+mypy .
 ```
+
+### Prerequisites
+
+- Python 3.8+
+- Mojo SDK (for high-performance simulations)
+- Ansible (for infrastructure deployment)
+- GPU support (optional, for accelerated simulations)
 
 ## Project Structure
 
 ```text
 ├── q-learning-mfcs/          # Q-learning MFC control system
-│   ├── README.md            # Detailed project documentation
-│   ├── figures/             # Analysis graphs and diagrams
-│   ├── reports/             # LaTeX research reports
-│   └── *.py, *.mojo         # Implementation files
-├── pixi.toml                # Dependency configuration
-└── README.md                # This file
+│   ├── src/                 # Source code for simulations and control
+│   │   ├── *.py            # Python implementations
+│   │   └── *.mojo          # High-performance Mojo implementations
+│   ├── data/               # Simulation outputs and datasets
+│   │   └── figures/        # Generated analysis graphs
+│   ├── reports/            # LaTeX research reports and analysis
+│   ├── simulation_data/    # Raw simulation results (CSV/JSON)
+│   ├── q_learning_models/  # Trained Q-learning models (.pkl)
+│   └── bibliography/       # Research papers and references
+├── conf-repo/               # Infrastructure configuration
+│   ├── ansible-minio-setup.yml  # MinIO deployment playbook
+│   ├── inventory.yml       # Ansible inventory
+│   └── templates/          # Configuration templates
+├── docs/                    # Project documentation
+│   ├── MFC_SIMULATION_DOCUMENTATION.md
+│   ├── LITERATURE_VALIDATION_ANALYSIS.md
+│   └── ...                 # Additional documentation files
+├── logs/                    # Application and session logs
+├── pixi.toml               # Dependency configuration
+├── pixi.lock               # Locked dependencies
+└── README.md               # This file
 ```
+
+## Key Components
+
+### Q-Learning Control System (`q-learning-mfcs/src/`)
+
+- **Mojo Implementations**: High-performance simulations leveraging GPU acceleration
+  - `mfc_100h_gpu.mojo`, `mfc_100h_gpu_optimized.mojo`: GPU-accelerated 100-hour simulations
+  - `mfc_qlearning.mojo`: Core Q-learning algorithm implementation
+  - `odes.mojo`: Differential equation solvers
+
+- **Python Implementations**: Analysis and visualization tools
+  - `mfc_unified_qlearning_control.py`: Unified control system
+  - `mfc_recirculation_control.py`: Recirculation optimization
+  - `energy_sustainability_analysis.py`: Energy efficiency analysis
+  - `literature_validation_comparison_plots.py`: Validation against published data
+
+- **Stack Simulation**: Multi-cell MFC stack modeling
+  - `mfc_stack_simulation.py`: Complete 5-cell stack simulation
+  - `stack_physical_specs.py`: Physical specifications and parameters
+
+### Infrastructure Automation (`conf-repo/`)
+
+- **Ansible Playbooks**: Automated deployment and configuration
+- **MinIO Setup**: Object storage for simulation data
+- **Monitoring Scripts**: Health checks and backup automation
+
+### Documentation (`docs/`)
+
+- Comprehensive simulation documentation
+- Literature validation and analysis reports
+- Energy balance and sustainability studies
+- EIS-QCM biofilm correlation models
+
+## Features
+
+### Simulation Capabilities
+
+- **Multi-timescale Simulations**: 100-hour and 1000-hour continuous operation
+- **GPU Acceleration**: CUDA-optimized simulations for real-time control
+- **Comprehensive Modeling**: Electrochemical, biofilm, and substrate dynamics
+- **Noise Modeling**: Realistic sensor noise and environmental variations
+
+### Control Strategies
+
+- **Q-Learning Optimization**: Reinforcement learning for optimal control
+- **Dynamic Substrate Control**: Adaptive feeding strategies
+- **Flow Rate Optimization**: Hydraulic retention time optimization
+- **Cell Reversal Prevention**: Active monitoring and intervention
+
+### Analysis Tools
+
+- **Performance Visualization**: Comprehensive plotting and analysis
+- **Energy Sustainability**: Lifecycle analysis and efficiency metrics
+- **Literature Validation**: Comparison with published experimental data
+- **Economic Analysis**: Cost-benefit and ROI calculations
+
+## Getting Started
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd mfc-project
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   pixi install
+   ```
+
+3. **Run a simulation**:
+   ```bash
+   cd q-learning-mfcs/src
+   python mfc_unified_qlearning_control.py
+   ```
+
+4. **Generate analysis plots**:
+   ```bash
+   python generate_all_figures.py
+   ```
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+
+- Code passes `ruff` and `mypy` checks
+- Mojo files are formatted with `mojo format`
+- Tests are included for new functionality
+- Documentation is updated accordingly
 
 ## License
 

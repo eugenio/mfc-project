@@ -1,3 +1,4 @@
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 """
 Enhanced PDF Report Generator for Q-Learning MFC Stack Project
 with improved layout, typography, and comprehensive visualizations.
