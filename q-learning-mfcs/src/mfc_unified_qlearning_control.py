@@ -430,7 +430,7 @@ class MFCUnifiedQLearningSimulation:
     def biofilm_factor(self, thickness):
         """Calculate biofilm factor affecting mass transfer"""
         if self.use_gpu:
-            delta_opt = cp.abs(thickness - self.optimal_biofilm_thickness)
+            delta_opt = self.gpu_acc.abs(thickness - self.optimal_biofilm_thickness)
             return 1.0 + 0.3 * delta_opt + 0.1 * delta_opt * delta_opt
         else:
             delta_opt = np.abs(thickness - self.optimal_biofilm_thickness)
@@ -446,8 +446,8 @@ class MFCUnifiedQLearningSimulation:
         
         # Optimal biofilm enhancement
         if self.use_gpu:
-            electron_enhancement = cp.where(
-                cp.abs(biofilm - self.optimal_biofilm_thickness) < 0.1,
+            electron_enhancement = self.gpu_acc.where(
+                self.gpu_acc.abs(biofilm - self.optimal_biofilm_thickness) < 0.1,
                 1.2, 1.0
             )
         else:
@@ -477,7 +477,7 @@ class MFCUnifiedQLearningSimulation:
                 self.debug_counter += 1
         
         if self.use_gpu:
-            outlet_concentration = cp.maximum(0.001, inlet_concentration - acetate_consumed)
+            outlet_concentration = self.gpu_acc.maximum(0.001, inlet_concentration - acetate_consumed)
         else:
             outlet_concentration = np.maximum(0.001, inlet_concentration - acetate_consumed)
         
@@ -486,9 +486,9 @@ class MFCUnifiedQLearningSimulation:
         
         voltage_base = 0.8
         if self.use_gpu:
-            concentration_factor = cp.log(1.0 + inlet_concentration / self.K_AC)
-            biofilm_voltage_loss = 0.05 * cp.abs(biofilm - self.optimal_biofilm_thickness)
-            cell_voltage = cp.maximum(0.1, voltage_base + 0.1 * concentration_factor - biofilm_voltage_loss)
+            concentration_factor = self.gpu_acc.log(1.0 + inlet_concentration / self.K_AC)
+            biofilm_voltage_loss = 0.05 * self.gpu_acc.abs(biofilm - self.optimal_biofilm_thickness)
+            cell_voltage = self.gpu_acc.maximum(0.1, voltage_base + 0.1 * concentration_factor - biofilm_voltage_loss)
         else:
             concentration_factor = np.log(1.0 + inlet_concentration / self.K_AC)
             biofilm_voltage_loss = 0.05 * np.abs(biofilm - self.optimal_biofilm_thickness)
@@ -518,9 +518,9 @@ class MFCUnifiedQLearningSimulation:
             
             # Control growth near optimal thickness
             if self.use_gpu:
-                control_factor = cp.where(
+                control_factor = self.gpu_acc.where(
                     current_thickness > self.optimal_biofilm_thickness, 0.5,
-                    cp.where(current_thickness < self.optimal_biofilm_thickness * 0.8, 1.5, 1.0)
+                    self.gpu_acc.where(current_thickness < self.optimal_biofilm_thickness * 0.8, 1.5, 1.0)
                 )
             else:
                 control_factor = 1.0
@@ -532,7 +532,7 @@ class MFCUnifiedQLearningSimulation:
             net_growth = (growth_rate * control_factor - decay_rate - shear_rate) * dt
             
             if self.use_gpu:
-                new_thickness = cp.clip(current_thickness + net_growth, 0.5, 3.0)
+                new_thickness = self.gpu_acc.clip(current_thickness + net_growth, 0.5, 3.0)
             else:
                 new_thickness = np.clip(current_thickness + net_growth, 0.5, 3.0)
             
@@ -585,7 +585,7 @@ class MFCUnifiedQLearningSimulation:
         self.concentration_errors[step] = concentration_error
         
         if self.use_gpu:
-            biofilm_deviation = float(cp.mean(cp.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness)))
+            biofilm_deviation = float(self.gpu_acc.to_cpu(self.gpu_acc.mean(self.gpu_acc.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness))))
         else:
             biofilm_deviation = float(np.mean(np.abs(self.biofilm_thickness[step, :] - self.optimal_biofilm_thickness)))
         
@@ -699,22 +699,22 @@ class MFCUnifiedQLearningSimulation:
         
         # Convert GPU arrays to CPU if needed
         if self.use_gpu:
-            self.cell_voltages = cp.asnumpy(self.cell_voltages)
-            self.biofilm_thickness = cp.asnumpy(self.biofilm_thickness)
-            self.acetate_concentrations = cp.asnumpy(self.acetate_concentrations)
-            self.current_densities = cp.asnumpy(self.current_densities)
-            self.power_outputs = cp.asnumpy(self.power_outputs)
-            self.substrate_consumptions = cp.asnumpy(self.substrate_consumptions)
-            self.stack_voltages = cp.asnumpy(self.stack_voltages)
-            self.stack_powers = cp.asnumpy(self.stack_powers)
-            self.flow_rates = cp.asnumpy(self.flow_rates)
-            self.objective_values = cp.asnumpy(self.objective_values)
-            self.substrate_utilizations = cp.asnumpy(self.substrate_utilizations)
-            self.q_rewards = cp.asnumpy(self.q_rewards)
-            self.q_actions = cp.asnumpy(self.q_actions)
-            self.inlet_concentrations = cp.asnumpy(self.inlet_concentrations)
-            self.outlet_concentrations = cp.asnumpy(self.outlet_concentrations)
-            self.concentration_errors = cp.asnumpy(self.concentration_errors)
+            self.cell_voltages = self.gpu_acc.to_cpu(self.cell_voltages)
+            self.biofilm_thickness = self.gpu_acc.to_cpu(self.biofilm_thickness)
+            self.acetate_concentrations = self.gpu_acc.to_cpu(self.acetate_concentrations)
+            self.current_densities = self.gpu_acc.to_cpu(self.current_densities)
+            self.power_outputs = self.gpu_acc.to_cpu(self.power_outputs)
+            self.substrate_consumptions = self.gpu_acc.to_cpu(self.substrate_consumptions)
+            self.stack_voltages = self.gpu_acc.to_cpu(self.stack_voltages)
+            self.stack_powers = self.gpu_acc.to_cpu(self.stack_powers)
+            self.flow_rates = self.gpu_acc.to_cpu(self.flow_rates)
+            self.objective_values = self.gpu_acc.to_cpu(self.objective_values)
+            self.substrate_utilizations = self.gpu_acc.to_cpu(self.substrate_utilizations)
+            self.q_rewards = self.gpu_acc.to_cpu(self.q_rewards)
+            self.q_actions = self.gpu_acc.to_cpu(self.q_actions)
+            self.inlet_concentrations = self.gpu_acc.to_cpu(self.inlet_concentrations)
+            self.outlet_concentrations = self.gpu_acc.to_cpu(self.outlet_concentrations)
+            self.concentration_errors = self.gpu_acc.to_cpu(self.concentration_errors)
     
     def save_data(self):
         """Save simulation data and unified Q-learning model"""
