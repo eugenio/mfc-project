@@ -16,6 +16,7 @@ from mfc_stack_simulation import MFCStack, MFCStackQLearningController
 import time
 import json
 from datetime import datetime, timedelta
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 class LongTermMFCStack(MFCStack):
     """Extended MFC stack with long-term effects"""
@@ -441,10 +442,10 @@ def save_simulation_results(stack, controller, metrics):
         })
     
     # Save to JSON
-    with open('mfc_100h_results.json', 'w') as f:
+    with open(get_simulation_data_path('mfc_100h_results.json'), 'w') as f:
         json.dump(results, f, indent=2)
     
-    print("Results saved to 'mfc_100h_results.json'")
+    print(f"Results saved to '{get_simulation_data_path('mfc_100h_results.json')}'")
     
     # Generate plots
     generate_100h_plots(stack, controller, metrics)
@@ -519,7 +520,7 @@ def generate_100h_plots(stack, controller, metrics):
     ax6.grid(True)
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_analysis.png'), dpi=300, bbox_inches='tight')
     print("Plots saved to 'mfc_100h_analysis.png'")
 
 if __name__ == "__main__":

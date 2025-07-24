@@ -13,6 +13,7 @@ This simulation includes:
 import numpy as np
 import matplotlib.pyplot as plt
 from odes import MFCModel
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 import time
 from collections import deque
 import random
@@ -568,7 +569,7 @@ def save_simulation_data(stack, controller):
         })
     
     # Save to JSON file
-    filename = 'mfc_stack_simulation_data.json'
+    filename = get_simulation_data_path('mfc_stack_simulation_data.json')
     with open(filename, 'w') as f:
         json.dump(simulation_data, f, indent=2)
     
@@ -656,7 +657,7 @@ def plot_simulation_results(stack, controller):
     ax6.legend()
     
     plt.tight_layout()
-    plt.savefig('mfc_stack_simulation.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_stack_simulation.png'), dpi=300, bbox_inches='tight')
     print("Plots saved to 'mfc_stack_simulation.png'")
 
 if __name__ == "__main__":
