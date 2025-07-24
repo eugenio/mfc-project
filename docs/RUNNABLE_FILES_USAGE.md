@@ -2,14 +2,15 @@
 
 This document provides comprehensive usage instructions for all runnable files in the MFC simulation repository.
 
+> **Note**: All Python simulation files now feature universal GPU acceleration with automatic backend detection (NVIDIA CUDA, AMD ROCm) and CPU fallback. See [GPU_ACCELERATION_GUIDE.md](GPU_ACCELERATION_GUIDE.md) for details.
+
 ## Table of Contents
 
 1. [Overview](#overview)
 2. [Mojo Simulation Files](#mojo-simulation-files)
 3. [Python Analysis and Utilities](#python-analysis-and-utilities)
 4. [Development and Testing Files](#development-and-testing-files)
-5. [Claude Code Integration Files](#claude-code-integration-files)
-6. [Quick Reference Guide](#quick-reference-guide)
+5. [Quick Reference Guide](#quick-reference-guide)
 
 ---
 
@@ -20,13 +21,12 @@ The repository contains multiple types of runnable files:
 - **🔥 Mojo Simulations**: High-performance MFC simulations (`.mojo` files)
 - **🐍 Python Analysis**: Data processing, visualization, and reports (`.py` files)  
 - **🧪 Development Tools**: Testing and development utilities
-- **🤖 Integration Hooks**: Claude Code integration and automation
 
 ---
 
 ## Mojo Simulation Files
 
-### 1. `q-learning-mfcs/mfc_100h_simple.mojo` ⭐ **BASELINE**
+### 1. `q-learning-mfcs/src/mfc_100h_simple.mojo` ⭐ **BASELINE**
 
 **Purpose**: Simple heuristic-based 100-hour MFC simulation
 **Performance**: 2.75 Wh in ~1.6 seconds
@@ -35,11 +35,11 @@ The repository contains multiple types of runnable files:
 **Usage**:
 ```bash
 # Run the simulation
-mojo run q-learning-mfcs/mfc_100h_simple.mojo
+mojo run q-learning-mfcs/src/mfc_100h_simple.mojo
 
 # Format before running
-mojo format q-learning-mfcs/mfc_100h_simple.mojo
-mojo run q-learning-mfcs/mfc_100h_simple.mojo
+mojo format q-learning-mfcs/src/mfc_100h_simple.mojo
+mojo run q-learning-mfcs/src/mfc_100h_simple.mojo
 ```
 
 **Output Example**:
@@ -60,7 +60,7 @@ Simulation completed successfully
 
 ---
 
-### 2. `q-learning-mfcs/mfc_100h_qlearn.mojo`
+### 2. `q-learning-mfcs/src/mfc_100h_qlearn.mojo`
 
 **Purpose**: Basic Q-learning MFC simulation with reinforcement learning
 **Performance**: 3.64 Wh in ~2.1 seconds (+32.3% vs simple)
@@ -69,7 +69,7 @@ Simulation completed successfully
 **Usage**:
 ```bash
 # Run basic Q-learning simulation
-mojo run q-learning-mfcs/mfc_100h_qlearn.mojo
+mojo run q-learning-mfcs/src/mfc_100h_qlearn.mojo
 ```
 
 **Configuration**:
@@ -90,7 +90,7 @@ Final epsilon: 0.05
 
 ---
 
-### 3. `q-learning-mfcs/mfc_100h_enhanced.mojo` 🏆 **RECOMMENDED**
+### 3. `q-learning-mfcs/src/mfc_100h_enhanced.mojo` 🏆 **RECOMMENDED**
 
 **Purpose**: Enhanced Q-learning with advanced optimization features
 **Performance**: 127.65 Wh in ~87.6 seconds (+4538.9% vs simple)
@@ -99,10 +99,10 @@ Final epsilon: 0.05
 **Usage**:
 ```bash
 # Run enhanced Q-learning simulation
-mojo run q-learning-mfcs/mfc_100h_enhanced.mojo
+mojo run q-learning-mfcs/src/mfc_100h_enhanced.mojo
 
 # Monitor progress (takes ~1.5 minutes)
-timeout 300 mojo run q-learning-mfcs/mfc_100h_enhanced.mojo
+timeout 300 mojo run q-learning-mfcs/src/mfc_100h_enhanced.mojo
 ```
 
 **Key Features**:
@@ -131,7 +131,7 @@ Stack coordination achieved
 
 ---
 
-### 4. `q-learning-mfcs/mfc_100h_advanced.mojo` ⚠️ **RESEARCH**
+### 4. `q-learning-mfcs/src/mfc_100h_advanced.mojo` ⚠️ **RESEARCH**
 
 **Purpose**: High-complexity Q-learning with full state space exploration
 **Performance**: Times out >900 seconds (too complex for practical use)
@@ -140,7 +140,7 @@ Stack coordination achieved
 **Usage**:
 ```bash
 # WARNING: This will likely timeout
-timeout 1800 mojo run q-learning-mfcs/mfc_100h_advanced.mojo
+timeout 1800 mojo run q-learning-mfcs/src/mfc_100h_advanced.mojo
 
 # For research purposes only - not recommended for production
 ```
@@ -158,7 +158,7 @@ timeout 1800 mojo run q-learning-mfcs/mfc_100h_advanced.mojo
 
 ---
 
-### 5. `q-learning-mfcs/mfc_100h_gpu_optimized.mojo` 🚀 **EXPERIMENTAL**
+### 5. `q-learning-mfcs/src/mfc_100h_gpu_optimized.mojo` 🚀 **EXPERIMENTAL**
 
 **Purpose**: Tensor-based GPU acceleration experiment
 **Performance**: Designed for 10-30x speedup (experimental)
@@ -167,7 +167,7 @@ timeout 1800 mojo run q-learning-mfcs/mfc_100h_advanced.mojo
 **Usage**:
 ```bash
 # GPU-optimized simulation (requires compatible hardware)
-mojo run q-learning-mfcs/mfc_100h_gpu_optimized.mojo
+mojo run q-learning-mfcs/src/mfc_100h_gpu_optimized.mojo
 
 # Check GPU availability first
 nvidia-smi  # For NVIDIA GPUs
@@ -187,7 +187,7 @@ nvidia-smi  # For NVIDIA GPUs
 
 ---
 
-### 6. `q-learning-mfcs/mfc_100h_gpu.mojo` ❌ **DEPRECATED**
+### 6. `q-learning-mfcs/src/mfc_100h_gpu.mojo` ❌ **DEPRECATED**
 
 **Purpose**: Original GPU acceleration attempt
 **Status**: 💀 Deprecated (compatibility issues)
@@ -203,40 +203,40 @@ nvidia-smi  # For NVIDIA GPUs
 
 ### 7. Development Mojo Files
 
-#### `q-learning-mfcs/mfc_qlearning.mojo`
+#### `q-learning-mfcs/src/mfc_qlearning.mojo`
 **Purpose**: Core Q-learning implementation prototype
-**Usage**: `mojo run q-learning-mfcs/mfc_qlearning.mojo`
+**Usage**: `mojo run q-learning-mfcs/src/mfc_qlearning.mojo`
 **Status**: Research prototype
 
-#### `q-learning-mfcs/odes.mojo`
+#### `q-learning-mfcs/src/odes.mojo`
 **Purpose**: ODE solver utilities for electrochemical kinetics
 **Usage**: Library file (not directly runnable)
 **Status**: Utility library
 
-#### `q-learning-mfcs/qlearning_bindings.mojo`
+#### `q-learning-mfcs/src/qlearning_bindings.mojo`
 **Purpose**: Q-learning algorithm bindings
 **Usage**: Library file (not directly runnable)  
 **Status**: Utility library
 
-#### `q-learning-mfcs/test.mojo`
+#### `q-learning-mfcs/src/test.mojo`
 **Purpose**: Basic testing framework
-**Usage**: `mojo run q-learning-mfcs/test.mojo`
+**Usage**: `mojo run q-learning-mfcs/src/test.mojo`
 **Status**: Development utility
 
 ---
 
 ## Python Analysis and Utilities
 
-### 1. `q-learning-mfcs/run_gpu_simulation.py` 🏆 **BENCHMARK RUNNER**
+### 1. `q-learning-mfcs/src/run_gpu_simulation.py` 🏆 **BENCHMARK RUNNER**
 
 **Purpose**: Comprehensive benchmark runner for all Mojo simulations
 **Usage**:
 ```bash
 # Run comprehensive benchmark comparison
-python3 q-learning-mfcs/run_gpu_simulation.py
+python3 q-learning-mfcs/src/run_gpu_simulation.py
 
 # With pixi environment
-pixi run python q-learning-mfcs/run_gpu_simulation.py
+pixi run python q-learning-mfcs/src/run_gpu_simulation.py
 ```
 
 **Features**:
@@ -264,150 +264,133 @@ Running all Mojo implementations with parallel execution
 
 ---
 
-### 2. `run_simulation_comparison.py`
+### 2. Report Generation Scripts
 
-**Purpose**: Quick performance comparison of key simulations
-**Usage**:
-```bash
-# Run simplified comparison
-python3 run_simulation_comparison.py
-```
-
-**Features**:
-- Sequential simulation execution
-- Basic performance metrics
-- Improvement analysis
-- Faster than comprehensive benchmark
-
----
-
-### 3. Report Generation Scripts
-
-#### `q-learning-mfcs/generate_pdf_report.py`
+#### `q-learning-mfcs/src/generate_pdf_report.py`
 **Purpose**: Generate PDF analysis reports
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 generate_pdf_report.py
 
 # Requires: matplotlib, reportlab, numpy
 ```
 
-#### `q-learning-mfcs/generate_enhanced_pdf_report.py`
+#### `q-learning-mfcs/src/generate_enhanced_pdf_report.py`
 **Purpose**: Generate enhanced PDF reports with advanced analysis
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 generate_enhanced_pdf_report.py
 ```
 
-#### `q-learning-mfcs/generate_performance_graphs.py`
+#### `q-learning-mfcs/src/generate_performance_graphs.py`
 **Purpose**: Generate performance visualization graphs
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 generate_performance_graphs.py
 ```
 
 ---
 
-### 4. Analysis and Modeling Scripts
+### 3. Analysis and Modeling Scripts
 
-#### `q-learning-mfcs/energy_sustainability_analysis.py`
+#### `q-learning-mfcs/src/energy_sustainability_analysis.py`
 **Purpose**: Energy sustainability and efficiency analysis
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 energy_sustainability_analysis.py
 ```
 
-#### `q-learning-mfcs/create_summary_plots.py`
+#### `q-learning-mfcs/src/create_summary_plots.py`
 **Purpose**: Create summary visualization plots
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 create_summary_plots.py
 ```
 
-#### `q-learning-mfcs/stack_physical_specs.py`
+#### `q-learning-mfcs/src/stack_physical_specs.py`
 **Purpose**: Physical specifications and modeling for MFC stacks
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 stack_physical_specs.py
 ```
 
 ---
 
-### 5. Simulation and Demo Scripts
+### 4. Simulation and Demo Scripts
 
-#### `q-learning-mfcs/mfc_100h_simulation.py`
+#### `q-learning-mfcs/src/mfc_100h_simulation.py`
 **Purpose**: Python reference implementation of 100h simulation
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 mfc_100h_simulation.py
 ```
 
-#### `q-learning-mfcs/mfc_stack_simulation.py`
+#### `q-learning-mfcs/src/mfc_stack_simulation.py`
 **Purpose**: MFC stack simulation in Python
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 mfc_stack_simulation.py
 ```
 
-#### `q-learning-mfcs/mfc_qlearning_demo.py`
+#### `q-learning-mfcs/src/mfc_qlearning_demo.py`
 **Purpose**: Q-learning demonstration and tutorial
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 mfc_qlearning_demo.py
 ```
 
-#### `q-learning-mfcs/mfc_stack_demo.py`
+#### `q-learning-mfcs/src/mfc_stack_demo.py`
 **Purpose**: MFC stack demonstration
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 mfc_stack_demo.py
 ```
 
 ---
 
-### 6. Model and Build Scripts
+### 5. Model and Build Scripts
 
-#### `q-learning-mfcs/mfc_model.py`
+#### `q-learning-mfcs/src/mfc_model.py`
 **Purpose**: Core MFC modeling functions and utilities
 **Usage**: Import as library module
 ```python
 from mfc_model import MFCModel
 ```
 
-#### `q-learning-mfcs/build_qlearning.py`
+#### `q-learning-mfcs/src/build_qlearning.py`
 **Purpose**: Build and compile Q-learning components
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 build_qlearning.py
 ```
 
 ---
 
-### 7. External Analysis
+### 6. External Analysis
 
-#### `analyze_pdf_comments.py`
+#### `q-learning-mfcs/src/analyze_pdf_comments.py`
 **Purpose**: Analyze comments and annotations in PDF reports
 **Usage**:
 ```bash
-python3 analyze_pdf_comments.py [pdf_file]
+python3 q-learning-mfcs/src/analyze_pdf_comments.py [pdf_file]
 ```
 
-#### `q-learning-mfcs/test.py`
+#### `q-learning-mfcs/src/test.py`
 **Purpose**: Python testing framework
 **Usage**:
 ```bash
-cd q-learning-mfcs
+cd q-learning-mfcs/src
 python3 test.py
 ```
 
@@ -416,59 +399,12 @@ python3 test.py
 ## Development and Testing Files
 
 ### Testing Framework
-- `q-learning-mfcs/test.mojo` - Mojo testing utilities
-- `q-learning-mfcs/test.py` - Python testing framework
+- `q-learning-mfcs/src/test.mojo` - Mojo testing utilities
+- `q-learning-mfcs/src/test.py` - Python testing framework
 
 ### Build and Configuration
 - `pixi.toml` - Package management configuration
 - `pixi.lock` - Lock file for reproducible environments
-
----
-
-## Claude Code Integration Files
-
-### Hook Scripts (`.claude/hooks/`)
-
-These files provide Claude Code integration and automation:
-
-#### `notification.py`
-**Purpose**: Handle notifications and alerts
-**Usage**: Automatically triggered by Claude Code
-
-#### `post_tool_use.py` / `pre_tool_use.py`
-**Purpose**: Pre/post-processing for tool usage
-**Usage**: Automatically triggered by Claude Code
-
-#### `user_prompt_submit.py`
-**Purpose**: Process user prompt submissions  
-**Usage**: Automatically triggered by Claude Code
-
-#### `stop.py` / `subagent_stop.py`
-**Purpose**: Handle stopping and cleanup
-**Usage**: Automatically triggered by Claude Code
-
-#### `send_event.py`
-**Purpose**: Event handling and dispatch
-**Usage**: Automatically triggered by Claude Code
-
-### Utility Modules
-
-#### `.claude/hooks/utils/constants.py`
-**Purpose**: Constants and configuration for Claude integration
-**Usage**: Import as module
-
-#### `.claude/hooks/utils/summarizer.py`
-**Purpose**: Text summarization utilities
-**Usage**: Import as module
-
-#### TTS (Text-to-Speech) Modules
-- `elevenlabs_tts.py` - ElevenLabs TTS integration
-- `openai_tts.py` - OpenAI TTS integration  
-- `pyttsx3_tts.py` - Pyttsx3 TTS integration
-
-#### LLM Integration
-- `anth.py` - Anthropic API integration
-- `oai.py` - OpenAI API integration
 
 ---
 
@@ -477,31 +413,31 @@ These files provide Claude Code integration and automation:
 ### 🚀 **For Quick Testing**
 ```bash
 # Fastest baseline (1.6s)
-mojo run q-learning-mfcs/mfc_100h_simple.mojo
+mojo run q-learning-mfcs/src/mfc_100h_simple.mojo
 ```
 
 ### 🏆 **For Best Performance**
 ```bash
 # Recommended enhanced version (87.6s)
-mojo run q-learning-mfcs/mfc_100h_enhanced.mojo
+mojo run q-learning-mfcs/src/mfc_100h_enhanced.mojo
 ```
 
 ### 📊 **For Comprehensive Analysis**
 ```bash
 # Full benchmark comparison
-python3 q-learning-mfcs/run_gpu_simulation.py
+python3 q-learning-mfcs/src/run_gpu_simulation.py
 ```
 
 ### 🔬 **For Research**
 ```bash
 # Advanced Q-learning (warning: very slow)
-timeout 1800 mojo run q-learning-mfcs/mfc_100h_advanced.mojo
+timeout 1800 mojo run q-learning-mfcs/src/mfc_100h_advanced.mojo
 ```
 
 ### 🚀 **For GPU Acceleration (Experimental)**
 ```bash
 # GPU-optimized version
-mojo run q-learning-mfcs/mfc_100h_gpu_optimized.mojo
+mojo run q-learning-mfcs/src/mfc_100h_gpu_optimized.mojo
 ```
 
 ---
@@ -538,13 +474,13 @@ pip install matplotlib numpy reportlab
 ### Running Simulations
 ```bash
 # Format Mojo files before running
-mojo format q-learning-mfcs/*.mojo
+mojo format q-learning-mfcs/src/*.mojo
 
 # Run individual simulations
-mojo run q-learning-mfcs/[simulation_file].mojo
+mojo run q-learning-mfcs/src/[simulation_file].mojo
 
 # Run Python analysis
-python3 q-learning-mfcs/[script_name].py
+python3 q-learning-mfcs/src/[script_name].py
 ```
 
 ---
