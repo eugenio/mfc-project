@@ -8,6 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 import matplotlib.patches as mpatches
 
 def create_summary_plots():
@@ -165,10 +166,10 @@ def create_summary_plots():
                 fontsize=18, fontweight='bold', y=0.95)
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_summary_performance.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_summary_performance.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Summary performance plot saved to 'mfc_100h_summary_performance.png'")
+    print(f"Summary performance plot saved to '{get_figure_path('mfc_100h_summary_performance.png')}'")
 
 def create_technical_summary():
     """Create a technical summary visualization"""
@@ -273,10 +274,10 @@ def create_technical_summary():
                 ha='center', va='bottom', fontsize=10, fontweight='bold', color='green')
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_technical_summary.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_technical_summary.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Technical summary plot saved to 'mfc_100h_technical_summary.png'")
+    print(f"Technical summary plot saved to '{get_figure_path('mfc_100h_technical_summary.png')}'")
 
 def main():
     """Main function to create all summary plots"""
@@ -291,8 +292,8 @@ def main():
     
     print("\n=== Summary Plots Complete ===")
     print("Generated files:")
-    print("1. mfc_100h_summary_performance.png - Key performance metrics")
-    print("2. mfc_100h_technical_summary.png - Technical analysis summary")
+    print(f"1. {get_figure_path('mfc_100h_summary_performance.png')} - Key performance metrics")
+    print(f"2. {get_figure_path('mfc_100h_technical_summary.png')} - Technical analysis summary")
     print("\nThese plots provide a focused view of the most important results")
     print("from the 100-hour GPU-accelerated MFC simulation.")
 
