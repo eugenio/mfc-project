@@ -19,14 +19,12 @@ from collections import defaultdict
 import pickle
 from path_config import get_figure_path, get_simulation_data_path, get_model_path
 
-# Try to import GPU acceleration libraries
-try:
-    import cupy as cp
-    GPU_AVAILABLE = True
-    print("GPU acceleration enabled (CuPy)")
-except ImportError:
-    GPU_AVAILABLE = False
-    print("GPU acceleration not available, using CPU")
+# Import universal GPU acceleration
+from gpu_acceleration import get_gpu_accelerator
+
+# Initialize GPU accelerator
+gpu_accelerator = get_gpu_accelerator()
+GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class UnifiedQLearningController:
     def __init__(self, target_outlet_conc=10.0, learning_rate=0.1, discount_factor=0.95, epsilon=0.4):
@@ -345,8 +343,9 @@ def add_subplot_labels(fig, start_letter='a'):
 
 class MFCUnifiedQLearningSimulation:
     def __init__(self, use_gpu=True, target_outlet_conc=10.0):
-        """Initialize MFC simulation with unified Q-learning control"""
+        """Initialize MFC simulation with universal GPU acceleration"""
         self.use_gpu = use_gpu and GPU_AVAILABLE
+        self.gpu_acc = gpu_accelerator if self.use_gpu else None
         
         # Simulation parameters
         self.num_cells = 5
@@ -394,7 +393,11 @@ class MFCUnifiedQLearningSimulation:
         
     def initialize_arrays(self):
         """Initialize simulation state arrays"""
-        array_func = cp.zeros if self.use_gpu else np.zeros
+        # Initialize arrays using universal GPU accelerator
+        if self.use_gpu:
+            array_func = self.gpu_acc.zeros
+        else:
+            array_func = np.zeros
         
         # Cell state arrays [time_step, cell_index]
         self.cell_voltages = array_func((self.num_steps, self.num_cells))
