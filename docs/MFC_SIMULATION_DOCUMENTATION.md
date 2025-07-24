@@ -7,13 +7,13 @@ This documentation covers a comprehensive suite of Mojo-based Microbial Fuel Cel
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [File Descriptions](#file-descriptions)
-3. [Implementation Details](#implementation-details)
-4. [Performance Comparison](#performance-comparison)
-5. [Usage Guide](#usage-guide)
-6. [Theoretical Background](#theoretical-background)
+1. [File Descriptions](#file-descriptions)
+1. [Implementation Details](#implementation-details)
+1. [Performance Comparison](#performance-comparison)
+1. [Usage Guide](#usage-guide)
+1. [Theoretical Background](#theoretical-background)
 
----
+______________________________________________________________________
 
 ## Architecture Overview
 
@@ -45,7 +45,7 @@ MFC Simulation Suite
 - **Acceleration**: GPU tensor operations (where supported)
 - **Domain**: Electrochemical simulation and energy optimization
 
----
+______________________________________________________________________
 
 ## File Descriptions
 
@@ -217,6 +217,7 @@ struct EnhancedMFCStack:
 **Advanced Features**:
 
 - **Enhanced Q-Learning**:
+
   - State discretization: 6D → hash table
   - Dynamic Q-table growth (6,532 entries learned)
   - Epsilon decay: 0.3 → 0.18
@@ -234,11 +235,13 @@ struct EnhancedMFCStack:
   ```
 
 - **Stack Coordination**:
+
   - Voltage uniformity optimization
   - Series connection constraints
   - Coordinated aging management
 
 - **Enhanced Electrochemical Model**:
+
   - Improved reaction kinetics
   - pH buffer effects on proton concentration
   - Biofilm thickness impact on mass transfer
@@ -327,7 +330,7 @@ struct GPUMFCStack:
 - Q-table updates: 10-50x parallel hash operations
 - Overall speedup: 10-30x faster execution
 
----
+______________________________________________________________________
 
 ## Implementation Details
 
@@ -402,7 +405,7 @@ fn update_q_table(mut self, cell_idx: Int, reward: Float64):
     self.set_q_value(state_action_key, new_q)
 ```
 
----
+______________________________________________________________________
 
 ## Performance Comparison
 
@@ -414,16 +417,16 @@ fn update_q_table(mut self, cell_idx: Int, reward: Float64):
 | Q-Learning | 2.1s | 3.64 Wh | +32.3% | 3.8% | ✅ Basic RL |
 | Enhanced | 87.6s | **127.65 Wh** | **+4538.9%** | **134.4%** | 🏆 **RECOMMENDED** |
 | Advanced | >900s | Timeout | N/A | N/A | ⚠️ Too complex |
-| GPU Optimized | ~10-30s* | ~100-150 Wh* | ~40-50x* | ~150%* | 🚀 Experimental |
+| GPU Optimized | ~10-30s\* | ~100-150 Wh\* | ~40-50x\* | ~150%\* | 🚀 Experimental |
 
-*GPU performance estimates based on theoretical analysis
+\*GPU performance estimates based on theoretical analysis
 
 ### Key Performance Insights
 
 1. **Enhanced Version is Optimal**: Achieves excellent performance (127.65 Wh) with reasonable runtime (87.6s)
-2. **Diminishing Returns**: Advanced version's complexity doesn't justify performance gains
-3. **GPU Promise**: Tensor-based approach could achieve similar results 10-30x faster
-4. **Python Target Exceeded**: Enhanced version achieves 134.4% of original Python simulation target
+1. **Diminishing Returns**: Advanced version's complexity doesn't justify performance gains
+1. **GPU Promise**: Tensor-based approach could achieve similar results 10-30x faster
+1. **Python Target Exceeded**: Enhanced version achieves 134.4% of original Python simulation target
 
 ### Computational Complexity Analysis
 
@@ -435,7 +438,7 @@ Advanced:   O(n⁷)    - Full state space exploration
 GPU:        O(n²/p)  - Parallel tensor operations (p = parallelism factor)
 ```
 
----
+______________________________________________________________________
 
 ## Usage Guide
 
@@ -489,7 +492,7 @@ struct EnhancedMFCConfig:
 
 ### Output Interpretation
 
-``` text
+```text
 === Enhanced Q-Learning Simulation Complete ===
 Total energy produced: 127.65 Wh        # Primary performance metric
 Average power: 1.242 W                  # Mean power output
@@ -507,7 +510,7 @@ Final epsilon: 0.18                     # Exploration vs exploitation
 - **Q-table Growth**: Number of state-action pairs learned
 - **Epsilon Decay**: Balance between exploration and exploitation
 
----
+______________________________________________________________________
 
 ## Theoretical Background
 
@@ -576,7 +579,7 @@ P_stack = V_stack × I_stack
 
 Coordination optimization maximizes the minimum cell current while maintaining voltage uniformity.
 
----
+______________________________________________________________________
 
 ## Advanced Topics
 
@@ -626,7 +629,7 @@ fn apply_aging_effects(mut self, dt_hours: Float64):
         self.biofilm[cell_idx] = min(2.0, self.biofilm[cell_idx] + biofilm_growth)
 ```
 
----
+______________________________________________________________________
 
 ## Conclusion
 
@@ -634,14 +637,14 @@ This MFC simulation suite represents a comprehensive approach to electrochemical
 
 The progression from simple heuristics to advanced Q-learning demonstrates the power of reinforcement learning in complex electrochemical system control, with potential applications in renewable energy, wastewater treatment, and sustainable technology development.
 
----
+______________________________________________________________________
 
 ## References
 
 1. **Electrochemical Theory**: Butler-Volmer kinetics and MFC fundamentals
-2. **Machine Learning**: Q-learning and temporal difference methods
-3. **Optimization**: Multi-objective reward design and stack coordination
-4. **High-Performance Computing**: GPU tensor operations and vectorized algorithms
+1. **Machine Learning**: Q-learning and temporal difference methods
+1. **Optimization**: Multi-objective reward design and stack coordination
+1. **High-Performance Computing**: GPU tensor operations and vectorized algorithms
 
 ## File Maintenance
 
@@ -650,6 +653,6 @@ The progression from simple heuristics to advanced Q-learning demonstrates the p
 - **Maintainer**: MFC Simulation Project
 - **License**: Research and Educational Use
 
----
+______________________________________________________________________
 
 *This documentation is automatically generated and maintained alongside the simulation codebase. For technical questions or contributions, please refer to the project repository.*
