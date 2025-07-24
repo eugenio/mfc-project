@@ -20,6 +20,7 @@ import json
 import pandas as pd
 from scipy.integrate import odeint
 from scipy.optimize import minimize_scalar
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 @dataclass
 class GeobacterBiofilmParameters:
@@ -471,10 +472,10 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('physics_accurate_biofilm_qcm_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('physics_accurate_biofilm_qcm_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Physics-accurate biofilm analysis plot saved to 'physics_accurate_biofilm_qcm_analysis.png'")
+    print(f"Physics-accurate biofilm analysis plot saved to '{get_figure_path('physics_accurate_biofilm_qcm_analysis.png')}'")
 
 def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.0):
     """Run complete physics-accurate biofilm simulation with QCM monitoring"""
@@ -521,7 +522,7 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
     }
     
     # Save JSON
-    with open('physics_biofilm_qcm_data.json', 'w') as f:
+    with open(get_simulation_data_path('physics_biofilm_qcm_data.json'), 'w') as f:
         json.dump(combined_data, f, indent=2, default=str)
     
     # Save CSV
@@ -540,7 +541,7 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
     }
     
     df = pd.DataFrame(df_data)
-    df.to_csv('physics_biofilm_qcm_data.csv', index=False)
+    df.to_csv(get_simulation_data_path('physics_biofilm_qcm_data.csv'), index=False)
     
     # Print summary
     final_thickness = biofilm_results['thickness_um'][-1]
@@ -564,9 +565,9 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
         print("⚠️  Biofilm thickness exceeds optimal range")
     
     print(f"\nData saved to:")
-    print(f"- physics_biofilm_qcm_data.json")
-    print(f"- physics_biofilm_qcm_data.csv")
-    print(f"- physics_accurate_biofilm_qcm_analysis.png")
+    print(f"- {get_simulation_data_path('physics_biofilm_qcm_data.json')}")
+    print(f"- {get_simulation_data_path('physics_biofilm_qcm_data.csv')}")
+    print(f"- {get_figure_path('physics_accurate_biofilm_qcm_analysis.png')}")
 
 if __name__ == "__main__":
     run_physics_simulation(duration_hours=200, substrate_conc=1.0)
