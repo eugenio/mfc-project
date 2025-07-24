@@ -19,6 +19,7 @@ from scipy.optimize import minimize_scalar
 import time
 from collections import defaultdict
 import pickle
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 class AnolytereservoirSystem:
     """Simulates 1L anolyte reservoir with recirculation and substrate control"""
@@ -571,8 +572,8 @@ if __name__ == "__main__":
         df_data[f'cell_{i+1}_biofilm'] = [thick[i] for thick in results['biofilm_thicknesses']]
     
     df = pd.DataFrame(df_data)
-    csv_file = f"simulation_data/mfc_recirculation_control{suffix}_{timestamp}.csv"
-    json_file = f"simulation_data/mfc_recirculation_control{suffix}_{timestamp}.json"
+    csv_file = get_simulation_data_path(f"mfc_recirculation_control{suffix}_{timestamp}.csv")
+    json_file = get_simulation_data_path(f"mfc_recirculation_control{suffix}_{timestamp}.json")
     
     # Save CSV
     df.to_csv(csv_file, index=False)
