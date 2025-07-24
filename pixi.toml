@@ -42,3 +42,6 @@ pytest-benchmark = "*"
 detect-secrets = "*"
 mdformat = "*"
 pymupdf = "*"
+
+[pypi-dependencies]
+detect-secrets = ">=1.5.0, <2"
