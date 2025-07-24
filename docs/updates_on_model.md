@@ -3,6 +3,7 @@
 ## **1. ARCHITETTURA DEL SISTEMA**
 
 ### **🔬 Modello Fisico-Biologico:**
+
 - **Stack di 5 celle MFC** con parametri realistici
 - **Cinetica di Monod** con effetti biofilm per reazione acetato
 - **Modello biofilm dinamico** con crescita, decadimento e shear stress
@@ -11,6 +12,7 @@
 - **Unità corrette**: Concentrazioni in mmol/L, volumi in litri, flussi in L/h
 
 ### **🧠 Controller Q-Learning:**
+
 - **Spazio stati discretizzato**: potenza, deviazione biofilm, utilizzazione substrato, fase temporale
 - **Spazio azioni**: 9 aggiustamenti di flusso (-10 a +10 mL/h)
 - **Politica ε-greedy** con decay dinamico (0.3 → 0.05)
@@ -20,12 +22,14 @@
 ## **2. CONFIGURAZIONI IMPLEMENTATE**
 
 ### **🔄 Modello Sequenziale** (`mfc_qlearning_optimization.py`)
+
 - **Flusso in serie**: outlet cella N → inlet cella N+1
 - **Tempo residenza**: ~19,800 secondi per cella (flow 10 mL/h)
 - **Utilizzazione substrato**: 23.42% (efficiente)
 - **Performance**: 0.017 W, 17.2 Wh totali
 
 ### **⚡ Modello Parallelo** (`mfc_qlearning_optimization_parallel.py`)
+
 - **Flusso parallelo**: stessa concentrazione inlet per tutte le celle
 - **Tempo residenza**: ~5.5 secondi per cella (flow 10 mL/h)
 - **Utilizzazione substrato**: 0.00% (inefficiente)
@@ -34,17 +38,20 @@
 ## **3. SISTEMA DI REWARD OTTIMIZZATO**
 
 ### **🎯 Obiettivi Multi-Criterio:**
+
 1. **Massimizzare potenza** (+50x incrementi, -100x decrementi)
-2. **Massimizzare consumo acetato** (+30x incrementi, -60x decrementi)
-3. **Controllo biofilm ottimale** (spessore 1.3 ± 5%)
-4. **Steady-state biofilm** (derivata ≈ 0, +15 bonus)
+1. **Massimizzare consumo acetato** (+30x incrementi, -60x decrementi)
+1. **Controllo biofilm ottimale** (spessore 1.3 ± 5%)
+1. **Steady-state biofilm** (derivata ≈ 0, +15 bonus)
 
 ### **⚖️ Sistema di Penalty:**
+
 - **-50x** per deviazioni biofilm > 5%
 - **-100** penalty combinata per deterioramento simultaneo
 - **Soglie dinamiche** per performance accettabile
 
 ### **💡 Logica di Reward:**
+
 ```python
 # 1. POWER COMPONENT
 if power_change > 0:
@@ -78,21 +85,24 @@ if power_change < 0 and substrate_change < 0 and biofilm_deviation > deviation_t
 ## **4. VISUALIZZAZIONI COMPLETE**
 
 ### **📈 Dashboard Principale** (3x3 plots):
+
 1. **Potenza + Reward Q-learning** (dual axis)
-2. **Controllo flusso Q-learning**
-3. **Efficienza utilizzazione substrato**
-4. **Evoluzione spessore biofilm** (5 celle)
-5. **Azioni Q-learning** selezionate
-6. **Voltaggio celle individuali**
-7. **Progresso ottimizzazione** multi-obiettivo
-8. **Decay esplorazione** (ε)
-9. **Summary performance**
+1. **Controllo flusso Q-learning**
+1. **Efficienza utilizzazione substrato**
+1. **Evoluzione spessore biofilm** (5 celle)
+1. **Azioni Q-learning** selezionate
+1. **Voltaggio celle individuali**
+1. **Progresso ottimizzazione** multi-obiettivo
+1. **Decay esplorazione** (ε)
+1. **Summary performance**
 
 ### **🌊 Analisi Flusso Dettagliata** (2x1 plots):
+
 - **Evoluzione temporale** flusso istantaneo con marcatori decisioni Q-learning
 - **Distribuzione/istogramma** velocità flusso con statistiche
 
 ### **🔗 Analisi Correlazione Flusso-Substrato** (2x2 plots):
+
 - **Scatter plot** flusso vs utilizzazione (colormap temporale)
 - **Serie temporali combinate** (dual axis)
 - **Analisi binned** con error bars
@@ -101,16 +111,19 @@ if power_change < 0 and substrate_change < 0 and biofilm_deviation > deviation_t
 ## **5. DATI E MODELLI SALVATI**
 
 ### **💾 Output Files per ogni simulazione:**
+
 - **CSV**: Dati completi time-series (360k punti, 1000 ore)
 - **JSON**: Metadata e metriche performance
 - **PKL**: Q-table addestrata (stato-azioni apprese)
 - **PNG**: 3 dashboard visualizzazione
 
 ### **🏷️ Nomenclatura Files:**
+
 - **Sequenziale**: `mfc_qlearning_YYYYMMDD_HHMMSS.*`
 - **Parallelo**: `mfc_qlearning_parallel_YYYYMMDD_HHMMSS.*`
 
 ### **📂 Struttura Directory:**
+
 ```
 q-learning-mfcs/
 ├── mfc_qlearning_optimization.py           # Modello sequenziale
@@ -123,6 +136,7 @@ q-learning-mfcs/
 ## **6. PARAMETRI TECNICI CHIAVE**
 
 ### **🔧 Parametri Fisici:**
+
 - **Volume anodico**: 0.055 L/cella
 - **Area membrana**: 5×10⁻⁴ m²
 - **Concentrazione inlet**: 20 mmol/L acetato
@@ -131,6 +145,7 @@ q-learning-mfcs/
 - **Durata simulazione**: 1000 ore (360k timestep da 10s)
 
 ### **🧪 Parametri Biologici:**
+
 - **r_max**: 1×10⁻⁵ mol/(m²·s)
 - **K_AC**: 5 mmol/L (half-saturation)
 - **Spessore biofilm ottimale**: 1.3
@@ -138,6 +153,7 @@ q-learning-mfcs/
 - **Fattori crescita**: substrato, decay, shear stress
 
 ### **🤖 Parametri Q-Learning:**
+
 - **Learning rate**: 0.1
 - **Discount factor**: 0.95
 - **Epsilon**: 0.3 → 0.05 (decay 0.995)
@@ -157,6 +173,7 @@ q-learning-mfcs/
 | **Tempo residenza** | 19.8k s | 5.5 s | +3600x seq |
 
 ### **📊 Performance Insights:**
+
 - **Configurazione sequenziale** dimostra superiorità in tutti i KPI
 - **Sistema di reward** distingue correttamente configurazioni efficaci vs inefficaci
 - **Q-learning converge** rapidamente e mantiene performance stabile
@@ -166,6 +183,7 @@ q-learning-mfcs/
 ## **8. CAPABILITIES AVANZATE**
 
 ### **🚀 Features Implementate:**
+
 - ✅ **GPU acceleration** support (CuPy)
 - ✅ **Multi-threading** ready
 - ✅ **Real-time progress** monitoring
@@ -176,6 +194,7 @@ q-learning-mfcs/
 - ✅ **Modular architecture** per easy extension
 
 ### **📊 Analisi Disponibili:**
+
 - ✅ **Performance metrics** completi
 - ✅ **Learning curves** Q-learning
 - ✅ **Correlation analysis** multi-variabile
@@ -184,6 +203,7 @@ q-learning-mfcs/
 - ✅ **Comparative benchmarking** configurazioni
 
 ### **🔬 Debug e Monitoring:**
+
 - **Real-time debug output** per primi step
 - **Progress reporting** ogni 100 ore
 - **Epsilon tracking** per monitoraggio exploration
@@ -193,6 +213,7 @@ q-learning-mfcs/
 ## **9. VALIDAZIONE TECNICA**
 
 ### **✅ Modello Validato:**
+
 - **Bilanci di massa** conservati
 - **Cinetica realistica** Monod + biofilm effects
 - **Elettrochimica** corretta (8 e⁻ per acetato)
@@ -201,6 +222,7 @@ q-learning-mfcs/
 - **Performance** distingue correttamente configurazioni efficaci vs inefficaci
 
 ### **🧪 Test Cases Superati:**
+
 - **Unit conversion** accuracy (L/h ↔ mL/h)
 - **Concentration units** consistency (mmol/L)
 - **Reward system** logic validation
@@ -211,6 +233,7 @@ q-learning-mfcs/
 ## **10. CONTROLLO DINAMICO SUBSTRATO**
 
 ### **🎮 Dual Control System** (`mfc_dynamic_substrate_control.py`)
+
 - **Q-Learning**: Controllo portata (flow rate)
 - **PID Controller**: Controllo concentrazione substrato inlet
 - **Target**: Mantenere concentrazione outlet a 8.0 mmol/L
@@ -218,6 +241,7 @@ q-learning-mfcs/
 - **Range substrato**: 5-50 mmol/L
 
 ### **📉 Risultati Dual Control:**
+
 - **Controllo outlet**: RMSE = 3.00 mmol/L
 - **Efficienza substrato**: 0.003% (limitata dal PID)
 - **Stabilità**: Sistema stabile ma poco efficiente
@@ -226,6 +250,7 @@ q-learning-mfcs/
 ## **11. UNIFIED Q-LEARNING CONTROL**
 
 ### **🧠 Controller Unificato** (`mfc_unified_qlearning_control.py`)
+
 - **Elimina necessità di PID** separato
 - **Controllo simultaneo**: Flow rate + Substrate concentration
 - **Spazio stati esteso**: 6D invece di 4D
@@ -238,6 +263,7 @@ q-learning-mfcs/
 - **Spazio azioni duale**: 63 combinazioni (9 flow × 7 substrate)
 
 ### **🎯 Advanced Features:**
+
 ```python
 # EXTENDED STATE SPACE (6 dimensions)
 self.state_bins = {
@@ -256,6 +282,7 @@ self.actions = [(f, s) for f in flow_actions for s in substrate_actions]
 ```
 
 ### **💡 Unified Reward Function:**
+
 ```python
 # 1. Power component (unchanged)
 # 2. Substrate consumption component (unchanged)
@@ -271,6 +298,7 @@ else:  # Outside acceptable range
 ```
 
 ### **📊 Visualizzazione Estesa:**
+
 - **16 subplot dashboard** completo
 - **Dual control visualization**: Flow + Substrate
 - **Performance metrics** per entrambi i controlli
@@ -278,6 +306,7 @@ else:  # Outside acceptable range
 - **Action heatmap** 2D per decisioni congiunte
 
 ### **🔬 Vantaggi del Controller Unificato:**
+
 - **Ottimizzazione congiunta** multi-obiettivo
 - **Apprendimento correlazioni** flow-substrate
 - **Eliminazione conflitti** tra controller separati
@@ -287,6 +316,7 @@ else:  # Outside acceptable range
 ## **12. PROSSIMI SVILUPPI POTENZIALI**
 
 ### **🔮 Estensioni Possibili:**
+
 - **Deep Q-Learning** (DQN) implementation
 - **Multi-agent** Q-learning per celle individuali
 - **Dynamic biofilm** growth modeling enhancement
@@ -299,6 +329,7 @@ else:  # Outside acceptable range
 - **Reinforcement Learning** avanzato (PPO, SAC)
 
 ### **📈 Ottimizzazioni Tecniche:**
+
 - **Parallelization** of cell calculations
 - **Vectorized operations** optimization
 - **Memory usage** optimization per large simulations
@@ -308,30 +339,32 @@ else:  # Outside acceptable range
 - **Transfer learning** tra configurazioni
 - **Continual learning** per adattamento
 
----
+______________________________________________________________________
 
 ## **CONCLUSIONI**
 
 Il modello MFC Q-Learning è **completo, robusto e pronto per analisi avanzate**. Il sistema implementa:
 
 1. **Fisica realistica** degli MFC con dinamiche biofilm
-2. **Controller intelligente** Q-learning con reward ottimizzato  
-3. **Visualizzazioni complete** per analisi dettagliata
-4. **Validazione tecnica** su configurazioni alternative
-5. **Architecture modulare** per estensioni future
+1. **Controller intelligente** Q-learning con reward ottimizzato
+1. **Visualizzazioni complete** per analisi dettagliata
+1. **Validazione tecnica** su configurazioni alternative
+1. **Architecture modulare** per estensioni future
 
 Il confronto sequenziale vs parallelo dimostra chiaramente l'efficacia del sistema nell'identificare configurazioni ottimali per massimizzare produzione energetica e utilizzazione substrato. 🎯
 
 ### **📈 Evoluzione del Sistema:**
+
 1. **Modello base** con Q-learning per flow control
-2. **Dual control** con Q-learning + PID (limitato)
-3. **Unified Q-learning** con controllo completo integrato
-4. **Ottimizzazione parametri reward** per biofilm ottimale
-5. **Fine-tuning azioni** per controllo preciso
+1. **Dual control** con Q-learning + PID (limitato)
+1. **Unified Q-learning** con controllo completo integrato
+1. **Ottimizzazione parametri reward** per biofilm ottimale
+1. **Fine-tuning azioni** per controllo preciso
 
 ## **13. OTTIMIZZAZIONE PARAMETRI REWARD**
 
 ### **🎯 Problema Identificato:**
+
 - **Biofilm converge a 0.5** invece del valore ottimale 1.3
 - **Shear stress eccessivo** da flow rate elevati impedisce crescita
 - **Trade-off** tra potenza instantanea e biofilm ottimale
@@ -339,6 +372,7 @@ Il confronto sequenziale vs parallelo dimostra chiaramente l'efficacia del siste
 ### **🔧 Modifiche Implementate:**
 
 #### **Aumento Reward Biofilm (+25% totale):**
+
 ```python
 # Prima: biofilm_reward = 30.0, steady_bonus = 20.0  
 # Dopo: biofilm_reward = 38.0, steady_bonus = 25.0
@@ -348,6 +382,7 @@ if growth_rate < 0.01:
 ```
 
 #### **Ottimizzazione Spazio Azioni:**
+
 ```python
 # Riduzione flow rate massimi per ridurre shear stress
 flow_actions = [-8, -4, -2, -1, 0, 1, 2, 3, 4]  # Era: [-10, -5, ..., +10]
@@ -356,6 +391,7 @@ substrate_actions = [-2, -1, -0.5, 0, 0.5, 1, 1.5]  # Era: [-3, -2, ..., +4]
 ```
 
 #### **Flow Penalty per Biofilm Sub-Ottimale:**
+
 ```python
 # Penalità per flow rate >20 mL/h quando biofilm <90% dell'ottimale
 if avg_biofilm < optimal_thickness * 0.9:
@@ -374,6 +410,7 @@ if avg_biofilm < optimal_thickness * 0.9:
 | **Learning trend** | Declining | Stable | Stable | Stable | **Improving** |
 
 ### **🏆 Miglioramenti Ottenuti:**
+
 - **RMSE -42%**: 8.641 → 4.851 mmol/L (controllo concentrazione)
 - **MAE -37%**: 5.946 → 3.732 mmol/L (precisione migliorata)
 - **Reward +4.3%**: Performance Q-learning ottimizzata
@@ -381,9 +418,10 @@ if avg_biofilm < optimal_thickness * 0.9:
 - **Controllo fine**: Incrementi frazionari (±0.5 mmol/L)
 
 ### **🔬 Insights Tecnici:**
+
 - **Shear stress = 0.0001 × (flow_rate × 1e6)^0.5** è il fattore limitante
 - **Decay rate = 0.0002 × thickness** è parametro biologico fisso
-- **Flow rate <20 mL/h** favorisce crescita biofilm verso 1.3
+- **Flow rate \<20 mL/h** favorisce crescita biofilm verso 1.3
 - **Incrementi ±0.5 mmol/L** permettono convergenza precisa
 
 Il controller unificato rappresenta l'**evoluzione ottimizzata** del sistema, con parametri fine-tuned per equilibrare tutti gli obiettivi multi-criterio.
@@ -391,12 +429,14 @@ Il controller unificato rappresenta l'**evoluzione ottimizzata** del sistema, co
 ## **13. OPTUNA HYPERPARAMETER OPTIMIZATION**
 
 ### **🎯 Framework Implementato:**
+
 - **Bayesian Optimization** con Tree-structured Parzen Estimator (TPE)
 - **140 trials** paralleli su 14 thread (120h simulazioni)
 - **Top 14 validation** estesa (600h simulazioni)
 - **15+ parametri** ottimizzati automaticamente
 
 ### **⚡ Architettura Optuna:**
+
 ```python
 # Spazio parametri ottimizzato
 'biofilm_base_reward': 20.0-60.0
@@ -408,9 +448,10 @@ Il controller unificato rappresenta l'**evoluzione ottimizzata** del sistema, co
 ```
 
 ### **🏆 Trial Vincente #37:**
+
 - **Objective**: 8.991467 (migliore di 140 trials)
 - **Learning rate**: 0.0987 (vs 0.1 default)
-- **Discount factor**: 0.9517 (vs 0.95 default) 
+- **Discount factor**: 0.9517 (vs 0.95 default)
 - **Biofilm penalty**: 92.79× (molto severa)
 - **Flow actions**: [-12,+6] mL/h (asimmetrico)
 - **Substrate actions**: [-1.05,+1.20] mmol/L (fine)
@@ -429,6 +470,7 @@ Il controller unificato rappresenta l'**evoluzione ottimizzata** del sistema, co
 ### **🔧 Fix Tecnici Implementati:**
 
 #### **Epsilon Decay Correction:**
+
 ```python
 # PROBLEMA: epsilon cresceva esponenzialmente
 # decay_factor = epsilon_decay * 1.005 = 1.002 > 1 ❌
@@ -441,6 +483,7 @@ else:
 ```
 
 #### **Simulation Parameter Override:**
+
 ```python
 # Fix constructor parameters e array reinitialization
 sim.total_time = duration * 3600
@@ -449,17 +492,20 @@ sim.num_steps = int(sim.total_time / sim.dt)
 ```
 
 ### **📈 Performance Optimization Pipeline:**
+
 1. **Phase 1**: 140 trials × 120h → 5 minuti
-2. **Phase 2**: Top 14 × 600h → 43 minuti  
-3. **Total**: ~48 minuti per parametri ottimali
+1. **Phase 2**: Top 14 × 600h → 43 minuti
+1. **Total**: ~48 minuti per parametri ottimali
 
 ### **🎭 Dashboard Generato:**
+
 - **16-subplot visualization** completa
 - **Epsilon decay perfetto**: Exploration→Exploitation
 - **Flow control ottimizzato**: 5 mL/h finale
 - **Biofilm issue confermato**: Converge a 0.5 vs target 1.3
 
 ### **💡 Insights dall'Ottimizzazione:**
+
 - **Shear stress dominante**: Flow >20 mL/h impedisce crescita biofilm
 - **Reward asimmetrica**: Penalty per aumenti flow, bonus per riduzioni
 - **Concentrazione fine-tuning**: Incrementi ±0.5 mmol/L cruciali
@@ -468,12 +514,14 @@ sim.num_steps = int(sim.total_time / sim.dt)
 ## **14. CONTROLLER PRODUCTION-READY**
 
 ### **📁 Files Finali:**
+
 - `mfc_optuna_optimization.py` - Framework completo 140 trials
-- `mfc_unified_qlearning_optimized.py` - Controller ottimizzato  
+- `mfc_unified_qlearning_optimized.py` - Controller ottimizzato
 - `mfc_unified_qlearning_dashboard_*.png` - Visualization completa
 - `optuna_results/best_parameters_*.json` - Parametri vincenti
 
 ### **🎯 Achievements Completati:**
+
 - ✅ **Optuna framework** completamente funzionale
 - ✅ **14-thread optimization** massima performance
 - ✅ **Epsilon decay** corretto e validato
@@ -482,26 +530,30 @@ sim.num_steps = int(sim.total_time / sim.dt)
 - ✅ **Dashboard completo** per analisi
 
 ### **⚠️ Issues Rimanenti:**
+
 - **Biofilm thickness**: Converge a 0.5 invece di 1.3 ottimale
 - **Substrate utilization**: Molto bassa (0.025%)
 - **Shear stress**: Dominante vs growth rate nel bilancio biofilm
 
 ### **🚀 Prossimi Sviluppi:**
+
 - **Biofilm growth parameters** fine-tuning
-- **Shear stress model** optimization  
+- **Shear stress model** optimization
 - **Multi-objective NSGA-II** per trade-off biofilm/energia
 - **Transfer learning** per diverse configurazioni MFC
 
 ### **📈 Evoluzione del Sistema Finale:**
+
 1. **Modello base** con Q-learning per flow control
-2. **Dual control** con Q-learning + PID (limitato)
-3. **Unified Q-learning** con controllo completo integrato
-4. **Manual optimization** con reward fine-tuning (+10%, +25%)
-5. **Optuna optimization** con automated hyperparameter search ⭐
+1. **Dual control** con Q-learning + PID (limitato)
+1. **Unified Q-learning** con controllo completo integrato
+1. **Manual optimization** con reward fine-tuning (+10%, +25%)
+1. **Optuna optimization** con automated hyperparameter search ⭐
 
 Il sistema ha raggiunto la **massima evoluzione** con ottimizzazione automatica Bayesiana, identificando parametri ottimali in 48 minuti vs settimane di tuning manuale.
 
----
-*Generated on: 2025-07-23*  
-*Version: v1.3*  
+______________________________________________________________________
+
+*Generated on: 2025-07-23*\
+*Version: v1.3*\
 *Status: ✅ Fully Optimized & Production Ready*
