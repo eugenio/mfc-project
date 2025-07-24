@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import os
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 # Set style for professional plots
 plt.style.use('seaborn-v0_8')
@@ -23,9 +24,9 @@ def load_and_prepare_data():
     
     # Load datasets
     try:
-        unified_df = pd.read_csv('simulation_data/mfc_unified_qlearning_20250724_022416.csv')
-        non_unified_df = pd.read_csv('simulation_data/mfc_qlearning_20250724_022231.csv')
-        recirculation_df = pd.read_csv('simulation_data/mfc_recirculation_control_20250724_040215.csv')  # 1000h data
+        unified_df = pd.read_csv(get_simulation_data_path('mfc_unified_qlearning_20250724_022416.csv'))
+        non_unified_df = pd.read_csv(get_simulation_data_path('mfc_qlearning_20250724_022231.csv'))
+        recirculation_df = pd.read_csv(get_simulation_data_path('mfc_recirculation_control_20250724_040215.csv'))  # 1000h data
     except FileNotFoundError as e:
         print(f"Error loading data files: {e}")
         return None, None, None
@@ -587,13 +588,13 @@ def main():
     # 1. Biofilm Health Comparison
     print("   🧬 Creating biofilm health comparison...")
     fig1 = create_biofilm_health_comparison(unified_df, non_unified_df, recirculation_df)
-    fig1.savefig('figures/biofilm_health_comparison_1000h.png', dpi=300, bbox_inches='tight')
+    fig1.savefig(get_figure_path('biofilm_health_comparison_1000h.png'), dpi=300, bbox_inches='tight')
     plt.close(fig1)
     
     # 2. Substrate Management Comparison  
     print("   🍃 Creating substrate management comparison...")
     fig2 = create_substrate_management_comparison(unified_df, non_unified_df, recirculation_df)
-    fig2.savefig('figures/substrate_management_comparison_1000h.png', dpi=300, bbox_inches='tight')
+    fig2.savefig(get_figure_path('substrate_management_comparison_1000h.png'), dpi=300, bbox_inches='tight')
     plt.close(fig2)
     
     # 3. System Performance Comparison
