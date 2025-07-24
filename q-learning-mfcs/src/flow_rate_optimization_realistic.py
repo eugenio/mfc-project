@@ -10,6 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from dataclasses import dataclass
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 @dataclass
 class RealisticMFCParameters:
@@ -273,7 +274,7 @@ def analyze_and_plot():
     
     plt.suptitle('Realistic MFC Flow Rate Optimization', fontsize=16)
     plt.tight_layout()
-    plt.savefig('mfc_flow_optimization_realistic.png', dpi=300)
+    plt.savefig(get_figure_path('mfc_flow_optimization_realistic.png'), dpi=300)
     plt.close()
     
     # Comparison with current operation
@@ -292,4 +293,4 @@ def analyze_and_plot():
 
 if __name__ == "__main__":
     opt, results = analyze_and_plot()
-    print("\nOptimization complete! Check 'mfc_flow_optimization_realistic.png'")
+    print(f"\nOptimization complete! Check '{get_figure_path('mfc_flow_optimization_realistic.png')}'")
