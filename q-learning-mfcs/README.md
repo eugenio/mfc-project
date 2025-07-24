@@ -8,7 +8,7 @@ This project implements a complete MFC stack control system featuring:
 
 - **5-cell MFC stack simulation** with realistic electrochemical dynamics
 - **Q-learning controller** optimized for accelerator hardware (GPU/NPU/ASIC)
-- **Sensor simulation** with noise and calibration effects
+- **Advanced sensor simulation** with EIS/QCM biofilm sensing, noise and calibration effects
 - **Actuator control** for duty cycle, pH buffer, and acetate addition
 - **Cell reversal prevention** and recovery mechanisms
 - **Real-time optimization** for power stability and efficiency
@@ -30,6 +30,9 @@ This project implements a complete MFC stack control system featuring:
 - **Current sensors** - Load current measurement with noise simulation
 - **pH sensors** - Electrolyte pH monitoring for each cell
 - **Acetate sensors** - Substrate concentration tracking
+- **EIS sensors** - Electrochemical impedance spectroscopy for biofilm thickness monitoring
+- **QCM sensors** - Quartz crystal microbalance for biofilm mass measurement
+- **Sensor fusion** - Multi-algorithm data fusion with uncertainty quantification
 
 #### Actuator Systems
 
@@ -216,6 +219,37 @@ The Python implementations now feature universal GPU acceleration:
    - Aggregations (mean, sum)
    - Random number generation
 
+### EIS and QCM Sensor Integration (New)
+
+The system now includes comprehensive biofilm sensing capabilities:
+
+#### Electrochemical Impedance Spectroscopy (EIS)
+- **Biofilm thickness measurement** (5-80 μm range)
+- **Species-specific calibration** for G. sulfurreducens and S. oneidensis
+- **Equivalent circuit modeling** with Randles circuit representation
+- **Real-time biofilm conductivity monitoring**
+- **Literature-validated parameters** from recent MFC studies
+
+#### Quartz Crystal Microbalance (QCM)
+- **Biofilm mass sensing** (0-1000 ng/cm² range)
+- **Sauerbrey equation implementation** for rigid biofilms
+- **Viscoelastic corrections** for soft biofilms
+- **Multiple crystal types** (5 MHz and 10 MHz AT-cut)
+- **Temperature compensation** and drift correction
+
+#### Advanced Sensor Fusion
+- **Multi-algorithm fusion**: Kalman filter, weighted average, maximum likelihood, Bayesian inference
+- **Uncertainty quantification** with confidence intervals
+- **Fault detection and tolerance** for sensor degradation
+- **Real-time calibration** based on sensor agreement
+- **Performance metrics**: sensor agreement, fusion confidence, measurement quality
+
+#### Integration with Q-Learning Controller
+- **Extended state space** with sensor measurements (EIS thickness, QCM mass, sensor quality)
+- **Multi-objective rewards** incorporating biofilm health, sensor agreement, and system stability
+- **Adaptive exploration** based on sensor confidence
+- **Sensor-guided control decisions** for improved biofilm management
+
 ## Results and Analysis
 
 ### Simulation Results
@@ -275,12 +309,31 @@ python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
 
 ## Files Description
 
+### Core System
 - `odes.mojo` - MFC electrochemical model
 - `mfc_qlearning.mojo` - Q-learning controller (Mojo implementation)
 - `mfc_stack_simulation.py` - Complete stack simulation
 - `mfc_stack_demo.py` - Comprehensive demonstration
 - `mfc_qlearning_demo.py` - Basic Q-learning demo
 - `build_qlearning.py` - Build script
+
+### Advanced Models
+- `src/biofilm_kinetics/` - Biofilm formation and growth models
+- `src/metabolic_model.py` - Metabolic pathway modeling
+- `src/integrated_mfc_model.py` - Complete integrated MFC system
+- `src/mfc_recirculation_control.py` - Recirculation and substrate control
+- `src/sensing_enhanced_q_controller.py` - Sensor-enhanced Q-learning controller
+- `src/sensor_integrated_mfc_model.py` - MFC model with sensor feedback loops
+
+### Sensing Models
+- `src/sensing_models/eis_model.py` - Electrochemical impedance spectroscopy
+- `src/sensing_models/qcm_model.py` - Quartz crystal microbalance
+- `src/sensing_models/sensor_fusion.py` - Multi-sensor data fusion
+- `src/sensing_models/__init__.py` - Sensing models module
+
+### Testing
+- `tests/sensing_models/test_sensing_models.py` - Comprehensive sensor tests
+- `tests/run_tests.py` - Test suite runner
 - `README.md` - This documentation
 
 ## References
