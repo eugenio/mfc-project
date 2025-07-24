@@ -21,7 +21,7 @@ The `q-learning-mfcs/` directory contains a fully implemented Q-learning control
 
 - **Advanced Control**: Q-learning algorithm optimized for accelerator hardware (GPU/NPU/ASIC)
 - **Complete Simulation**: 5-cell MFC stack with realistic electrochemical dynamics
-- **Sensor Integration**: Voltage, current, pH, and substrate concentration monitoring
+- **Advanced Sensor Integration**: EIS and QCM biofilm sensing, voltage, current, pH, and substrate concentration monitoring
 - **Actuator Control**: PWM duty cycle, pH buffer, and acetate addition systems
 - **Performance**: 97.1% power stability, 100% cell reversal prevention
 - **Documentation**: Comprehensive LaTeX reports with analysis and figures
