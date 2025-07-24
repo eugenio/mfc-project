@@ -88,9 +88,12 @@ class GPUAccelerator:
         except Exception as e:
             print(f"⚠️  JAX available but GPU not functional: {e}")
         
-        if not self.available_backends:
-            print("💻 No GPU backends detected - will use CPU-only mode")
+        # Always add CPU as fallback option
+        if 'cpu' not in self.available_backends:
             self.available_backends.append('cpu')
+            
+        if len(self.available_backends) == 1 and self.available_backends[0] == 'cpu':
+            print("💻 No GPU backends detected - will use CPU-only mode")
     
     def _initialize_backend(self, prefer_backend: str):
         """Initialize the preferred backend."""
@@ -186,15 +189,15 @@ class GPUAccelerator:
         }
         print("   Using CPU-only computation")
     
-    def array(self, data, dtype=None):
+    def array(self, data, dtype=np.float32):
         """Create array on appropriate device."""
         if self.backend == 'cuda' and self.cp:
             return self.cp.asarray(data, dtype=dtype)
         elif self.backend == 'rocm' and self.torch:
             if isinstance(data, np.ndarray):
-                tensor = self.torch.from_numpy(data.copy())
+                tensor = self.torch.from_numpy(data.copy().astype(dtype))
             else:
-                tensor = self.torch.tensor(data, dtype=dtype)
+                tensor = self.torch.tensor(data, dtype=self._np_to_torch_dtype(dtype))
             return tensor.cuda()
         else:
             return np.asarray(data, dtype=dtype)
@@ -286,18 +289,181 @@ class GPUAccelerator:
                     'used': self.torch.cuda.memory_allocated()
                 }
         return None
+    
+    # Mathematical operations with automatic CPU fallback
+    def abs(self, array):
+        """Absolute value with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.abs(array)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.abs(array)
+        else:
+            return np.abs(array)
+    
+    def where(self, condition, x, y):
+        """Conditional selection with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.where(condition, x, y)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.where(condition, x, y)
+        else:
+            return np.where(condition, x, y)
+    
+    def maximum(self, x, y):
+        """Element-wise maximum with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.maximum(x, y)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.maximum(x, y)
+        else:
+            return np.maximum(x, y)
+    
+    def minimum(self, x, y):
+        """Element-wise minimum with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.minimum(x, y)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.minimum(x, y)
+        else:
+            return np.minimum(x, y)
+    
+    def log(self, array):
+        """Natural logarithm with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.log(array)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.log(array)
+        else:
+            return np.log(array)
+    
+    def exp(self, array):
+        """Exponential function with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.exp(array)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.exp(array)
+        else:
+            return np.exp(array)
+    
+    def clip(self, array, min_val, max_val):
+        """Clip values with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.clip(array, min_val, max_val)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.clamp(array, min_val, max_val)
+        else:
+            return np.clip(array, min_val, max_val)
+    
+    def mean(self, array, axis=None):
+        """Mean with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.mean(array, axis=axis)
+        elif self.backend == 'rocm' and self.torch:
+            if axis is None:
+                return self.torch.mean(array)
+            else:
+                return self.torch.mean(array, dim=axis)
+        else:
+            return np.mean(array, axis=axis)
+    
+    def sum(self, array, axis=None):
+        """Sum with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.sum(array, axis=axis)
+        elif self.backend == 'rocm' and self.torch:
+            if axis is None:
+                return self.torch.sum(array)
+            else:
+                return self.torch.sum(array, dim=axis)
+        else:
+            return np.sum(array, axis=axis)
+    
+    def sqrt(self, array):
+        """Square root with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.sqrt(array)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.sqrt(array)
+        else:
+            return np.sqrt(array)
+    
+    def power(self, array, exponent):
+        """Power function with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.power(array, exponent)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.pow(array, exponent)
+        else:
+            return np.power(array, exponent)
+    
+    def random_normal(self, shape, mean=0.0, std=1.0, dtype=np.float32):
+        """Generate random normal distribution with CPU fallback."""
+        if self.backend == 'cuda' and self.cp:
+            return self.cp.random.normal(mean, std, shape).astype(dtype)
+        elif self.backend == 'rocm' and self.torch:
+            return self.torch.normal(mean, std, shape, dtype=self._np_to_torch_dtype(dtype)).cuda()
+        else:
+            return np.random.normal(mean, std, shape).astype(dtype)
+    
+    def force_cpu_fallback(self):
+        """Force CPU fallback mode for testing or when GPU fails."""
+        print("🔄 Forcing CPU fallback mode")
+        self.backend = 'cpu'
+        self.cp = None
+        self.torch = None
+        self.device_info = {
+            'backend': 'cpu',
+            'device_count': 0,
+            'device_name': 'CPU (Fallback Mode)'
+        }
+        print("💻 Now using CPU-only computation")
+    
+    def test_gpu_functionality(self) -> bool:
+        """Test GPU functionality and fallback to CPU if needed."""
+        if self.backend == 'cpu':
+            return True
+            
+        try:
+            print("🧪 Testing GPU functionality...")
+            
+            # Create test arrays
+            a = self.array([1.0, 2.0, 3.0])
+            b = self.array([4.0, 5.0, 6.0])
+            
+            # Test basic operations
+            c = a + b
+            d = self.abs(a - b)
+            e = self.maximum(a, b)
+            f = self.mean(c)
+            
+            # Test conversion back to CPU
+            result = self.to_cpu(c)
+            expected = np.array([5.0, 7.0, 9.0])
+            
+            if not np.allclose(result, expected, rtol=1e-5):
+                raise ValueError("GPU computation results don't match expected values")
+            
+            print("✅ GPU functionality test passed")
+            return True
+            
+        except Exception as e:
+            print(f"❌ GPU functionality test failed: {e}")
+            print("🔄 Falling back to CPU mode...")
+            self.force_cpu_fallback()
+            return False
 
 
 # Global GPU accelerator instance
 _gpu_accelerator = None
 
-def get_gpu_accelerator(prefer_backend: str = 'auto', force_reinit: bool = False) -> GPUAccelerator:
+def get_gpu_accelerator(prefer_backend: str = 'auto', force_reinit: bool = False, test_functionality: bool = True) -> GPUAccelerator:
     """
-    Get global GPU accelerator instance.
+    Get global GPU accelerator instance with automatic CPU fallback.
     
     Args:
         prefer_backend: Preferred backend ('auto', 'cuda', 'rocm', 'cpu')
         force_reinit: Force reinitialization even if already created
+        test_functionality: Test GPU functionality and fallback to CPU if needed
     
     Returns:
         GPUAccelerator instance
@@ -306,6 +472,10 @@ def get_gpu_accelerator(prefer_backend: str = 'auto', force_reinit: bool = False
     
     if _gpu_accelerator is None or force_reinit:
         _gpu_accelerator = GPUAccelerator(prefer_backend)
+        
+        # Test GPU functionality and fallback to CPU if needed
+        if test_functionality and _gpu_accelerator.is_gpu_available():
+            _gpu_accelerator.test_gpu_functionality()
     
     return _gpu_accelerator
 
