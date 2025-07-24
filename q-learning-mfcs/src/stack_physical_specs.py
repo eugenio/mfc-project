@@ -9,6 +9,7 @@ import matplotlib.patches as patches
 from matplotlib.patches import Rectangle, Circle
 import matplotlib
 matplotlib.use('Agg')
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 def calculate_stack_dimensions():
     """Calculate physical dimensions from simulation parameters"""
@@ -322,10 +323,10 @@ def create_stack_diagram():
     ax2.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(0, 1))
     
     plt.tight_layout()
-    plt.savefig('mfc_stack_technical_diagram.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_stack_technical_diagram.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Technical diagram saved to 'mfc_stack_technical_diagram.png'")
+    print(f"Technical diagram saved to '{get_figure_path('mfc_stack_technical_diagram.png')}'")
 
 def create_specifications_sheet():
     """Create a detailed specifications sheet"""
@@ -458,10 +459,10 @@ def create_specifications_sheet():
             ha='center', va='bottom', fontsize=10, style='italic',
             transform=ax.transAxes)
     
-    plt.savefig('mfc_stack_specifications.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_stack_specifications.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Specifications sheet saved to 'mfc_stack_specifications.png'")
+    print(f"Specifications sheet saved to '{get_figure_path('mfc_stack_specifications.png')}'")
 
 def main():
     """Main function to calculate and display stack characteristics"""
@@ -477,8 +478,8 @@ def main():
     
     print("\n=== Technical Documentation Generated ===")
     print("Files created:")
-    print("1. mfc_stack_technical_diagram.png - Technical assembly diagram")
-    print("2. mfc_stack_specifications.png - Detailed specifications sheet")
+    print(f"1. {get_figure_path('mfc_stack_technical_diagram.png')} - Technical assembly diagram")
+    print(f"2. {get_figure_path('mfc_stack_specifications.png')} - Detailed specifications sheet")
     print()
     print("The stack is compact, lightweight, and suitable for")
     print("laboratory research and small-scale applications.")
