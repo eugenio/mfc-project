@@ -15,13 +15,15 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 ## Optimization Objectives
 
 ### Primary Objectives
+
 1. **Maximize instantaneous power output**
-2. **Maximize substrate consumption per pass**
-3. **Minimize biofilm growth rate**
+1. **Maximize substrate consumption per pass**
+1. **Minimize biofilm growth rate**
 
 ### Secondary Constraints
+
 - Maintain coulombic efficiency >95%
-- Keep biofilm factor <1.5 (maintenance threshold)
+- Keep biofilm factor \<1.5 (maintenance threshold)
 - Ensure practical residence time (>1 minute)
 
 ## Analysis Results
@@ -29,11 +31,13 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 ### Key Findings
 
 1. **Current Flow Rate Issues**:
+
    - Very short residence time (2.4 seconds)
    - Extremely low substrate utilization (0.91%)
    - High flow velocity limits mass transfer
 
-2. **Optimal Flow Rate Range**:
+1. **Optimal Flow Rate Range**:
+
    - **Recommended**: 15-25 mL/h (60-70% reduction from current)
    - **Residence Time**: 2-3 minutes
    - **Substrate Efficiency**: 15-25% per pass
@@ -43,19 +47,22 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 #### Why Reduce Flow Rate?
 
 1. **Mass Transfer Limitation**:
+
    ```
    Residence time τ = V_a / Q_a
    Current: τ = 55 μL / 81 mL/h = 2.4 seconds
    Optimal: τ = 55 μL / 20 mL/h = 10 seconds
    ```
 
-2. **Substrate Consumption Kinetics**:
+1. **Substrate Consumption Kinetics**:
+
    - Monod kinetics: r = r_max × C/(K + C)
    - Longer residence time allows more complete conversion
    - Current: C_AC ≈ 1.55 mol/m³ (very little consumed)
    - Optimal: C_AC ≈ 1.2 mol/m³ (20-25% consumed)
 
-3. **Biofilm Growth Control**:
+1. **Biofilm Growth Control**:
+
    - Moderate flow prevents excessive shear stress
    - Longer residence time improves biofilm stability
    - Reduced biofilm growth rate with balanced conditions
@@ -63,16 +70,19 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 ## Recommended Operating Strategy
 
 ### Phase 1: Flow Rate Reduction (Week 1-2)
+
 - Gradually reduce flow rate from 81 to 25 mL/h
 - Monitor power output and substrate efficiency
 - Adjust based on performance metrics
 
 ### Phase 2: Fine Tuning (Week 3-4)
+
 - Optimize between 15-25 mL/h based on results
 - Implement adaptive control based on biofilm thickness
 - Monitor coulombic efficiency
 
 ### Phase 3: Long-term Operation
+
 - Maintain optimal flow rate with periodic adjustments
 - Implement biofilm cleaning when factor >1.5
 - Monitor for performance degradation
@@ -90,23 +100,28 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 ## Implementation Considerations
 
 ### Technical Requirements
+
 1. **Flow Control System**:
+
    - Precision pump with flow rate control
    - Flow sensors for monitoring
    - Automated control system
 
-2. **Monitoring Parameters**:
+1. **Monitoring Parameters**:
+
    - Real-time power output
    - Inlet/outlet acetate concentration
    - pH and conductivity
    - Biofilm thickness indicators
 
-3. **Safety Considerations**:
+1. **Safety Considerations**:
+
    - Backup flow system
    - Alarm systems for flow deviation
    - Manual override capability
 
 ### Economic Impact
+
 - **Substrate Cost Reduction**: 75% less fresh medium required
 - **Improved Power Output**: 15-20% increase in stable power
 - **Reduced Maintenance**: Better biofilm control
@@ -115,11 +130,13 @@ Based on the energy balance analysis and continuous flow model, we've developed 
 ## Mathematical Model
 
 ### Residence Time Optimization
+
 ```
 τ_optimal = sqrt(K_AC * V_a / (k_max * X * A_m))
 ```
 
 Where:
+
 - K_AC = 0.592 mol/m³ (acetate half-saturation)
 - V_a = 5.5×10⁻⁵ m³ (anodic volume)
 - k_max = maximum rate constant
@@ -127,6 +144,7 @@ Where:
 - A_m = membrane area
 
 ### Substrate Conversion
+
 ```
 η = (C_in - C_out) / C_in = τ * k_max * X / (K_AC + C_avg)
 ```
@@ -134,6 +152,7 @@ Where:
 Target efficiency: η = 0.2 (20% conversion)
 
 ### Biofilm Growth Model
+
 ```
 dB/dt = k_growth * (C_substrate / (K_s + C_substrate)) - k_decay * B
 ```
@@ -143,6 +162,7 @@ Optimal conditions minimize dB/dt while maximizing power.
 ## Conclusion
 
 Flow rate optimization offers significant improvements in MFC performance:
+
 - **75% reduction in flow rate** (81 → 20 mL/h)
 - **20-fold improvement in substrate efficiency**
 - **15-20% increase in stable power output**
@@ -153,7 +173,7 @@ This optimization transforms the system from a low-efficiency, high-throughput o
 ## Next Steps
 
 1. Implement variable flow rate control system
-2. Conduct experimental validation of optimization
-3. Develop adaptive control algorithm
-4. Monitor long-term performance and stability
-5. Scale optimization to larger systems
+1. Conduct experimental validation of optimization
+1. Develop adaptive control algorithm
+1. Monitor long-term performance and stability
+1. Scale optimization to larger systems
