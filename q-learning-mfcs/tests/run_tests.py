@@ -18,6 +18,8 @@ sys.path.insert(0, str(src_dir))
 from test_path_config import TestPathConfig
 from test_file_outputs import TestFileOutputIntegration, TestSpecificFileImports
 from test_actual_executions import TestActualFileExecutions, TestFileOutputPatterns
+from test_gpu_capability import TestGPUCapability
+from test_gpu_acceleration import TestGPUAcceleration
 
 
 def create_test_suite():
@@ -36,12 +38,16 @@ def create_test_suite():
     suite.addTest(loader.loadTestsFromTestCase(TestActualFileExecutions))
     suite.addTest(loader.loadTestsFromTestCase(TestFileOutputPatterns))
     
+    # Add GPU capability tests
+    suite.addTest(loader.loadTestsFromTestCase(TestGPUCapability))
+    suite.addTest(loader.loadTestsFromTestCase(TestGPUAcceleration))
+    
     return suite
 
 
 def run_tests(verbosity=2):
     """Run all tests with specified verbosity."""
-    print("🧪 MFC Q-Learning Project - Path Output Test Suite")
+    print("🧪 MFC Q-Learning Project - Comprehensive Test Suite")
     print("=" * 60)
     print(f"Running tests from: {Path(__file__).parent}")
     print(f"Source directory: {src_dir}")
@@ -94,7 +100,9 @@ def run_specific_test_class(test_class_name, verbosity=2):
         'file_outputs': TestFileOutputIntegration,
         'imports': TestSpecificFileImports,
         'executions': TestActualFileExecutions,
-        'patterns': TestFileOutputPatterns
+        'patterns': TestFileOutputPatterns,
+        'gpu_capability': TestGPUCapability,
+        'gpu_acceleration': TestGPUAcceleration
     }
     
     if test_class_name not in test_classes:
@@ -115,7 +123,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Run MFC Q-Learning path output tests')
     parser.add_argument('--test-class', '-c', 
-                       help='Run specific test class (path_config, file_outputs, imports, executions, patterns)')
+                       help='Run specific test class (path_config, file_outputs, imports, executions, patterns, gpu_capability, gpu_acceleration)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output')
     parser.add_argument('--quiet', '-q', action='store_true', 
