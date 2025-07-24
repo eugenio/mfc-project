@@ -443,13 +443,13 @@ GPU:        O(n²/p)  - Parallel tensor operations (p = parallelism factor)
 
 ```bash
 # Run baseline simulation
-mojo run q-learning-mfcs/mfc_100h_simple.mojo
+mojo run q-learning-mfcs/src/mfc_100h_simple.mojo
 
 # Run recommended enhanced version
-mojo run q-learning-mfcs/mfc_100h_enhanced.mojo
+mojo run q-learning-mfcs/src/mfc_100h_enhanced.mojo
 
 # Run comprehensive benchmark
-python3 q-learning-mfcs/run_gpu_simulation.py
+python3 q-learning-mfcs/src/run_gpu_simulation.py
 ```
 
 ### Configuration Parameters
