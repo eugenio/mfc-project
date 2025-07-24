@@ -6,14 +6,15 @@ Visualization analysis of substrate utilization performance between unified and 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 def create_analysis_plots():
     """Create visualization plots for the MFC comparison analysis"""
     
     # Read the data files
     print("Loading simulation data for visualization...")
-    unified_data = pd.read_csv('/home/uge/mfc-project/q-learning-mfcs/simulation_data/mfc_unified_qlearning_20250724_022416.csv')
-    non_unified_data = pd.read_csv('/home/uge/mfc-project/q-learning-mfcs/simulation_data/mfc_qlearning_20250724_022231.csv')
+    unified_data = pd.read_csv(get_simulation_data_path('mfc_unified_qlearning_20250724_022416.csv'))
+    non_unified_data = pd.read_csv(get_simulation_data_path('mfc_qlearning_20250724_022231.csv'))
     
     # Calculate corrected substrate utilization for unified model
     unified_substrate_util = ((unified_data['inlet_concentration'] - unified_data['avg_outlet_concentration']) / 
@@ -82,7 +83,7 @@ def create_analysis_plots():
     axes[1, 1].grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('/home/uge/mfc-project/q-learning-mfcs/mfc_comparison_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_comparison_analysis.png'), dpi=300, bbox_inches='tight')
     print("Plot saved as: /home/uge/mfc-project/q-learning-mfcs/mfc_comparison_analysis.png")
     
     # Print key statistics for the plots
