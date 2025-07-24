@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar, differential_evolution
 from dataclasses import dataclass
 from typing import Tuple
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 @dataclass
 class MFCParameters:
@@ -293,7 +294,7 @@ def plot_optimization_results(results: dict, optimal: dict):
     ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('mfc_flow_optimization_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_flow_optimization_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Create summary table
@@ -350,7 +351,7 @@ def plot_optimization_results(results: dict, optimal: dict):
     ax.set_title('Flow Rate Optimization Summary\nCurrent vs Optimal Performance', 
                  fontsize=14, fontweight='bold', pad=20)
     
-    plt.savefig('mfc_flow_optimization_summary.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_flow_optimization_summary.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
 def main():
