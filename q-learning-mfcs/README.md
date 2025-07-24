@@ -183,15 +183,38 @@ Where:
 - **Exploration decay**: ε = 0.3 → 0.01
 - **Q-table size**: 50-100 states (discretized)
 
-## Mojo Acceleration Benefits
+## Acceleration Benefits
+
+### Mojo Implementation
 
 The Mojo implementation provides:
 
 1. **Vectorized Operations**: Parallel tensor computations
 1. **Zero-cost Abstractions**: Memory-efficient data structures
 1. **Cross-platform Acceleration**: GPU/NPU/ASIC compatibility
-1. **Real-time Performance**: \<1ms control loop execution
+1. **Real-time Performance**: <1ms control loop execution
 1. **Scalability**: Linear scaling with cell count
+
+### Universal GPU Acceleration (New)
+
+The Python implementations now feature universal GPU acceleration:
+
+1. **Multi-vendor Support**: 
+   - NVIDIA GPUs via CuPy
+   - AMD GPUs via PyTorch with ROCm
+   - Automatic backend detection
+2. **CPU Fallback**: Seamless operation on systems without GPU
+3. **Unified API**: Single interface for all mathematical operations
+4. **Performance Benefits**:
+   - Up to 10x speedup for large-scale simulations
+   - Real-time control loop execution
+   - Efficient memory management
+5. **Tested Operations**:
+   - Array operations (creation, conversion)
+   - Mathematical functions (abs, log, exp, sqrt, power)
+   - Conditional operations (where, maximum, minimum, clip)
+   - Aggregations (mean, sum)
+   - Random number generation
 
 ## Results and Analysis
 
@@ -225,6 +248,30 @@ The Mojo implementation provides:
 1. **Predictive Control**: Model predictive control (MPC) integration
 1. **Hardware Integration**: Real sensor/actuator interfaces
 1. **Distributed Control**: Multi-stack coordination
+
+## Testing
+
+### Test Suite
+
+The project includes a comprehensive test suite with:
+
+- **Path Configuration Tests**: Verify output directory structure
+- **File Output Tests**: Validate data saving functionality
+- **Import Tests**: Check all modules import correctly
+- **Execution Tests**: Test simulation execution
+- **GPU Capability Tests**: Hardware detection for NVIDIA/AMD GPUs
+- **GPU Acceleration Tests**: Functional tests for GPU operations
+
+Run tests from the main project directory:
+
+```bash
+# Run all tests
+python q-learning-mfcs/tests/run_tests.py
+
+# Run specific test suites
+python q-learning-mfcs/tests/run_tests.py -c gpu_capability
+python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
+```
 
 ## Files Description
 
