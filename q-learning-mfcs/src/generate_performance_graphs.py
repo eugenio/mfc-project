@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from datetime import datetime, timedelta
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 # Set style for better-looking plots
 plt.style.use('default')
@@ -408,10 +409,10 @@ def create_comprehensive_performance_plots():
     
     # Save the plot
     plt.tight_layout()
-    plt.savefig('mfc_100h_comprehensive_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_comprehensive_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Comprehensive performance graphs saved to 'mfc_100h_comprehensive_analysis.png'")
+    print(f"Comprehensive performance graphs saved to '{get_figure_path('mfc_100h_comprehensive_analysis.png')}'")
     
     return data
 
@@ -537,10 +538,10 @@ def create_additional_analysis_plots(data):
     ax6.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_detailed_analysis.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_detailed_analysis.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print("Detailed analysis plots saved to 'mfc_100h_detailed_analysis.png'")
+    print(f"Detailed analysis plots saved to '{get_figure_path('mfc_100h_detailed_analysis.png')}'")
 
 def main():
     """Main function to generate all performance graphs"""
@@ -557,8 +558,8 @@ def main():
     
     print("\n=== Performance Analysis Complete ===")
     print("Generated plots:")
-    print("1. mfc_100h_comprehensive_analysis.png - Main performance dashboard")
-    print("2. mfc_100h_detailed_analysis.png - Detailed technical analysis")
+    print(f"1. {get_figure_path('mfc_100h_comprehensive_analysis.png')} - Main performance dashboard")
+    print(f"2. {get_figure_path('mfc_100h_detailed_analysis.png')} - Detailed technical analysis")
     print()
     print("Key insights from the graphs:")
     print("✓ Power peaked at 0.190W during optimization phase")
