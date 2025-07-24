@@ -17,9 +17,9 @@ struct QLearningMFCConfig:
         self.n_cells = 5
         self.simulation_hours = 100
         self.time_step = 1.0
-        self.learning_rate = 0.1
-        self.epsilon = 0.3
-        self.epsilon_decay = 0.995
+        self.learning_rate = 0.0987
+        self.epsilon = 0.3702
+        self.epsilon_decay = 0.9978
 
 
 struct QLearningMFCStack:

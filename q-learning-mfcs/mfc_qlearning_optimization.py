@@ -27,13 +27,13 @@ except ImportError:
     print("GPU acceleration not available, using CPU")
 
 class QLearningFlowController:
-    def __init__(self, learning_rate=0.1, discount_factor=0.95, epsilon=0.3):
+    def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702):
         """Q-Learning controller for flow rate optimization"""
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.epsilon = epsilon
-        self.epsilon_decay = 0.995
-        self.epsilon_min = 0.05
+        self.epsilon_decay = 0.9978
+        self.epsilon_min = 0.1020
         
         # Q-table stored as nested dictionary
         self.q_table = defaultdict(lambda: defaultdict(float))
@@ -53,8 +53,8 @@ class QLearningFlowController:
         self.substrate_bins = np.linspace(0, 50, 10)  # Utilization 0-50% into 10 bins
         self.time_bins = np.array([200, 500, 800, 1000])  # Time phases in hours
         
-        # Action space: flow rate adjustments
-        self.actions = np.array([-10, -5, -2, -1, 0, 1, 2, 5, 10])  # mL/h adjustments
+        # Action space: flow rate adjustments (from optimal parameters)
+        self.actions = np.array([-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])  # mL/h adjustments
         
     def discretize_state(self, power, biofilm_deviation, substrate_utilization, time_hours):
         """Convert continuous state to discrete state key"""
