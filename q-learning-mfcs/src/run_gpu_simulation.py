@@ -1,3 +1,4 @@
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 """
 GPU-Accelerated 100-Hour MFC Simulation Runner
 
@@ -569,7 +570,7 @@ def generate_comparison_plots(successful_results):
                 f'{eff:.3f}', ha='center', va='bottom', fontweight='bold')
     
     plt.tight_layout()
-    plt.savefig('mfc_simulation_comparison.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_simulation_comparison.png'), dpi=300, bbox_inches='tight')
     print("Comparison plots saved to 'mfc_simulation_comparison.png'")
 
 def save_performance_data(performance_log, n_points):
@@ -600,7 +601,7 @@ def save_performance_data(performance_log, n_points):
     }
     
     # Save to JSON file
-    filename = 'mfc_performance_data.json'
+    filename = get_simulation_data_path('mfc_performance_data.json')
     with open(filename, 'w') as f:
         json.dump(performance_data, f, indent=2)
     
@@ -662,7 +663,7 @@ def generate_plots(performance_log, n_points):
     ax4.grid(True)
     
     plt.tight_layout()
-    plt.savefig('mfc_100h_python_results.png', dpi=300, bbox_inches='tight')
+    plt.savefig(get_figure_path('mfc_100h_python_results.png'), dpi=300, bbox_inches='tight')
     print("Python simulation plots saved to 'mfc_100h_python_results.png'")
 
 def main():

@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import time
 from collections import defaultdict
 import pickle
+from path_config import get_figure_path, get_simulation_data_path, get_model_path
 
 # Try to import GPU acceleration libraries
 try:
@@ -696,12 +697,12 @@ class MFCDynamicSubstrateSimulation:
         
         # Save CSV
         df = pd.DataFrame(csv_data)
-        csv_filename = f'simulation_data/mfc_dynamic_substrate_{timestamp}.csv'
+        csv_filename = get_simulation_data_path(f'mfc_dynamic_substrate_{timestamp}.csv')
         df.to_csv(csv_filename, index=False)
         print(f"CSV data saved to {csv_filename}")
         
         # Save Q-learning model
-        q_model_filename = f'q_learning_models/q_table_dynamic_{timestamp}.pkl'
+        q_model_filename = get_model_path(f'q_table_dynamic_{timestamp}.pkl')
         with open(q_model_filename, 'wb') as f:
             pickle.dump(dict(self.q_controller.q_table), f)
         print(f"Q-table saved to {q_model_filename}")
@@ -748,7 +749,7 @@ class MFCDynamicSubstrateSimulation:
         }
         
         # Save JSON
-        json_filename = f'simulation_data/mfc_dynamic_substrate_{timestamp}.json'
+        json_filename = get_simulation_data_path(f'mfc_dynamic_substrate_{timestamp}.json')
         with open(json_filename, 'w') as f:
             json.dump(json_data, f, indent=2)
         print(f"JSON data saved to {json_filename}")
@@ -939,7 +940,7 @@ class MFCDynamicSubstrateSimulation:
         plt.tight_layout()
         
         # Save dashboard
-        dashboard_filename = f'figures/mfc_dynamic_substrate_dashboard_{timestamp}.png'
+        dashboard_filename = get_figure_path(f'mfc_dynamic_substrate_dashboard_{timestamp}.png')
         plt.savefig(dashboard_filename, dpi=300, bbox_inches='tight')
         print(f"Dynamic substrate control dashboard saved to {dashboard_filename}")
         
@@ -1062,7 +1063,7 @@ class MFCDynamicSubstrateSimulation:
         plt.tight_layout()
         
         # Save control analysis figure
-        control_filename = f'figures/mfc_substrate_control_analysis_{timestamp}.png'
+        control_filename = get_figure_path(f'mfc_substrate_control_analysis_{timestamp}.png')
         plt.savefig(control_filename, dpi=300, bbox_inches='tight')
         print(f"Substrate control analysis saved to {control_filename}")
         
@@ -1094,8 +1095,9 @@ def main():
     
     print("\n=== DYNAMIC SUBSTRATE CONTROL SIMULATION COMPLETE ===")
     print(f"Results saved with timestamp: {timestamp}")
-    print("Check 'simulation_data/' for CSV, JSON files and Q-learning model")
-    print("Check 'figures/' for dual control visualization dashboard")
+    print(f"Data saved to: {get_simulation_data_path('')}")
+    print(f"Figures saved to: {get_figure_path('')}")
+    print(f"Models saved to: {get_model_path('')}")
     
     # Final summary
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)

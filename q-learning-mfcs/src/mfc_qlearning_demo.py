@@ -1,3 +1,4 @@
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 """
 High-performance Q-learning MFC controller demo using Mojo accelerated backend.
 
