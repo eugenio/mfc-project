@@ -12,10 +12,11 @@ import numpy as np
 import json
 import glob
 from datetime import datetime
+from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 
 def load_simulation_data(file_pattern):
     """Load the most recent simulation data matching pattern"""
-    files = glob.glob(f"simulation_data/{file_pattern}")
+    files = glob.glob(get_simulation_data_path(file_pattern))
     if not files:
         return None, None
     
@@ -250,7 +251,7 @@ def create_literature_comparison_plots():
     # Save the figure
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"figures/literature_validation_comparison_{timestamp}.png"
-    plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='white')
+    plt.savefig(get_figure_path(filename), dpi=300, bbox_inches='tight', facecolor='white')
     print(f"✅ Comparison plots saved to: {filename}")
     
     # plt.show()  # Disabled for non-interactive mode
