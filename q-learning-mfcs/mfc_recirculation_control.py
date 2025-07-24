@@ -94,6 +94,15 @@ class SubstrateConcentrationController:
         self.halt_threshold = 0.5  # mmol/L decline threshold
         self.previous_outlet_conc = None
         
+        # Enhanced feedback control parameters
+        self.starvation_threshold_critical = 2.0  # mmol/L
+        self.starvation_threshold_warning = 5.0  # mmol/L
+        self.excess_threshold = 25.0  # mmol/L - halt addition if too high
+        
+        # Adaptive control gains
+        self.control_mode = "normal"  # normal, emergency, conservation
+        self.control_history = []
+        
     def calculate_substrate_addition(self, outlet_conc, reservoir_conc, cell_concentrations, dt_hours):
         """Calculate substrate addition rate based on multi-sensor feedback"""
         
@@ -131,21 +140,57 @@ class SubstrateConcentrationController:
         elif min_cell_conc < 2.0:  # Critical starvation
             starvation_factor = 5.0  # Emergency boost
         
-        # 4. Check for halt condition (declining outlet concentration)
+        # 4. Enhanced halt conditions and adaptive control mode
         halt_addition = False
+        
+        # Check for declining outlet concentration
         if self.previous_outlet_conc is not None:
             outlet_decline = self.previous_outlet_conc - outlet_conc
             if outlet_decline > self.halt_threshold:
                 halt_addition = True
         
-        # 5. Combine control signals
-        base_addition_rate = (outlet_control + reservoir_control) * starvation_factor
+        # Check for excess concentration (prevent waste)
+        if reservoir_conc > self.excess_threshold:
+            halt_addition = True
+            self.control_mode = "conservation"
+        
+        # Adaptive control mode selection
+        if min_cell_conc < self.starvation_threshold_critical:
+            self.control_mode = "emergency"
+            starvation_factor *= 3.0  # Triple the addition rate
+        elif min_cell_conc < self.starvation_threshold_warning:
+            self.control_mode = "warning"
+            starvation_factor *= 1.5  # Increase addition rate
+        else:
+            self.control_mode = "normal"
+        
+        # 5. Combine control signals with adaptive gains
+        if self.control_mode == "emergency":
+            # Emergency mode: prioritize cell feeding
+            base_addition_rate = max(outlet_control, reservoir_control) * starvation_factor
+        elif self.control_mode == "conservation":
+            # Conservation mode: reduce addition
+            base_addition_rate = min(outlet_control, reservoir_control) * 0.5
+        else:
+            # Normal mode: balanced control
+            base_addition_rate = (outlet_control + reservoir_control) * starvation_factor
         
         # Apply limits and halt condition
         if halt_addition:
             addition_rate = 0.0
         else:
             addition_rate = np.clip(base_addition_rate, self.min_addition_rate, self.max_addition_rate)
+        
+        # Log control decision
+        control_decision = {
+            'mode': self.control_mode,
+            'outlet_error': outlet_error,
+            'reservoir_error': reservoir_error,
+            'min_cell_conc': min_cell_conc,
+            'addition_rate': addition_rate,
+            'halt': halt_addition
+        }
+        self.control_history.append(control_decision)
         
         # Update previous values
         self.previous_outlet_error = outlet_error

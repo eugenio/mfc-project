@@ -27,11 +27,11 @@ struct MFCQLearningConfig:
     var max_steps_per_episode: Int
 
     fn __init__(out self):
-        self.learning_rate = 0.1
-        self.discount_factor = 0.9
-        self.epsilon = 0.3
-        self.epsilon_decay = 0.995
-        self.epsilon_min = 0.01
+        self.learning_rate = 0.0987
+        self.discount_factor = 0.9517
+        self.epsilon = 0.3702
+        self.epsilon_decay = 0.9978
+        self.epsilon_min = 0.1020
         self.n_state_bins = 10
         self.n_action_bins = 10
         self.max_episodes = 1000
