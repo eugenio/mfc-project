@@ -136,6 +136,10 @@ class QLearningConfig:
     stability_target_flow_rate: float = 15.0  # Target flow rate for stability (mL/h)
     stability_target_outlet_concentration: float = 12.0  # Target outlet concentration (mM)
     
+    # Substrate concentration bounds
+    substrate_concentration_min: float = 5.0  # mmol/L minimum
+    substrate_concentration_max: float = 45.0  # mmol/L maximum
+    
     # Action selection parameters
     flow_adjustment_unit: float = 1e-6  # Flow rate adjustment unit (m³/s)
     flow_conversion_factor: float = 3.6  # Conversion factor for flow units
