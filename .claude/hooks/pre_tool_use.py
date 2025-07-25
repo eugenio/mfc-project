@@ -8,6 +8,7 @@ import sys
 import re
 import os
 import subprocess
+from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
 
@@ -694,6 +695,14 @@ def check_edit_thresholds(tool_name, tool_input):
 
 def main():
     print("DEBUG: pre_tool_use.py hook started", file=sys.stderr)
+    
+    # Log hook execution to a file for debugging
+    try:
+        with open('/tmp/hook_debug.log', 'a') as f:
+            f.write(f"Hook called at {datetime.now()}\n")
+    except:
+        pass
+    
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
