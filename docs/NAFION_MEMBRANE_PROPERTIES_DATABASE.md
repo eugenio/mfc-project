@@ -1,6 +1,7 @@
 # Nafion Membrane Properties Database for MFC Oxygen Crossover Calculations
 
 ## Overview
+
 This database contains comprehensive quantitative data on Nafion membrane properties specifically relevant to microbial fuel cell (MFC) oxygen crossover modeling. All values include source conditions (temperature, humidity) and membrane grades for immediate use in calculations.
 
 ## Physical Properties
@@ -9,19 +10,21 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 
 | Membrane Grade | Dry Thickness (μm) | Wet Thickness (μm) | Equivalent Weight (g/mol) |
 |---------------|-------------------|-------------------|--------------------------|
-| Nafion 112    | 50                | 71                | 1100                     |
-| Nafion 1135   | 88                | 112               | 1100                     |
-| Nafion 115    | 125               | 161               | 1100                     |
-| Nafion 117    | 175-183           | 220               | 1100                     |
-| Nafion 212    | ~50               | -                 | 1100                     |
-| Nafion NR211  | ~25               | -                 | 1100                     |
+| Nafion 112 | 50 | 71 | 1100 |
+| Nafion 1135 | 88 | 112 | 1100 |
+| Nafion 115 | 125 | 161 | 1100 |
+| Nafion 117 | 175-183 | 220 | 1100 |
+| Nafion 212 | ~50 | - | 1100 |
+| Nafion NR211 | ~25 | - | 1100 |
 
 **Notes:**
+
 - Nafion 117: 0.007 inches (178 μm) thickness
 - NR211 is current technological standard for fuel cells
 - Wet thickness measurements at room temperature in water
 
 ### Density and Porosity
+
 - **Dry Density**: Membrane-specific values not explicitly provided in literature
 - **Porosity**: Non-porous ion-exchange membrane (porosity ≈ 0%)
 - **Structure**: Perfluorinated sulfonic acid polymer with ionic channels
@@ -35,6 +38,7 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 | Equilibration Time | 24 hours | 24 hours | To reach steady state |
 
 **Temperature/Humidity Dependencies:**
+
 - Water uptake increases with relative humidity following BET equation
 - Nafion 211 shows higher water content than Nafion 117
 - Thin membranes exhibit higher water uptake vs swelling ratio
@@ -51,10 +55,12 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 | Nafion (MFC) | 25 | - | DO = 5.35 × 10⁻⁶ | cm²/s | Diffusion coefficient |
 
 **Unit Conversions:**
+
 - 3.85 × 10¹² mol cm⁻¹ s⁻¹ = 3.85 × 10¹⁰ mol m⁻¹ s⁻¹
 - Oxygen transport resistance: 1.6 s cm⁻¹ at 80°C, 75% RH
 
 **Activation Energy:**
+
 - O₂ diffusion in Nafion 112: 12.58 kJ mol⁻¹
 - Enthalpy of mixing for O₂: 5.88 kJ mol⁻¹
 
@@ -70,17 +76,21 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 | Nafion NR212 | 80 | 95 | 0.95 | Near saturation |
 
 **Key Dependencies:**
-- **Temperature Effects**: 
+
+- **Temperature Effects**:
+
   - Conductivity increases up to 80°C
   - Above 80°C, conductivity plateaus (80-100°C identical)
   - Activation energy: ~130 meV for all Nafion types
-  
+
 - **Humidity Effects**:
+
   - Exponential increase with relative humidity
-  - At low RH (<50%): minimal temperature dependence
+  - At low RH (\<50%): minimal temperature dependence
   - At high RH (>60%): strong temperature dependence
 
 **Directional Properties:**
+
 - Extruded membranes (112): highest conductivity in extrusion direction
 - Dispersion-cast membranes (NR212): isotropic conductivity
 
@@ -93,6 +103,7 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 | Water Diffusion Coefficient | 25 | 2-10 × 10⁻⁵ | cm²s⁻¹ | General Nafion |
 
 **Enhancement Strategies:**
+
 - Modified Nafion/H₃PO₄: 0.2-0.6 H₂O/H⁺
 - Contact with liquid water: ~3× higher flux than vapor
 - Temperature dependence: linear increase from 15-130°C
@@ -109,6 +120,7 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 | Nafion | 60°C operation | 186-210 | mΩ·cm² | Fuel cell |
 
 **MFC-Specific Values:**
+
 - Solution resistance (Rs): 6.5 Ω (conventional), 2.6 Ω (modified)
 - Charge transfer resistance (Rct): ~10 Ω
 - Internal resistance range: 148-300 Ω (varies with membrane condition)
@@ -124,27 +136,32 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 ### Ion Selectivity and Performance
 
 **Membrane Performance in MFCs:**
+
 - Pretreated Nafion 117: 100 mW/m² maximum power
 - Untreated Nafion 117: 52.8 mW/m²
 - Biofouled Nafion 117: 20.9 mW/m²
 
 **Comparative Performance:**
+
 - Anion exchange membranes: 2-5× higher energy yields than Nafion
 - Lower internal resistance: AEM (148 Ω) vs Nafion (higher)
 
 ## Temperature and Humidity Correlation Models
 
 ### Conductivity Models
+
 - **Humidity dependence**: Exponential function
 - **Temperature dependence**: Arrhenius equation below 80°C
 - **Water content correlation**: BET equation for vapor sorption
 
 ### Transport Mechanism Transitions
+
 - **Low hydration**: Vehicle mechanism (proton + water)
 - **High hydration**: Structure diffusion mechanism
 - **Amplification factor**: A = 2.5 for fully hydrated Nafion 117
 
 ## Cost Considerations
+
 - **Nafion 117 price range**: 1400-2200 US$/m²
 - **Regional variations**: Significant price disparities between locations
 - **Alternative membranes**: 4× better power performance at 75× lower cost
@@ -152,12 +169,14 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 ## Limitations for MFC Applications
 
 ### Critical Issues
+
 1. **High oxygen permeability**: Allows O₂ crossover to anode
-2. **Membrane fouling**: Reduces performance over time
-3. **Cost**: Expensive compared to alternatives
-4. **pH sensitivity**: Performance degrades with pH changes
+1. **Membrane fouling**: Reduces performance over time
+1. **Cost**: Expensive compared to alternatives
+1. **pH sensitivity**: Performance degrades with pH changes
 
 ### Comparative Oxygen Permeability
+
 - Nafion: Baseline high permeability
 - SPEEK: 0.27 × 10¹² mol cm⁻¹ s⁻¹ (order of magnitude lower)
 - SPSU: 0.15 × 10¹² mol cm⁻¹ s⁻¹ (order of magnitude lower)
@@ -165,12 +184,14 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 ## References and Data Sources
 
 ### Primary Literature Sources
+
 1. Energy & Fuels - "Mass Transport through a Proton Exchange Membrane (Nafion) in Microbial Fuel Cells"
-2. Journal of Physical Chemistry C - "Gas Permeation through Nafion. Part 1: Measurements"
-3. Nature Communications - "The role of oxygen-permeable ionomer for polymer electrolyte fuel cells"
-4. Various electrochemical journals for EIS and conductivity data
+1. Journal of Physical Chemistry C - "Gas Permeation through Nafion. Part 1: Measurements"
+1. Nature Communications - "The role of oxygen-permeable ionomer for polymer electrolyte fuel cells"
+1. Various electrochemical journals for EIS and conductivity data
 
 ### Measurement Conditions
+
 - Most data obtained at standard atmospheric pressure
 - Temperature range: 15-130°C
 - Humidity range: 10-100% RH
@@ -179,21 +200,25 @@ This database contains comprehensive quantitative data on Nafion membrane proper
 ## Usage Notes for MFC Modeling
 
 ### Critical Parameters for Oxygen Crossover
+
 1. **Primary**: Oxygen permeability coefficient (3.85 × 10¹² mol cm⁻¹ s⁻¹ at 80°C)
-2. **Secondary**: Membrane thickness and water content
-3. **Environmental**: Temperature and humidity dependencies
+1. **Secondary**: Membrane thickness and water content
+1. **Environmental**: Temperature and humidity dependencies
 
 ### Model Implementation
+
 - Use temperature-dependent permeability
 - Account for water content effects on transport
 - Consider membrane swelling in thickness calculations
 - Include humidity effects on conductivity for electrical modeling
 
 ### Recommended Values for Initial Calculations
+
 - **Oxygen permeability**: 3.85 × 10¹² mol cm⁻¹ s⁻¹ (80°C, 75% RH)
 - **Proton conductivity**: 0.078 S/cm (room temperature, 100% RH)
 - **Water drag coefficient**: 2.0-5.1 H₂O/H⁺ (15-130°C)
 - **Membrane resistance**: 0.1-0.3 Ω·cm² (depending on conditions)
 
----
+______________________________________________________________________
+
 *Database compiled from peer-reviewed literature focusing on quantitative parameters for MFC oxygen crossover modeling. All values include measurement conditions for accurate implementation in computational models.*
