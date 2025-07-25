@@ -140,32 +140,32 @@ class SubstrateConcentrationController:
         self.target_outlet_conc = target_outlet_conc
         self.target_reservoir_conc = target_reservoir_conc
         
-        # PID parameters for outlet concentration control
-        self.kp_outlet = 2.0
-        self.ki_outlet = 0.1
-        self.kd_outlet = 0.5
+        # PID parameters for outlet concentration control (reduced gains for lactate)
+        self.kp_outlet = 0.5  # Reduced from 2.0
+        self.ki_outlet = 0.01  # Reduced from 0.1
+        self.kd_outlet = 0.1  # Reduced from 0.5
         self.outlet_error_integral = 0.0
         self.previous_outlet_error = 0.0
         
-        # PID parameters for reservoir concentration control
-        self.kp_reservoir = 1.0
-        self.ki_reservoir = 0.05
-        self.kd_reservoir = 0.2
+        # PID parameters for reservoir concentration control (reduced gains)
+        self.kp_reservoir = 0.2  # Reduced from 1.0
+        self.ki_reservoir = 0.005  # Reduced from 0.05
+        self.kd_reservoir = 0.05  # Reduced from 0.2
         self.reservoir_error_integral = 0.0
         self.previous_reservoir_error = 0.0
         
-        # Control limits
+        # Control limits (reduced maximum addition rate)
         self.min_addition_rate = 0.0  # mmol/h
-        self.max_addition_rate = 50.0  # mmol/h
+        self.max_addition_rate = 5.0  # Reduced from 50.0 mmol/h
         
-        # Substrate halt conditions
-        self.halt_threshold = 0.5  # mmol/L decline threshold
+        # Substrate halt conditions (tighter control)
+        self.halt_threshold = 0.2  # Reduced from 0.5 mmol/L decline threshold
         self.previous_outlet_conc = None
         
-        # Enhanced feedback control parameters
+        # Enhanced feedback control parameters (tighter thresholds)
         self.starvation_threshold_critical = 2.0  # mmol/L
         self.starvation_threshold_warning = 5.0  # mmol/L
-        self.excess_threshold = 25.0  # mmol/L - halt addition if too high
+        self.excess_threshold = 22.0  # Reduced from 25.0 mmol/L - halt addition if too high
         
         # Adaptive control gains
         self.control_mode = "normal"  # normal, emergency, conservation
@@ -290,13 +290,16 @@ class SubstrateConcentrationController:
 class AdvancedQLearningFlowController:
     """Enhanced Q-Learning controller with recirculation and substrate monitoring"""
     
-    def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702):
-        """Enhanced Q-Learning controller"""
+    def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702, config=None):
+        """Enhanced Q-Learning controller with configurable substrate control"""
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.epsilon = epsilon
-        self.epsilon_decay = 0.9978
-        self.epsilon_min = 0.1020
+        self.epsilon_decay = config.epsilon_decay if config else 0.9995
+        self.epsilon_min = config.epsilon_min if config else 0.01
+        
+        # Configuration for substrate control
+        self.config = config or self._default_config()
         
         # Q-table stored as nested dictionary
         self.q_table = defaultdict(lambda: defaultdict(float))
@@ -308,8 +311,17 @@ class AdvancedQLearningFlowController:
         self.total_rewards = 0
         self.episode_count = 0
         
+        # Previous state for learning
+        self.previous_state = None
+        self.previous_action = None
+        
+    def _default_config(self):
+        """Default configuration if none provided"""
+        from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+        return DEFAULT_QLEARNING_CONFIG
+        
     def setup_enhanced_state_action_spaces(self):
-        """Enhanced state space including reservoir and cell concentrations"""
+        """Enhanced state space including reservoir and cell concentrations with substrate control"""
         # Enhanced state variables: [power, biofilm_deviation, substrate_utilization, 
         #                           reservoir_conc, min_cell_conc, outlet_conc_error, time_phase]
         self.power_bins = np.linspace(0, 2.0, 8)
@@ -320,8 +332,12 @@ class AdvancedQLearningFlowController:
         self.outlet_error_bins = np.linspace(0, 15, 6)
         self.time_bins = np.array([200, 500, 800, 1000])
         
-        # Enhanced action space: flow rate adjustments
-        self.actions = np.array([-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
+        # Enhanced action space: combined flow rate and substrate addition
+        self.flow_actions = np.array(self.config.flow_rate_actions)
+        self.substrate_actions = np.array(self.config.substrate_actions)
+        
+        # Combined action space: (flow_action_idx, substrate_action_idx)
+        self.total_actions = len(self.flow_actions) * len(self.substrate_actions)
         
     def discretize_enhanced_state(self, power, biofilm_deviation, substrate_utilization, 
                                  reservoir_conc, min_cell_conc, outlet_error, time_hours):
@@ -335,6 +351,76 @@ class AdvancedQLearningFlowController:
         time_idx = np.clip(np.digitize(time_hours, self.time_bins) - 1, 0, len(self.time_bins) - 2)
         
         return (power_idx, biofilm_idx, substrate_idx, reservoir_idx, cell_idx, outlet_idx, time_idx)
+    
+    def calculate_substrate_reward(self, reservoir_conc, cell_concentrations, outlet_conc, substrate_addition):
+        """Calculate reward for substrate control based on sensor readings"""
+        reward = 0.0
+        
+        # Reward for maintaining target concentrations
+        reservoir_error = abs(reservoir_conc - self.config.substrate_target_reservoir)
+        if reservoir_error < 2.0:  # Within 2 mM of target
+            reward += self.config.reward_weights.substrate_target_reward * (1.0 - reservoir_error / 2.0)
+        
+        outlet_error = abs(outlet_conc - self.config.substrate_target_outlet)
+        if outlet_error < 2.0:  # Within 2 mM of target
+            reward += self.config.reward_weights.substrate_target_reward * (1.0 - outlet_error / 2.0)
+        
+        # Reward for each cell maintaining target concentration
+        for cell_conc in cell_concentrations:
+            cell_error = abs(cell_conc - self.config.substrate_target_cell)
+            if cell_error < 3.0:  # Within 3 mM of target
+                reward += self.config.reward_weights.substrate_target_reward * 0.2 * (1.0 - cell_error / 3.0)
+        
+        # Penalties for exceeding thresholds
+        if reservoir_conc > self.config.substrate_max_threshold:
+            excess = reservoir_conc - self.config.substrate_max_threshold
+            reward += self.config.reward_weights.substrate_excess_penalty * excess
+        
+        if outlet_conc > self.config.substrate_max_threshold:
+            excess = outlet_conc - self.config.substrate_max_threshold
+            reward += self.config.reward_weights.substrate_excess_penalty * excess
+        
+        # Penalties for starvation
+        min_cell_conc = min(cell_concentrations) if cell_concentrations else outlet_conc
+        if min_cell_conc < self.config.substrate_min_threshold:
+            starvation = self.config.substrate_min_threshold - min_cell_conc
+            reward += self.config.reward_weights.substrate_starvation_penalty * starvation
+        
+        # Penalty for substrate addition (encourages efficiency)
+        if substrate_addition > 0:
+            reward += self.config.reward_weights.substrate_addition_penalty * substrate_addition
+        
+        return reward
+    
+    def choose_combined_action(self, state):
+        """Choose combined flow and substrate action using epsilon-greedy"""
+        if np.random.random() < self.epsilon:
+            # Random action
+            action_idx = np.random.randint(0, self.total_actions)
+        else:
+            # Greedy action
+            q_values = [self.q_table[state][a] for a in range(self.total_actions)]
+            action_idx = np.argmax(q_values)
+        
+        # Convert single action index to flow and substrate actions
+        flow_idx = action_idx // len(self.substrate_actions)
+        substrate_idx = action_idx % len(self.substrate_actions)
+        
+        return action_idx, flow_idx, substrate_idx
+    
+    def update_q_value(self, state, action_idx, reward, next_state):
+        """Update Q-value using Q-learning rule"""
+        if next_state is not None:
+            max_next_q = max([self.q_table[next_state][a] for a in range(self.total_actions)])
+        else:
+            max_next_q = 0.0
+        
+        current_q = self.q_table[state][action_idx]
+        new_q = current_q + self.learning_rate * (reward + self.discount_factor * max_next_q - current_q)
+        self.q_table[state][action_idx] = new_q
+        
+        # Decay epsilon
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
 class MFCCellWithMonitoring:
     """Individual MFC cell with enhanced substrate monitoring"""
@@ -464,18 +550,62 @@ def simulate_mfc_with_recirculation(duration_hours=100):
         # Get reservoir sensor readings
         reservoir_sensors = reservoir.get_sensor_readings()
         
-        # Calculate substrate addition using feedback controller with sensor data
-        addition_rate, halt_flag = controller.calculate_substrate_addition(
-            outlet_concentration, 
-            reservoir.substrate_concentration,
-            cell_concentrations,
-            reservoir_sensors,
-            dt_hours
+        # Q-learning control for substrate addition (replaced PID controller)
+        # Get current system state
+        avg_biofilm = np.mean([cell.biofilm_thickness for cell in cells])
+        biofilm_deviation = abs(avg_biofilm - cells[0].optimal_biofilm_thickness)
+        substrate_utilization = ((inlet_concentration - outlet_concentration) / 
+                               inlet_concentration * 100 if inlet_concentration > 0 else 0)
+        min_cell_conc = min(cell_concentrations)
+        outlet_error = abs(outlet_concentration - 12.0)  # Target outlet concentration
+        
+        # Discretize state for Q-learning
+        state = q_controller.discretize_enhanced_state(
+            0.001,  # Simplified power for this context
+            biofilm_deviation, 
+            substrate_utilization,
+            reservoir.substrate_concentration, 
+            min_cell_conc, 
+            outlet_error, 
+            time_hours
         )
         
-        # Add substrate to reservoir
-        reservoir.substrate_halt = halt_flag
-        reservoir.add_substrate(addition_rate, dt_hours)
+        # Choose combined action (flow + substrate)
+        action_idx, flow_idx, substrate_idx = q_controller.choose_combined_action(state)
+        
+        # Apply flow action
+        flow_rate_ml_h += q_controller.flow_actions[flow_idx]
+        flow_rate_ml_h = np.clip(flow_rate_ml_h, 5.0, 50.0)  # Keep within bounds
+        
+        # Apply substrate action
+        substrate_addition = q_controller.substrate_actions[substrate_idx]
+        addition_rate = max(0.0, substrate_addition)  # No negative additions
+        addition_rate = min(addition_rate, q_controller.config.substrate_addition_max)
+        
+        # Calculate reward for Q-learning
+        substrate_reward = q_controller.calculate_substrate_reward(
+            reservoir.substrate_concentration,
+            cell_concentrations,
+            outlet_concentration,
+            addition_rate
+        )
+        
+        # Update Q-value if we have previous state
+        if q_controller.previous_state is not None:
+            q_controller.update_q_value(
+                q_controller.previous_state,
+                q_controller.previous_action,
+                substrate_reward,
+                state
+            )
+        
+        # Store current state and action for next iteration
+        q_controller.previous_state = state
+        q_controller.previous_action = action_idx
+        
+        # Add substrate to reservoir (no halt flag needed - Q-learning handles this)
+        if addition_rate > 0:
+            reservoir.add_substrate(addition_rate, dt_hours)
         
         # Simulate recirculation
         reservoir.circulate_anolyte(flow_rate_ml_h, outlet_concentration, dt_hours)
@@ -508,7 +638,7 @@ def simulate_mfc_with_recirculation(duration_hours=100):
         results['substrate_addition_rate'].append(addition_rate)
         results['total_power'].append(total_power)
         results['biofilm_thicknesses'].append([cell.biofilm_thickness for cell in cells])
-        results['substrate_halt'].append(halt_flag)
+        results['substrate_halt'].append(int(addition_rate == 0.0))  # 1 if no substrate added, 0 otherwise
         
         # Progress reporting
         if step % (n_steps // 10) == 0:
@@ -517,7 +647,7 @@ def simulate_mfc_with_recirculation(duration_hours=100):
                   f"Outlet: {outlet_concentration:.2f} mmol/L, "
                   f"Min Cell: {min_cell_conc:.2f} mmol/L, "
                   f"Addition: {addition_rate:.1f} mmol/h, "
-                  f"Halt: {halt_flag}")
+                  f"Q-Action: {action_idx}")
     
     return results, cells, reservoir, controller
 
