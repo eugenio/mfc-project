@@ -12,6 +12,293 @@ from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
 
+def analyze_code_content(content, file_path=""):
+    """
+    Analyze code content to extract meaningful information for commit messages.
+    
+    Args:
+        content: The code content to analyze
+        file_path: Path to the file (for context)
+        
+    Returns:
+        dict: Analysis results with summary information
+    """
+    if not content or not content.strip():
+        return {"summary": "empty content", "details": []}
+    
+    lines = content.splitlines()
+    analysis = {
+        "summary": "",
+        "details": [],
+        "functions": [],
+        "classes": [],
+        "imports": [],
+        "comments": [],
+        "docstrings": [],
+        "constants": [],
+        "total_lines": len(lines)
+    }
+    
+    # Detect file type from extension
+    file_ext = Path(file_path).suffix.lower() if file_path else ""
+    
+    # Analyze Python code
+    if file_ext in ['.py', '.pyi'] or any('python' in line.lower() for line in lines[:3]):
+        analysis.update(_analyze_python_code(lines))
+    # Analyze JavaScript/TypeScript
+    elif file_ext in ['.js', '.ts', '.jsx', '.tsx']:
+        analysis.update(_analyze_javascript_code(lines))
+    # Analyze other code files
+    elif file_ext in ['.mojo', '.🔥']:
+        analysis.update(_analyze_mojo_code(lines))
+    # Generic code analysis
+    else:
+        analysis.update(_analyze_generic_code(lines))
+    
+    # Generate summary
+    analysis["summary"] = _generate_code_summary(analysis)
+    
+    return analysis
+
+def _analyze_python_code(lines):
+    """Analyze Python-specific code patterns."""
+    result = {"functions": [], "classes": [], "imports": [], "docstrings": [], "constants": []}
+    
+    in_docstring = False
+    docstring_quotes = None
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Handle docstrings
+        if not in_docstring:
+            if stripped.startswith('"""') or stripped.startswith("'''"):
+                docstring_quotes = stripped[:3]
+                in_docstring = True
+                if stripped.count(docstring_quotes) >= 2:  # Single line docstring
+                    result["docstrings"].append(stripped[3:-3].strip())
+                    in_docstring = False
+        else:
+            if docstring_quotes in stripped:
+                in_docstring = False
+        
+        if in_docstring:
+            continue
+            
+        # Functions
+        if stripped.startswith('def '):
+            func_name = stripped[4:].split('(')[0].strip()
+            result["functions"].append(func_name)
+        
+        # Classes
+        elif stripped.startswith('class '):
+            class_name = stripped[6:].split('(')[0].split(':')[0].strip()
+            result["classes"].append(class_name)
+        
+        # Imports
+        elif stripped.startswith('import ') or stripped.startswith('from '):
+            result["imports"].append(stripped)
+        
+        # Constants (uppercase variables)
+        elif '=' in stripped and not stripped.startswith('#'):
+            var_part = stripped.split('=')[0].strip()
+            if var_part.isupper() and var_part.isidentifier():
+                result["constants"].append(var_part)
+    
+    return result
+
+def _analyze_javascript_code(lines):
+    """Analyze JavaScript/TypeScript-specific code patterns."""
+    result = {"functions": [], "classes": [], "imports": [], "constants": []}
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Functions
+        if 'function ' in stripped:
+            try:
+                func_name = stripped.split('function ')[1].split('(')[0].strip()
+                result["functions"].append(func_name)
+            except IndexError:
+                pass
+        elif '=>' in stripped and ('const ' in stripped or 'let ' in stripped or 'var ' in stripped):
+            try:
+                func_name = stripped.split('=')[0].replace('const', '').replace('let', '').replace('var', '').strip()
+                result["functions"].append(func_name)
+            except IndexError:
+                pass
+        
+        # Classes
+        elif stripped.startswith('class '):
+            try:
+                class_name = stripped[6:].split(' ')[0].split('{')[0].strip()
+                result["classes"].append(class_name)
+            except IndexError:
+                pass
+        
+        # Imports
+        elif stripped.startswith('import ') or stripped.startswith('export '):
+            result["imports"].append(stripped)
+        
+        # Constants
+        elif stripped.startswith('const ') and stripped.isupper():
+            try:
+                const_name = stripped[6:].split('=')[0].strip()
+                result["constants"].append(const_name)
+            except IndexError:
+                pass
+    
+    return result
+
+def _analyze_mojo_code(lines):
+    """Analyze Mojo-specific code patterns."""
+    result = {"functions": [], "classes": [], "imports": [], "structs": []}
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Functions
+        if stripped.startswith('fn '):
+            try:
+                func_name = stripped[3:].split('(')[0].strip()
+                result["functions"].append(func_name)
+            except IndexError:
+                pass
+        
+        # Structs
+        elif stripped.startswith('struct '):
+            try:
+                struct_name = stripped[7:].split(':')[0].split('(')[0].strip()
+                result["structs"].append(struct_name)
+            except IndexError:
+                pass
+        
+        # Imports
+        elif stripped.startswith('from ') and 'import' in stripped:
+            result["imports"].append(stripped)
+    
+    return result
+
+def _analyze_generic_code(lines):
+    """Generic code analysis for unknown file types."""
+    result = {"functions": [], "classes": [], "imports": [], "comments": []}
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Comments
+        if stripped.startswith('#') or stripped.startswith('//') or stripped.startswith('/*'):
+            if len(stripped) > 3:  # Skip very short comments
+                result["comments"].append(stripped[:50] + '...' if len(stripped) > 50 else stripped)
+    
+    return result
+
+def _generate_code_summary(analysis):
+    """Generate a concise summary of the code analysis."""
+    parts = []
+    
+    if analysis.get("functions"):
+        func_names = analysis["functions"][:3]  # Show first 3 functions
+        if len(analysis["functions"]) > 3:
+            parts.append(f"functions: {', '.join(func_names)} (+{len(analysis['functions'])-3} more)")
+        else:
+            parts.append(f"functions: {', '.join(func_names)}")
+    
+    if analysis.get("classes"):
+        class_names = analysis["classes"][:2]  # Show first 2 classes
+        if len(analysis["classes"]) > 2:
+            parts.append(f"classes: {', '.join(class_names)} (+{len(analysis['classes'])-2} more)")
+        else:
+            parts.append(f"classes: {', '.join(class_names)}")
+    
+    if analysis.get("structs"):
+        struct_names = analysis["structs"][:2]
+        parts.append(f"structs: {', '.join(struct_names)}")
+    
+    if analysis.get("imports") and len(analysis["imports"]) > 0:
+        parts.append(f"{len(analysis['imports'])} imports")
+    
+    if analysis.get("constants") and len(analysis["constants"]) > 0:
+        parts.append(f"{len(analysis['constants'])} constants")
+    
+    if analysis.get("docstrings") and len(analysis["docstrings"]) > 0:
+        parts.append(f"{len(analysis['docstrings'])} docstrings")
+    
+    # If no specific patterns found, describe generically
+    if not parts:
+        if analysis.get("total_lines", 0) > 0:
+            return f"{analysis['total_lines']} lines of code"
+        else:
+            return "code changes"
+    
+    return " | ".join(parts)
+
+def generate_meaningful_commit_message(operation_type, file_path, old_content="", new_content="", base_message=""):
+    """
+    Generate a meaningful commit message based on code analysis.
+    
+    Args:
+        operation_type: "create", "edit", "remove"
+        file_path: Path to the file
+        old_content: Original content (for edits/removals)
+        new_content: New content (for edits/creates)
+        base_message: Base message prefix
+        
+    Returns:
+        str: Enhanced commit message
+    """
+    file_name = Path(file_path).name
+    
+    if operation_type == "create":
+        analysis = analyze_code_content(new_content, file_path)
+        return f"{base_message}{file_name} ({analysis['total_lines']} lines) - {analysis['summary']}"
+    
+    elif operation_type == "edit":
+        old_analysis = analyze_code_content(old_content, file_path) if old_content else {"summary": "empty"}
+        new_analysis = analyze_code_content(new_content, file_path) if new_content else {"summary": "empty"}
+        
+        # Determine what changed
+        old_funcs = set(old_analysis.get("functions", []))
+        new_funcs = set(new_analysis.get("functions", []))
+        added_funcs = new_funcs - old_funcs
+        removed_funcs = old_funcs - new_funcs
+        
+        old_classes = set(old_analysis.get("classes", []))
+        new_classes = set(new_analysis.get("classes", []))
+        added_classes = new_classes - old_classes
+        removed_classes = old_classes - new_classes
+        
+        changes = []
+        if added_funcs:
+            changes.append(f"added {', '.join(list(added_funcs)[:3])}")
+        if removed_funcs:
+            changes.append(f"removed {', '.join(list(removed_funcs)[:3])}")
+        if added_classes:
+            changes.append(f"added class {', '.join(list(added_classes)[:2])}")
+        if removed_classes:
+            changes.append(f"removed class {', '.join(list(removed_classes)[:2])}")
+        
+        if changes:
+            change_desc = " | ".join(changes)
+        else:
+            # Fallback to line count changes
+            old_lines = old_analysis.get("total_lines", 0)
+            new_lines = new_analysis.get("total_lines", 0)
+            if new_lines > old_lines:
+                change_desc = f"expanded by {new_lines - old_lines} lines"
+            elif new_lines < old_lines:
+                change_desc = f"reduced by {old_lines - new_lines} lines"
+            else:
+                change_desc = "modified content"
+        
+        return f"{base_message}{file_name} - {change_desc}"
+    
+    elif operation_type == "remove":
+        analysis = analyze_code_content(old_content, file_path) if old_content else {"summary": "unknown content"}
+        return f"{base_message}{file_name} - removed {analysis['summary']}"
+    
+    return base_message
+
 def is_dangerous_rm_command(command):
     """
     Comprehensive detection of dangerous rm commands.
@@ -282,14 +569,17 @@ def check_file_creation_thresholds(tool_name, tool_input):
                                       capture_output=True, text=True, cwd=os.getcwd())
                 
                 if result.stdout.strip():
-                    # Stage and commit the new file when it's created
-                    commit_message = f"{config.get('commit_message_prefix', 'Auto-commit: New file created - ')}{os.path.basename(file_path)} ({new_lines} lines)"
+                    # Generate meaningful commit message for file creation
+                    meaningful_commit_msg = generate_meaningful_commit_message(
+                        "create", file_path, "", content, 
+                        config.get('commit_message_prefix', 'Auto-commit: New file created - ')
+                    )
                     
                     print(f"AUTO-COMMIT: Staging changes for commit", file=sys.stderr)
                     subprocess.run(['git', 'add', '.'], cwd=os.getcwd(), capture_output=True)
                     
-                    print(f"AUTO-COMMIT: Creating commit: {commit_message}", file=sys.stderr)
-                    subprocess.run(['git', 'commit', '-m', commit_message], 
+                    print(f"AUTO-COMMIT: Creating commit: {meaningful_commit_msg}", file=sys.stderr)
+                    subprocess.run(['git', 'commit', '-m', meaningful_commit_msg], 
                                  cwd=os.getcwd(), capture_output=True)
                     
                     print("AUTO-COMMIT: Commit completed successfully", file=sys.stderr)
@@ -555,13 +845,18 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                         print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
                         return False
                     
-                    chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(old_chunks)} - removed {len(chunk_to_remove.splitlines())} lines"
-                    result = subprocess.run(['git', 'commit', '-m', chunk_msg], capture_output=True, text=True)
+                    # Generate meaningful commit message
+                    meaningful_msg = generate_meaningful_commit_message(
+                        "edit", file_path, chunk_to_remove, chunk_to_add, 
+                        f"{config['commit_message_prefix']}chunk {i+1}/{len(old_chunks)} - "
+                    )
+                    
+                    result = subprocess.run(['git', 'commit', '-m', meaningful_msg], capture_output=True, text=True)
                     if result.returncode != 0:
                         print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
                         return False
                         
-                    print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(old_chunks)}", file=sys.stderr)
+                    print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(old_chunks)} - {meaningful_msg}", file=sys.stderr)
                 else:
                     print(f"WARNING: Chunk not found in current content", file=sys.stderr)
                 
@@ -587,8 +882,14 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
             if result.returncode != 0:
                 print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
                 return False
+            
+            # Generate meaningful commit message for removal
+            removal_msg = generate_meaningful_commit_message(
+                "remove", file_path, old_string, "", 
+                f"{config['commit_message_prefix']}"
+            )
                 
-            result = subprocess.run(['git', 'commit', '-m', f"{config['commit_message_prefix']}removed old content"], 
+            result = subprocess.run(['git', 'commit', '-m', removal_msg], 
                          capture_output=True, text=True)
             if result.returncode != 0:
                 print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
@@ -616,14 +917,19 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 if result.returncode != 0:
                     print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
                     return False
+                
+                # Generate meaningful commit message for chunk addition
+                chunk_addition_msg = generate_meaningful_commit_message(
+                    "create", file_path, "", chunk, 
+                    f"{config['commit_message_prefix']}chunk {i+1}/{len(new_chunks)} - "
+                )
                     
-                chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(new_chunks)} - added {len(chunk.splitlines())} lines"
-                result = subprocess.run(['git', 'commit', '-m', chunk_msg], capture_output=True, text=True)
+                result = subprocess.run(['git', 'commit', '-m', chunk_addition_msg], capture_output=True, text=True)
                 if result.returncode != 0:
                     print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
                     return False
                     
-                print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)}", file=sys.stderr)
+                print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)} - {chunk_addition_msg}", file=sys.stderr)
                 
         except Exception as e:
             print(f"ERROR: Failed during chunked addition: {e}", file=sys.stderr)
