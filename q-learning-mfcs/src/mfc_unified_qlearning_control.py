@@ -18,6 +18,10 @@ import time
 from collections import defaultdict
 import pickle
 from path_config import get_figure_path, get_simulation_data_path, get_model_path
+from typing import Optional
+
+# Import configuration classes
+from config import QLearningConfig, validate_qlearning_config
 
 # Import universal GPU acceleration
 from gpu_acceleration import get_gpu_accelerator
@@ -27,22 +31,31 @@ gpu_accelerator = get_gpu_accelerator()
 GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class UnifiedQLearningController:
-    def __init__(self, target_outlet_conc=10.0, learning_rate=0.1, discount_factor=0.95, epsilon=0.4):
+    def __init__(self, config: Optional[QLearningConfig] = None, target_outlet_conc: Optional[float] = None):
         """
         Advanced Q-Learning controller for unified flow + substrate concentration control
         
         Args:
-            target_outlet_conc: Target outlet concentration (mmol/L)
-            learning_rate: Q-learning learning rate
-            discount_factor: Q-learning discount factor
-            epsilon: Initial exploration rate
+            config: Q-learning configuration object
+            target_outlet_conc: Target outlet concentration (mmol/L), overrides config if provided
         """
-        self.target_outlet_conc = target_outlet_conc
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
-        self.epsilon = epsilon
-        self.epsilon_decay = 0.998  # Slower decay for more complex problem
-        self.epsilon_min = 0.08    # Higher minimum for continuous exploration
+        # Use default configuration if not provided
+        if config is None:
+            config = QLearningConfig()
+            
+        # Validate configuration
+        validate_qlearning_config(config)
+        self.config = config
+        
+        # Set target outlet concentration
+        self.target_outlet_conc = target_outlet_conc if target_outlet_conc is not None else config.stability_target_outlet_concentration
+        
+        # Extract Q-learning parameters
+        self.learning_rate = config.learning_rate
+        self.discount_factor = config.discount_factor
+        self.epsilon = config.epsilon
+        self.epsilon_decay = config.epsilon_decay
+        self.epsilon_min = config.epsilon_min
         
         # Q-table stored as nested dictionary
         self.q_table = defaultdict(lambda: defaultdict(float))
@@ -56,26 +69,29 @@ class UnifiedQLearningController:
         self.action_history = []
         self.performance_history = []
         
-        # Constraints for substrate concentration
-        self.min_substrate = 5.0   # mmol/L minimum
-        self.max_substrate = 45.0  # mmol/L maximum
+        # Constraints from configuration
+        self.min_substrate = config.substrate_concentration_min
+        self.max_substrate = config.substrate_concentration_max
         
     def setup_state_action_spaces(self):
         """Define extended state and action discretization for dual control Q-learning"""
         
         # EXTENDED STATE SPACE (6 dimensions instead of 4)
         # State variables: [power, biofilm_deviation, substrate_utilization, outlet_conc_error, flow_rate, time_phase]
-        self.power_bins = np.linspace(0, 2.0, 8)  # Power levels
-        self.biofilm_bins = np.linspace(0, 1.0, 6)  # Biofilm deviation
-        self.substrate_bins = np.linspace(0, 50, 8)  # Substrate utilization
-        self.outlet_error_bins = np.linspace(-10, 10, 8)  # Outlet concentration error
-        self.flow_rate_bins = np.linspace(5, 50, 6)  # Flow rate levels (mL/h)
-        self.time_bins = np.array([200, 500, 800, 1000])  # Time phases
+        self.power_bins = np.linspace(0, self.config.power_max, self.config.power_bins)
+        self.biofilm_bins = np.linspace(0, self.config.biofilm_max_deviation, self.config.biofilm_deviation_bins)
+        self.substrate_bins = np.linspace(0, self.config.substrate_utilization_max, self.config.substrate_utilization_bins)
+        self.outlet_error_bins = np.linspace(self.config.outlet_error_range[0], 
+                                           self.config.outlet_error_range[1], 
+                                           self.config.outlet_error_bins)
+        self.flow_rate_bins = np.linspace(self.config.flow_rate_range[0], 
+                                        self.config.flow_rate_range[1], 
+                                        self.config.flow_rate_bins)
+        self.time_bins = np.array(self.config.time_phase_hours)
         
-        # EXTENDED ACTION SPACE - Dual actions [flow_adjustment, substrate_adjustment]
-        # Each action is a tuple: (flow_change_ml_h, substrate_change_mmol_l)
-        flow_actions = [-8, -4, -2, -1, 0, 1, 2, 3, 4]  # mL/h adjustments (reduced max increase)
-        substrate_actions = [-2, -1, -0.5, 0, 0.5, 1, 1.5]  # mmol/L adjustments (70% reduced increases)
+        # EXTENDED ACTION SPACE - Dual actions from configuration
+        flow_actions = self.config.unified_flow_actions
+        substrate_actions = self.config.substrate_actions
         
         # Create combined action space
         self.actions = []
@@ -83,8 +99,8 @@ class UnifiedQLearningController:
             for substr_adj in substrate_actions:
                 self.actions.append((flow_adj, substr_adj))
         
-        print(f"Unified Q-learning initialized:")
-        print(f"- State space dimensions: 6 (extended)")
+        print("Unified Q-learning initialized:")
+        print("- State space dimensions: 6 (extended)")
         print(f"- Total possible states: ~{8*6*8*8*6*4:,}")
         print(f"- Action space size: {len(self.actions)} dual actions")
         print(f"- Target outlet concentration: {self.target_outlet_conc:.1f} mmol/L")
@@ -667,7 +683,7 @@ class MFCUnifiedQLearningSimulation:
         print("Starting MFC Unified Q-Learning Control simulation...")
         print(f"Duration: 1000 hours, Timesteps: {self.num_steps}")
         print(f"GPU acceleration: {'Enabled' if self.use_gpu else 'Disabled'}")
-        print(f"Control: Unified Q-Learning (flow rate + substrate concentration)")
+        print("Control: Unified Q-Learning (flow rate + substrate concentration)")
         print(f"Target outlet concentration: {self.unified_controller.target_outlet_conc:.1f} mmol/L")
         print(f"Initial flow rate: {self.flow_rates[0] * 1000:.1f} mL/h")
         print(f"Initial inlet concentration: {self.inlet_concentrations[0]:.1f} mmol/L")
@@ -842,11 +858,11 @@ class MFCUnifiedQLearningSimulation:
         ax1.grid(True, alpha=0.3)
         
         lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        labels = [line.get_label() for line in lines]
         ax1.legend(lines, labels, loc='upper left')
         
         # Plot 2: Unified Concentration Control
-        ax2 = plt.subplot(4, 4, 2)
+        plt.subplot(4, 4, 2)
         plt.plot(time_hours, self.inlet_concentrations, 'g-', linewidth=2, label='Inlet (Q-Controlled)')
         plt.plot(time_hours, self.outlet_concentrations, 'orange', linewidth=1.5, label='Outlet (Average)')
         plt.axhline(y=self.unified_controller.target_outlet_conc, color='red', 
@@ -858,7 +874,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 3: Flow Rate Control
-        ax3 = plt.subplot(4, 4, 3)
+        plt.subplot(4, 4, 3)
         plt.plot(time_hours, self.flow_rates * 1000, 'purple', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Flow Rate (mL/h)')
@@ -866,7 +882,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 4: Concentration Error Evolution
-        ax4 = plt.subplot(4, 4, 4)
+        plt.subplot(4, 4, 4)
         plt.plot(time_hours, self.concentration_errors, 'red', linewidth=1.5)
         plt.axhline(y=0, color='black', linestyle='-', alpha=0.5)
         plt.xlabel('Time (hours)')
@@ -875,7 +891,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 5: Biofilm Evolution
-        ax5 = plt.subplot(4, 4, 5)
+        plt.subplot(4, 4, 5)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.biofilm_thickness[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -888,7 +904,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 6: Substrate Utilization
-        ax6 = plt.subplot(4, 4, 6)
+        plt.subplot(4, 4, 6)
         plt.plot(time_hours, self.substrate_utilizations, 'brown', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Utilization (%)')
@@ -896,7 +912,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 7: Multi-Objective Progress
-        ax7 = plt.subplot(4, 4, 7)
+        plt.subplot(4, 4, 7)
         plt.plot(time_hours, self.objective_values, 'teal', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Objective Value')
@@ -904,7 +920,7 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 8: Individual Cell Voltages
-        ax8 = plt.subplot(4, 4, 8)
+        plt.subplot(4, 4, 8)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.cell_voltages[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -926,11 +942,11 @@ class MFCUnifiedQLearningSimulation:
         ax9.grid(True, alpha=0.3)
         
         lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        labels = [line.get_label() for line in lines]
         ax9.legend(lines, labels, loc='upper left')
         
         # Plot 10: Control Performance Analysis
-        ax10 = plt.subplot(4, 4, 10)
+        plt.subplot(4, 4, 10)
         # Moving average of concentration error
         window_size = 360  # 1 hour
         if len(self.concentration_errors) >= window_size:
@@ -947,7 +963,7 @@ class MFCUnifiedQLearningSimulation:
             plt.grid(True, alpha=0.3)
         
         # Plot 11: Action Space Exploration
-        ax11 = plt.subplot(4, 4, 11)
+        plt.subplot(4, 4, 11)
         # Plot epsilon decay
         epsilon_values = []
         current_epsilon = 0.4
@@ -963,12 +979,12 @@ class MFCUnifiedQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 12: Outlet Concentration Distribution
-        ax12 = plt.subplot(4, 4, 12)
+        plt.subplot(4, 4, 12)
         valid_outlet = self.outlet_concentrations[self.outlet_concentrations > 0]
         if len(valid_outlet) > 0:
             plt.hist(valid_outlet, bins=30, alpha=0.7, color='orange', edgecolor='black')
             plt.axvline(x=self.unified_controller.target_outlet_conc, color='red', 
-                       linestyle='--', linewidth=2, label=f'Target')
+                       linestyle='--', linewidth=2, label='Target')
             plt.xlabel('Outlet Concentration (mmol/L)')
             plt.ylabel('Frequency')
             plt.title('Outlet Concentration Distribution')
@@ -976,7 +992,7 @@ class MFCUnifiedQLearningSimulation:
             plt.grid(True, alpha=0.3)
         
         # Plot 13: Inlet vs Outlet Correlation
-        ax13 = plt.subplot(4, 4, 13)
+        plt.subplot(4, 4, 13)
         valid_mask = (self.outlet_concentrations > 0) & (self.inlet_concentrations > 0)
         if np.any(valid_mask):
             plt.scatter(self.inlet_concentrations[valid_mask], 
@@ -989,7 +1005,7 @@ class MFCUnifiedQLearningSimulation:
             plt.grid(True, alpha=0.3)
         
         # Plot 14: Control Strategy Evolution
-        ax14 = plt.subplot(4, 4, 14)
+        plt.subplot(4, 4, 14)
         # Show how the controller balances flow and concentration
         if len(self.unified_controller.action_history) > 0:
             actions = np.array(self.unified_controller.action_history)
@@ -1008,7 +1024,7 @@ class MFCUnifiedQLearningSimulation:
             plt.grid(True, alpha=0.3)
         
         # Plot 15: Performance Metrics Comparison
-        ax15 = plt.subplot(4, 4, 15)
+        plt.subplot(4, 4, 15)
         # Show different objective components
         power_obj = np.minimum(1.0, self.stack_powers / 5.0)
         biofilm_obj = np.maximum(0.0, 1.0 - np.abs(np.mean(self.biofilm_thickness, axis=1) - self.optimal_biofilm_thickness))
@@ -1132,38 +1148,38 @@ def main():
     rmse = np.sqrt(np.mean(valid_errors**2)) if len(valid_errors) > 0 else 0
     mean_abs_error = np.mean(np.abs(valid_errors)) if len(valid_errors) > 0 else 0
     
-    print(f"\nFinal Performance Summary (UNIFIED Q-LEARNING CONTROL):")
-    print(f"=" * 60)
-    print(f"ENERGY PERFORMANCE:")
+    print("\nFinal Performance Summary (UNIFIED Q-LEARNING CONTROL):")
+    print("=" * 60)
+    print("ENERGY PERFORMANCE:")
     print(f"  Total Energy: {total_energy:.1f} Wh")
     print(f"  Average Power: {np.mean(sim.stack_powers):.3f} W")
     print(f"  Final Power: {sim.stack_powers[-1]:.3f} W")
     print(f"  Final Substrate Utilization: {sim.substrate_utilizations[-1]:.2f}%")
     
-    print(f"\nUNIFIED CONTROL PERFORMANCE:")
+    print("\nUNIFIED CONTROL PERFORMANCE:")
     print(f"  Target Outlet Concentration: {target_outlet:.1f} mmol/L")
     print(f"  Final Outlet Concentration: {sim.outlet_concentrations[-1]:.2f} mmol/L")
     print(f"  Final Control Error: {final_error:.3f} mmol/L")
     print(f"  Control RMSE: {rmse:.3f} mmol/L")
     print(f"  Control MAE: {mean_abs_error:.3f} mmol/L")
     
-    print(f"\nCONTROL ACTIONS:")
+    print("\nCONTROL ACTIONS:")
     print(f"  Final Flow Rate: {sim.flow_rates[-1] * 1000:.1f} mL/h")
     print(f"  Final Inlet Concentration: {sim.inlet_concentrations[-1]:.2f} mmol/L")
     
-    print(f"\nQ-LEARNING STATISTICS:")
+    print("\nQ-LEARNING STATISTICS:")
     print(f"  Total Reward Accumulated: {control_stats['total_reward']:.1f}")
     print(f"  Q-Table Size (States Learned): {control_stats['q_table_size']:,}")
     print(f"  Final Exploration Rate: {control_stats['exploration_rate']:.3f}")
     print(f"  Average Recent Reward: {control_stats['avg_reward']:.1f}")
     print(f"  Learning Trend: {'Improving' if control_stats['reward_trend'] > 0 else 'Stable' if abs(control_stats['reward_trend']) < 1 else 'Declining'}")
     
-    print(f"\nUNIFIED CONTROL ADVANTAGES DEMONSTRATED:")
-    print(f"  ✓ Single intelligent agent for dual control")
-    print(f"  ✓ Coordinated optimization of flow and concentration")
-    print(f"  ✓ Advanced 6D state space utilization")
-    print(f"  ✓ Adaptive exploration strategy")
-    print(f"  ✓ Superior integration vs separate controllers")
+    print("\nUNIFIED CONTROL ADVANTAGES DEMONSTRATED:")
+    print("  ✓ Single intelligent agent for dual control")
+    print("  ✓ Coordinated optimization of flow and concentration")
+    print("  ✓ Advanced 6D state space utilization")
+    print("  ✓ Adaptive exploration strategy")
+    print("  ✓ Superior integration vs separate controllers")
 
 
 if __name__ == "__main__":
