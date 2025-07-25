@@ -164,7 +164,6 @@ def plot_comprehensive_results(stack, controller, phase_results):
     # Set up matplotlib
     import matplotlib
     matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
     
     fig, axes = plt.subplots(4, 2, figsize=(16, 20))
     

@@ -6,7 +6,7 @@ and their utilization by exoelectrogenic bacteria.
 """
 
 import numpy as np
-from typing import Dict, Any
+from typing import Dict
 from dataclasses import dataclass
 
 

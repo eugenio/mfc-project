@@ -12,7 +12,7 @@ import numpy as np
 import json
 import glob
 from datetime import datetime
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 
 def load_simulation_data(file_pattern):
     """Load the most recent simulation data matching pattern"""
@@ -261,17 +261,17 @@ def create_literature_comparison_plots():
     print("📊 LITERATURE VALIDATION COMPARISON SUMMARY")
     print("="*80)
     
-    print(f"\n🔬 ORIGINAL PARAMETERS (100h):")
+    print("\n🔬 ORIGINAL PARAMETERS (100h):")
     print(f"   Final Power Output: {orig_final_power:.6f} W")
     print(f"   Final Biofilm Thickness: {orig_final_biofilm:.3f}")
     print(f"   Final Substrate Utilization: {orig_utilization.iloc[orig_100h_idx]:.2f}%")
     
-    print(f"\n🧬 LITERATURE-VALIDATED PARAMETERS (100h):")
+    print("\n🧬 LITERATURE-VALIDATED PARAMETERS (100h):")
     print(f"   Final Power Output: {lit_final_power_100h:.6f} W")
     print(f"   Final Biofilm Thickness: {lit_final_biofilm_100h:.3f}")
     print(f"   Final Substrate Utilization: {lit_utilization.iloc[-1]:.2f}%")
     
-    print(f"\n📈 IMPROVEMENTS:")
+    print("\n📈 IMPROVEMENTS:")
     power_improvement = ((lit_final_power_100h - orig_final_power) / orig_final_power) * 100
     biofilm_improvement = ((lit_final_biofilm_100h - orig_final_biofilm) / orig_final_biofilm) * 100
     utilization_improvement = lit_utilization.iloc[-1] - orig_utilization.iloc[orig_100h_idx]
@@ -280,10 +280,10 @@ def create_literature_comparison_plots():
     print(f"   Biofilm Thickness: +{biofilm_improvement:.1f}% ({orig_final_biofilm:.3f} → {lit_final_biofilm_100h:.3f})")
     print(f"   Substrate Utilization: +{utilization_improvement:.2f}% points")
     
-    print(f"\n⏱️ LONG-TERM STABILITY (1000h):")
+    print("\n⏱️ LONG-TERM STABILITY (1000h):")
     print(f"   Final Power Output: {lit_final_power_1000h:.6f} W")
     print(f"   Final Biofilm Thickness: {lit_final_biofilm_1000h:.3f}")
-    print(f"   Sustained Performance: ✅ Maintained")
+    print("   Sustained Performance: ✅ Maintained")
     
     return filename
 

@@ -14,10 +14,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
-from datetime import datetime, timedelta
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path
 
 # Set style for better-looking plots
 plt.style.use('default')

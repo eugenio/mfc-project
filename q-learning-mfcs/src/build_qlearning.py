@@ -71,7 +71,7 @@ def main():
         else:
             print(f"Build step {i} failed, but continuing...")
     
-    print(f"\n=== Build Summary ===")
+    print("\n=== Build Summary ===")
     print(f"Successful steps: {success_count}/{len(build_steps)}")
     
     if success_count == len(build_steps):

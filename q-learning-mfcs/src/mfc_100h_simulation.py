@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 from mfc_stack_simulation import MFCStack, MFCStackQLearningController
 import time
 import json
-from datetime import datetime, timedelta
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from datetime import datetime
+from path_config import get_figure_path, get_simulation_data_path
 
 class LongTermMFCStack(MFCStack):
     """Extended MFC stack with long-term effects"""
@@ -283,7 +283,7 @@ def run_100h_simulation():
     progress_intervals = [10, 25, 50, 75, 90, 95, 99]  # Hours to report progress
     next_progress_idx = 0
     
-    print(f"Starting 100-hour simulation...")
+    print("Starting 100-hour simulation...")
     print(f"Total steps: {total_steps:,}")
     print(f"Expected completion time: ~{total_steps/10000:.0f} seconds")
     print()
@@ -457,7 +457,6 @@ def generate_100h_plots(stack, controller, metrics):
     
     import matplotlib
     matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
     
     fig, axes = plt.subplots(3, 2, figsize=(16, 12))
     
@@ -538,7 +537,7 @@ if __name__ == "__main__":
         print("Partial results may be available in saved files.")
         
     except Exception as e:
-        print(f"\n=== Simulation Error ===")
+        print("\n=== Simulation Error ===")
         print(f"Error: {e}")
         import traceback
         traceback.print_exc()

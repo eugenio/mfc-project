@@ -20,32 +20,39 @@ class ConfigValidationError(Exception):
 
 
 def validate_range(value: float, min_val: float, max_val: float, 
-                  parameter: str, inclusive_min: bool = True, inclusive_max: bool = True) -> None:
+                  parameter: str, message_or_inclusive_min: Union[str, bool] = True, 
+                  inclusive_max: bool = True) -> None:
     """Validate that a value is within the specified range."""
-    if inclusive_min and inclusive_max:
-        if not (min_val <= value <= max_val):
-            raise ConfigValidationError(
-                parameter, value, 
-                f"must be in range [{min_val}, {max_val}]"
-            )
-    elif inclusive_min and not inclusive_max:
-        if not (min_val <= value < max_val):
-            raise ConfigValidationError(
-                parameter, value,
-                f"must be in range [{min_val}, {max_val})"
-            )
-    elif not inclusive_min and inclusive_max:
-        if not (min_val < value <= max_val):
-            raise ConfigValidationError(
-                parameter, value,
-                f"must be in range ({min_val}, {max_val}]"
-            )
+    # Handle both old signature (with booleans) and new signature (with custom message)
+    if isinstance(message_or_inclusive_min, str):
+        # New signature: custom message provided
+        custom_message = message_or_inclusive_min
+        inclusive_min = True
     else:
-        if not (min_val < value < max_val):
-            raise ConfigValidationError(
-                parameter, value,
-                f"must be in range ({min_val}, {max_val})"
-            )
+        # Old signature: boolean for inclusive_min
+        custom_message = None
+        inclusive_min = message_or_inclusive_min
+    
+    # Validate range
+    valid = False
+    if inclusive_min and inclusive_max:
+        valid = min_val <= value <= max_val
+        range_str = f"[{min_val}, {max_val}]"
+    elif inclusive_min and not inclusive_max:
+        valid = min_val <= value < max_val
+        range_str = f"[{min_val}, {max_val})"
+    elif not inclusive_min and inclusive_max:
+        valid = min_val < value <= max_val
+        range_str = f"({min_val}, {max_val}]"
+    else:
+        valid = min_val < value < max_val
+        range_str = f"({min_val}, {max_val})"
+    
+    if not valid:
+        if custom_message:
+            raise ConfigValidationError(parameter, value, custom_message)
+        else:
+            raise ConfigValidationError(parameter, value, f"must be in range {range_str}")
 
 
 def validate_positive(value: float, parameter: str, allow_zero: bool = False) -> None:

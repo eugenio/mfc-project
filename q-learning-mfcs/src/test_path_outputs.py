@@ -7,15 +7,11 @@ running full simulations.
 
 import os
 import sys
-import tempfile
-import shutil
 import unittest
 import importlib.util
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend for testing
-import matplotlib.pyplot as plt
 
 # Add src directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

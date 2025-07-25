@@ -12,7 +12,6 @@ import json
 import os
 from datetime import datetime
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize_scalar
 import time
 from collections import defaultdict
 import pickle
@@ -521,7 +520,7 @@ class MFCQLearningSimulationParallel:
         print("Starting MFC Q-Learning optimization simulation - PARALLEL FLOW VERSION...")
         print(f"Duration: 1000 hours, Timesteps: {self.num_steps}")
         print(f"GPU acceleration: {'Enabled' if self.use_gpu else 'Disabled'}")
-        print(f"Flow configuration: PARALLEL (each cell gets same inlet concentration)")
+        print("Flow configuration: PARALLEL (each cell gets same inlet concentration)")
         print(f"Initial flow rate: {self.flow_rates[0] * 1000:.1f} mL/h")
         
         start_time = time.time()
@@ -968,7 +967,7 @@ def main():
     
     # Final summary
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)
-    print(f"\nFinal Performance Summary (PARALLEL FLOW):")
+    print("\nFinal Performance Summary (PARALLEL FLOW):")
     print(f"Total Energy: {total_energy:.1f} Wh")
     print(f"Average Power: {np.mean(sim.stack_powers):.3f} W")
     print(f"Final Power: {sim.stack_powers[-1]:.3f} W")

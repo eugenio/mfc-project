@@ -2,7 +2,6 @@
 Path configuration for MFC Q-Learning project outputs.
 This module provides standardized paths for all output types.
 """
-import os
 from pathlib import Path
 
 # Get the project root directory (q-learning-mfcs)

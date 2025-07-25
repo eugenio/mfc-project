@@ -13,14 +13,12 @@ actual sensor measurements as feedback for model validation and adaptation.
 """
 
 import numpy as np
-from typing import Tuple, Dict, Optional, Any, List
+from typing import Dict, Optional, Any
 import sys
 import os
 
 # Import base biofilm model
 from .biofilm_model import BiofilmKineticsModel
-from .species_params import SpeciesParameters, KineticParameters
-from .substrate_params import SubstrateParameters, SubstrateProperties
 
 # Import sensing models
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sensing_models'))

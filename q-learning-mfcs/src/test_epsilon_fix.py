@@ -3,7 +3,6 @@
 Test epsilon decay fix
 """
 
-import numpy as np
 from mfc_unified_qlearning_optimized import OptimizedMFCSimulation
 
 def test_epsilon_decay():

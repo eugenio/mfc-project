@@ -12,7 +12,7 @@ import numpy as np
 import datetime
 import matplotlib
 matplotlib.use('Agg')
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_report_path
 
 def create_cover_page(pdf):
     """Create professional cover page"""
@@ -934,9 +934,9 @@ def generate_comprehensive_pdf_report():
         pdf_metadata['CreationDate'] = datetime.datetime.now()
     
     print(f"\n✅ PDF report generated successfully: {filename}")
-    print(f"📄 Total pages: 7")
-    print(f"📊 Includes: Technical overview, simulation results, energy analysis, conclusions")
-    print(f"📧 Ready for sharing with colleagues and stakeholders")
+    print("📄 Total pages: 7")
+    print("📊 Includes: Technical overview, simulation results, energy analysis, conclusions")
+    print("📧 Ready for sharing with colleagues and stakeholders")
     
     return filename
 
@@ -950,11 +950,11 @@ def main():
     try:
         filename = generate_comprehensive_pdf_report()
         
-        print(f"\n🎉 Report Generation Complete!")
+        print("\n🎉 Report Generation Complete!")
         print(f"📋 File: {filename}")
-        print(f"📁 Location: Current directory")
-        print(f"💡 This report contains all key findings and technical details")
-        print(f"🤝 Perfect for sharing with colleagues, supervisors, and collaborators")
+        print("📁 Location: Current directory")
+        print("💡 This report contains all key findings and technical details")
+        print("🤝 Perfect for sharing with colleagues, supervisors, and collaborators")
         
     except Exception as e:
         print(f"❌ Error generating PDF report: {e}")

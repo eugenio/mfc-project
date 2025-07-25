@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import max.mojo.importer
 import sys
 import os
 

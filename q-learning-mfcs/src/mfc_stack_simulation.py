@@ -13,7 +13,7 @@ This simulation includes:
 import numpy as np
 import matplotlib.pyplot as plt
 from odes import MFCModel
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 import time
 from collections import deque
 import random
@@ -584,7 +584,6 @@ def plot_simulation_results(stack, controller):
     # Set up matplotlib for non-interactive use
     import matplotlib
     matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
     
     fig, axes = plt.subplots(3, 2, figsize=(15, 12))
     

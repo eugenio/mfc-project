@@ -1,4 +1,3 @@
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 """
 Enhanced PDF Report Generator for Q-Learning MFC Stack Project
 with improved layout, typography, and comprehensive visualizations.
@@ -1057,8 +1056,8 @@ def main():
         d['Creator'] = 'Enhanced Mojo GPU-Accelerated Simulation Platform'
     
     print(f"✅ Enhanced PDF report generated successfully: {filename}")
-    print(f"📄 Total pages: 6 (enhanced layout)")
-    print(f"📊 Features:")
+    print("📄 Total pages: 6 (enhanced layout)")
+    print("📊 Features:")
     print("   • Professional typography and color schemes")
     print("   • Comprehensive visualizations and diagrams")
     print("   • Detailed technical specifications")
@@ -1067,7 +1066,7 @@ def main():
     print("   • High-resolution figures (300 DPI)")
     print()
     print("🎉 Enhanced Report Generation Complete!")
-    print(f"📧 Ready for professional presentation and collaboration")
+    print("📧 Ready for professional presentation and collaboration")
 
 if __name__ == "__main__":
     main()
