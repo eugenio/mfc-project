@@ -19,7 +19,7 @@ biological:
         acetate: 20.0  # Precisely controlled concentrations
         lactate: 12.0
         pyruvate: 8.5
-    
+
     shewanella:
       max_growth_rate: 0.142  # Precise growth rate measurement
       electron_transport_efficiency: 0.82
@@ -53,7 +53,7 @@ control:
     flow_rate_tolerance: 0.1  # Very tight tolerance
     pump_efficiency: 0.962  # Precisely calibrated
     pump_response_time: 2.2
-    
+
     flow_pid:
       kp: 2.15  # Precisely tuned gains
       ki: 0.08
@@ -70,18 +70,18 @@ control:
     min_addition_rate: 0.0
     max_addition_rate: 40.0
     nominal_addition_rate: 10.2
-    
+
     outlet_pid:
       kp: 2.25  # Fine-tuned parameters
       ki: 0.065
       kd: 0.28
       enable_anti_windup: true
-    
+
     reservoir_pid:
       kp: 1.35
       ki: 0.042
       kd: 0.18
-    
+
     starvation_threshold_warning: 4.5
     starvation_threshold_critical: 2.2
     excess_threshold: 26.0
@@ -102,20 +102,20 @@ control:
     epsilon: 0.22
     epsilon_decay: 0.9965
     epsilon_min: 0.065
-    
+
     power_bins: 10  # Fine discretization for precision
     biofilm_deviation_bins: 8
     substrate_utilization_bins: 10
-    
+
     flow_rate_adjustments: [-10.0, -6.0, -3.0, -1.5, -0.5, 0.0, 0.5, 1.5, 3.0, 6.0, 10.0]
     substrate_actions: [-2.5, -1.5, -0.8, -0.3, 0.0, 0.3, 0.8, 1.5, 2.5]
-    
+
     # Balanced multi-objective weights for precision
     power_objective_weight: 0.42
     biofilm_health_weight: 0.35
     sensor_agreement_weight: 0.18
     stability_weight: 0.05
-    
+
     # Precision-focused reward structure
     power_reward_weight: 12.5
     power_penalty_threshold: 45.0
@@ -140,10 +140,10 @@ visualization:
     grid_enabled: true
     grid_alpha: 0.25
     font_family: "Times New Roman"  # Publication font
-    
+
   color_scheme_type: "scientific"
   output_format: "pdf"  # Vector format for precision
-  
+
   data_processing:
     time_series_sampling_rate: 75  # Moderate sampling for clarity
     enable_smoothing: true
@@ -160,7 +160,7 @@ visualization:
     vertical_spacing: 0.22
     legend_position: "upper right"
     main_title: "Precision MFC Control Analysis"
-    
+
     subplot_titles:
       - "Power Output (W)"
       - "Biofilm Thickness (μm)"
@@ -178,12 +178,12 @@ precision_monitoring:
     concentration_precision: 0.1  # ±0.1 mmol/L
     power_precision: 0.005  # ±0.005 W
     biofilm_precision: 0.5  # ±0.5 μm
-  
+
   calibration_schedule:
     flow_sensors: 3600  # Calibrate every hour
     concentration_sensors: 7200  # Every 2 hours
     power_measurement: 1800  # Every 30 minutes
-    
+
   quality_control:
     enable_drift_correction: true
     drift_threshold: 0.02  # 2% drift threshold

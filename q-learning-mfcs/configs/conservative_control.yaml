@@ -19,7 +19,7 @@ biological:
         acetate: 15.0  # mmol/L
         lactate: 8.0
         pyruvate: 5.0
-    
+
     shewanella:
       max_growth_rate: 0.12  # Conservative growth rate
       electron_transport_efficiency: 0.75
@@ -53,7 +53,7 @@ control:
     flow_rate_tolerance: 0.8
     pump_efficiency: 0.95
     pump_response_time: 3.0  # Slower response for stability
-    
+
     flow_pid:
       kp: 1.2  # Conservative proportional gain
       ki: 0.05  # Low integral gain
@@ -69,18 +69,18 @@ control:
     min_addition_rate: 0.0
     max_addition_rate: 25.0  # Conservative maximum addition rate
     nominal_addition_rate: 8.0
-    
+
     outlet_pid:
       kp: 1.5  # Conservative tuning
       ki: 0.04
       kd: 0.15
       enable_anti_windup: true
-    
+
     reservoir_pid:
       kp: 0.8
       ki: 0.03
       kd: 0.1
-    
+
     starvation_threshold_warning: 6.0  # Higher warning threshold
     starvation_threshold_critical: 3.0  # Higher critical threshold
     excess_threshold: 22.0  # Lower excess threshold
@@ -101,20 +101,20 @@ control:
     epsilon: 0.15  # Lower exploration
     epsilon_decay: 0.998
     epsilon_min: 0.05
-    
+
     power_bins: 6  # Coarser discretization for stability
     biofilm_deviation_bins: 5
     substrate_utilization_bins: 6
-    
+
     flow_rate_adjustments: [-8.0, -5.0, -2.0, -1.0, 0.0, 1.0, 2.0, 5.0, 8.0]
     substrate_actions: [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
-    
+
     # Conservative multi-objective weights
     power_objective_weight: 0.3  # Lower power priority
     biofilm_health_weight: 0.4  # Higher biofilm health priority
     sensor_agreement_weight: 0.2
     stability_weight: 0.1
-    
+
     # Conservative reward structure
     power_reward_weight: 8.0
     power_penalty_threshold: 60.0  # Higher threshold
@@ -136,10 +136,10 @@ visualization:
     line_width: 2.0
     grid_enabled: true
     grid_alpha: 0.4
-    
+
   color_scheme_type: "scientific"
   output_format: "pdf"  # Vector format for publication
-  
+
   data_processing:
     time_series_sampling_rate: 200  # Less frequent sampling
     enable_smoothing: true

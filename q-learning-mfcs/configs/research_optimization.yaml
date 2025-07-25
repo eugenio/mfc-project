@@ -19,7 +19,7 @@ biological:
         acetate: 25.0  # Higher concentrations for performance
         lactate: 15.0
         pyruvate: 12.0
-    
+
     shewanella:
       max_growth_rate: 0.18  # Aggressive growth rate
       electron_transport_efficiency: 0.88
@@ -42,7 +42,7 @@ biological:
           vmax: 12.5
           km: 0.9
           ki: 110.0
-    
+
     lactate:
       molecular_weight: 90.08
       chemical_formula: "C3H6O3"
@@ -66,7 +66,7 @@ control:
     flow_rate_tolerance: 0.3  # Tight tolerance
     pump_efficiency: 0.98  # High efficiency pump
     pump_response_time: 1.0  # Fast response
-    
+
     flow_pid:
       kp: 3.5  # Aggressive proportional gain
       ki: 0.25  # Higher integral gain
@@ -82,18 +82,18 @@ control:
     min_addition_rate: 0.0
     max_addition_rate: 100.0  # Very high addition rate capability
     nominal_addition_rate: 20.0
-    
+
     outlet_pid:
       kp: 4.0  # Aggressive tuning
       ki: 0.15
       kd: 0.6
       enable_anti_windup: true
-    
+
     reservoir_pid:
       kp: 2.5
       ki: 0.08
       kd: 0.4
-    
+
     starvation_threshold_warning: 3.0  # Lower warning threshold
     starvation_threshold_critical: 1.0  # Very low critical threshold
     excess_threshold: 40.0  # High excess threshold
@@ -114,20 +114,20 @@ control:
     epsilon: 0.6  # High exploration
     epsilon_decay: 0.992
     epsilon_min: 0.15  # Maintain some exploration
-    
+
     power_bins: 12  # Fine discretization for precision
     biofilm_deviation_bins: 10
     substrate_utilization_bins: 12
-    
+
     flow_rate_adjustments: [-25.0, -15.0, -10.0, -5.0, -2.0, 0.0, 2.0, 5.0, 10.0, 15.0, 25.0]
     substrate_actions: [-5.0, -3.0, -2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
-    
+
     # Performance-focused multi-objective weights
     power_objective_weight: 0.6  # Very high power priority
     biofilm_health_weight: 0.2
     sensor_agreement_weight: 0.1
     stability_weight: 0.1
-    
+
     # Aggressive reward structure
     power_reward_weight: 25.0  # Very high power reward
     power_penalty_threshold: 30.0  # Low penalty threshold
@@ -151,10 +151,10 @@ visualization:
     marker_size: 4.0
     grid_enabled: true
     grid_alpha: 0.2
-    
+
   color_scheme_type: "scientific"
   output_format: "svg"  # Vector format for scalability
-  
+
   data_processing:
     time_series_sampling_rate: 50  # High resolution sampling
     enable_smoothing: false  # No smoothing for research accuracy
@@ -171,7 +171,7 @@ visualization:
     vertical_spacing: 0.15
     legend_position: "upper right"
     main_title: "Research MFC Optimization Analysis"
-    
+
     subplot_titles:
       - "Power Output Optimization"
       - "Biofilm Development"
@@ -202,7 +202,7 @@ sensitivity_analysis:
       config_path: ["control", "advanced_control", "learning_rate"]
       description: "Q-learning learning rate"
       category: "learning"
-    
+
     - name: "power_objective_weight"
       bounds:
         min_value: 0.3
@@ -211,7 +211,7 @@ sensitivity_analysis:
       config_path: ["control", "advanced_control", "power_objective_weight"]
       description: "Power optimization weight"
       category: "objectives"
-    
+
     - name: "max_flow_rate"
       bounds:
         min_value: 40.0
@@ -220,7 +220,7 @@ sensitivity_analysis:
       config_path: ["control", "flow_control", "max_flow_rate"]
       description: "Maximum flow rate"
       category: "control"
-    
+
     - name: "target_outlet_concentration"
       bounds:
         min_value: 8.0
@@ -237,7 +237,7 @@ sensitivity_analysis:
     - name: "morris"
       n_samples: 1000
       n_levels: 6
-    
+
   outputs:
     - "average_power"
     - "biofilm_stability"
