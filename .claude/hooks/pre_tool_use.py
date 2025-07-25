@@ -468,6 +468,11 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
         bool: True if successful, False otherwise
     """
     import difflib
+    import traceback
+    
+    print(f"DEBUG: Starting chunked edit for {file_path}", file=sys.stderr)
+    print(f"DEBUG: Old string length: {len(old_string)} chars, {len(old_string.splitlines())} lines", file=sys.stderr)
+    print(f"DEBUG: New string length: {len(new_string)} chars, {len(new_string.splitlines())} lines", file=sys.stderr)
     
     old_lines = old_string.splitlines(keepends=True)
     new_lines = new_string.splitlines(keepends=True)
@@ -476,29 +481,39 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=''))
     
     max_lines = min(config.get('max_lines_added', 25), config.get('max_lines_removed', 25))
+    print(f"DEBUG: Max lines per chunk: {max_lines}", file=sys.stderr)
     
     # Read the current file content
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             current_content = f.read()
+        print(f"DEBUG: Successfully read file, length: {len(current_content)} chars", file=sys.stderr)
     except Exception as e:
         print(f"ERROR: Failed to read file {file_path}: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         return False
     
     # If the old_string doesn't match current content exactly, abort
     if old_string not in current_content:
         print(f"ERROR: Old string not found in {file_path}", file=sys.stderr)
+        print(f"DEBUG: File content preview: {current_content[:100]}...", file=sys.stderr)
+        print(f"DEBUG: Old string preview: {old_string[:100]}...", file=sys.stderr)
         return False
     
     # Split the change into chunks
     old_chunks = split_text_into_chunks(old_string, max_lines)
     new_chunks = split_text_into_chunks(new_string, max_lines)
     
+    print(f"DEBUG: Split into {len(old_chunks)} old chunks and {len(new_chunks)} new chunks", file=sys.stderr)
+    
     # If we're removing more than adding, process removals first
     if len(old_chunks) > len(new_chunks):
+        print(f"DEBUG: Removing content mode (more old chunks than new)", file=sys.stderr)
         # Remove chunks from the end to the beginning
         for i in range(len(old_chunks) - 1, -1, -1):
             try:
+                print(f"DEBUG: Processing chunk {i+1}/{len(old_chunks)}", file=sys.stderr)
+                
                 # Read current content
                 with open(file_path, 'r', encoding='utf-8') as f:
                     current_content = f.read()
@@ -507,24 +522,40 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 chunk_to_remove = old_chunks[i]
                 chunk_to_add = new_chunks[i] if i < len(new_chunks) else ''
                 
+                print(f"DEBUG: Chunk to remove has {len(chunk_to_remove.splitlines())} lines", file=sys.stderr)
+                print(f"DEBUG: Chunk to add has {len(chunk_to_add.splitlines())} lines", file=sys.stderr)
+                
                 if chunk_to_remove in current_content:
                     new_content = current_content.replace(chunk_to_remove, chunk_to_add, 1)
                     
                     # Write the change
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(new_content)
+                    print(f"DEBUG: File written successfully", file=sys.stderr)
                     
                     # Commit this chunk
-                    subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+                    result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
+                    if result.returncode != 0:
+                        print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
+                        return False
+                    
                     chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(old_chunks)} - removed {len(chunk_to_remove.splitlines())} lines"
-                    subprocess.run(['git', 'commit', '-m', chunk_msg], check=True, capture_output=True)
+                    result = subprocess.run(['git', 'commit', '-m', chunk_msg], capture_output=True, text=True)
+                    if result.returncode != 0:
+                        print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+                        return False
+                        
                     print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(old_chunks)}", file=sys.stderr)
+                else:
+                    print(f"WARNING: Chunk not found in current content", file=sys.stderr)
                 
             except Exception as e:
                 print(f"ERROR: Failed to process chunk {i+1}: {e}", file=sys.stderr)
+                traceback.print_exc(file=sys.stderr)
                 return False
     
     else:
+        print(f"DEBUG: Adding content mode (more new chunks than old)", file=sys.stderr)
         # Adding more than removing - do a direct chunked replacement
         # Start by replacing with empty content, then add chunks
         try:
@@ -536,14 +567,25 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             
-            subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
-            subprocess.run(['git', 'commit', '-m', f"{config['commit_message_prefix']}removed old content"], 
-                         check=True, capture_output=True)
+            result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
+                return False
+                
+            result = subprocess.run(['git', 'commit', '-m', f"{config['commit_message_prefix']}removed old content"], 
+                         capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+                return False
+            
+            print(f"DEBUG: Removed old content", file=sys.stderr)
             
             # Now add new content in chunks
             insertion_point = current_content.index(old_string)
             
             for i, chunk in enumerate(new_chunks):
+                print(f"DEBUG: Adding chunk {i+1}/{len(new_chunks)}", file=sys.stderr)
+                
                 with open(file_path, 'r', encoding='utf-8') as f:
                     current_content = f.read()
                 
@@ -554,15 +596,25 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(new_content)
                 
-                subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+                result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
+                if result.returncode != 0:
+                    print(f"ERROR: git add failed: {result.stderr}", file=sys.stderr)
+                    return False
+                    
                 chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(new_chunks)} - added {len(chunk.splitlines())} lines"
-                subprocess.run(['git', 'commit', '-m', chunk_msg], check=True, capture_output=True)
+                result = subprocess.run(['git', 'commit', '-m', chunk_msg], capture_output=True, text=True)
+                if result.returncode != 0:
+                    print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+                    return False
+                    
                 print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)}", file=sys.stderr)
                 
         except Exception as e:
             print(f"ERROR: Failed during chunked addition: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             return False
     
+    print(f"DEBUG: Chunked edit completed successfully", file=sys.stderr)
     return True
 
 def check_edit_thresholds(tool_name, tool_input):
