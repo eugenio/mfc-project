@@ -471,6 +471,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     import traceback
     
     print(f"DEBUG: Starting chunked edit for {file_path}", file=sys.stderr)
+    print(f"DEBUG: Current working directory: {os.getcwd()}", file=sys.stderr)
     print(f"DEBUG: Old string length: {len(old_string)} chars, {len(old_string.splitlines())} lines", file=sys.stderr)
     print(f"DEBUG: New string length: {len(new_string)} chars, {len(new_string.splitlines())} lines", file=sys.stderr)
     
@@ -653,6 +654,10 @@ def check_edit_thresholds(tool_name, tool_input):
         total_changes > max_total
     )
     
+    print(f"DEBUG: Checking thresholds - lines_added={lines_added}, lines_removed={lines_removed}, total={total_changes}", file=sys.stderr)
+    print(f"DEBUG: Thresholds - max_added={max_added}, max_removed={max_removed}, max_total={max_total}", file=sys.stderr)
+    print(f"DEBUG: Threshold exceeded: {threshold_exceeded}", file=sys.stderr)
+    
     if threshold_exceeded:
         print("LARGE EDIT DETECTED:", file=sys.stderr)
         print(f"  File: {file_path}", file=sys.stderr)
@@ -668,6 +673,8 @@ def check_edit_thresholds(tool_name, tool_input):
                 old_string = tool_input.get('old_string', '')
                 new_string = tool_input.get('new_string', '')
                 
+                print(f"DEBUG: About to call perform_chunked_edit with file_path={file_path}", file=sys.stderr)
+                
                 # Perform chunked edit
                 if perform_chunked_edit(file_path, old_string, new_string, config):
                     print("CHUNKED EDIT COMPLETE: All chunks committed successfully", file=sys.stderr)
@@ -677,6 +684,8 @@ def check_edit_thresholds(tool_name, tool_input):
                     print("CHUNKED EDIT FAILED: Falling back to regular edit", file=sys.stderr)
             else:
                 print("COMPLEX EDIT: MultiEdit not supported for chunking, proceeding normally", file=sys.stderr)
+        else:
+            print("DEBUG: Auto-commit disabled, proceeding normally", file=sys.stderr)
         
         # If chunking is disabled or failed, proceed normally
         return False
