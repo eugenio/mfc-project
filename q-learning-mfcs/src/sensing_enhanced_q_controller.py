@@ -16,11 +16,12 @@ control decisions, leading to better biofilm management and MFC performance.
 """
 
 import numpy as np
-import pandas as pd
 from typing import Dict, List, Tuple, Optional, Any
-from collections import defaultdict
 import sys
 import os
+
+# Import configuration classes
+from config import QLearningConfig, SensorConfig, validate_qlearning_config, validate_sensor_config
 
 # Import base controller
 sys.path.append(os.path.dirname(__file__))
@@ -29,9 +30,9 @@ from mfc_recirculation_control import AdvancedQLearningFlowController
 # Import sensing models
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sensing_models'))
 try:
-    from sensing_models.eis_model import EISModel, EISMeasurement
-    from sensing_models.qcm_model import QCMModel, QCMMeasurement
-    from sensing_models.sensor_fusion import SensorFusion, FusedMeasurement
+    from sensing_models.eis_model import EISModel
+    from sensing_models.qcm_model import QCMModel
+    from sensing_models.sensor_fusion import SensorFusion
 except ImportError as e:
     print(f"Warning: Sensing models not available: {e}")
     EISModel = QCMModel = SensorFusion = None
@@ -54,44 +55,61 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
     - Sensor fault handling and degradation compensation
     """
     
-    def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702,
-                 enable_sensor_state=True, sensor_weight=0.3, fault_tolerance=True):
+    def __init__(self, qlearning_config: Optional[QLearningConfig] = None,
+                 sensor_config: Optional[SensorConfig] = None,
+                 enable_sensor_state: bool = True, fault_tolerance: bool = True):
         """
         Initialize sensing-enhanced Q-learning controller.
         
         Args:
-            learning_rate: Q-learning learning rate
-            discount_factor: Q-learning discount factor
-            epsilon: Exploration rate
+            qlearning_config: Q-learning configuration parameters
+            sensor_config: Sensor configuration parameters
             enable_sensor_state: Include sensor data in state representation
-            sensor_weight: Weight of sensor information in decisions (0-1)
             fault_tolerance: Enable fault-tolerant operation
         """
-        # Initialize base controller
-        super().__init__(learning_rate, discount_factor, epsilon)
+        # Use default configurations if not provided
+        if qlearning_config is None:
+            qlearning_config = QLearningConfig()
+        if sensor_config is None:
+            sensor_config = SensorConfig()
+            
+        # Validate configurations
+        validate_qlearning_config(qlearning_config)
+        validate_sensor_config(sensor_config)
+        
+        # Store configurations
+        self.qlearning_config = qlearning_config
+        self.sensor_config = sensor_config
+        
+        # Initialize base controller with enhanced parameters
+        super().__init__(
+            qlearning_config.enhanced_learning_rate,
+            qlearning_config.enhanced_discount_factor, 
+            qlearning_config.enhanced_epsilon
+        )
         
         # Sensor configuration
         self.enable_sensor_state = enable_sensor_state
-        self.sensor_weight = sensor_weight
+        self.sensor_weight = qlearning_config.sensor_weight
         self.fault_tolerance = fault_tolerance
         
         # Enhanced state space setup
         self.setup_sensor_enhanced_state_space()
         
-        # Multi-objective parameters
-        self.power_weight = 0.4          # Weight for power optimization
-        self.biofilm_health_weight = 0.3  # Weight for biofilm health
-        self.sensor_agreement_weight = 0.2 # Weight for sensor consistency
-        self.stability_weight = 0.1       # Weight for system stability
+        # Multi-objective parameters from config
+        self.power_weight = qlearning_config.power_objective_weight
+        self.biofilm_health_weight = qlearning_config.biofilm_health_weight
+        self.sensor_agreement_weight = qlearning_config.sensor_agreement_weight
+        self.stability_weight = qlearning_config.stability_weight
         
         # Sensor confidence tracking
         self.sensor_confidence_history = []
         self.sensor_fault_count = 0
         self.sensor_degradation_factor = 1.0
         
-        # Adaptive exploration parameters
-        self.min_sensor_confidence = 0.3  # Minimum confidence for sensor-based decisions
-        self.exploration_boost_factor = 1.5 # Boost exploration when sensors unreliable
+        # Adaptive exploration parameters from config
+        self.min_sensor_confidence = qlearning_config.sensor_confidence_threshold
+        self.exploration_boost_factor = qlearning_config.exploration_boost_factor
         
         # Performance tracking
         self.sensor_guided_decisions = 0
@@ -114,21 +132,45 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         super().setup_enhanced_state_action_spaces()
         
         if self.enable_sensor_state:
-            # Additional sensor-based state variables
+            # Additional sensor-based state variables using configuration
+            # Get state space config
+            state_config = self.qlearning_config.state_space
+            
             # EIS-related states
-            self.eis_thickness_bins = np.linspace(0, 80, 8)    # μm (G. sulfurreducens range)
-            self.eis_conductivity_bins = np.linspace(0, 0.01, 6) # S/m
-            self.eis_quality_bins = np.linspace(0, 1, 4)       # Measurement quality
+            self.eis_thickness_bins = np.linspace(
+                0, state_config.eis_thickness_max, 
+                state_config.eis_thickness_bins
+            )
+            self.eis_conductivity_bins = np.linspace(
+                0, state_config.eis_conductivity_max, 
+                state_config.eis_conductivity_bins
+            )
+            self.eis_quality_bins = np.linspace(
+                0, 1, state_config.eis_confidence_bins
+            )
             
             # QCM-related states
-            self.qcm_mass_bins = np.linspace(0, 1000, 8)       # ng/cm²
-            self.qcm_frequency_shift_bins = np.linspace(0, 500, 6) # Hz
-            self.qcm_dissipation_bins = np.linspace(0, 0.01, 4) # Dissipation factor
+            self.qcm_mass_bins = np.linspace(
+                0, state_config.qcm_mass_max, 
+                state_config.qcm_mass_bins
+            )
+            self.qcm_frequency_shift_bins = np.linspace(
+                0, state_config.qcm_frequency_max, 
+                state_config.qcm_frequency_bins
+            )
+            self.qcm_dissipation_bins = np.linspace(
+                0, state_config.qcm_dissipation_max, 
+                state_config.qcm_dissipation_bins
+            )
             
             # Sensor fusion states
-            self.sensor_agreement_bins = np.linspace(0, 1, 5)   # Agreement score
-            self.fusion_confidence_bins = np.linspace(0, 1, 4)  # Fusion confidence
-            self.sensor_status_bins = np.array([0, 1, 2, 3])    # good, degraded, failed, unavailable
+            self.sensor_agreement_bins = np.linspace(
+                0, 1, state_config.sensor_agreement_bins
+            )
+            self.fusion_confidence_bins = np.linspace(
+                0, 1, state_config.fusion_confidence_bins
+            )
+            self.sensor_status_bins = np.array([0, 1, 2, 3])  # good, degraded, failed, unavailable
             
             print("Sensor-enhanced state space initialized")
         else:
@@ -279,7 +321,8 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         if eis_data:
             eis_quality = eis_data.get('measurement_quality', 0.0)
             eis_status = eis_data.get('status', 'unavailable')
-            status_factor = {'good': 1.0, 'degraded': 0.6, 'failed': 0.2, 'unavailable': 0.0}
+            status_factor = self.sensor_config.fusion.status_scores.copy()
+            status_factor['unavailable'] = 0.0
             eis_confidence = eis_quality * status_factor.get(eis_status, 0.0)
             confidences.append(eis_confidence)
         
@@ -288,7 +331,8 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         if qcm_data:
             qcm_quality = qcm_data.get('measurement_quality', 0.0)
             qcm_status = qcm_data.get('status', 'unavailable')
-            status_factor = {'good': 1.0, 'degraded': 0.6, 'failed': 0.2, 'unavailable': 0.0}
+            status_factor = self.sensor_config.fusion.status_scores.copy()
+            status_factor['unavailable'] = 0.0
             qcm_confidence = qcm_quality * status_factor.get(qcm_status, 0.0)
             confidences.append(qcm_confidence)
         
@@ -389,13 +433,14 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
             eis_thickness = eis_data.get('thickness_um', 0.0)
             eis_conductivity = eis_data.get('conductivity_S_per_m', 0.0)
             
-            # Optimal thickness reward (20-40 μm for G. sulfurreducens)
-            optimal_thickness = 30.0  # μm
+            # Optimal thickness reward using configuration
+            rewards_config = self.qlearning_config.rewards
+            optimal_thickness = rewards_config.biofilm_optimal_thickness_um
             thickness_deviation = abs(eis_thickness - optimal_thickness) / optimal_thickness
             thickness_reward = max(0, 1.0 - thickness_deviation)
             
             # Conductivity reward (higher is better for electron transfer)
-            conductivity_reward = min(1.0, eis_conductivity / 0.005)  # Normalized to 0.005 S/m
+            conductivity_reward = min(1.0, eis_conductivity / rewards_config.conductivity_normalization_S_per_m)
             
             biofilm_reward += (thickness_reward + conductivity_reward) / 2
         
@@ -409,7 +454,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
             if len(self.sensor_confidence_history) > 1:
                 previous_mass = getattr(self, '_previous_qcm_mass', 0.0)
                 mass_growth_rate = (qcm_mass - previous_mass) / max(1.0, qcm_mass)
-                growth_reward = max(0, min(1.0, mass_growth_rate * 10))  # Normalize growth rate
+                growth_reward = max(0, min(1.0, mass_growth_rate * self.qlearning_config.rewards.mass_growth_rate_factor))
                 biofilm_reward += growth_reward * qcm_quality
             
             self._previous_qcm_mass = qcm_mass
@@ -434,12 +479,12 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         """Calculate reward based on system stability."""
         # Flow rate stability
         current_flow = system_state.get('flow_rate', 10.0)
-        target_flow = 15.0  # Target flow rate
+        target_flow = self.qlearning_config.stability_target_flow_rate
         flow_stability = max(0, 1.0 - abs(current_flow - target_flow) / target_flow)
         
         # Substrate concentration stability
         outlet_conc = system_state.get('outlet_concentration', 10.0)
-        target_outlet = 12.0  # Target outlet concentration
+        target_outlet = self.qlearning_config.stability_target_outlet_concentration
         conc_stability = max(0, 1.0 - abs(outlet_conc - target_outlet) / target_outlet)
         
         # Combined stability reward
@@ -614,3 +659,26 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         }
         
         return validation_results
+    
+    def get_state_hash(self, inlet_conc: float, outlet_conc: float, total_current: float) -> str:
+        """Generate a state hash for Q-learning state lookup."""
+        # Simple discretization for state encoding
+        inlet_bin = int(inlet_conc / 5.0)  # 5 mM bins
+        outlet_bin = int(outlet_conc / 5.0)  # 5 mM bins
+        current_bin = int(total_current / 0.1)  # 0.1 A bins
+        
+        return f"{inlet_bin}_{outlet_bin}_{current_bin}"
+    
+    def choose_action(self, state: str) -> int:
+        """Choose an action using epsilon-greedy policy."""
+        # Epsilon-greedy action selection
+        if np.random.random() < self.epsilon:
+            # Explore: random action
+            return np.random.randint(0, 10)  # 10 action choices
+        else:
+            # Exploit: best known action
+            q_values = self.q_table[state]
+            if q_values:
+                return max(q_values, key=q_values.get)
+            else:
+                return np.random.randint(0, 10)  # Random if no Q-values yet
