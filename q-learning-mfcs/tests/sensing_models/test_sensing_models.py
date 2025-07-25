@@ -401,7 +401,7 @@ class TestSensorFusion(unittest.TestCase):
         """Test sensor fusion initialization."""
         # Test different fusion methods
         for method in [FusionMethod.KALMAN_FILTER, FusionMethod.WEIGHTED_AVERAGE,
-                      FusionMethod.MAXIMUM_LIKELIHOOD, FusionMethod.BAYESIAN_INFERENCE]:
+                      FusionMethod.MAXIMUM_LIKELIHOOD, FusionMethod.BAYESIAN_FUSION]:
             fusion = SensorFusion(method=method, use_gpu=False)
             self.assertEqual(fusion.method, method)
             
@@ -510,7 +510,7 @@ class TestSensorFusion(unittest.TestCase):
         
         # Test all fusion methods
         for method in [FusionMethod.KALMAN_FILTER, FusionMethod.WEIGHTED_AVERAGE,
-                      FusionMethod.MAXIMUM_LIKELIHOOD, FusionMethod.BAYESIAN_INFERENCE]:
+                      FusionMethod.MAXIMUM_LIKELIHOOD, FusionMethod.BAYESIAN_FUSION]:
             fusion = SensorFusion(method=method, use_gpu=False)
             
             try:

@@ -152,6 +152,9 @@ class QLearningConfig:
     
     # Reward weights configuration
     rewards: QLearningRewardWeights = field(default_factory=QLearningRewardWeights)
+    
+    # State space configuration
+    state_space: 'StateSpaceConfig' = field(default_factory=lambda: StateSpaceConfig())
 
 
 @dataclass
@@ -170,6 +173,25 @@ class StateSpaceConfig:
     
     # Enhanced state space with sensors
     sensor_state_bins: int = 12  # Combined sensor state bins
+    
+    # EIS sensor state configuration
+    eis_thickness_bins: int = 8  # EIS biofilm thickness bins
+    eis_thickness_max: float = 80.0  # Maximum EIS thickness (μm)
+    eis_conductivity_bins: int = 6  # EIS conductivity bins
+    eis_conductivity_max: float = 0.01  # Maximum conductivity (S/m)
+    eis_confidence_bins: int = 4  # EIS confidence level bins
+    
+    # QCM sensor state configuration
+    qcm_mass_bins: int = 8  # QCM mass bins
+    qcm_mass_max: float = 1000.0  # Maximum QCM mass (ng/cm²)
+    qcm_frequency_bins: int = 6  # QCM frequency bins
+    qcm_frequency_max: float = 500.0  # Maximum frequency shift (Hz)
+    qcm_dissipation_bins: int = 4  # QCM dissipation bins (from existing code)
+    qcm_dissipation_max: float = 0.01  # Maximum dissipation factor (from sensor_config.py)
+    
+    # Sensor fusion state configuration
+    sensor_agreement_bins: int = 4  # Sensor agreement bins (from existing code)
+    fusion_confidence_bins: int = 5  # Sensor fusion confidence bins (from existing code)
     
     def get_total_states(self, include_sensors: bool = False) -> int:
         """Calculate total number of discrete states."""

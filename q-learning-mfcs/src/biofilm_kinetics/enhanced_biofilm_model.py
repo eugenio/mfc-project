@@ -110,7 +110,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
                 'kalman_filter': FusionMethod.KALMAN_FILTER,
                 'weighted_average': FusionMethod.WEIGHTED_AVERAGE,
                 'maximum_likelihood': FusionMethod.MAXIMUM_LIKELIHOOD,
-                'bayesian': FusionMethod.BAYESIAN_INFERENCE
+                'bayesian': FusionMethod.BAYESIAN_FUSION
             }
             
             self.sensor_fusion = SensorFusion(
