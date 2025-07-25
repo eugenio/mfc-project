@@ -96,4 +96,3 @@ def main():
     print("\n✨ Test completed!")
 
 if __name__ == "__main__":
-    main()
