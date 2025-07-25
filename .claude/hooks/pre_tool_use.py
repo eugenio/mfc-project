@@ -434,9 +434,140 @@ def perform_auto_commit(file_path, config, changes_summary):
         print(f"WARNING: Auto-commit error for {file_path}: {e}", file=sys.stderr)
         return False
 
+def split_text_into_chunks(text, chunk_size):
+    """
+    Split text into chunks of approximately chunk_size lines.
+    
+    Args:
+        text: Text to split
+        chunk_size: Maximum lines per chunk
+        
+    Returns:
+        list: List of text chunks
+    """
+    lines = text.splitlines(keepends=True)
+    chunks = []
+    
+    for i in range(0, len(lines), chunk_size):
+        chunk = ''.join(lines[i:i + chunk_size])
+        chunks.append(chunk)
+    
+    return chunks
+
+def perform_chunked_edit(file_path, old_string, new_string, config):
+    """
+    Perform a large edit by splitting it into smaller chunks and committing each.
+    
+    Args:
+        file_path: Path to the file being edited
+        old_string: Original content to replace
+        new_string: New content
+        config: Edit threshold configuration
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    import difflib
+    
+    old_lines = old_string.splitlines(keepends=True)
+    new_lines = new_string.splitlines(keepends=True)
+    
+    # Generate unified diff
+    diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=''))
+    
+    max_lines = min(config.get('max_lines_added', 25), config.get('max_lines_removed', 25))
+    
+    # Read the current file content
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            current_content = f.read()
+    except Exception as e:
+        print(f"ERROR: Failed to read file {file_path}: {e}", file=sys.stderr)
+        return False
+    
+    # If the old_string doesn't match current content exactly, abort
+    if old_string not in current_content:
+        print(f"ERROR: Old string not found in {file_path}", file=sys.stderr)
+        return False
+    
+    # Split the change into chunks
+    old_chunks = split_text_into_chunks(old_string, max_lines)
+    new_chunks = split_text_into_chunks(new_string, max_lines)
+    
+    # If we're removing more than adding, process removals first
+    if len(old_chunks) > len(new_chunks):
+        # Remove chunks from the end to the beginning
+        for i in range(len(old_chunks) - 1, -1, -1):
+            try:
+                # Read current content
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    current_content = f.read()
+                
+                # Replace this chunk with empty or corresponding new chunk
+                chunk_to_remove = old_chunks[i]
+                chunk_to_add = new_chunks[i] if i < len(new_chunks) else ''
+                
+                if chunk_to_remove in current_content:
+                    new_content = current_content.replace(chunk_to_remove, chunk_to_add, 1)
+                    
+                    # Write the change
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+                    
+                    # Commit this chunk
+                    subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+                    chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(old_chunks)} - removed {len(chunk_to_remove.splitlines())} lines"
+                    subprocess.run(['git', 'commit', '-m', chunk_msg], check=True, capture_output=True)
+                    print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(old_chunks)}", file=sys.stderr)
+                
+            except Exception as e:
+                print(f"ERROR: Failed to process chunk {i+1}: {e}", file=sys.stderr)
+                return False
+    
+    else:
+        # Adding more than removing - do a direct chunked replacement
+        # Start by replacing with empty content, then add chunks
+        try:
+            # First, remove all old content
+            with open(file_path, 'r', encoding='utf-8') as f:
+                current_content = f.read()
+            
+            new_content = current_content.replace(old_string, '', 1)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            
+            subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+            subprocess.run(['git', 'commit', '-m', f"{config['commit_message_prefix']}removed old content"], 
+                         check=True, capture_output=True)
+            
+            # Now add new content in chunks
+            insertion_point = current_content.index(old_string)
+            
+            for i, chunk in enumerate(new_chunks):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    current_content = f.read()
+                
+                # Insert chunk at the appropriate position
+                new_content = current_content[:insertion_point] + chunk + current_content[insertion_point:]
+                insertion_point += len(chunk)
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                
+                subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+                chunk_msg = f"{config['commit_message_prefix']}chunk {i+1}/{len(new_chunks)} - added {len(chunk.splitlines())} lines"
+                subprocess.run(['git', 'commit', '-m', chunk_msg], check=True, capture_output=True)
+                print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)}", file=sys.stderr)
+                
+        except Exception as e:
+            print(f"ERROR: Failed during chunked addition: {e}", file=sys.stderr)
+            return False
+    
+    return True
+
 def check_edit_thresholds(tool_name, tool_input):
     """
-    Check if edit operation exceeds configured thresholds.
+    Check if edit operation exceeds configured thresholds and handle accordingly.
     
     Args:
         tool_name: Name of the tool being used
@@ -478,24 +609,25 @@ def check_edit_thresholds(tool_name, tool_input):
         print(f"  Total changes: {total_changes} (max: {max_total})", file=sys.stderr)
         
         if config.get('auto_commit', True):
-            print("AUTO-COMMIT: Will commit existing changes before proceeding", file=sys.stderr)
+            print("CHUNKED EDIT MODE: Will split edit into smaller chunks", file=sys.stderr)
             
-            # Try to commit any existing staged changes first
-            try:
-                result = subprocess.run(['git', 'status', '--porcelain'], 
-                                      capture_output=True, text=True, check=True)
-                if result.stdout.strip():
-                    subprocess.run(['git', 'add', '.'], check=True, capture_output=True)
-                    subprocess.run(['git', 'commit', '-m', 
-                                  f"{config['commit_message_prefix']}staging before large edit"], 
-                                  check=True, capture_output=True)
-                    print("AUTO-COMMIT: Committed existing changes", file=sys.stderr)
-            except subprocess.CalledProcessError:
-                pass  # No changes to commit or commit failed
+            # Only handle simple Edit operations for chunking
+            if tool_name == 'Edit':
+                old_string = tool_input.get('old_string', '')
+                new_string = tool_input.get('new_string', '')
+                
+                # Perform chunked edit
+                if perform_chunked_edit(file_path, old_string, new_string, config):
+                    print("CHUNKED EDIT COMPLETE: All chunks committed successfully", file=sys.stderr)
+                    # Block the original edit since we've already performed it in chunks
+                    return True
+                else:
+                    print("CHUNKED EDIT FAILED: Falling back to regular edit", file=sys.stderr)
+            else:
+                print("COMPLEX EDIT: MultiEdit not supported for chunking, proceeding normally", file=sys.stderr)
         
-        # Allow the operation to continue but log the large edit
-        print("PROCEEDING: Large edit operation will continue", file=sys.stderr)
-        return False  # Don't block, just warn and commit
+        # If chunking is disabled or failed, proceed normally
+        return False
     
     return False
 
