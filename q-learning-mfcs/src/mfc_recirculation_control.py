@@ -355,6 +355,9 @@ class MFCCellWithMonitoring:
         self.max_reaction_rate = 0.15  # Increased based on literature
         self.biofilm_growth_rate = 0.05  # Increased 50x based on Shewanella literature (0.825 h⁻¹ max)
         self.optimal_biofilm_thickness = 1.3
+        self.anode_overpotential = 0.1  # Default anode overpotential (V)
+        self.current = 0.0  # Cell current (A)
+        self.voltage = 0.7  # Cell voltage (V)
         
         # Monitoring data
         self.concentration_history = []
@@ -403,6 +406,10 @@ class MFCCellWithMonitoring:
         self.consumption_rate_history.append(substrate_consumed / dt_hours if dt_hours > 0 else 0)
         
         return self.outlet_concentration
+    
+    def process_with_monitoring(self, inlet_conc, flow_rate_ml_h, dt_hours):
+        """Process cell with monitoring - alias for update_concentrations"""
+        return self.update_concentrations(inlet_conc, flow_rate_ml_h, dt_hours)
 
 def simulate_mfc_with_recirculation(duration_hours=100):
     """Main simulation function with recirculation and advanced substrate control"""
