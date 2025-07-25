@@ -24,6 +24,12 @@ class QLearningRewardWeights:
     substrate_base_reward: float = 15.0  # Base substrate reward
     substrate_multiplier: float = 0.75  # Substrate efficiency multiplier
     
+    # Substrate concentration control rewards
+    substrate_target_reward: float = 50.0  # Reward for maintaining target concentrations
+    substrate_excess_penalty: float = -100.0  # Penalty for exceeding max threshold
+    substrate_starvation_penalty: float = -75.0  # Penalty for starvation conditions
+    substrate_addition_penalty: float = -15.0  # Higher penalty per unit of substrate added (was -5.0)
+    
     # Efficiency optimization weights
     efficiency_weight: float = 20.0  # Weight for substrate efficiency
     efficiency_threshold: float = 0.5  # Minimum efficiency threshold (50%)
@@ -54,9 +60,9 @@ class QLearningConfig:
     discount_factor: float = 0.95  # Gamma: discount factor (0 ≤ γ ≤ 1)  
     epsilon: float = 0.3  # Exploration rate (0 ≤ ε ≤ 1)
     
-    # Epsilon decay parameters
-    epsilon_decay: float = 0.995  # Decay rate per episode
-    epsilon_min: float = 0.1  # Minimum epsilon value
+    # Epsilon decay parameters (faster decay for substrate control)
+    epsilon_decay: float = 0.9995  # Decay rate per step (faster decay)
+    epsilon_min: float = 0.01  # Much lower minimum epsilon (1% vs 10%)
     
     # Alternative configurations for different controllers
     enhanced_learning_rate: float = 0.0987  # Enhanced controller specific
@@ -107,6 +113,14 @@ class QLearningConfig:
     # Action space configuration
     flow_rate_actions: List[int] = field(default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
     substrate_actions: List[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
+    
+    # Substrate control thresholds (configurable)
+    substrate_target_reservoir: float = 20.0  # Target reservoir concentration (mM)
+    substrate_target_outlet: float = 12.0  # Target outlet concentration (mM)
+    substrate_target_cell: float = 15.0  # Target per-cell concentration (mM)
+    substrate_max_threshold: float = 25.0  # Maximum allowed concentration (mM)
+    substrate_min_threshold: float = 2.0  # Minimum starvation threshold (mM)
+    substrate_addition_max: float = 5.0  # Maximum addition rate (mmol/h)
     
     # Unified controller action spaces
     unified_flow_actions: List[int] = field(default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4])
@@ -173,6 +187,16 @@ class StateSpaceConfig:
     
     # Enhanced state space with sensors
     sensor_state_bins: int = 12  # Combined sensor state bins
+    
+    # Substrate sensor state configuration  
+    reservoir_substrate_bins: int = 8  # Reservoir substrate concentration bins
+    reservoir_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM)
+    
+    cell_substrate_bins: int = 6  # Per-cell substrate concentration bins
+    cell_substrate_range: Tuple[float, float] = (0.0, 30.0)  # Range (mM)
+    
+    outlet_substrate_bins: int = 6  # Outlet substrate concentration bins
+    outlet_substrate_range: Tuple[float, float] = (0.0, 25.0)  # Range (mM)
     
     # EIS sensor state configuration
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins
