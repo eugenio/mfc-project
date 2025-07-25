@@ -24,18 +24,16 @@ Literature References:
 2. Hunt, A., & Thomas, D. (1999). "The Pragmatic Programmer"
 """
 
-import os
 import yaml
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any, Union, Type, TypeVar
+from typing import Dict, List, Optional, Any, TypeVar
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 import logging
 from abc import ABC, abstractmethod
 
 # Import all configuration classes
-from .biological_config import SpeciesMetabolicConfig, ComprehensiveSubstrateConfig
 from .control_config import ControlSystemConfig
 from .visualization_config import VisualizationConfig
 

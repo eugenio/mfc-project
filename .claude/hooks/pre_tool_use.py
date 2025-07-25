@@ -111,6 +111,197 @@ def load_edit_thresholds():
     
     return default_config
 
+def load_file_creation_thresholds():
+    """
+    Load file creation threshold configuration from settings.json.
+    
+    Returns:
+        dict: File creation threshold configuration with defaults
+    """
+    default_config = {
+        "max_new_file_lines": 100,
+        "max_files_per_session": 5,
+        "enabled": True,
+        "auto_commit": True,
+        "commit_message_prefix": "Auto-commit: New file created - ",
+        "exclude_patterns": ["*.tmp", "*.log", "*.cache", ".DS_Store", "Thumbs.db"],
+        "include_patterns": ["*.py", "*.md", "*.yaml", "*.yml", "*.json", "*.toml", "*.txt"]
+    }
+    
+    try:
+        settings_path = Path(__file__).parent.parent / "settings.json"
+        if settings_path.exists():
+            with open(settings_path, 'r') as f:
+                settings = json.load(f)
+                return settings.get("file_creation_thresholds", default_config)
+    except Exception:
+        pass
+    
+    return default_config
+
+def should_track_file(file_path, config):
+    """
+    Check if a file should be tracked based on include/exclude patterns.
+    
+    Args:
+        file_path: Path to the file
+        config: File creation threshold configuration
+        
+    Returns:
+        bool: True if file should be tracked
+    """
+    import fnmatch
+    
+    file_name = os.path.basename(file_path)
+    
+    # Check exclude patterns first
+    for pattern in config.get('exclude_patterns', []):
+        if fnmatch.fnmatch(file_name, pattern):
+            return False
+    
+    # Check include patterns
+    include_patterns = config.get('include_patterns', [])
+    if not include_patterns:
+        return True  # If no include patterns, include all (except excluded)
+    
+    for pattern in include_patterns:
+        if fnmatch.fnmatch(file_name, pattern):
+            return True
+    
+    return False
+
+def get_session_file_count():
+    """
+    Get the number of files created in the current session.
+    
+    Returns:
+        int: Number of files created in current session
+    """
+    try:
+        session_log_dir = ensure_session_log_dir("current")
+        file_creation_log = session_log_dir / "file_creations.log"
+        
+        if not file_creation_log.exists():
+            return 0
+        
+        with open(file_creation_log, 'r') as f:
+            return len(f.readlines())
+    except Exception:
+        return 0
+
+def log_file_creation(file_path):
+    """
+    Log a file creation event.
+    
+    Args:
+        file_path: Path to the created file
+    """
+    try:
+        session_log_dir = ensure_session_log_dir("current")
+        file_creation_log = session_log_dir / "file_creations.log"
+        
+        with open(file_creation_log, 'a') as f:
+            from datetime import datetime
+            timestamp = datetime.now().isoformat()
+            f.write(f"{timestamp}: {file_path}\n")
+    except Exception:
+        pass
+
+def check_file_creation_thresholds(tool_name, tool_input):
+    """
+    Check if file creation operation should trigger auto-commit.
+    
+    Args:
+        tool_name: Name of the tool being used
+        tool_input: Tool input parameters
+        
+    Returns:
+        bool: True if auto-commit should be triggered, False otherwise
+    """
+    # Debug logging
+    print(f"DEBUG: check_file_creation_thresholds called with tool_name={tool_name}", file=sys.stderr)
+    
+    config = load_file_creation_thresholds()
+    
+    # Skip if threshold checking is disabled
+    if not config.get('enabled', True):
+        print("DEBUG: File creation threshold checking is disabled", file=sys.stderr)
+        return False
+    
+    # Only check Write tool for new file creation
+    if tool_name != 'Write':
+        print(f"DEBUG: Skipping - tool is {tool_name}, not Write", file=sys.stderr)
+        return False
+    
+    file_path = tool_input.get('file_path', '')
+    content = tool_input.get('content', '')
+    
+    print(f"DEBUG: Write tool detected - file_path={file_path}", file=sys.stderr)
+    
+    if not file_path:
+        return False
+    
+    # Check if this is a new file creation
+    if os.path.exists(file_path):
+        print(f"DEBUG: File already exists, not a new creation: {file_path}", file=sys.stderr)
+        return False  # File already exists, not a new creation
+    
+    # Check if file should be tracked
+    if not should_track_file(file_path, config):
+        return False
+    
+    # Check file size threshold
+    new_lines = len(content.splitlines()) if content else 0
+    max_lines = config.get('max_new_file_lines', 100)
+    
+    # Check session file count threshold
+    current_file_count = get_session_file_count()
+    max_files = config.get('max_files_per_session', 5)
+    
+    threshold_exceeded = (
+        new_lines > max_lines or 
+        current_file_count >= max_files
+    )
+    
+    if threshold_exceeded:
+        print("NEW FILE CREATION THRESHOLD EXCEEDED:", file=sys.stderr)
+        print(f"  File: {file_path}", file=sys.stderr)
+        print(f"  Lines in new file: {new_lines} (max: {max_lines})", file=sys.stderr)
+        print(f"  Files created this session: {current_file_count} (max: {max_files})", file=sys.stderr)
+        
+        if config.get('auto_commit', True):
+            print("AUTO-COMMIT: Will commit new file creation", file=sys.stderr)
+            
+            # Log the file creation
+            log_file_creation(file_path)
+            
+            # Try to commit any existing staged changes first
+            try:
+                result = subprocess.run(['git', 'status', '--porcelain'], 
+                                      capture_output=True, text=True, cwd=os.getcwd())
+                
+                if result.stdout.strip():
+                    # Stage and commit the new file when it's created
+                    commit_message = f"{config.get('commit_message_prefix', 'Auto-commit: New file created - ')}{os.path.basename(file_path)} ({new_lines} lines)"
+                    
+                    print(f"AUTO-COMMIT: Staging changes for commit", file=sys.stderr)
+                    subprocess.run(['git', 'add', '.'], cwd=os.getcwd(), capture_output=True)
+                    
+                    print(f"AUTO-COMMIT: Creating commit: {commit_message}", file=sys.stderr)
+                    subprocess.run(['git', 'commit', '-m', commit_message], 
+                                 cwd=os.getcwd(), capture_output=True)
+                    
+                    print("AUTO-COMMIT: Commit completed successfully", file=sys.stderr)
+                    
+            except Exception as e:
+                print(f"AUTO-COMMIT: Error during commit: {e}", file=sys.stderr)
+        
+        return True
+    
+    # If not exceeding thresholds, still log the file creation
+    log_file_creation(file_path)
+    return False
+
 def count_file_lines(file_path):
     """
     Count the number of lines in a file.
@@ -309,6 +500,7 @@ def check_edit_thresholds(tool_name, tool_input):
     return False
 
 def main():
+    print("DEBUG: pre_tool_use.py hook started", file=sys.stderr)
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
@@ -316,10 +508,17 @@ def main():
         tool_name = input_data.get('tool_name', '')
         tool_input = input_data.get('tool_input', {})
         
+        print(f"DEBUG: Received tool_name={tool_name}", file=sys.stderr)
+        
         # Check edit thresholds for large file changes
         if check_edit_thresholds(tool_name, tool_input):
             print("BLOCKED: Edit operation exceeds configured thresholds", file=sys.stderr)
             sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
+        
+        # Check file creation thresholds for new file creation
+        if check_file_creation_thresholds(tool_name, tool_input):
+            print("FILE CREATION: Threshold exceeded, auto-commit triggered", file=sys.stderr)
+            # Note: We don't block file creation, just trigger auto-commit
         
         # Check for .env file access (blocks access to sensitive environment files)
         if is_env_file_access(tool_name, tool_input):

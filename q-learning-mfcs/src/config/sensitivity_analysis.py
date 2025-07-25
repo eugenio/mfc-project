@@ -26,20 +26,14 @@ Literature References:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Callable, Union
+from typing import Dict, List, Tuple, Optional, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import matplotlib.pyplot as plt
-import seaborn as sns
 from scipy.stats import qmc
-from scipy.optimize import minimize
 import logging
-from concurrent.futures import ProcessPoolExecutor, as_completed
-import warnings
 
 # Import configuration classes
-from .config_manager import ConfigProfile
-from .control_config import ControlSystemConfig
 from .visualization_config import VisualizationConfig
 
 
@@ -754,8 +748,8 @@ class SensitivityVisualizer:
         param_names = result.parameter_names
         
         # Scatter plot
-        scatter = ax.scatter(mu_star, sigma, c=self.colors[0], 
-                           s=100, alpha=0.7, edgecolors='black')
+        ax.scatter(mu_star, sigma, c=self.colors[0], 
+                  s=100, alpha=0.7, edgecolors='black')
         
         # Add parameter labels
         for i, name in enumerate(param_names):

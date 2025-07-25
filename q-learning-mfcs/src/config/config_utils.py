@@ -35,15 +35,11 @@ from typing import Dict, List, Tuple, Optional, Any, Union, Type
 from dataclasses import dataclass, field, fields, is_dataclass
 import logging
 from datetime import datetime
-import jsonschema
 from jsonschema import validate, ValidationError
 import warnings
 
 # Import configuration classes
-from .biological_config import SpeciesMetabolicConfig, ComprehensiveSubstrateConfig
-from .control_config import ControlSystemConfig, PIDConfig, FlowControlConfig
-from .visualization_config import VisualizationConfig, PlotStyleConfig, ColorSchemeConfig
-from .config_manager import ConfigProfile, ConfigurationError
+from .config_manager import ConfigurationError
 
 
 class ConfigurationFormatError(ConfigurationError):
