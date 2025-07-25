@@ -218,7 +218,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
                     'kalman_filter': FusionMethod.KALMAN_FILTER,
                     'weighted_average': FusionMethod.WEIGHTED_AVERAGE,
                     'maximum_likelihood': FusionMethod.MAXIMUM_LIKELIHOOD,
-                    'bayesian': FusionMethod.BAYESIAN_INFERENCE
+                    'bayesian': FusionMethod.BAYESIAN_FUSION
                 }
                 
                 fusion_model = SensorFusion(
@@ -255,7 +255,6 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         # Enhanced Q-learning flow controller with sensor integration
         self.flow_controller = SensingEnhancedQLearningController(
             enable_sensor_state=self.enable_eis or self.enable_qcm,
-            sensor_weight=self.sensor_feedback_weight,
             fault_tolerance=True
         )
         

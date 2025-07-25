@@ -85,21 +85,21 @@ def validate_qlearning_config(config: QLearningConfig) -> bool:
     """
     
     # Core Q-learning parameters
-    validate_range(config.learning_rate, 0.0, 1.0, "learning_rate", inclusive_min=False)
+    validate_range(config.learning_rate, 0.0, 1.0, "learning_rate", False)
     validate_probability(config.discount_factor, "discount_factor")
     validate_probability(config.epsilon, "epsilon")
     
     # Epsilon decay parameters
-    validate_range(config.epsilon_decay, 0.0, 1.0, "epsilon_decay", inclusive_min=False)
+    validate_range(config.epsilon_decay, 0.0, 1.0, "epsilon_decay", False)
     validate_probability(config.epsilon_min, "epsilon_min")
     
     # Alternative configurations
-    validate_range(config.enhanced_learning_rate, 0.0, 1.0, "enhanced_learning_rate", inclusive_min=False)
+    validate_range(config.enhanced_learning_rate, 0.0, 1.0, "enhanced_learning_rate", False)
     validate_probability(config.enhanced_discount_factor, "enhanced_discount_factor")
     validate_probability(config.enhanced_epsilon, "enhanced_epsilon")
     
     # Advanced decay parameters
-    validate_range(config.advanced_epsilon_decay, 0.0, 1.0, "advanced_epsilon_decay", inclusive_min=False)
+    validate_range(config.advanced_epsilon_decay, 0.0, 1.0, "advanced_epsilon_decay", False)
     validate_probability(config.advanced_epsilon_min, "advanced_epsilon_min")
     
     # Validate epsilon relationships
@@ -331,8 +331,8 @@ def validate_sensor_fusion_config(config: SensorFusionConfig) -> bool:
     validate_range(config.fault_threshold, 0.0, 1.0, "fault_threshold")
     
     # Decay factors should be in (0, 1]
-    validate_range(config.eis_reliability_decay, 0.0, 1.0, "eis_reliability_decay", inclusive_min=False)
-    validate_range(config.qcm_reliability_decay, 0.0, 1.0, "qcm_reliability_decay", inclusive_min=False)
+    validate_range(config.eis_reliability_decay, 0.0, 1.0, "eis_reliability_decay", False)
+    validate_range(config.qcm_reliability_decay, 0.0, 1.0, "qcm_reliability_decay", False)
     
     # Update weights should be small positive values
     validate_range(config.eis_reliability_update_weight, 0.0, 1.0, "eis_reliability_update_weight")
