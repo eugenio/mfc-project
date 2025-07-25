@@ -20,18 +20,23 @@ Implementation includes:
 """
 
 import numpy as np
-import pandas as pd
 from typing import Dict, List, Tuple, Optional, Any, Union
 from dataclasses import dataclass
 from enum import Enum
 import sys
 import os
-from scipy.optimize import minimize
-from scipy.stats import chi2
 
 # Import sensing models
-from .eis_model import EISModel, EISMeasurement, BacterialSpecies
-from .qcm_model import QCMModel, QCMMeasurement
+from .eis_model import EISMeasurement, BacterialSpecies
+from .qcm_model import QCMMeasurement
+
+# Import configuration
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+try:
+    from config import SensorConfig, FusionMethod as ConfigFusionMethod
+except ImportError:
+    SensorConfig = None
+    ConfigFusionMethod = None
 
 # Add GPU acceleration
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -41,12 +46,16 @@ except ImportError:
     get_gpu_accelerator = None
 
 
-class FusionMethod(Enum):
-    """Sensor fusion methods."""
-    KALMAN_FILTER = "kalman_filter"
-    WEIGHTED_AVERAGE = "weighted_average"
-    MAXIMUM_LIKELIHOOD = "maximum_likelihood"
-    BAYESIAN_INFERENCE = "bayesian_inference"
+# Use configuration FusionMethod if available, otherwise define locally
+if ConfigFusionMethod is not None:
+    FusionMethod = ConfigFusionMethod
+else:
+    class FusionMethod(Enum):
+        """Sensor fusion methods."""
+        KALMAN_FILTER = "kalman_filter"
+        WEIGHTED_AVERAGE = "weighted_average"
+        MAXIMUM_LIKELIHOOD = "maximum_likelihood"
+        BAYESIAN_FUSION = "bayesian_fusion"
 
 
 @dataclass
@@ -91,14 +100,16 @@ class KalmanFilter:
     Measurement vector: [eis_thickness, qcm_thickness, eis_conductivity]
     """
     
-    def __init__(self, dt: float = 0.1):
+    def __init__(self, dt: float = 0.1, config: Optional[SensorConfig] = None):
         """
         Initialize Kalman filter.
         
         Args:
             dt: Time step (hours)
+            config: Optional sensor configuration
         """
         self.dt = dt
+        self.config = config
         self.n_states = 5  # [thickness, biomass, conductivity, d_thickness/dt, d_biomass/dt]
         self.n_measurements = 3  # [eis_thickness, qcm_thickness, eis_conductivity]
         
@@ -115,8 +126,13 @@ class KalmanFilter:
             [0, 0, 0, 0, 1]      # d_biomass/dt
         ])
         
-        # Process noise covariance
-        self.Q = np.diag([0.1, 0.5, 1e-6, 0.01, 0.05])  # Tuned for biofilm dynamics
+        # Process noise covariance from configuration or defaults
+        if self.config and self.config.fusion:
+            process_noise = self.config.fusion.process_noise_covariance
+            measurement_noise = self.config.fusion.measurement_noise_covariance
+            self.Q = np.diag(process_noise)
+        else:
+            self.Q = np.diag([0.1, 0.5, 1e-6, 0.01, 0.05])  # Tuned for biofilm dynamics
         
         # Measurement matrix
         self.H = np.array([
@@ -126,7 +142,11 @@ class KalmanFilter:
         ])
         
         # Measurement noise covariance (will be updated adaptively)
-        self.R = np.diag([2.0, 1.0, 1e-5])  # [eis_thick, qcm_thick, conductivity]
+        if self.config and self.config.fusion:
+            measurement_noise = self.config.fusion.measurement_noise_covariance[:3]  # Take first 3 values
+            self.R = np.diag(measurement_noise)
+        else:
+            self.R = np.diag([2.0, 1.0, 1e-5])  # [eis_thick, qcm_thick, conductivity]
         
         # Filter status
         self.initialized = False
@@ -183,8 +203,8 @@ class KalmanFilter:
         self.state = self.state + np.dot(K, innovation)
         
         # Update covariance
-        I = np.eye(self.n_states)
-        self.covariance = np.dot((I - np.dot(K, self.H)), self.covariance)
+        identity_matrix = np.eye(self.n_states)
+        self.covariance = np.dot((identity_matrix - np.dot(K, self.H)), self.covariance)
         
         # Ensure non-negative values
         self.state[0] = max(0, self.state[0])  # thickness
@@ -250,33 +270,58 @@ class SensorCalibration:
     sensor agreement and external validation data.
     """
     
-    def __init__(self):
+    def __init__(self, config: Optional[SensorConfig] = None):
         """Initialize calibration system."""
-        # EIS calibration parameters
-        self.eis_calibration = {
-            'thickness_slope': -125.0,  # Ohm per μm
-            'thickness_intercept': 1750.0,  # Ohm
-            'conductivity_factor': 1.0,  # Scaling factor
-            'uncertainty_model': 'linear',  # 'linear' or 'quadratic'
-            'baseline_uncertainty': 2.0,  # μm
-        }
+        self.config = config
         
-        # QCM calibration parameters
-        self.qcm_calibration = {
-            'density_factor': 1.0,  # Biofilm density correction
-            'viscosity_correction': 1.0,  # Viscoelastic correction
-            'sensitivity_factor': 1.0,  # Mass sensitivity correction
-            'uncertainty_model': 'sqrt',  # 'linear' or 'sqrt'
-            'baseline_uncertainty': 1.0,  # μm
-        }
+        # EIS calibration parameters from config or defaults
+        if self.config and self.config.eis:
+            species_cal = self.config.eis.species_calibration.get('mixed', {})
+            self.eis_calibration = {
+                'thickness_slope': species_cal.get('thickness_slope', -125.0),
+                'thickness_intercept': species_cal.get('thickness_intercept', 1750.0),
+                'conductivity_factor': 1.0,  # Scaling factor
+                'uncertainty_model': 'linear',  # 'linear' or 'quadratic'
+                'baseline_uncertainty': self.config.eis.baseline_uncertainty,
+            }
+        else:
+            self.eis_calibration = {
+                'thickness_slope': -125.0,  # Ohm per μm
+                'thickness_intercept': 1750.0,  # Ohm
+                'conductivity_factor': 1.0,  # Scaling factor
+                'uncertainty_model': 'linear',  # 'linear' or 'quadratic'
+                'baseline_uncertainty': 2.0,  # μm
+            }
+        
+        # QCM calibration parameters from config or defaults
+        if self.config and self.config.qcm:
+            self.qcm_calibration = {
+                'density_factor': self.config.qcm.biofilm_density,
+                'viscosity_correction': 1.0,  # Viscoelastic correction
+                'sensitivity_factor': self.config.qcm.mass_sensitivity_factor,
+                'uncertainty_model': 'sqrt',  # 'linear' or 'sqrt'
+                'baseline_uncertainty': self.config.qcm.baseline_uncertainty,
+            }
+        else:
+            self.qcm_calibration = {
+                'density_factor': 1.0,  # Biofilm density correction
+                'viscosity_correction': 1.0,  # Viscoelastic correction
+                'sensitivity_factor': 1.0,  # Mass sensitivity correction
+                'uncertainty_model': 'sqrt',  # 'linear' or 'sqrt'
+                'baseline_uncertainty': 1.0,  # μm
+            }
         
         # Cross-calibration data
         self.calibration_history = []
         self.agreement_history = []
         
-        # Calibration quality metrics
-        self.eis_reliability = 1.0  # 0-1
-        self.qcm_reliability = 1.0  # 0-1
+        # Calibration quality metrics from config or defaults
+        if self.config and self.config.fusion:
+            self.eis_reliability = self.config.fusion.eis_reliability
+            self.qcm_reliability = self.config.fusion.qcm_reliability
+        else:
+            self.eis_reliability = 1.0  # 0-1
+            self.qcm_reliability = 1.0  # 0-1
         self.last_calibration_time = 0.0
     
     def update_calibration(self, eis_measurements: List[EISMeasurement],
@@ -420,7 +465,8 @@ class SensorFusion:
     
     def __init__(self, method: FusionMethod = FusionMethod.KALMAN_FILTER,
                  species: BacterialSpecies = BacterialSpecies.MIXED,
-                 use_gpu: bool = True):
+                 use_gpu: bool = True,
+                 config: Optional[SensorConfig] = None):
         """
         Initialize sensor fusion system.
         
@@ -428,10 +474,12 @@ class SensorFusion:
             method: Fusion algorithm to use
             species: Bacterial species for calibration
             use_gpu: Enable GPU acceleration
+            config: Optional sensor configuration
         """
         self.method = method
         self.species = species
         self.use_gpu = use_gpu
+        self.config = config
         
         # Initialize GPU if available
         self.gpu_acc = None
@@ -442,13 +490,19 @@ class SensorFusion:
             self.gpu_available = False
         
         # Initialize components
-        self.kalman_filter = KalmanFilter() if method == FusionMethod.KALMAN_FILTER else None
-        self.calibration = SensorCalibration()
+        self.kalman_filter = KalmanFilter(config=self.config) if method == FusionMethod.KALMAN_FILTER else None
+        self.calibration = SensorCalibration(config=self.config)
         
-        # Fusion parameters
-        self.min_sensor_weight = 0.1  # Minimum weight for any sensor
-        self.max_disagreement = 10.0  # μm, maximum acceptable disagreement
-        self.fault_threshold = 0.3   # Reliability threshold for fault detection
+        # Fusion parameters from configuration or defaults
+        if self.config and self.config.fusion:
+            fusion_config = self.config.fusion
+            self.min_sensor_weight = fusion_config.min_sensor_weight
+            self.max_disagreement = fusion_config.max_sensor_disagreement
+            self.fault_threshold = fusion_config.sensor_fault_threshold
+        else:
+            self.min_sensor_weight = 0.1  # Minimum weight for any sensor
+            self.max_disagreement = 10.0  # μm, maximum acceptable disagreement
+            self.fault_threshold = 0.3   # Reliability threshold for fault detection
         
         # Historical data
         self.fusion_history = []
