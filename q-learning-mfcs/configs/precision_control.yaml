@@ -1,0 +1,191 @@
+# Precision Control Configuration
+# High accuracy control for laboratory precision applications
+# Tight tolerances and careful parameter tuning
+
+metadata:
+  version: "2.0.0"
+  description: "Precision control settings for high-accuracy laboratory applications"
+  environment: "testing"
+  created_at: "2025-07-25T08:52:53+02:00"
+
+# Biological Configuration - Precisely characterized parameters
+biological:
+  species_configs:
+    geobacter:
+      max_growth_rate: 0.105  # Precisely measured growth rate (1/h)
+      electron_transport_efficiency: 0.87  # Literature-validated efficiency
+      cytochrome_content: 0.095  # Precise cytochrome quantification
+      metabolite_concentrations:
+        acetate: 20.0  # Precisely controlled concentrations
+        lactate: 12.0
+        pyruvate: 8.5
+    
+    shewanella:
+      max_growth_rate: 0.142  # Precise growth rate measurement
+      electron_transport_efficiency: 0.82
+      cytochrome_content: 0.078
+      metabolite_concentrations:
+        acetate: 18.5
+        lactate: 14.0
+        glucose: 11.0
+
+  substrate_configs:
+    acetate:
+      molecular_weight: 82.034  # Precise molecular weight
+      chemical_formula: "C2H4O2"
+      species_kinetics:
+        geobacter:
+          vmax: 11.2  # Precisely determined kinetic parameters
+          km: 0.95    # mmol/L
+          ki: 95.5    # mmol/L
+        shewanella:
+          vmax: 9.8
+          km: 1.05
+          ki: 88.2
+
+# Control System Configuration - Precision tuning
+control:
+  flow_control:
+    min_flow_rate: 5.0
+    max_flow_rate: 45.0
+    nominal_flow_rate: 15.0
+    max_flow_rate_change: 2.0  # Small, precise changes
+    flow_rate_tolerance: 0.1  # Very tight tolerance
+    pump_efficiency: 0.962  # Precisely calibrated
+    pump_response_time: 2.2
+    
+    flow_pid:
+      kp: 2.15  # Precisely tuned gains
+      ki: 0.08
+      kd: 0.35
+      output_min: 0.0
+      output_max: 100.0
+      enable_anti_windup: true
+      derivative_on_measurement: true
+      dead_band: 0.05  # Small dead band for precision
+
+  substrate_control:
+    target_outlet_concentration: 12.5  # Precise target
+    target_reservoir_concentration: 20.5
+    min_addition_rate: 0.0
+    max_addition_rate: 40.0
+    nominal_addition_rate: 10.2
+    
+    outlet_pid:
+      kp: 2.25  # Fine-tuned parameters
+      ki: 0.065
+      kd: 0.28
+      enable_anti_windup: true
+    
+    reservoir_pid:
+      kp: 1.35
+      ki: 0.042
+      kd: 0.18
+    
+    starvation_threshold_warning: 4.5
+    starvation_threshold_critical: 2.2
+    excess_threshold: 26.0
+    starvation_boost_factor: 2.1
+    critical_boost_factor: 4.2
+
+  recirculation:
+    reservoir_volume: 1.000  # Precise volume measurement
+    initial_substrate_concentration: 20.5
+    mixing_time_constant: 0.095  # Precisely characterized mixing
+    pump_efficiency: 0.962
+    min_recirculation_rate: 8.0
+    max_recirculation_rate: 95.0
+
+  advanced_control:
+    learning_rate: 0.087  # Precisely optimized learning rate
+    discount_factor: 0.945
+    epsilon: 0.22
+    epsilon_decay: 0.9965
+    epsilon_min: 0.065
+    
+    power_bins: 10  # Fine discretization for precision
+    biofilm_deviation_bins: 8
+    substrate_utilization_bins: 10
+    
+    flow_rate_adjustments: [-10.0, -6.0, -3.0, -1.5, -0.5, 0.0, 0.5, 1.5, 3.0, 6.0, 10.0]
+    substrate_actions: [-2.5, -1.5, -0.8, -0.3, 0.0, 0.3, 0.8, 1.5, 2.5]
+    
+    # Balanced multi-objective weights for precision
+    power_objective_weight: 0.42
+    biofilm_health_weight: 0.35
+    sensor_agreement_weight: 0.18
+    stability_weight: 0.05
+    
+    # Precision-focused reward structure
+    power_reward_weight: 12.5
+    power_penalty_threshold: 45.0
+    biofilm_reward_weight: 45.0
+    biofilm_optimal_thickness: 32.5  # Precise optimal thickness
+    substrate_consumption_weight: 6.8
+
+  # Precise timing parameters
+  control_update_interval: 45.0  # Precise update timing
+  data_logging_interval: 5.0  # High frequency logging
+  emergency_shutdown_enabled: true
+  fault_tolerance_enabled: true
+
+# Visualization Configuration - Publication quality
+visualization:
+  plot_style:
+    figure_width: 12.0
+    figure_height: 9.0
+    dpi: 600  # High DPI for precision figures
+    line_width: 1.8
+    marker_size: 5.0
+    grid_enabled: true
+    grid_alpha: 0.25
+    font_family: "Times New Roman"  # Publication font
+    
+  color_scheme_type: "scientific"
+  output_format: "pdf"  # Vector format for precision
+  
+  data_processing:
+    time_series_sampling_rate: 75  # Moderate sampling for clarity
+    enable_smoothing: true
+    smoothing_window: 8  # Light smoothing
+    smoothing_method: "savgol"  # Savitzky-Golay filter for precision
+    enable_outlier_detection: true
+    outlier_threshold: 3.2  # Moderate outlier detection
+    confidence_level: 0.95  # Standard confidence level
+
+  layout:
+    n_rows: 2
+    n_cols: 3  # 6 subplots for comprehensive view
+    horizontal_spacing: 0.18
+    vertical_spacing: 0.22
+    legend_position: "upper right"
+    main_title: "Precision MFC Control Analysis"
+    
+    subplot_titles:
+      - "Power Output (W)"
+      - "Biofilm Thickness (μm)"
+      - "Substrate Concentration (mmol/L)"
+      - "Flow Rate Control (mL/h)"
+      - "Control Actions"
+      - "System Performance Metrics"
+
+# Precision measurement configuration
+precision_monitoring:
+  enabled: true
+  measurement_interval: 30.0  # seconds
+  precision_targets:
+    flow_rate_precision: 0.05  # ±0.05 mL/h
+    concentration_precision: 0.1  # ±0.1 mmol/L
+    power_precision: 0.005  # ±0.005 W
+    biofilm_precision: 0.5  # ±0.5 μm
+  
+  calibration_schedule:
+    flow_sensors: 3600  # Calibrate every hour
+    concentration_sensors: 7200  # Every 2 hours
+    power_measurement: 1800  # Every 30 minutes
+    
+  quality_control:
+    enable_drift_correction: true
+    drift_threshold: 0.02  # 2% drift threshold
+    reference_measurements: true
+    reference_interval: 14400  # Every 4 hours
