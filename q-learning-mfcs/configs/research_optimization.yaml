@@ -1,0 +1,245 @@
+# Research Optimization Configuration
+# Aggressive optimization for research and development scenarios
+# Maximum performance with higher exploration and faster adaptation
+
+metadata:
+  version: "2.0.0"
+  description: "Research optimization settings for maximum performance"
+  environment: "development"
+  created_at: "2025-07-25T08:52:53+02:00"
+
+# Biological Configuration - High performance strains
+biological:
+  species_configs:
+    geobacter:
+      max_growth_rate: 0.15  # High performance growth rate (1/h)
+      electron_transport_efficiency: 0.92  # Optimized efficiency
+      cytochrome_content: 0.12  # High cytochrome content
+      metabolite_concentrations:
+        acetate: 25.0  # Higher concentrations for performance
+        lactate: 15.0
+        pyruvate: 12.0
+    
+    shewanella:
+      max_growth_rate: 0.18  # Aggressive growth rate
+      electron_transport_efficiency: 0.88
+      cytochrome_content: 0.10
+      metabolite_concentrations:
+        acetate: 22.0
+        lactate: 18.0
+        glucose: 15.0
+
+  substrate_configs:
+    acetate:
+      molecular_weight: 82.03
+      chemical_formula: "C2H4O2"
+      species_kinetics:
+        geobacter:
+          vmax: 15.0  # High performance Vmax (mmol/gDW/h)
+          km: 0.8    # Lower Km for high affinity (mmol/L)
+          ki: 120.0  # Higher inhibition tolerance
+        shewanella:
+          vmax: 12.5
+          km: 0.9
+          ki: 110.0
+    
+    lactate:
+      molecular_weight: 90.08
+      chemical_formula: "C3H6O3"
+      species_kinetics:
+        geobacter:
+          vmax: 12.0
+          km: 1.1
+          ki: 100.0
+        shewanella:
+          vmax: 14.0
+          km: 0.7
+          ki: 90.0
+
+# Control System Configuration - Aggressive tuning
+control:
+  flow_control:
+    min_flow_rate: 3.0  # Wide operating range
+    max_flow_rate: 80.0  # High maximum flow rate
+    nominal_flow_rate: 25.0  # Higher nominal for performance
+    max_flow_rate_change: 20.0  # Large flow rate changes allowed
+    flow_rate_tolerance: 0.3  # Tight tolerance
+    pump_efficiency: 0.98  # High efficiency pump
+    pump_response_time: 1.0  # Fast response
+    
+    flow_pid:
+      kp: 3.5  # Aggressive proportional gain
+      ki: 0.25  # Higher integral gain
+      kd: 0.8   # Higher derivative gain
+      output_min: 0.0
+      output_max: 100.0
+      enable_anti_windup: true
+      derivative_on_measurement: true
+
+  substrate_control:
+    target_outlet_concentration: 15.0  # Higher target for performance
+    target_reservoir_concentration: 30.0  # High reservoir concentration
+    min_addition_rate: 0.0
+    max_addition_rate: 100.0  # Very high addition rate capability
+    nominal_addition_rate: 20.0
+    
+    outlet_pid:
+      kp: 4.0  # Aggressive tuning
+      ki: 0.15
+      kd: 0.6
+      enable_anti_windup: true
+    
+    reservoir_pid:
+      kp: 2.5
+      ki: 0.08
+      kd: 0.4
+    
+    starvation_threshold_warning: 3.0  # Lower warning threshold
+    starvation_threshold_critical: 1.0  # Very low critical threshold
+    excess_threshold: 40.0  # High excess threshold
+    starvation_boost_factor: 3.0  # Aggressive boost
+    critical_boost_factor: 8.0  # Very aggressive emergency boost
+
+  recirculation:
+    reservoir_volume: 1.0
+    initial_substrate_concentration: 30.0
+    mixing_time_constant: 0.05  # Very fast mixing
+    pump_efficiency: 0.98
+    min_recirculation_rate: 5.0
+    max_recirculation_rate: 150.0  # Very high recirculation
+
+  advanced_control:
+    learning_rate: 0.25  # Aggressive learning rate
+    discount_factor: 0.92  # Shorter horizon for fast adaptation
+    epsilon: 0.6  # High exploration
+    epsilon_decay: 0.992
+    epsilon_min: 0.15  # Maintain some exploration
+    
+    power_bins: 12  # Fine discretization for precision
+    biofilm_deviation_bins: 10
+    substrate_utilization_bins: 12
+    
+    flow_rate_adjustments: [-25.0, -15.0, -10.0, -5.0, -2.0, 0.0, 2.0, 5.0, 10.0, 15.0, 25.0]
+    substrate_actions: [-5.0, -3.0, -2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+    
+    # Performance-focused multi-objective weights
+    power_objective_weight: 0.6  # Very high power priority
+    biofilm_health_weight: 0.2
+    sensor_agreement_weight: 0.1
+    stability_weight: 0.1
+    
+    # Aggressive reward structure
+    power_reward_weight: 25.0  # Very high power reward
+    power_penalty_threshold: 30.0  # Low penalty threshold
+    biofilm_reward_weight: 30.0
+    biofilm_optimal_thickness: 40.0  # Aggressive biofilm target
+    substrate_consumption_weight: 15.0  # High consumption reward
+
+  # System-wide parameters - Fast operation
+  control_update_interval: 30.0  # Very frequent updates
+  emergency_shutdown_enabled: true
+  fault_tolerance_enabled: true
+  performance_metrics_interval: 60.0  # Frequent performance monitoring
+
+# Visualization Configuration - Research focused
+visualization:
+  plot_style:
+    figure_width: 16.0  # Large figures for detailed analysis
+    figure_height: 12.0
+    dpi: 600  # High resolution for publications
+    line_width: 1.5
+    marker_size: 4.0
+    grid_enabled: true
+    grid_alpha: 0.2
+    
+  color_scheme_type: "scientific"
+  output_format: "svg"  # Vector format for scalability
+  
+  data_processing:
+    time_series_sampling_rate: 50  # High resolution sampling
+    enable_smoothing: false  # No smoothing for research accuracy
+    enable_outlier_detection: true
+    outlier_threshold: 4.0  # Less aggressive outlier removal
+    compute_statistics: true
+    confidence_level: 0.99  # High confidence intervals
+    enable_trend_lines: true
+
+  layout:
+    n_rows: 3
+    n_cols: 3  # Many subplots for comprehensive analysis
+    horizontal_spacing: 0.15
+    vertical_spacing: 0.15
+    legend_position: "upper right"
+    main_title: "Research MFC Optimization Analysis"
+    
+    subplot_titles:
+      - "Power Output Optimization"
+      - "Biofilm Development"
+      - "Substrate Utilization"
+      - "Flow Rate Control"
+      - "Concentration Dynamics"
+      - "Control Actions"
+      - "Sensor Measurements"
+      - "Performance Metrics"
+      - "System State Evolution"
+
+  animation:
+    enable_animation: true  # Enable for dynamic analysis
+    animation_interval: 100.0
+    animation_frames: 200
+    save_animation: true
+    animation_format: "mp4"
+
+# Sensitivity Analysis Configuration
+sensitivity_analysis:
+  enabled: true
+  parameters:
+    - name: "learning_rate"
+      bounds:
+        min_value: 0.05
+        max_value: 0.5
+        nominal_value: 0.25
+      config_path: ["control", "advanced_control", "learning_rate"]
+      description: "Q-learning learning rate"
+      category: "learning"
+    
+    - name: "power_objective_weight"
+      bounds:
+        min_value: 0.3
+        max_value: 0.8
+        nominal_value: 0.6
+      config_path: ["control", "advanced_control", "power_objective_weight"]
+      description: "Power optimization weight"
+      category: "objectives"
+    
+    - name: "max_flow_rate"
+      bounds:
+        min_value: 40.0
+        max_value: 120.0
+        nominal_value: 80.0
+      config_path: ["control", "flow_control", "max_flow_rate"]
+      description: "Maximum flow rate"
+      category: "control"
+    
+    - name: "target_outlet_concentration"
+      bounds:
+        min_value: 8.0
+        max_value: 25.0
+        nominal_value: 15.0
+      config_path: ["control", "substrate_control", "target_outlet_concentration"]
+      description: "Target outlet concentration"
+      category: "control"
+
+  methods:
+    - name: "sobol"
+      n_samples: 2000
+      calc_second_order: true
+    - name: "morris"
+      n_samples: 1000
+      n_levels: 6
+    
+  outputs:
+    - "average_power"
+    - "biofilm_stability"
+    - "substrate_efficiency"
+    - "control_stability"

@@ -9,9 +9,12 @@ This project implements a complete MFC stack control system featuring:
 - **5-cell MFC stack simulation** with realistic electrochemical dynamics
 - **Q-learning controller** optimized for accelerator hardware (GPU/NPU/ASIC)
 - **Advanced sensor simulation** with EIS/QCM biofilm sensing, noise and calibration effects
-- **Biological configuration system** with literature-referenced parameters
-- **Species-specific modeling** for Geobacter, Shewanella, and mixed cultures
+- **Comprehensive configuration system** with literature-referenced biological parameters
+- **Species-specific modeling** for Geobacter, Shewanella, and mixed cultures  
 - **Substrate-specific kinetics** for acetate, lactate, pyruvate, and glucose
+- **Control system parameterization** with PID tuning and Q-learning optimization
+- **Visualization configuration** with publication-ready plotting and analysis
+- **Parameter sensitivity analysis** framework with global and local methods
 - **Actuator control** for duty cycle, pH buffer, and acetate addition
 - **Cell reversal prevention** and recovery mechanisms
 - **Real-time optimization** for power stability and efficiency
@@ -182,6 +185,189 @@ Where:
 - Acetate addition control
 - Extended operation
 - Resource optimization
+
+## Configuration System
+
+### Overview
+
+The MFC system features a comprehensive configuration management framework that replaces hardcoded parameters with literature-backed, configurable values. This system enables:
+
+- **Biological parameter management** with species-specific and substrate-specific configurations
+- **Control system parameterization** for PID controllers, Q-learning parameters, and flow control
+- **Visualization configuration** for publication-ready plots and analysis
+- **Parameter sensitivity analysis** to identify critical system parameters
+
+### Configuration Components
+
+#### 1. Biological Configuration (`src/config/biological_config.py`)
+
+**Species-Specific Parameters**:
+- Metabolic rates and electron transport efficiency
+- Cytochrome content and growth characteristics
+- Literature-referenced parameters for Geobacter and Shewanella
+
+**Substrate-Specific Parameters**:
+- Michaelis-Menten kinetics (Vmax, Km, Ki)
+- Molecular properties and chemical formulas
+- Species-substrate interaction parameters
+
+**Example**:
+```python
+from config.biological_config import get_geobacter_config
+config = get_geobacter_config()
+# Access: config.max_growth_rate, config.electron_transport_efficiency
+```
+
+#### 2. Control System Configuration (`src/config/control_config.py`)
+
+**PID Controller Parameters**:
+- Proportional, integral, and derivative gains
+- Anti-windup and bumpless transfer settings
+- Setpoint weighting and derivative filtering
+
+**Flow Control Parameters**:
+- Flow rate bounds and tolerance settings
+- Pump characteristics and response times
+- Safety parameters and alarm thresholds
+
+**Q-Learning Parameters**:
+- Learning rate, discount factor, exploration parameters
+- State and action space discretization
+- Multi-objective reward weights
+
+**Example**:
+```python
+from config.control_config import get_precision_control_config
+config = get_precision_control_config()
+# Access: config.flow_control.flow_pid.kp, config.advanced_control.learning_rate
+```
+
+#### 3. Visualization Configuration (`src/config/visualization_config.py`)
+
+**Plot Styling**:
+- Figure dimensions, DPI, and font settings
+- Line widths, marker sizes, and transparency
+- Grid styling and color schemes
+
+**Data Processing**:
+- Sampling rates and smoothing parameters
+- Outlier detection and missing data handling
+- Statistical analysis settings
+
+**Layout Configuration**:
+- Subplot arrangements and spacing
+- Legend positioning and styling
+- Axis scaling and limits
+
+#### 4. Configuration Management (`src/config/config_manager.py`)
+
+**Profile Management**:
+- Multiple configuration profiles (conservative, aggressive, precision)
+- Profile inheritance and overrides
+- Version control and migration
+
+**Validation and Loading**:
+- JSON Schema validation
+- YAML/JSON file support
+- Environment variable substitution
+
+### Configuration Profiles
+
+#### Conservative Control (`configs/conservative_control.yaml`)
+- Stable operation with conservative PID tuning
+- Higher safety margins and slower response times
+- Suitable for long-term continuous operation
+
+#### Research Optimization (`configs/research_optimization.yaml`)
+- Aggressive optimization for maximum performance
+- High exploration rates and rapid adaptation
+- Ideal for research and development scenarios
+
+#### Precision Control (`configs/precision_control.yaml`)
+- High-accuracy control for laboratory applications
+- Tight tolerances and precise parameter tuning
+- Publication-quality measurement requirements
+
+### Parameter Sensitivity Analysis
+
+#### Framework Features (`src/config/sensitivity_analysis.py`)
+
+**Local Sensitivity Analysis**:
+- One-at-a-time parameter perturbation
+- Gradient-based sensitivity calculation
+- Local parameter importance ranking
+
+**Global Sensitivity Analysis**:
+- Sobol global sensitivity indices
+- Morris elementary effects method
+- Variance-based importance measures
+
+**Sampling Methods**:
+- Latin Hypercube sampling
+- Sobol sequence sampling
+- Random and grid-based sampling
+
+#### Usage Example
+
+```python
+from config.sensitivity_analysis import ParameterSpace, SensitivityAnalyzer
+from config.sensitivity_analysis import ParameterDefinition, ParameterBounds
+
+# Define parameter space
+parameters = [
+    ParameterDefinition(
+        name="learning_rate",
+        bounds=ParameterBounds(0.01, 0.3, nominal_value=0.1),
+        config_path=["control", "advanced_control", "learning_rate"]
+    )
+]
+
+param_space = ParameterSpace(parameters)
+analyzer = SensitivityAnalyzer(param_space, model_function, output_names)
+
+# Perform Sobol analysis
+result = analyzer.analyze_sensitivity(
+    method=SensitivityMethod.SOBOL,
+    n_samples=1000
+)
+
+# Rank parameters by importance
+ranking = analyzer.rank_parameters(result, "power_output", "total_order")
+```
+
+### Configuration Usage
+
+#### Loading Configurations
+
+```python
+from config.config_manager import get_config_manager
+
+# Initialize configuration manager
+config_mgr = get_config_manager("configs/")
+
+# Load specific profile
+config_mgr.load_profile_from_file("conservative", "configs/conservative_control.yaml")
+config_mgr.set_current_profile("conservative")
+
+# Access configurations
+biological_config = config_mgr.get_configuration("biological")
+control_config = config_mgr.get_configuration("control")
+```
+
+#### Creating Custom Profiles
+
+```python
+# Create new profile
+profile = config_mgr.create_profile(
+    profile_name="custom_research",
+    biological=custom_biological_config,
+    control=custom_control_config,
+    inherits_from="research_optimization"
+)
+
+# Save to file
+config_mgr.save_profile_to_file("custom_research", "configs/custom_research.yaml")
+```
 
 ## Performance Metrics
 
