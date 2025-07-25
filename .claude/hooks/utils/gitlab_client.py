@@ -39,7 +39,7 @@ def load_gitlab_config() -> Dict[str, Any]:
     
     # Try to load from settings.json
     try:
-        settings_path = Path(__file__).parent.parent / "settings.json"
+        settings_path = Path(__file__).parent.parent.parent / "settings.json"
         if settings_path.exists():
             with open(settings_path, 'r') as f:
                 settings = json.load(f)
@@ -196,6 +196,78 @@ def create_issue(title: str, description: str, labels: List[str] = None,
     except GitlabError as e:
         print(f"Failed to create GitLab issue: {e}", file=sys.stderr)
         return None
+
+def get_project_issues(state: str = "all", labels: List[str] = None, 
+                      assignee: str = None, limit: int = 100) -> List[Dict[str, Any]]:
+    """
+    Get all issues from the GitLab project.
+    
+    Args:
+        state: Issue state filter ('opened', 'closed', 'all')
+        labels: Filter by labels
+        assignee: Filter by assignee username
+        limit: Maximum number of issues to return
+        
+    Returns:
+        list: List of issue dictionaries
+    """
+    project = get_current_project()
+    if not project:
+        return []
+    
+    try:
+        issues_params = {
+            'state': state,
+            'per_page': min(limit, 100),
+            'all': True if limit > 100 else False
+        }
+        
+        if labels:
+            issues_params['labels'] = ','.join(labels)
+        
+        if assignee:
+            # Find user by username
+            gl = get_gitlab_client()
+            users = gl.users.list(username=assignee)
+            if users:
+                issues_params['assignee_id'] = users[0].id
+        
+        issues = project.issues.list(**issues_params)
+        
+        # Convert to dictionary format
+        result = []
+        for issue in issues[:limit]:
+            issue_dict = {
+                'id': issue.id,
+                'iid': issue.iid,
+                'title': issue.title,
+                'description': issue.description,
+                'state': issue.state,
+                'created_at': issue.created_at,
+                'updated_at': issue.updated_at,
+                'web_url': issue.web_url,
+                'labels': issue.labels,
+                'author': {
+                    'name': issue.author.get('name', ''),
+                    'username': issue.author.get('username', '')
+                } if hasattr(issue, 'author') and issue.author else {}
+            }
+            
+            # Add assignee if present
+            if hasattr(issue, 'assignee') and issue.assignee:
+                issue_dict['assignee'] = {
+                    'name': issue.assignee.get('name', ''),
+                    'username': issue.assignee.get('username', '')
+                }
+            
+            result.append(issue_dict)
+        
+        print(f"Retrieved {len(result)} issues from GitLab project", file=sys.stderr)
+        return result
+        
+    except GitlabError as e:
+        print(f"Failed to get GitLab issues: {e}", file=sys.stderr)
+        return []
 
 def create_merge_request(source_branch: str, target_branch: str = None,
                         title: str = None, description: str = None,
