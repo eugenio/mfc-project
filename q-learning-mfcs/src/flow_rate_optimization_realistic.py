@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from dataclasses import dataclass
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path
 
 @dataclass
 class RealisticMFCParameters:

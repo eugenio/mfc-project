@@ -611,7 +611,7 @@ class MFCDynamicSubstrateSimulation:
         print("Starting MFC Dynamic Substrate Control + Q-Learning simulation...")
         print(f"Duration: 1000 hours, Timesteps: {self.num_steps}")
         print(f"GPU acceleration: {'Enabled' if self.use_gpu else 'Disabled'}")
-        print(f"Control: Q-Learning (flow) + PID (substrate concentration)")
+        print("Control: Q-Learning (flow) + PID (substrate concentration)")
         print(f"Target outlet concentration: {self.substrate_controller.target_outlet_conc:.1f} mmol/L")
         print(f"Initial flow rate: {self.flow_rates[0] * 1000:.1f} mL/h")
         
@@ -1101,7 +1101,7 @@ def main():
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)
     control_metrics = sim.substrate_controller.get_control_metrics()
     
-    print(f"\nFinal Performance Summary (DUAL CONTROL):")
+    print("\nFinal Performance Summary (DUAL CONTROL):")
     print(f"Total Energy: {total_energy:.1f} Wh")
     print(f"Average Power: {np.mean(sim.stack_powers):.3f} W")
     print(f"Final Power: {sim.stack_powers[-1]:.3f} W")

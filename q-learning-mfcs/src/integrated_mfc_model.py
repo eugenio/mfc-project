@@ -12,7 +12,7 @@ The integration enables comprehensive MFC simulation with biological accuracy.
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Tuple, List, Optional, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass
 import time
 import pickle
@@ -107,7 +107,7 @@ class IntegratedMFCModel:
         self.gpu_acc = get_gpu_accelerator() if use_gpu else None
         self.gpu_available = self.gpu_acc.is_gpu_available() if self.gpu_acc else False
         
-        print(f"Initializing Integrated MFC Model")
+        print("Initializing Integrated MFC Model")
         print(f"Configuration: {n_cells} cells, {species} bacteria, {substrate} substrate")
         print(f"GPU Acceleration: {'Enabled' if self.gpu_available else 'Disabled'}")
         
@@ -427,7 +427,7 @@ class IntegratedMFCModel:
         Returns:
             Dictionary with simulation results
         """
-        print(f"\nStarting Integrated MFC Simulation")
+        print("\nStarting Integrated MFC Simulation")
         print(f"Duration: {self.simulation_hours} hours")
         print(f"Time step: {dt} hours")
         
@@ -455,7 +455,7 @@ class IntegratedMFCModel:
         results = self._compile_results()
         results['computation_time'] = computation_time
         
-        print(f"\nSimulation Complete!")
+        print("\nSimulation Complete!")
         print(f"Total Energy: {results['total_energy']:.2f} Wh")
         print(f"Average Power: {results['average_power']:.3f} W")
         print(f"Peak Power: {results['peak_power']:.3f} W")
@@ -534,7 +534,7 @@ class IntegratedMFCModel:
         with open(q_table_file, 'wb') as f:
             pickle.dump(dict(self.flow_controller.q_table), f)
         
-        print(f"\nResults saved to:")
+        print("\nResults saved to:")
         print(f"  Summary: {summary_file}")
         print(f"  Time series: {time_series_file}")
         print(f"  Q-table: {q_table_file}")

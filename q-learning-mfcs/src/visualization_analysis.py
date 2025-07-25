@@ -6,7 +6,7 @@ Visualization analysis of substrate utilization performance between unified and 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 
 def create_analysis_plots():
     """Create visualization plots for the MFC comparison analysis"""
@@ -90,12 +90,12 @@ def create_analysis_plots():
     print("\n=== VISUALIZATION INSIGHTS ===")
     
     # Substrate utilization analysis
-    print(f"\nSubstrate Utilization Patterns:")
+    print("\nSubstrate Utilization Patterns:")
     print(f"- Unified model shows very low but stable utilization (~{unified_substrate_util.mean():.4f}%)")
     print(f"- Non-unified model shows higher but declining utilization (start: ~{non_unified_substrate_util.iloc[100]:.1f}%, end: ~{non_unified_substrate_util.iloc[-1]:.1f}%)")
     
     # Biofilm development
-    print(f"\nBiofilm Development:")
+    print("\nBiofilm Development:")
     print(f"- Unified model maintains constant biofilm thickness ({unified_avg_biofilm.iloc[-1]:.3f})")
     print(f"- Non-unified model shows growing biofilm (start: {non_unified_avg_biofilm.iloc[100]:.3f}, end: {non_unified_avg_biofilm.iloc[-1]:.3f})")
     
@@ -103,19 +103,19 @@ def create_analysis_plots():
     unified_power_trend = np.polyfit(range(len(unified_data)), unified_data['stack_power'], 1)[0]
     non_unified_power_trend = np.polyfit(range(len(non_unified_data)), non_unified_data['stack_power'], 1)[0]
     
-    print(f"\nPower Output Trends:")
+    print("\nPower Output Trends:")
     print(f"- Unified model power trend: {unified_power_trend:.2e} W/timestep ({'increasing' if unified_power_trend > 0 else 'decreasing'})")
     print(f"- Non-unified model power trend: {non_unified_power_trend:.2e} W/timestep ({'increasing' if non_unified_power_trend > 0 else 'decreasing'})")
     
     # Key performance periods
-    print(f"\nKey Performance Periods:")
+    print("\nKey Performance Periods:")
     
     # Early performance (first 10%)
     early_cutoff = int(len(unified_data) * 0.1)
     unified_early_util = unified_substrate_util[:early_cutoff].mean()
     non_unified_early_util = non_unified_substrate_util[:early_cutoff].mean()
     
-    print(f"- Early stage average utilization (first 10%):")
+    print("- Early stage average utilization (first 10%):")
     print(f"  Unified: {unified_early_util:.4f}%, Non-unified: {non_unified_early_util:.1f}%")
     
     # Late performance (last 10%)
@@ -123,7 +123,7 @@ def create_analysis_plots():
     unified_late_util = unified_substrate_util[late_cutoff:].mean()
     non_unified_late_util = non_unified_substrate_util[late_cutoff:].mean()
     
-    print(f"- Late stage average utilization (last 10%):")
+    print("- Late stage average utilization (last 10%):")
     print(f"  Unified: {unified_late_util:.4f}%, Non-unified: {non_unified_late_util:.1f}%")
     
     return {

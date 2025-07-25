@@ -7,68 +7,68 @@ eis:
   start_frequency: 0.01
   end_frequency: 100000.0
   points_per_decade: 10
-  
+
   # Current and impedance settings
   applied_current: 0.001
   reference_impedance: 1000.0
-  
+
   # Electrode configuration
   electrode_area: 0.01
   reference_electrode_type: "Ag/AgCl"
-  
+
   # Model parameters
   solution_resistance: 10.0
   double_layer_capacitance: 1.0e-6
   charge_transfer_resistance: 1000.0
   warburg_coefficient: 500.0
-  
+
   # Measurement settings
   measurement_time: 60.0
   stabilization_time: 10.0
   baseline_uncertainty: 2.0
-  
+
   # Noise and drift
   noise_level: 0.02
   drift_rate: 0.001
-  
+
   # Update intervals
   measurement_interval: 300
   calibration_interval: 3600
 
-# QCM Configuration  
+# QCM Configuration
 qcm:
   # Crystal parameters
   fundamental_frequency: 5.0e6
   crystal_area: 1.0
   overtone_number: 3
-  
+
   # Material properties
   shear_modulus: 2.947e11
   density: 2648.0
-  
+
   # Biofilm properties
   biofilm_density: 1050.0
   biofilm_shear_modulus: 1.0e6
-  
+
   # Measurement settings
   frequency_resolution: 0.1
   baseline_drift_rate: 0.5
   temperature_coefficient: -0.087
   baseline_uncertainty: 1.0
-  
+
   # Mass sensitivity
   mass_sensitivity_constant: 17.7
   mass_sensitivity_factor: 1.0
-  
+
   # Temperature control
   temperature_setpoint: 25.0
   temperature_tolerance: 0.1
-  
+
   # Noise parameters
   frequency_noise_level: 1.0
   dissipation_noise_level: 1.0e-6
-  
-  # Update intervals  
+
+  # Update intervals
   measurement_interval: 60
   calibration_interval: 7200
 
@@ -76,48 +76,48 @@ qcm:
 fusion:
   # Fusion method
   method: "kalman_filter"
-  
+
   # Process noise (for Kalman filter)
   process_noise_covariance: [0.1, 0.5, 1.0e-6, 0.01, 0.05]
-  
+
   # Measurement noise
   measurement_noise_covariance: [2.0, 1.0, 1.0e-5, 0.1, 0.01]
-  
+
   # Sensor reliability
   eis_reliability: 0.95
   qcm_reliability: 0.98
-  
+
   # Fusion parameters
   min_sensor_weight: 0.1
   max_sensor_disagreement: 10.0
   sensor_fault_threshold: 0.3
-  
+
   # Update rates
   fusion_update_interval: 60
   state_prediction_interval: 30
-  
+
   # Cross-validation
   cross_validation_window: 10
   agreement_threshold: 0.8
-  
+
   # Adaptive parameters
   adaptation_rate: 0.01
   confidence_decay_factor: 0.99
   reliability_recovery_rate: 0.001
-  
+
   # Status scores
   status_scores:
     good: 1.0
     degraded: 0.6
     failed: 0.2
     unavailable: 0.0
-  
-  # Confidence weights  
+
+  # Confidence weights
   confidence_weights:
     eis_weight: 0.45
     qcm_weight: 0.45
     fusion_weight: 0.1
-  
+
   # Species properties
   species_properties:
     geobacter:

@@ -1,4 +1,3 @@
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 """
 High-performance Q-learning MFC controller demo using Mojo accelerated backend.
 
@@ -12,7 +11,6 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from odes import MFCModel
 import time
-import sys
 
 def run_mojo_qlearning_demo():
     """Run the Mojo-accelerated Q-learning demo"""
@@ -278,7 +276,7 @@ def run_mojo_qlearning_demo():
     print("\n5. Training summary:")
     print(f"Final average reward: {np.mean(rewards[-20:]):.3f}")
     print(f"Final average power: {np.mean(powers[-20:]):.3f}")
-    print(f"Q-table statistics:")
+    print("Q-table statistics:")
     print(f"  Mean Q-value: {np.mean(demo_controller.q_table):.4f}")
     print(f"  Max Q-value: {np.max(demo_controller.q_table):.4f}")
     print(f"  Min Q-value: {np.min(demo_controller.q_table):.4f}")

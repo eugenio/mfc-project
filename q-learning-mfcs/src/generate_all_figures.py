@@ -1,4 +1,3 @@
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 #!/usr/bin/env python3
 """
 Unified Figure Generation Script for MFC Q-Learning Project
@@ -29,9 +28,7 @@ from datetime import datetime
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import Rectangle, Circle
-from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Rectangle
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -1486,11 +1483,11 @@ def main():
         json_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.json')]
         report_files = [f for f in os.listdir(REPORTS_DIR) if f.endswith('.json')]
         
-        print(f"\n📊 Data Summary:")
+        print("\n📊 Data Summary:")
         print(f"   • {len(csv_files)} CSV datasets")
         print(f"   • {len(json_files)} JSON datasets") 
         print(f"   • {len(report_files)} provenance reports")
-        print(f"   • 1 unified Markdown report")
+        print("   • 1 unified Markdown report")
             
     except Exception as e:
         print(f"❌ Error generating figures: {str(e)}")

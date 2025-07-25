@@ -9,7 +9,7 @@ import matplotlib.patches as patches
 from matplotlib.patches import Rectangle, Circle
 import matplotlib
 matplotlib.use('Agg')
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path
 
 def calculate_stack_dimensions():
     """Calculate physical dimensions from simulation parameters"""
@@ -100,24 +100,24 @@ def calculate_stack_dimensions():
     # Material and construction details
     print("🔩 CONSTRUCTION DETAILS")
     print("=" * 50)
-    print(f"Membrane material:             Proton Exchange Membrane (PEM)")
-    print(f"Electrode material:            Carbon cloth/felt")
-    print(f"Current collector:             Stainless steel mesh")
-    print(f"Gasket material:               PTFE/Viton")
-    print(f"Frame material:                Acrylic/Polycarbonate")
-    print(f"Connection type:               Series electrical, parallel hydraulic")
-    print(f"Operating temperature:         30°C (303 K)")
-    print(f"Operating pH:                  7.0-8.2 (controlled)")
+    print("Membrane material:             Proton Exchange Membrane (PEM)")
+    print("Electrode material:            Carbon cloth/felt")
+    print("Current collector:             Stainless steel mesh")
+    print("Gasket material:               PTFE/Viton")
+    print("Frame material:                Acrylic/Polycarbonate")
+    print("Connection type:               Series electrical, parallel hydraulic")
+    print("Operating temperature:         30°C (303 K)")
+    print("Operating pH:                  7.0-8.2 (controlled)")
     print()
     
     # Comparative analysis
     print("📊 COMPARATIVE ANALYSIS")
     print("=" * 50)
-    print(f"Stack size comparison:         Coffee mug sized")
-    print(f"Power comparison:              LED light bulb equivalent")
-    print(f"Energy storage:                Small smartphone battery")
-    print(f"Flow rate comparison:          Slow drip coffee maker")
-    print(f"Weight comparison:             Small laptop computer")
+    print("Stack size comparison:         Coffee mug sized")
+    print("Power comparison:              LED light bulb equivalent")
+    print("Energy storage:                Small smartphone battery")
+    print("Flow rate comparison:          Slow drip coffee maker")
+    print("Weight comparison:             Small laptop computer")
     print()
     
     return {

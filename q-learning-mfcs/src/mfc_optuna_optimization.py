@@ -1,4 +1,3 @@
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
 #!/usr/bin/env python3
 """
 MFC Unified Q-Learning Hyperparameter Optimization with Optuna
@@ -25,8 +24,7 @@ import numpy as np
 import json
 import time
 import sys
-import os
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Optional, List
 import logging
 from datetime import datetime
 import multiprocessing as mp
@@ -535,12 +533,12 @@ class MFCOptunaOptimizer:
         print(f"Number of finished trials: {len(study.trials)}")
         print(f"Best objective value: {study.best_value:.6f}")
         
-        print(f"\nBest parameters:")
+        print("\nBest parameters:")
         for key, value in study.best_params.items():
             print(f"  {key}: {value}")
         
         if study.best_trial.user_attrs:
-            print(f"\nBest trial performance metrics:")
+            print("\nBest trial performance metrics:")
             attrs = study.best_trial.user_attrs
             print(f"  Energy: {attrs.get('energy_total', 'N/A'):.3f} Wh")
             print(f"  Final Power: {attrs.get('final_power', 'N/A'):.4f} W")
@@ -933,7 +931,7 @@ class MFCOptunaOptimizer:
             # Sort by extended objective (lower is better)
             successful_results.sort(key=lambda x: x['extended_objective'])
             
-            print(f"\nBEST VALIDATED CONFIGURATION:")
+            print("\nBEST VALIDATED CONFIGURATION:")
             best = successful_results[0]
             config = best['config']
             metrics = best['extended_metrics']
@@ -949,7 +947,7 @@ class MFCOptunaOptimizer:
             print(f"  Substrate Utilization: {metrics['substrate_utilization']:.3f}%")
             print(f"  Simulation Time: {best['extended_simulation_time']:.1f}s")
             
-            print(f"\nTOP 3 CONFIGURATIONS SUMMARY:")
+            print("\nTOP 3 CONFIGURATIONS SUMMARY:")
             for i, result in enumerate(successful_results[:3]):
                 config = result['config']
                 metrics = result['extended_metrics']
@@ -972,15 +970,15 @@ def main():
     N_JOBS = min(14, mp.cpu_count())  # Use up to 14 threads
     STUDY_NAME = "mfc_qlearning_optimization_v1"
     
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Trials: {N_TRIALS}")
     print(f"  Parallel jobs: {N_JOBS}")
     print(f"  Available CPU cores: {mp.cpu_count()}")
     print(f"  Study name: {STUDY_NAME}")
-    print(f"  Simulation duration: 120h per trial")
-    print(f"  Timeout per trial: 300s (5 min)")
+    print("  Simulation duration: 120h per trial")
+    print("  Timeout per trial: 300s (5 min)")
     print(f"  Expected total time: ~{(N_TRIALS * 300 / 60 / N_JOBS):.1f} minutes")
-    print(f"  Extended validation: Top 14 configs × 600h each")
+    print("  Extended validation: Top 14 configs × 600h each")
     
     # Create optimizer
     optimizer = MFCOptunaOptimizer(

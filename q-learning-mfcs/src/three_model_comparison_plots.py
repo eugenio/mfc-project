@@ -11,9 +11,8 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime
 import os
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 
 # Set style for professional plots
 plt.style.use('seaborn-v0_8')
@@ -574,7 +573,7 @@ def main():
         print("❌ Error loading data files. Please check file paths.")
         return
     
-    print(f"✅ Data loaded successfully:")
+    print("✅ Data loaded successfully:")
     print(f"   - Unified model: {len(unified_df)} data points (1000h)")
     print(f"   - Non-unified model: {len(non_unified_df)} data points (1000h)") 
     print(f"   - Recirculation model: {len(recirculation_df)} data points (1000h)")

@@ -9,6 +9,9 @@ This project implements a complete MFC stack control system featuring:
 - **5-cell MFC stack simulation** with realistic electrochemical dynamics
 - **Q-learning controller** optimized for accelerator hardware (GPU/NPU/ASIC)
 - **Advanced sensor simulation** with EIS/QCM biofilm sensing, noise and calibration effects
+- **Biological configuration system** with literature-referenced parameters
+- **Species-specific modeling** for Geobacter, Shewanella, and mixed cultures
+- **Substrate-specific kinetics** for acetate, lactate, pyruvate, and glucose
 - **Actuator control** for duty cycle, pH buffer, and acetate addition
 - **Cell reversal prevention** and recovery mechanisms
 - **Real-time optimization** for power stability and efficiency
@@ -20,6 +23,7 @@ This project implements a complete MFC stack control system featuring:
 1. **MFC Model (`odes.mojo`)** - Electrochemical simulation using Mojo
 1. **Q-Learning Controller (`mfc_qlearning.mojo`)** - Accelerated learning algorithm
 1. **Stack Simulation (`mfc_stack_simulation.py`)** - Complete 5-cell system
+1. **Biological Configuration System** - Literature-referenced parameter management
 1. **Sensor/Actuator Layer** - Hardware abstraction and control
 
 ### Key Features
@@ -87,6 +91,19 @@ python mfc_stack_simulation.py
 
 ```bash
 python mfc_stack_demo.py
+```
+
+#### Biological Configuration Examples
+
+```bash
+# Run Geobacter-acetate configuration example
+python examples/example_geobacter_acetate_config.py
+
+# Run Shewanella-lactate configuration example
+python examples/example_shewanella_lactate_config.py
+
+# Run mixed culture configuration example
+python examples/example_mixed_culture_config.py
 ```
 
 ## Technical Details
@@ -195,24 +212,24 @@ The Mojo implementation provides:
 1. **Vectorized Operations**: Parallel tensor computations
 1. **Zero-cost Abstractions**: Memory-efficient data structures
 1. **Cross-platform Acceleration**: GPU/NPU/ASIC compatibility
-1. **Real-time Performance**: <1ms control loop execution
+1. **Real-time Performance**: \<1ms control loop execution
 1. **Scalability**: Linear scaling with cell count
 
 ### Universal GPU Acceleration (New)
 
 The Python implementations now feature universal GPU acceleration:
 
-1. **Multi-vendor Support**: 
+1. **Multi-vendor Support**:
    - NVIDIA GPUs via CuPy
    - AMD GPUs via PyTorch with ROCm
    - Automatic backend detection
-2. **CPU Fallback**: Seamless operation on systems without GPU
-3. **Unified API**: Single interface for all mathematical operations
-4. **Performance Benefits**:
+1. **CPU Fallback**: Seamless operation on systems without GPU
+1. **Unified API**: Single interface for all mathematical operations
+1. **Performance Benefits**:
    - Up to 10x speedup for large-scale simulations
    - Real-time control loop execution
    - Efficient memory management
-5. **Tested Operations**:
+1. **Tested Operations**:
    - Array operations (creation, conversion)
    - Mathematical functions (abs, log, exp, sqrt, power)
    - Conditional operations (where, maximum, minimum, clip)
@@ -224,6 +241,7 @@ The Python implementations now feature universal GPU acceleration:
 The system now includes comprehensive biofilm sensing capabilities:
 
 #### Electrochemical Impedance Spectroscopy (EIS)
+
 - **Biofilm thickness measurement** (5-80 μm range)
 - **Species-specific calibration** for G. sulfurreducens and S. oneidensis
 - **Equivalent circuit modeling** with Randles circuit representation
@@ -231,6 +249,7 @@ The system now includes comprehensive biofilm sensing capabilities:
 - **Literature-validated parameters** from recent MFC studies
 
 #### Quartz Crystal Microbalance (QCM)
+
 - **Biofilm mass sensing** (0-1000 ng/cm² range)
 - **Sauerbrey equation implementation** for rigid biofilms
 - **Viscoelastic corrections** for soft biofilms
@@ -238,6 +257,7 @@ The system now includes comprehensive biofilm sensing capabilities:
 - **Temperature compensation** and drift correction
 
 #### Advanced Sensor Fusion
+
 - **Multi-algorithm fusion**: Kalman filter, weighted average, maximum likelihood, Bayesian inference
 - **Uncertainty quantification** with confidence intervals
 - **Fault detection and tolerance** for sensor degradation
@@ -245,10 +265,48 @@ The system now includes comprehensive biofilm sensing capabilities:
 - **Performance metrics**: sensor agreement, fusion confidence, measurement quality
 
 #### Integration with Q-Learning Controller
+
 - **Extended state space** with sensor measurements (EIS thickness, QCM mass, sensor quality)
 - **Multi-objective rewards** incorporating biofilm health, sensor agreement, and system stability
 - **Adaptive exploration** based on sensor confidence
 - **Sensor-guided control decisions** for improved biofilm management
+
+### Biological Configuration System (New)
+
+The system now includes a comprehensive biological parameter management framework:
+
+#### Species-Specific Configurations
+
+- **Geobacter sulfurreducens**: Optimized for direct electron transfer and acetate utilization
+- **Shewanella oneidensis**: Enhanced for flavin-mediated electron transfer and lactate metabolism
+- **Mixed cultures**: Dynamic species ratio management with synergistic interactions
+- **Literature-referenced parameters**: All values backed by peer-reviewed research
+
+#### Substrate-Specific Modeling
+
+- **Acetate**: Primary substrate for Geobacter with complete oxidation pathway
+- **Lactate**: Preferred substrate for Shewanella with pyruvate intermediate
+- **Pyruvate**: Universal substrate for both species with enhanced kinetics
+- **Glucose**: Complex substrate with fermentation pathways
+
+#### Key Configuration Features
+
+- **Metabolic reaction definitions** with enzyme kinetics and thermodynamics
+- **Biofilm formation parameters** with species-specific growth characteristics
+- **Environmental compensation** for temperature and pH effects
+- **Comprehensive validation** ensuring biological plausibility
+- **Modular design** for easy extension with new species and substrates
+
+#### Literature References
+
+All parameters are referenced to key publications:
+
+- Lovley (2003): Geobacter metabolism and electron transfer
+- Bond et al. (2002): Electrode-reducing microorganisms
+- Marsili et al. (2008): Shewanella flavin-mediated electron transfer
+- Torres et al. (2010): Kinetic perspective on extracellular electron transfer
+- Marcus et al. (2007): Biofilm anode modeling
+- Reguera et al. (2005): Microbial nanowires
 
 ## Results and Analysis
 
@@ -261,13 +319,13 @@ The system now includes comprehensive biofilm sensing capabilities:
 
 ### Individual Cell Performance
 
-| Cell | Voltage (V) | Power (W) | pH  | Acetate |
+| Cell | Voltage (V) | Power (W) | pH | Acetate |
 |------|-------------|-----------|-----|---------|
-| 0    | 0.178       | 0.010     | 8.1 | 1.545   |
-| 1    | 0.173       | 0.014     | 8.0 | 1.584   |
-| 2    | 0.204       | 0.020     | 8.0 | 1.512   |
-| 3    | 0.197       | 0.014     | 7.9 | 1.569   |
-| 4    | 0.195       | 0.017     | 8.2 | 1.622   |
+| 0 | 0.178 | 0.010 | 8.1 | 1.545 |
+| 1 | 0.173 | 0.014 | 8.0 | 1.584 |
+| 2 | 0.204 | 0.020 | 8.0 | 1.512 |
+| 3 | 0.197 | 0.014 | 7.9 | 1.569 |
+| 4 | 0.195 | 0.017 | 8.2 | 1.622 |
 
 ### Control System Performance
 
@@ -310,6 +368,7 @@ python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
 ## Files Description
 
 ### Core System
+
 - `odes.mojo` - MFC electrochemical model
 - `mfc_qlearning.mojo` - Q-learning controller (Mojo implementation)
 - `mfc_stack_simulation.py` - Complete stack simulation
@@ -318,21 +377,39 @@ python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
 - `build_qlearning.py` - Build script
 
 ### Advanced Models
+
 - `src/biofilm_kinetics/` - Biofilm formation and growth models
-- `src/metabolic_model.py` - Metabolic pathway modeling
+- `src/metabolic_model/` - Metabolic pathway modeling with species-specific parameters
 - `src/integrated_mfc_model.py` - Complete integrated MFC system
 - `src/mfc_recirculation_control.py` - Recirculation and substrate control
 - `src/sensing_enhanced_q_controller.py` - Sensor-enhanced Q-learning controller
 - `src/sensor_integrated_mfc_model.py` - MFC model with sensor feedback loops
 
+### Biological Configuration System
+
+- `src/config/biological_config.py` - Species-specific metabolic and biofilm parameters
+- `src/config/substrate_config.py` - Substrate-specific kinetic and thermodynamic properties
+- `src/config/biological_validation.py` - Parameter validation and biological plausibility checks
+- `src/config/parameter_validation.py` - Core validation functions and error handling
+
 ### Sensing Models
+
 - `src/sensing_models/eis_model.py` - Electrochemical impedance spectroscopy
 - `src/sensing_models/qcm_model.py` - Quartz crystal microbalance
 - `src/sensing_models/sensor_fusion.py` - Multi-sensor data fusion
 - `src/sensing_models/__init__.py` - Sensing models module
 
+### Configuration Examples
+
+- `examples/example_geobacter_acetate_config.py` - Geobacter with acetate configuration
+- `examples/example_shewanella_lactate_config.py` - Enhanced Shewanella with lactate
+- `examples/example_mixed_culture_config.py` - Mixed culture systems with competition
+- `examples/README.md` - Comprehensive examples documentation
+
 ### Testing
+
 - `tests/sensing_models/test_sensing_models.py` - Comprehensive sensor tests
+- `tests/config/` - Configuration system tests
 - `tests/run_tests.py` - Test suite runner
 - `README.md` - This documentation
 

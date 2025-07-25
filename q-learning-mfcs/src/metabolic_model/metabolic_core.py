@@ -6,7 +6,7 @@ combining all components into a comprehensive simulation framework.
 """
 
 import numpy as np
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, Optional
 from dataclasses import dataclass
 import sys
 import os
@@ -18,6 +18,24 @@ from gpu_acceleration import get_gpu_accelerator
 from .pathway_database import PathwayDatabase, Species, Substrate, MetabolicReaction
 from .membrane_transport import MembraneTransport
 from .electron_shuttles import ElectronShuttleModel, ShuttleType
+
+# Import biological configuration
+try:
+    from config.biological_config import (
+        SpeciesMetabolicConfig, BacterialSpecies, 
+        get_geobacter_config, get_shewanella_config
+    )
+    from config.substrate_config import (
+        ComprehensiveSubstrateConfig, SubstrateType,
+        DEFAULT_SUBSTRATE_CONFIGS
+    )
+    from config.biological_validation import (
+        validate_species_metabolic_config, validate_comprehensive_substrate_config
+    )
+except ImportError:
+    # Fallback if configuration modules are not available
+    SpeciesMetabolicConfig = None
+    ComprehensiveSubstrateConfig = None
 
 
 @dataclass
@@ -59,7 +77,9 @@ class MetabolicModel:
     """
     
     def __init__(self, species: str = "mixed", substrate: str = "lactate",
-                 membrane_type: str = "Nafion-117", use_gpu: bool = True):
+                 membrane_type: str = "Nafion-117", use_gpu: bool = True,
+                 species_config: Optional[SpeciesMetabolicConfig] = None,
+                 substrate_config: Optional[ComprehensiveSubstrateConfig] = None):
         """
         Initialize metabolic model.
         
@@ -68,10 +88,34 @@ class MetabolicModel:
             substrate: Substrate type ("acetate", "lactate")
             membrane_type: Nafion membrane grade
             use_gpu: Enable GPU acceleration
+            species_config: Optional species metabolic configuration
+            substrate_config: Optional substrate configuration
         """
         self.species_str = species
         self.substrate_str = substrate
         self.use_gpu = use_gpu
+        
+        # Store configuration objects
+        self.species_config = species_config
+        self.substrate_config = substrate_config
+        
+        # Load default configurations if not provided
+        if SpeciesMetabolicConfig and self.species_config is None:
+            if species == "geobacter":
+                self.species_config = get_geobacter_config()
+            elif species == "shewanella":
+                self.species_config = get_shewanella_config()
+            # For "mixed" or other cases, could blend configs or use default
+            
+        if ComprehensiveSubstrateConfig and self.substrate_config is None:
+            substrate_type = SubstrateType.ACETATE if substrate == "acetate" else SubstrateType.LACTATE
+            self.substrate_config = DEFAULT_SUBSTRATE_CONFIGS.get(substrate_type)
+        
+        # Validate configurations if available
+        if self.species_config and validate_species_metabolic_config:
+            validate_species_metabolic_config(self.species_config)
+        if self.substrate_config and validate_comprehensive_substrate_config:
+            validate_comprehensive_substrate_config(self.substrate_config)
         
         # Map string inputs to enums
         self._map_species_substrate()
@@ -128,23 +172,27 @@ class MetabolicModel:
     
     def reset_state(self):
         """Reset metabolic state to initial conditions."""
-        # Initialize metabolite concentrations
-        self.metabolites = {
-            "acetate": 10.0 if self.substrate == Substrate.ACETATE else 0.0,
-            "lactate": 10.0 if self.substrate == Substrate.LACTATE else 0.0,
-            "pyruvate": 0.0,
-            "acetyl_coa": 0.0,
-            "citrate": 0.0,
-            "co2": 0.0,
-            "nadh": 0.1,
-            "nad_plus": 1.0,
-            "atp": 5.0,
-            "adp": 5.0,
-            "cytochrome_c_red": 0.1,
-            "cytochrome_c_ox": 0.9,
-            "o2": 0.001,  # Low oxygen (anaerobic)
-            "h_plus": 1e-7 * 1000  # pH 7.0 in mmol/L
-        }
+        # Initialize metabolite concentrations from configuration or defaults
+        if self.species_config and hasattr(self.species_config, 'metabolite_concentrations'):
+            self.metabolites = self.species_config.metabolite_concentrations.copy()
+        else:
+            # Fallback to hardcoded values
+            self.metabolites = {
+                "acetate": 10.0 if self.substrate == Substrate.ACETATE else 0.0,
+                "lactate": 10.0 if self.substrate == Substrate.LACTATE else 0.0,
+                "pyruvate": 0.0,
+                "acetyl_coa": 0.0,
+                "citrate": 0.0,
+                "co2": 0.0,
+                "nadh": 0.1,
+                "nad_plus": 1.0,
+                "atp": 5.0,
+                "adp": 5.0,
+                "cytochrome_c_red": 0.1,
+                "cytochrome_c_ox": 0.9,
+                "o2": 0.001,  # Low oxygen (anaerobic)
+                "h_plus": 1e-7 * 1000  # pH 7.0 in mmol/L
+            }
         
         # Initialize reaction fluxes
         self.fluxes = {
@@ -179,22 +227,54 @@ class MetabolicModel:
         reactions = self.current_pathway.reactions
         
         for reaction in reactions:
-            # Base flux from Vmax and metabolite concentrations
-            flux = reaction.vmax * biomass
+            # Get kinetic parameters from configuration or fallback to reaction
+            if (self.species_config and hasattr(self.species_config, 'reactions') and 
+                len(self.species_config.reactions) > 0):
+                # Find matching reaction configuration
+                reaction_config = next((r for r in self.species_config.reactions 
+                                      if r.id == reaction.id), None)
+                if reaction_config:
+                    vmax = reaction_config.kinetics.vmax
+                    km = reaction_config.kinetics.km
+                    ki = reaction_config.kinetics.ki
+                else:
+                    vmax = reaction.vmax
+                    km = getattr(reaction, 'km_values', {})
+                    ki = getattr(reaction, 'ki_values', {})
+            else:
+                vmax = reaction.vmax
+                km = getattr(reaction, 'km_values', {})
+                ki = getattr(reaction, 'ki_values', {})
+            
+            # Base flux from Vmax and biomass
+            flux = vmax * biomass
             
             # Apply Michaelis-Menten kinetics for substrates
-            for metabolite, km in reaction.km_values.items():
-                if metabolite in self.metabolites:
-                    conc = self.metabolites[metabolite]
+            if isinstance(km, dict):
+                for metabolite, km_val in km.items():
+                    if metabolite in self.metabolites:
+                        conc = self.metabolites[metabolite]
+                        flux *= conc / (km_val + conc)
+            elif isinstance(km, float) and km > 0:
+                # Use primary substrate concentration
+                substrate_key = "acetate" if self.substrate == Substrate.ACETATE else "lactate"
+                if substrate_key in self.metabolites:
+                    conc = self.metabolites[substrate_key]
                     flux *= conc / (km + conc)
             
             # Apply inhibition kinetics
-            for metabolite, ki in reaction.ki_values.items():
-                if metabolite in self.metabolites:
-                    conc = self.metabolites[metabolite]
+            if isinstance(ki, dict):
+                for metabolite, ki_val in ki.items():
+                    if metabolite in self.metabolites:
+                        conc = self.metabolites[metabolite]
+                        flux *= ki_val / (ki_val + conc)
+            elif isinstance(ki, float) and ki > 0:
+                # Apply general inhibition if available
+                if "o2" in self.metabolites:
+                    conc = self.metabolites["o2"]
                     flux *= ki / (ki + conc)
             
-            # Growth rate dependency
+            # Growth rate dependency for biosynthetic reactions
             if "synthetase" in reaction.name.lower():
                 flux *= (1 + growth_rate)
             
@@ -354,14 +434,20 @@ class MetabolicModel:
         Returns:
             Tuple of (direct_current, mediated_current) in A/m²
         """
+        # Get electron transport efficiency from configuration
+        if self.species_config:
+            et_efficiency = self.species_config.electron_transport_efficiency
+        else:
+            et_efficiency = 0.85  # Default fallback
+        
         # Direct electron transfer (cytochrome-based)
         cytochrome_flux = self.fluxes.get("GSU_R004", 0.0)  # Electron transport reaction
         
         if cytochrome_flux > 0:
             # flux in mmol e-/gDW/h -> A/m²
-            # flux * biomass * volume * F / (3600 * area)
+            # flux * biomass * volume * F * efficiency / (3600 * area)
             F = 96485  # C/mol
-            direct_current = (cytochrome_flux * biomass * volume * F) / (3600 * electrode_area)
+            direct_current = (cytochrome_flux * biomass * volume * F * et_efficiency) / (3600 * electrode_area)
         else:
             direct_current = 0.0
         
@@ -389,8 +475,13 @@ class MetabolicModel:
         if substrate_consumed <= 0:
             return 0.0
         
-        # Theoretical electrons from substrate
-        electrons_per_substrate = self.current_pathway.electron_yield
+        # Get theoretical electron yield from configuration
+        if (self.substrate_config and hasattr(self.substrate_config, 'degradation_pathways') and 
+            len(self.substrate_config.degradation_pathways) > 0):
+            electrons_per_substrate = self.substrate_config.degradation_pathways[0].electron_yield
+        else:
+            electrons_per_substrate = self.current_pathway.electron_yield
+        
         theoretical_electrons = substrate_consumed * electrons_per_substrate  # mmol e-
         
         # Actual electrons from current
@@ -399,14 +490,21 @@ class MetabolicModel:
         
         efficiency = actual_electrons / theoretical_electrons
         
-        # For realistic MFC operation, coulombic efficiency typically ranges from 10-90%
-        # If calculated efficiency is unrealistic, use a reasonable approximation
+        # Use yield coefficient from configuration for more realistic bounds
+        if self.species_config:
+            max_efficiency = min(0.9, self.species_config.yield_coefficient * 10)  # Scale yield coefficient
+            min_efficiency = max(0.05, self.species_config.yield_coefficient * 0.5)
+        else:
+            max_efficiency = 0.9
+            min_efficiency = 0.1
+        
+        # For realistic MFC operation, apply species-specific bounds
         if efficiency > 1.5 or efficiency < 0.001:
             # Use substrate utilization as a proxy for efficiency
             substrate_utilization = min(1.0, substrate_consumed / 0.1)  # Normalize to 0.1 mmol baseline
-            efficiency = 0.2 + 0.6 * substrate_utilization  # 20-80% range based on utilization
+            efficiency = min_efficiency + (max_efficiency - min_efficiency) * substrate_utilization
         
-        return min(1.0, max(0.0, efficiency))
+        return min(max_efficiency, max(min_efficiency, efficiency))
     
     def step_metabolism(self, dt: float, biomass: float, growth_rate: float,
                       anode_potential: float, substrate_supply: float,

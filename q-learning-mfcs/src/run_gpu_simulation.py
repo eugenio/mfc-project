@@ -1,4 +1,4 @@
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 """
 GPU-Accelerated 100-Hour MFC Simulation Runner
 
@@ -10,8 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import subprocess
-import os
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 

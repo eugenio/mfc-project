@@ -8,8 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
-import matplotlib.patches as mpatches
+from path_config import get_figure_path
 
 def create_summary_plots():
     """Create focused summary plots for key performance metrics"""

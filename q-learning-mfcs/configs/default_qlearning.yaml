@@ -50,14 +50,14 @@ rewards:
   power_weight: 10.0
   power_penalty_threshold: 50.0
   power_penalty_multiplier: 100.0
-  
+
   # Biofilm health
   biofilm_weight: 50.0
   biofilm_reward: 25.0
   biofilm_optimal_thickness_um: 30.0
   conductivity_normalization_S_per_m: 0.005
   mass_growth_rate_factor: 10.0
-  
+
   # Substrate utilization
   consumption_weight: 5.0
   substrate_reward_multiplier: 30.0

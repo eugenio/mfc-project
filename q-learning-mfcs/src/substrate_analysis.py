@@ -5,7 +5,6 @@ Analysis of substrate utilization performance between unified and non-unified MF
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 def load_and_analyze_data():
     """Load and analyze the MFC simulation data"""
@@ -25,7 +24,7 @@ def load_and_analyze_data():
     unified_final_util = unified_data['substrate_utilization'].iloc[-1]
     non_unified_final_util = non_unified_data['substrate_utilization'].iloc[-1]
     
-    print(f"\n1. FINAL SUBSTRATE UTILIZATION:")
+    print("\n1. FINAL SUBSTRATE UTILIZATION:")
     print(f"   Unified model:     {unified_final_util:.6f}")
     print(f"   Non-unified model: {non_unified_final_util:.6f}")
     print(f"   Difference:        {unified_final_util - non_unified_final_util:.6f}")
@@ -35,7 +34,7 @@ def load_and_analyze_data():
     unified_peak_util = unified_data['substrate_utilization'].max()
     non_unified_peak_util = non_unified_data['substrate_utilization'].max()
     
-    print(f"\n2. PEAK SUBSTRATE UTILIZATION:")
+    print("\n2. PEAK SUBSTRATE UTILIZATION:")
     print(f"   Unified model:     {unified_peak_util:.6f}")
     print(f"   Non-unified model: {non_unified_peak_util:.6f}")
     print(f"   Difference:        {unified_peak_util - non_unified_peak_util:.6f}")
@@ -44,7 +43,7 @@ def load_and_analyze_data():
     unified_mean_util = unified_data['substrate_utilization'].mean()
     non_unified_mean_util = non_unified_data['substrate_utilization'].mean()
     
-    print(f"\n3. AVERAGE SUBSTRATE UTILIZATION:")
+    print("\n3. AVERAGE SUBSTRATE UTILIZATION:")
     print(f"   Unified model:     {unified_mean_util:.6f}")
     print(f"   Non-unified model: {non_unified_mean_util:.6f}")
     print(f"   Difference:        {unified_mean_util - non_unified_mean_util:.6f}")
@@ -54,7 +53,7 @@ def load_and_analyze_data():
     unified_std_util = unified_data['substrate_utilization'].std()
     non_unified_std_util = non_unified_data['substrate_utilization'].std()
     
-    print(f"\n4. SUBSTRATE UTILIZATION STABILITY (Standard Deviation):")
+    print("\n4. SUBSTRATE UTILIZATION STABILITY (Standard Deviation):")
     print(f"   Unified model:     {unified_std_util:.6f}")
     print(f"   Non-unified model: {non_unified_std_util:.6f}")
     print(f"   Difference:        {unified_std_util - non_unified_std_util:.6f}")
@@ -72,12 +71,12 @@ def load_and_analyze_data():
     unified_steady_time = find_steady_state_time(unified_data)
     non_unified_steady_time = find_steady_state_time(non_unified_data)
     
-    print(f"\n5. TIME TO REACH STEADY STATE:")
+    print("\n5. TIME TO REACH STEADY STATE:")
     print(f"   Unified model:     {unified_steady_time:.3f} hours" if unified_steady_time else "   Unified model:     Not reached")
     print(f"   Non-unified model: {non_unified_steady_time:.3f} hours" if non_unified_steady_time else "   Non-unified model: Not reached")
     
     # Biofilm thickness analysis
-    print(f"\n=== BIOFILM THICKNESS ANALYSIS ===")
+    print("\n=== BIOFILM THICKNESS ANALYSIS ===")
     
     # Get biofilm thickness data (average across all cells)
     unified_biofilm_cols = [col for col in unified_data.columns if 'biofilm' in col]
@@ -86,7 +85,7 @@ def load_and_analyze_data():
     unified_avg_biofilm = unified_data[unified_biofilm_cols].mean(axis=1)
     non_unified_avg_biofilm = non_unified_data[non_unified_biofilm_cols].mean(axis=1)
     
-    print(f"\n6. FINAL AVERAGE BIOFILM THICKNESS:")
+    print("\n6. FINAL AVERAGE BIOFILM THICKNESS:")
     print(f"   Unified model:     {unified_avg_biofilm.iloc[-1]:.6f}")
     print(f"   Non-unified model: {non_unified_avg_biofilm.iloc[-1]:.6f}")
     print(f"   Difference:        {unified_avg_biofilm.iloc[-1] - non_unified_avg_biofilm.iloc[-1]:.6f}")
@@ -95,12 +94,12 @@ def load_and_analyze_data():
     unified_corr = np.corrcoef(unified_avg_biofilm, unified_data['substrate_utilization'])[0,1]
     non_unified_corr = np.corrcoef(non_unified_avg_biofilm, non_unified_data['substrate_utilization'])[0,1]
     
-    print(f"\n7. BIOFILM-SUBSTRATE UTILIZATION CORRELATION:")
+    print("\n7. BIOFILM-SUBSTRATE UTILIZATION CORRELATION:")
     print(f"   Unified model:     {unified_corr:.6f}")
     print(f"   Non-unified model: {non_unified_corr:.6f}")
     
     # Performance trends analysis
-    print(f"\n=== PERFORMANCE TRENDS ANALYSIS ===")
+    print("\n=== PERFORMANCE TRENDS ANALYSIS ===")
     
     # Look at trends in the last 25% of simulation time
     last_quarter_start = int(len(unified_data) * 0.75)
@@ -110,19 +109,19 @@ def load_and_analyze_data():
     non_unified_late_trend = np.polyfit(range(last_quarter_start, len(non_unified_data)), 
                                        non_unified_data['substrate_utilization'].iloc[last_quarter_start:], 1)[0]
     
-    print(f"\n8. LATE-STAGE SUBSTRATE UTILIZATION TREND (last 25% of simulation):")
+    print("\n8. LATE-STAGE SUBSTRATE UTILIZATION TREND (last 25% of simulation):")
     print(f"   Unified model slope:     {unified_late_trend:.8f} (per timestep)")
     print(f"   Non-unified model slope: {non_unified_late_trend:.8f} (per timestep)")
     
     # Summary and recommendation
-    print(f"\n=== SUMMARY AND COMPARISON ===")
+    print("\n=== SUMMARY AND COMPARISON ===")
     
     better_final = "Unified" if unified_final_util > non_unified_final_util else "Non-unified"
     better_peak = "Unified" if unified_peak_util > non_unified_peak_util else "Non-unified"
     better_avg = "Unified" if unified_mean_util > non_unified_mean_util else "Non-unified"
     more_stable = "Unified" if unified_std_util < non_unified_std_util else "Non-unified"
     
-    print(f"\nPerformance Winner Analysis:")
+    print("\nPerformance Winner Analysis:")
     print(f"- Better final utilization:    {better_final} model")
     print(f"- Better peak utilization:     {better_peak} model") 
     print(f"- Better average utilization:  {better_avg} model")
@@ -152,33 +151,33 @@ def load_and_analyze_data():
     else:
         non_unified_score += 1
     
-    print(f"\nOverall Performance Score:")
+    print("\nOverall Performance Score:")
     print(f"- Unified model:     {unified_score}/4")
     print(f"- Non-unified model: {non_unified_score}/4")
     
     if unified_score > non_unified_score:
-        print(f"\n🏆 WINNER: Unified model performs better overall")
+        print("\n🏆 WINNER: Unified model performs better overall")
     elif non_unified_score > unified_score:
-        print(f"\n🏆 WINNER: Non-unified model performs better overall")
+        print("\n🏆 WINNER: Non-unified model performs better overall")
     else:
-        print(f"\n🤝 TIE: Both models show comparable performance")
+        print("\n🤝 TIE: Both models show comparable performance")
     
     # Additional insights
-    print(f"\n=== KEY INSIGHTS ===")
+    print("\n=== KEY INSIGHTS ===")
     
     improvement_pct = ((unified_final_util - non_unified_final_util) / non_unified_final_util * 100)
     if abs(improvement_pct) > 1:
         print(f"- Significant substrate utilization difference: {improvement_pct:.1f}%")
     else:
-        print(f"- Substrate utilization performance is very similar between models")
+        print("- Substrate utilization performance is very similar between models")
     
     biofilm_diff_pct = ((unified_avg_biofilm.iloc[-1] - non_unified_avg_biofilm.iloc[-1]) / non_unified_avg_biofilm.iloc[-1] * 100)
     print(f"- Biofilm thickness difference: {biofilm_diff_pct:.1f}%")
     
     if abs(unified_corr - non_unified_corr) > 0.1:
-        print(f"- Different biofilm-utilization relationships between models")
+        print("- Different biofilm-utilization relationships between models")
     else:
-        print(f"- Similar biofilm-utilization relationships in both models")
+        print("- Similar biofilm-utilization relationships in both models")
 
 if __name__ == "__main__":
     load_and_analyze_data()

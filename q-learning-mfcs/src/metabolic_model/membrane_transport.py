@@ -7,7 +7,7 @@ and experimental data.
 """
 
 import numpy as np
-from typing import Dict, Tuple, Optional
+from typing import Dict
 from dataclasses import dataclass
 import sys
 import os

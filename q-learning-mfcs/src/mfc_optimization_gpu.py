@@ -13,7 +13,6 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 # import seaborn as sns  # Optional for styling
-from scipy.optimize import minimize_scalar
 import time
 
 # Import universal GPU acceleration
@@ -318,7 +317,7 @@ class MFCOptimizationSimulation:
         print("Starting MFC optimization simulation...")
         print(f"Duration: 1000 hours, Timesteps: {self.num_steps}")
         print(f"GPU acceleration: {'Enabled' if self.use_gpu else 'Disabled'}")
-        print(f"Flow rate control: Time-dependent (independent variable: time)")
+        print("Flow rate control: Time-dependent (independent variable: time)")
         
         start_time = time.time()
         
@@ -658,7 +657,7 @@ def main():
     
     # Final summary
     total_energy = np.trapz(sim.stack_powers, dx=sim.dt/3600)
-    print(f"\nFinal Performance Summary:")
+    print("\nFinal Performance Summary:")
     print(f"Total Energy: {total_energy:.1f} Wh")
     print(f"Average Power: {np.mean(sim.stack_powers):.3f} W")
     print(f"Final Power: {sim.stack_powers[-1]:.3f} W")

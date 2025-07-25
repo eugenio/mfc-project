@@ -18,13 +18,10 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
-from typing import Dict, List, Tuple, Optional
+from path_config import get_figure_path, get_simulation_data_path
+from typing import Dict, Optional
 import json
 import pandas as pd
-from scipy.optimize import curve_fit
-from scipy.signal import find_peaks
-import cmath
 
 @dataclass
 class EISParameters:
@@ -535,7 +532,7 @@ def main():
     correlation_eis_qcm = np.corrcoef(results['thickness_eis'], results['thickness_qcm'])[0,1]
     print(f"EIS-QCM Correlation R²:    {correlation_eis_qcm**2:.3f}")
     
-    print(f"\nData saved to:")
+    print("\nData saved to:")
     print(f"- {get_simulation_data_path('eis_qcm_correlation_data.csv')}")
     print(f"- {get_simulation_data_path('eis_qcm_correlation_data.json')}")
     print(f"- {get_figure_path('eis_qcm_biofilm_correlation_analysis.png')}")

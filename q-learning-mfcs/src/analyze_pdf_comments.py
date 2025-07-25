@@ -8,7 +8,7 @@ import fitz  # PyMuPDF
 import sys
 import json
 from pathlib import Path
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_simulation_data_path
 
 
 def analyze_pdf_annotations(pdf_path):
@@ -99,7 +99,7 @@ def print_analysis_report(analysis):
         return
     
     print("=" * 70)
-    print(f"📄 PDF ANALYSIS REPORT")
+    print("📄 PDF ANALYSIS REPORT")
     print("=" * 70)
     print(f"File: {analysis['file_path']}")
     print(f"Pages: {analysis['page_count']}")

@@ -6,7 +6,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-import max.mojo.importer
 import sys
 
 sys.path.insert(0, "")

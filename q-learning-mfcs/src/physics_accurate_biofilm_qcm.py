@@ -15,12 +15,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 import json
 import pandas as pd
 from scipy.integrate import odeint
-from scipy.optimize import minimize_scalar
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_figure_path, get_simulation_data_path
 
 @dataclass
 class GeobacterBiofilmParameters:
@@ -548,14 +547,14 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
     final_current = biofilm_results['current_density_A_m2'][-1] * 1000 / 10000  # mA/cm²
     final_activity = biofilm_results['electrochemical_activity'][-1]
     
-    print(f"\nSIMULATION RESULTS SUMMARY:")
+    print("\nSIMULATION RESULTS SUMMARY:")
     print(f"Final biofilm thickness:     {final_thickness:.1f} μm")
     print(f"Optimal thickness:           {biofilm_params.optimal_thickness_um:.1f} μm")
     print(f"Final current density:       {final_current:.2f} mA/cm²")
     print(f"Final electrochemical activity: {final_activity:.3f}")
     print(f"QCM measurement accuracy:    {np.mean(qcm_measurements['measurement_quality']):.3f}")
     
-    print(f"\nLiterature Validation:")
+    print("\nLiterature Validation:")
     print(f"Target current density:      {biofilm_params.max_current_density*1000/10000:.2f} mA/cm²")
     print(f"Achieved performance:        {final_current/(biofilm_params.max_current_density*1000/10000)*100:.1f}% of maximum")
     
@@ -564,7 +563,7 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
     else:
         print("⚠️  Biofilm thickness exceeds optimal range")
     
-    print(f"\nData saved to:")
+    print("\nData saved to:")
     print(f"- {get_simulation_data_path('physics_biofilm_qcm_data.json')}")
     print(f"- {get_simulation_data_path('physics_biofilm_qcm_data.csv')}")
     print(f"- {get_figure_path('physics_accurate_biofilm_qcm_analysis.png')}")

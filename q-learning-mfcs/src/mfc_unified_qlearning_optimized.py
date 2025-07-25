@@ -17,13 +17,8 @@ Date: 2025-07-23
 """
 
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import pickle
-import time
 from datetime import datetime
 from collections import defaultdict
-from typing import Tuple, Dict
 
 # GPU configuration
 try:
@@ -102,11 +97,11 @@ class OptimizedUnifiedQController:
             'biofilm_threshold_ratio': 0.884
         }
         
-        print(f"Optimized Unified Q-learning initialized:")
-        print(f"- State space dimensions: 6 (extended)")
+        print("Optimized Unified Q-learning initialized:")
+        print("- State space dimensions: 6 (extended)")
         print(f"- Action space size: {len(self.actions)} dual actions")
         print(f"- Target outlet concentration: {self.target_outlet_conc:.1f} mmol/L")
-        print(f"- Optimization source: Optuna Trial #37")
+        print("- Optimization source: Optuna Trial #37")
         
     def discretize_state(self, power, biofilm_deviation, substrate_utilization, 
                         outlet_conc_error, flow_rate, time_hours):

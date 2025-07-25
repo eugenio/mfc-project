@@ -11,15 +11,10 @@ Enhanced Q-learning agent with:
 import numpy as np
 import pandas as pd
 import json
-import os
 import argparse
 from datetime import datetime
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize_scalar
-import time
 from collections import defaultdict
-import pickle
-from path_config import get_figure_path, get_simulation_data_path, get_model_path, get_report_path, get_log_path
+from path_config import get_simulation_data_path
 
 class AnolytereservoirSystem:
     """Simulates 1L anolyte reservoir with recirculation and substrate control"""
@@ -550,7 +545,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     args = parse_arguments()
     
-    print(f"🔬 Running MFC Simulation with Literature-Validated Parameters")
+    print("🔬 Running MFC Simulation with Literature-Validated Parameters")
     print(f"📊 Duration: {args.duration} hours")
     print(f"📁 Output suffix: '{args.suffix}'")
     print("=" * 60)
@@ -613,19 +608,19 @@ if __name__ == "__main__":
     with open(json_file, 'w') as f:
         json.dump(json_data, f, indent=2)
     
-    print(f"\n=== LITERATURE-VALIDATED SIMULATION COMPLETE ===")
+    print("\n=== LITERATURE-VALIDATED SIMULATION COMPLETE ===")
     print(f"📊 Duration: {args.duration} hours")
     print(f"📁 CSV saved to: {csv_file}")
     print(f"📁 JSON saved to: {json_file}")
-    print(f"\n🔬 PERFORMANCE SUMMARY:")
+    print("\n🔬 PERFORMANCE SUMMARY:")
     print(f"   Reservoir concentration: {reservoir.substrate_concentration:.3f} mmol/L")
     print(f"   Final outlet concentration: {results['outlet_concentration'][-1]:.3f} mmol/L")
     print(f"   Total substrate added: {reservoir.total_substrate_added:.3f} mmol")
     print(f"   Average biofilm thickness: {np.mean([cell.biofilm_thickness for cell in cells]):.3f}")
     print(f"   Final power output: {results['total_power'][-1]:.6f} W")
     
-    print(f"\n🧬 LITERATURE IMPROVEMENTS APPLIED:")
-    print(f"   ✅ Biofilm growth rate: 0.05 h⁻¹ (50x increase from 0.001)")
-    print(f"   ✅ Acetate-specific potential: 0.35 V (reduced from 0.77 V)")
-    print(f"   ✅ Enhanced reaction rate: 0.15 (increased substrate consumption)")
-    print(f"   ✅ Balanced decay rate: 0.01 h⁻¹ (50x increase to match growth)")
+    print("\n🧬 LITERATURE IMPROVEMENTS APPLIED:")
+    print("   ✅ Biofilm growth rate: 0.05 h⁻¹ (50x increase from 0.001)")
+    print("   ✅ Acetate-specific potential: 0.35 V (reduced from 0.77 V)")
+    print("   ✅ Enhanced reaction rate: 0.15 (increased substrate consumption)")
+    print("   ✅ Balanced decay rate: 0.01 h⁻¹ (50x increase to match growth)")

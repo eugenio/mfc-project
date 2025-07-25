@@ -5,7 +5,7 @@ Provides abstraction layer for both NVIDIA CUDA and AMD ROCm support.
 """
 
 import sys
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 import numpy as np
 
 
@@ -576,7 +576,7 @@ if __name__ == '__main__':
     # Memory info
     mem_info = gpu_acc.get_memory_info()
     if mem_info:
-        print(f"\n💾 Memory info:")
+        print("\n💾 Memory info:")
         print(f"   Total: {mem_info['total'] // 1024**2} MB")
         print(f"   Used:  {mem_info['used'] // 1024**2} MB")
         print(f"   Free:  {mem_info['free'] // 1024**2} MB")
