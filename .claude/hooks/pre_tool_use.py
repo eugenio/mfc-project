@@ -345,6 +345,9 @@ def estimate_edit_changes(tool_name, tool_input):
         old_lines = len(old_string.splitlines()) if old_string else 0
         new_lines = len(new_string.splitlines()) if new_string else 0
         
+        print(f"DEBUG: estimate_edit_changes - old_string preview: {repr(old_string[:100])}", file=sys.stderr)
+        print(f"DEBUG: estimate_edit_changes - old_lines={old_lines}, new_lines={new_lines}", file=sys.stderr)
+        
         lines_removed = old_lines
         lines_added = new_lines
         
@@ -484,6 +487,17 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     
     max_lines = min(config.get('max_lines_added', 25), config.get('max_lines_removed', 25))
     print(f"DEBUG: Max lines per chunk: {max_lines}", file=sys.stderr)
+    
+    # Make file path absolute if relative
+    if not os.path.isabs(file_path):
+        # Try to find the file relative to the project root
+        project_root = "/home/uge/mfc-project"
+        abs_file_path = os.path.join(project_root, file_path)
+        if os.path.exists(abs_file_path):
+            file_path = abs_file_path
+        else:
+            print(f"ERROR: File not found at {file_path} or {abs_file_path}", file=sys.stderr)
+            return False
     
     # Read the current file content
     try:
@@ -711,6 +725,7 @@ def main():
         tool_input = input_data.get('tool_input', {})
         
         print(f"DEBUG: Received tool_name={tool_name}", file=sys.stderr)
+        print(f"DEBUG: Tool input keys: {list(tool_input.keys())}", file=sys.stderr)
         
         # Check edit thresholds for large file changes
         if check_edit_thresholds(tool_name, tool_input):
