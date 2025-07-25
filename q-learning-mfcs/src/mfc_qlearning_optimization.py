@@ -12,11 +12,14 @@ import json
 import os
 from datetime import datetime
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize_scalar
 import time
 from collections import defaultdict
 import pickle
 from path_config import get_figure_path, get_simulation_data_path, get_model_path
+from typing import Optional
+
+# Import configuration classes
+from config import QLearningConfig, validate_qlearning_config
 
 # Import universal GPU acceleration
 from gpu_acceleration import get_gpu_accelerator
@@ -26,13 +29,22 @@ gpu_accelerator = get_gpu_accelerator()
 GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class QLearningFlowController:
-    def __init__(self, learning_rate=0.0987, discount_factor=0.9517, epsilon=0.3702):
+    def __init__(self, config: Optional[QLearningConfig] = None):
         """Q-Learning controller for flow rate optimization"""
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
-        self.epsilon = epsilon
-        self.epsilon_decay = 0.9978
-        self.epsilon_min = 0.1020
+        # Use default configuration if not provided
+        if config is None:
+            config = QLearningConfig()
+        
+        # Validate configuration
+        validate_qlearning_config(config)
+        self.config = config
+        
+        # Extract basic Q-learning parameters
+        self.learning_rate = config.learning_rate
+        self.discount_factor = config.discount_factor
+        self.epsilon = config.epsilon
+        self.epsilon_decay = config.epsilon_decay
+        self.epsilon_min = config.epsilon_min
         
         # Q-table stored as nested dictionary
         self.q_table = defaultdict(lambda: defaultdict(float))
@@ -46,14 +58,16 @@ class QLearningFlowController:
         
     def setup_state_action_spaces(self):
         """Define state and action discretization for Q-learning"""
-        # State variables: [power, biofilm_deviation, substrate_utilization, time_phase]
-        self.power_bins = np.linspace(0, 2.0, 10)  # 0-2W discretized into 10 bins
-        self.biofilm_bins = np.linspace(0, 1.0, 10)  # Deviation 0-1 into 10 bins
-        self.substrate_bins = np.linspace(0, 50, 10)  # Utilization 0-50% into 10 bins
-        self.time_bins = np.array([200, 500, 800, 1000])  # Time phases in hours
+        # State variables from configuration
+        self.power_bins = np.linspace(0, self.config.power_max, self.config.power_bins)
+        self.biofilm_bins = np.linspace(0, self.config.biofilm_max_deviation, 
+                                       self.config.biofilm_deviation_bins)
+        self.substrate_bins = np.linspace(0, self.config.substrate_utilization_max, 
+                                        self.config.substrate_utilization_bins)
+        self.time_bins = np.array(self.config.time_phase_hours)
         
-        # Action space: flow rate adjustments (from optimal parameters)
-        self.actions = np.array([-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])  # mL/h adjustments
+        # Action space from configuration
+        self.actions = np.array(self.config.flow_rate_adjustments_ml_per_h)
         
     def discretize_state(self, power, biofilm_deviation, substrate_utilization, time_hours):
         """Convert continuous state to discrete state key"""
@@ -80,9 +94,11 @@ class QLearningFlowController:
             q_values = [self.q_table[state][i] for i in range(len(self.actions))]
             action_idx = np.argmax(q_values)
         
-        # Calculate new flow rate with bounds
+        # Calculate new flow rate with bounds from configuration
         flow_adjustment = self.actions[action_idx] * 1e-6 / 3.6  # Convert mL/h to m³/s
-        new_flow_rate = np.clip(current_flow_rate + flow_adjustment, 5.0e-6, 50.0e-6)
+        min_flow = self.config.flow_rate_min * 1e-6 / 3.6  # Convert mL/h to m³/s
+        max_flow = self.config.flow_rate_max * 1e-6 / 3.6  # Convert mL/h to m³/s
+        new_flow_rate = np.clip(current_flow_rate + flow_adjustment, min_flow, max_flow)
         
         return action_idx, new_flow_rate
     
@@ -513,7 +529,7 @@ class MFCQLearningSimulation:
         print("Starting MFC Q-Learning optimization simulation...")
         print(f"Duration: 1000 hours, Timesteps: {self.num_steps}")
         print(f"GPU acceleration: {'Enabled' if self.use_gpu else 'Disabled'}")
-        print(f"Flow rate control: Q-Learning (independent variable: system state)")
+        print("Flow rate control: Q-Learning (independent variable: system state)")
         print(f"Initial flow rate: {self.flow_rates[0] * 1000:.1f} mL/h")
         
         start_time = time.time()
@@ -647,11 +663,11 @@ class MFCQLearningSimulation:
         
         # Combine legends
         lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        labels = [line.get_label() for line in lines]
         ax1.legend(lines, labels, loc='upper left')
         
         # Plot 2: Q-Learning Flow Rate Control
-        ax2 = plt.subplot(3, 3, 2)
+        plt.subplot(3, 3, 2)
         plt.plot(time_hours, self.flow_rates * 1000, 'g-', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Flow Rate (mL/h)')
@@ -659,7 +675,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 3: Substrate Utilization
-        ax3 = plt.subplot(3, 3, 3)
+        plt.subplot(3, 3, 3)
         plt.plot(time_hours, self.substrate_utilizations, 'purple', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Utilization (%)')
@@ -667,7 +683,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 4: Biofilm Thickness Evolution
-        ax4 = plt.subplot(3, 3, 4)
+        plt.subplot(3, 3, 4)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.biofilm_thickness[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -680,7 +696,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 5: Q-Learning Actions
-        ax5 = plt.subplot(3, 3, 5)
+        plt.subplot(3, 3, 5)
         action_indices = self.q_actions[self.q_actions != 0]  # Remove zeros
         action_times = time_hours[self.q_actions != 0]
         if len(action_indices) > 0:
@@ -691,7 +707,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 6: Cell Voltages
-        ax6 = plt.subplot(3, 3, 6)
+        plt.subplot(3, 3, 6)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.cell_voltages[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -702,7 +718,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 7: Multi-Objective Progress
-        ax7 = plt.subplot(3, 3, 7)
+        plt.subplot(3, 3, 7)
         plt.plot(time_hours, self.objective_values, 'orange', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Objective Value')
@@ -710,7 +726,7 @@ class MFCQLearningSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 8: Q-Learning Exploration
-        ax8 = plt.subplot(3, 3, 8)
+        plt.subplot(3, 3, 8)
         # Plot epsilon decay over time (approximate)
         epsilon_values = []
         current_epsilon = 0.3
@@ -847,7 +863,7 @@ class MFCQLearningSimulation:
         
         # Combine legends
         lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        labels = [line.get_label() for line in lines]
         ax_flow.legend(lines, labels, loc='upper left')
         
         # Plot 14: Binned Analysis
@@ -957,7 +973,7 @@ def main():
     
     # Final summary
     total_energy = np.trapezoid(sim.stack_powers, dx=sim.dt/3600)
-    print(f"\nFinal Performance Summary:")
+    print("\nFinal Performance Summary:")
     print(f"Total Energy: {total_energy:.1f} Wh")
     print(f"Average Power: {np.mean(sim.stack_powers):.3f} W")
     print(f"Final Power: {sim.stack_powers[-1]:.3f} W")
