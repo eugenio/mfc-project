@@ -6,7 +6,6 @@ and S. oneidensis MR-1, including stoichiometric coefficients, enzyme kinetics,
 and flux constraints derived from KEGG and literature sources.
 """
 
-import numpy as np
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -262,6 +261,29 @@ class PathwayDatabase:
             ub=25.0
         )
         
+        # Reaction 2b: Acetate secretion (Shewanella cannot utilize acetate efficiently)
+        acetate_secretion = MetabolicReaction(
+            id="SON_R002b",
+            name="Acetate secretion",
+            equation="Acetyl-CoA + H2O → Acetate + CoA + H+",
+            stoichiometry={
+                "acetyl_coa": -0.6,  # ~60% of acetyl-CoA is secreted as acetate
+                "h2o": -0.6,
+                "acetate": 0.6,      # Acetate secretion as byproduct
+                "coa": 0.6,
+                "h_plus": 0.6
+            },
+            enzyme="Acetyl-CoA hydrolase / Phosphotransacetylase-Acetate kinase",
+            kegg_id="R00315",  # Acetyl-CoA hydrolysis
+            vmax=12.0,  # High rate of acetate secretion
+            km_values={"acetyl_coa": 0.1},
+            ki_values={},
+            delta_g0=-7.5,  # Thermodynamically favorable
+            reversible=False,
+            lb=0.0,
+            ub=15.0
+        )
+        
         # Reaction 3: NADH electron transport
         nadh_transport = MetabolicReaction(
             id="SON_R003",
@@ -303,16 +325,16 @@ class PathwayDatabase:
             ub=20.0
         )
         
-        reactions = [lactate_dehydrogenase, pyruvate_dehydrogenase, 
+        reactions = [lactate_dehydrogenase, pyruvate_dehydrogenase, acetate_secretion,
                     nadh_transport, flavin_transport]
         
         return MetabolicPathway(
-            name="Shewanella oneidensis lactate metabolism",
+            name="Shewanella oneidensis lactate metabolism with acetate secretion",
             reactions=reactions,
-            key_metabolites=["lactate", "pyruvate", "nadh", "flavin_reduced"],
+            key_metabolites=["lactate", "pyruvate", "acetyl_coa", "nadh", "flavin_reduced", "acetate"],
             electron_yield=4.0,  # electrons per lactate via flavins
             energy_yield=1.5,    # ATP per lactate
-            byproducts={"co2": 1.0, "h2o": 1.0}
+            byproducts={"co2": 1.0, "h2o": 1.0, "acetate": 0.6}  # Acetate as major byproduct
         )
     
     def _create_shewanella_acetate_pathway(self) -> MetabolicPathway:
@@ -456,7 +478,7 @@ class PathwayDatabase:
         pathway = self.get_pathway(species, substrate)
         
         # Sum stoichiometry across all reactions
-        net_stoichiometry = {}
+        net_stoichiometry: Dict[str, float] = {}
         for reaction in pathway.reactions:
             for metabolite, coeff in reaction.stoichiometry.items():
                 net_stoichiometry[metabolite] = net_stoichiometry.get(metabolite, 0) + coeff

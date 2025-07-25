@@ -247,6 +247,13 @@ class IntegratedMFCModel:
                 dt_hours=dt
             )
             
+            # Update cell current based on biofilm activity and substrate
+            # Simple current model: I = (V/R) * activity_factor
+            activity_factor = min(1.0, cell.substrate_concentration / 10.0)  # Activity based on substrate
+            biofilm_factor = min(1.0, cell.biofilm_thickness / 1.5)  # Biofilm contribution
+            base_current = 0.001 * activity_factor * biofilm_factor  # Base current in A
+            cell.current = base_current
+            
             # Apply biofilm enhancement
             biofilm_current = self.biofilm_models[i].calculate_biofilm_current_density(
                 biofilm_states[i]['biofilm_thickness'],
@@ -259,7 +266,29 @@ class IntegratedMFCModel:
             # Total enhanced current
             total_current = cell.current + biofilm_current + metabolic_current
             enhanced_currents.append(total_current)
-            cell_voltages.append(cell.voltage)
+            
+            # Calculate realistic cell voltage based on current
+            # V = E_emf - (η_activation + η_concentration + η_ohmic)
+            E_emf = 1.1  # Theoretical EMF for lactate/oxygen
+            
+            # Activation overpotential (Butler-Volmer approximation)
+            i0 = 1e-6  # Exchange current density (A/cm²)
+            A_cell = 10.0  # Cell area (cm²)
+            current_density = total_current / A_cell
+            eta_activation = 0.05 * np.log(max(current_density/i0, 1e-6))
+            
+            # Concentration overpotential (substrate depletion effects)
+            substrate_ratio = cell.substrate_concentration / 20.0  # Normalized to initial
+            eta_concentration = 0.03 * (1 - substrate_ratio)
+            
+            # Ohmic overpotential (resistance losses)
+            R_internal = 50.0  # Internal resistance (Ω)
+            eta_ohmic = total_current * R_internal
+            
+            # Total cell voltage
+            cell_voltage = max(0, E_emf - eta_activation - eta_concentration - eta_ohmic)
+            cell.voltage = cell_voltage  # Update the cell's voltage
+            cell_voltages.append(cell_voltage)
         
         # 5. Q-learning control
         # Get current system state
@@ -284,7 +313,7 @@ class IntegratedMFCModel:
         
         # 7. Substrate addition control
         cell_concentrations = [cell.substrate_concentration for cell in self.mfc_cells]
-        substrate_addition = self.substrate_controller.calculate_substrate_addition(
+        substrate_addition, halt_addition = self.substrate_controller.calculate_substrate_addition(
             outlet_conc=outlet_conc,
             reservoir_conc=self.reservoir.substrate_concentration,
             cell_concentrations=cell_concentrations,
@@ -292,7 +321,8 @@ class IntegratedMFCModel:
             dt_hours=dt
         )
         
-        self.reservoir.add_substrate(substrate_addition, dt)
+        if not halt_addition:
+            self.reservoir.add_substrate(substrate_addition, dt)
         
         # 8. Update energy and power tracking
         total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents))
@@ -477,7 +507,7 @@ class IntegratedMFCModel:
             'hour': hour,
             'time': self.time,
             'history': self.history[-100:],  # Last 100 hours
-            'q_table': dict(self.agent.q_table),
+            'q_table': dict(self.flow_controller.q_table),
             'performance_metrics': self.performance_metrics
         }
         
@@ -502,7 +532,7 @@ class IntegratedMFCModel:
         # Save final Q-table
         q_table_file = get_model_path(f'{prefix}_final_q_table.pkl')
         with open(q_table_file, 'wb') as f:
-            pickle.dump(dict(self.agent.q_table), f)
+            pickle.dump(dict(self.flow_controller.q_table), f)
         
         print(f"\nResults saved to:")
         print(f"  Summary: {summary_file}")
