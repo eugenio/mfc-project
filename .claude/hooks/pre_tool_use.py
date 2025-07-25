@@ -280,14 +280,14 @@ def check_edit_thresholds(tool_name, tool_input):
     )
     
     if threshold_exceeded:
-        print(f"LARGE EDIT DETECTED:", file=sys.stderr)
+        print("LARGE EDIT DETECTED:", file=sys.stderr)
         print(f"  File: {file_path}", file=sys.stderr)
         print(f"  Lines to add: {lines_added} (max: {max_added})", file=sys.stderr)
         print(f"  Lines to remove: {lines_removed} (max: {max_removed})", file=sys.stderr)
         print(f"  Total changes: {total_changes} (max: {max_total})", file=sys.stderr)
         
         if config.get('auto_commit', True):
-            print(f"AUTO-COMMIT: Will commit existing changes before proceeding", file=sys.stderr)
+            print("AUTO-COMMIT: Will commit existing changes before proceeding", file=sys.stderr)
             
             # Try to commit any existing staged changes first
             try:
@@ -303,7 +303,7 @@ def check_edit_thresholds(tool_name, tool_input):
                 pass  # No changes to commit or commit failed
         
         # Allow the operation to continue but log the large edit
-        print(f"PROCEEDING: Large edit operation will continue", file=sys.stderr)
+        print("PROCEEDING: Large edit operation will continue", file=sys.stderr)
         return False  # Don't block, just warn and commit
     
     return False
