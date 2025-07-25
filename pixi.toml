@@ -6,6 +6,8 @@ platforms = ["linux-64", "linux-aarch64"]
 version = "0.1.0"
 
 [tasks]
+pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
+post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
 
 [dependencies]
 scipy = ">=1.16.0,<2"

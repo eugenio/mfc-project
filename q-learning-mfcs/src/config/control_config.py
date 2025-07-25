@@ -20,9 +20,8 @@ Literature References:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any, Union
+from typing import Dict, List, Tuple
 from enum import Enum
-import numpy as np
 
 
 class ControlMode(Enum):

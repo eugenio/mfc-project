@@ -18,10 +18,9 @@ Literature References:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any, Union
+from typing import List, Tuple, Optional
 from enum import Enum
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class ColorScheme(Enum):
