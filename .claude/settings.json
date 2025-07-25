@@ -110,7 +110,7 @@
     "commit_message_prefix": "Auto-commit: Large file changes detected - "
   },
   "file_creation_thresholds": {
-    "max_new_file_lines": 50,
+    "max_new_file_lines": 20,
     "max_files_per_session": 5,
     "enabled": true,
     "auto_commit": true,
@@ -131,5 +131,18 @@
       "*.toml",
       "*.txt"
     ]
+  },
+  "gitlab": {
+    "enabled": false,
+    "url": "https://gitlab-runner.tail301d0a.ts.net",
+    "token": "",
+    "project_id": "",
+    "default_branch": "main",
+    "features": {
+      "auto_issue_on_hook_failure": true,
+      "auto_mr_on_multiple_commits": true,
+      "commit_comments": false,
+      "commit_threshold_for_mr": 5
+    }
   }
 }

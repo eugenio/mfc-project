@@ -11,6 +11,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
+from utils.gitlab_client import create_hook_failure_issue, load_gitlab_config
 
 def analyze_code_content(content, file_path=""):
     """
@@ -1087,8 +1088,19 @@ def main():
     except json.JSONDecodeError:
         # Gracefully handle JSON decode errors
         sys.exit(0)
-    except Exception:
-        # Handle any other errors gracefully
+    except Exception as e:
+        # Handle any other errors and optionally create GitLab issue
+        try:
+            config = load_gitlab_config()
+            if config.get("enabled") and config.get("features", {}).get("auto_issue_on_hook_failure"):
+                create_hook_failure_issue(
+                    hook_name="pre_tool_use",
+                    error_message=str(e),
+                    file_path=None
+                )
+        except:
+            pass  # Don't let GitLab errors prevent hook from exiting
+        
         sys.exit(0)
 
 if __name__ == '__main__':
