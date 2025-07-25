@@ -9,6 +9,7 @@ for Claude Code hooks.
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Add the hooks directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -22,6 +23,7 @@ from utils.gitlab_client import (
 )
 
 def main():
+    load_dotenv() # will search for .env file in local folder and load variables 
     """Test GitLab integration functionality."""
     print("🔧 GitLab API Integration Test")
     print("=" * 50)
