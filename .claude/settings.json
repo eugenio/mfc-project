@@ -139,6 +139,7 @@
     "default_branch": "main",
     "features": {
       "auto_issue_on_hook_failure": true,
+      "auto_issue_on_test_failure": true,
       "auto_mr_on_multiple_commits": true,
       "commit_comments": false,
       "commit_threshold_for_mr": 5

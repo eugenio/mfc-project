@@ -71,6 +71,263 @@ def handle_gitlab_integrations(input_data: dict):
     # Handle successful large edits
     if tool_name in ["Edit", "MultiEdit", "Write"]:
         handle_successful_edit(input_data)
+    
+    # Handle test failures and create automatic bug issues
+    if features.get("auto_issue_on_test_failure", True) and tool_name == "Bash":
+        handle_test_failures(input_data)
+
+def handle_test_failures(input_data: dict):
+    """
+    Analyze bash command output for test failures and create GitLab issues.
+    
+    Args:
+        input_data: Hook data containing command and output information
+    """
+    try:
+        tool_input = input_data.get("tool_input", {})
+        tool_result = input_data.get("tool_result", {})
+        
+        command = tool_input.get("command", "")
+        output = tool_result.get("output", "")
+        
+        # Skip if no output or not a test command
+        if not output or not _is_test_command(command):
+            return
+            
+        # Analyze output for test failures
+        test_analysis = _analyze_test_output(command, output)
+        
+        if test_analysis["has_failures"]:
+            _create_test_failure_issues(test_analysis, command)
+            
+    except Exception as e:
+        print(f"Failed to handle test failures: {e}", file=sys.stderr)
+
+def _is_test_command(command: str) -> bool:
+    """Check if command is a test-related command."""
+    test_indicators = [
+        "pytest", "python -m pytest", "unittest", "test_", 
+        "tests/", "/test", "ruff", "mypy", "python tests/",
+        "python -m unittest", "coverage run"
+    ]
+    return any(indicator in command.lower() for indicator in test_indicators)
+
+def _analyze_test_output(command: str, output: str) -> dict:
+    """
+    Analyze test output to identify failures and extract details.
+    
+    Returns:
+        dict: Analysis results with failure information
+    """
+    analysis = {
+        "has_failures": False,
+        "failure_count": 0,
+        "failures": [],
+        "test_type": _detect_test_type(command, output)
+    }
+    
+    # Analyze different types of test output
+    if "pytest" in command.lower() or "FAILED" in output:
+        _analyze_pytest_output(output, analysis)
+    elif "unittest" in command.lower() or "AssertionError" in output:
+        _analyze_unittest_output(output, analysis)
+    elif "ruff" in command.lower():
+        _analyze_ruff_output(output, analysis)
+    elif "mypy" in command.lower():
+        _analyze_mypy_output(output, analysis)
+    else:
+        _analyze_generic_test_output(output, analysis)
+    
+    return analysis
+
+def _detect_test_type(command: str, output: str) -> str:
+    """Detect the type of test being run."""
+    if "pytest" in command.lower():
+        return "pytest"
+    elif "unittest" in command.lower():
+        return "unittest"
+    elif "ruff" in command.lower():
+        return "linting"
+    elif "mypy" in command.lower():
+        return "type_checking"
+    else:
+        return "generic"
+
+def _analyze_pytest_output(output: str, analysis: dict):
+    """Analyze pytest output for failures."""
+    lines = output.split('\n')
+    
+    for line in lines:
+        if "FAILED" in line:
+            analysis["has_failures"] = True
+            analysis["failure_count"] += 1
+            analysis["failures"].append({
+                "type": "test_failure",
+                "description": line.strip(),
+                "severity": "medium"
+            })
+        elif "ERROR" in line:
+            analysis["has_failures"] = True
+            analysis["failure_count"] += 1
+            analysis["failures"].append({
+                "type": "test_error", 
+                "description": line.strip(),
+                "severity": "high"
+            })
+
+def _analyze_unittest_output(output: str, analysis: dict):
+    """Analyze unittest output for failures."""
+    if "FAILED" in output or "AssertionError" in output:
+        analysis["has_failures"] = True
+        
+        # Count failures
+        failure_count = output.count("FAIL:")
+        error_count = output.count("ERROR:")
+        analysis["failure_count"] = failure_count + error_count
+        
+        # Extract failure details
+        lines = output.split('\n')
+        for line in lines:
+            if "FAIL:" in line or "ERROR:" in line:
+                analysis["failures"].append({
+                    "type": "unittest_failure",
+                    "description": line.strip(),
+                    "severity": "medium"
+                })
+
+def _analyze_ruff_output(output: str, analysis: dict):
+    """Analyze ruff linting output for issues."""
+    if "error:" in output.lower() or "warning:" in output.lower():
+        analysis["has_failures"] = True
+        
+        # Count errors vs warnings
+        error_count = output.lower().count("error:")
+        warning_count = output.lower().count("warning:")
+        analysis["failure_count"] = error_count + warning_count
+        
+        if error_count > 0:
+            analysis["failures"].append({
+                "type": "linting_error",
+                "description": f"Ruff found {error_count} errors and {warning_count} warnings",
+                "severity": "high" if error_count > 0 else "low"
+            })
+
+def _analyze_mypy_output(output: str, analysis: dict):
+    """Analyze mypy type checking output for issues."""
+    if "error:" in output.lower():
+        analysis["has_failures"] = True
+        
+        error_count = output.lower().count("error:")
+        analysis["failure_count"] = error_count
+        
+        analysis["failures"].append({
+            "type": "type_checking_error",
+            "description": f"MyPy found {error_count} type errors",
+            "severity": "medium"
+        })
+
+def _analyze_generic_test_output(output: str, analysis: dict):
+    """Analyze generic test output for common failure patterns."""
+    failure_patterns = [
+        "AssertionError", "not greater than", "not equal", 
+        "not less than", "FAIL", "ERROR", "Exception:",
+        "Traceback"
+    ]
+    
+    for pattern in failure_patterns:
+        if pattern in output:
+            analysis["has_failures"] = True
+            analysis["failure_count"] += 1
+            analysis["failures"].append({
+                "type": "generic_failure",
+                "description": f"Detected failure pattern: {pattern}",
+                "severity": "medium"
+            })
+            break
+
+def _create_test_failure_issues(analysis: dict, command: str):
+    """Create GitLab issues for test failures."""
+    try:
+        # Import GitLab functions
+        from utils.gitlab_client import create_issue
+        
+        test_type = analysis["test_type"]
+        failure_count = analysis["failure_count"]
+        failures = analysis["failures"]
+        
+        # Create issue title
+        if test_type == "pytest":
+            title = f"🐛 Pytest failures detected: {failure_count} tests failing"
+        elif test_type == "unittest":
+            title = f"🐛 Unit test failures detected: {failure_count} tests failing"
+        elif test_type == "linting":
+            title = f"🔧 Code linting issues detected: {failure_count} issues found"
+        elif test_type == "type_checking":
+            title = f"🔍 Type checking errors detected: {failure_count} errors found"
+        else:
+            title = f"🐛 Test failures detected: {failure_count} issues found"
+        
+        # Build detailed description
+        description = f"""Automatic issue creation from failed test execution.
+
+**Command executed:** `{command}`
+
+**Test type:** {test_type}
+**Failure count:** {failure_count}
+
+**Failures detected:**
+"""
+        
+        for i, failure in enumerate(failures[:5], 1):  # Limit to first 5 failures
+            description += f"\n{i}. **{failure['type']}** (severity: {failure['severity']})\n   {failure['description']}\n"
+        
+        if len(failures) > 5:
+            description += f"\n... and {len(failures) - 5} more failures"
+        
+        description += f"""
+
+**Environment:**
+- Test execution time: {datetime.now().isoformat()}
+- Hook: post_tool_use (automatic detection)
+- Source: Claude Code automatic test failure detection
+
+**Next steps:**
+1. Review failing tests and error messages
+2. Fix underlying issues causing test failures
+3. Re-run tests to verify fixes
+4. Close this issue when all tests pass
+
+**Automated Issue Creation**
+This issue was automatically created by the Claude Code post-tool-use hook when test failures were detected."""
+        
+        # Determine appropriate labels
+        labels = ["bug", "automated"]
+        if test_type in ["linting", "type_checking"]:
+            labels.append("code-quality")
+        else:
+            labels.append("test-failure")
+            
+        # Add priority label based on severity
+        high_severity_count = sum(1 for f in failures if f.get("severity") == "high")
+        if high_severity_count > 0:
+            labels.append("priority::high")
+        elif failure_count > 5:
+            labels.append("priority::medium")
+        else:
+            labels.append("priority::low")
+        
+        # Create the issue
+        issue = create_issue(
+            title=title,
+            description=description,
+            labels=labels
+        )
+        
+        if issue:
+            print(f"✅ Created GitLab issue for test failures: {issue['web_url']}", file=sys.stderr)
+            
+    except Exception as e:
+        print(f"❌ Failed to create test failure issue: {e}", file=sys.stderr)
 
 def handle_hook_failure(input_data: dict):
     """
