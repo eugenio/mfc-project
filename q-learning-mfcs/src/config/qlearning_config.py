@@ -38,32 +38,32 @@ class BiofilmPhysicsConfig:
 class QLearningRewardWeights:
     """Reward function weights for Q-learning optimization."""
     
-    # Power optimization weights
-    power_weight: float = 10.0  # Weight for power output maximization
+    # Power optimization weights (Bayesian optimized)
+    power_weight: float = 18.450199366779497  # Optimized weight for power output maximization
     power_penalty_threshold: float = 50.0  # Penalty threshold for low power
     power_penalty_multiplier: float = 100.0  # Penalty multiplier for very low power
     power_base_reward_multiplier: float = 20.0  # Base reward multiplier
     
-    # Substrate utilization weights  
+    # Substrate utilization weights (Bayesian optimized)
     consumption_weight: float = 5.0  # Weight for substrate consumption
-    substrate_reward_multiplier: float = 30.0  # Substrate utilization reward
-    substrate_penalty_multiplier: float = 60.0  # Substrate waste penalty
+    substrate_reward_multiplier: float = 48.529149002822  # Optimized substrate utilization reward
+    substrate_penalty_multiplier: float = 86.3082652695326  # Optimized substrate waste penalty
     substrate_base_reward: float = 15.0  # Base substrate reward
     substrate_multiplier: float = 0.75  # Substrate efficiency multiplier
     
-    # Substrate concentration control rewards
+    # Substrate concentration control rewards (Bayesian optimized)
     substrate_target_reward: float = 50.0  # Reward for maintaining target concentrations
-    substrate_excess_penalty: float = -100.0  # Penalty for exceeding max threshold
+    substrate_excess_penalty: float = -110.441778832924  # Optimized penalty for exceeding max threshold
     substrate_starvation_penalty: float = -75.0  # Penalty for starvation conditions
     substrate_addition_penalty: float = -15.0  # Higher penalty per unit of substrate added (was -5.0)
     
-    # Efficiency optimization weights
-    efficiency_weight: float = 20.0  # Weight for substrate efficiency
+    # Efficiency optimization weights (Bayesian optimized)
+    efficiency_weight: float = 10.45562341841683  # Optimized weight for substrate efficiency
     efficiency_threshold: float = 0.5  # Minimum efficiency threshold (50%)
     efficiency_penalty_multiplier: float = 100.0  # Penalty for low efficiency
     
-    # Biofilm control weights
-    biofilm_weight: float = 50.0  # Weight for biofilm penalty
+    # Biofilm control weights (Bayesian optimized)
+    biofilm_weight: float = 76.25366956196135  # Optimized weight for biofilm penalty
     biofilm_reward: float = 25.0  # Reward for optimal biofilm
     biofilm_penalty_factor: float = 10.0  # Penalty factor for poor biofilm
     biofilm_steady_state_bonus: float = 15.0  # Bonus for steady state
@@ -91,14 +91,14 @@ class QLearningConfig:
     epsilon_decay: float = 0.9995  # Decay rate per step (faster decay)
     epsilon_min: float = 0.01  # Much lower minimum epsilon (1% vs 10%)
     
-    # Alternative configurations for different controllers
-    enhanced_learning_rate: float = 0.0987  # Enhanced controller specific
-    enhanced_discount_factor: float = 0.9517  # Enhanced controller specific  
-    enhanced_epsilon: float = 0.3702  # Enhanced controller specific
+    # Alternative configurations for different controllers (Bayesian optimized)
+    enhanced_learning_rate: float = 0.010698320638589937  # Optimized learning rate
+    enhanced_discount_factor: float = 0.9609992557261428  # Optimized discount factor  
+    enhanced_epsilon: float = 0.40064536992631566  # Optimized initial epsilon
     
-    # Advanced epsilon decay configurations
-    advanced_epsilon_decay: float = 0.9978  # Advanced decay rate
-    advanced_epsilon_min: float = 0.1020  # Advanced minimum epsilon
+    # Advanced epsilon decay configurations (Bayesian optimized)
+    advanced_epsilon_decay: float = 0.9968406902650004  # Optimized decay rate
+    advanced_epsilon_min: float = 0.0042714404222870305  # Optimized minimum epsilon
     
     # Reward weights configuration
     reward_weights: QLearningRewardWeights = field(default_factory=QLearningRewardWeights)
@@ -141,28 +141,65 @@ class QLearningConfig:
     flow_rate_actions: List[int] = field(default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
     substrate_actions: List[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
     
-    # Substrate control thresholds (configurable)
-    substrate_target_reservoir: float = 25.0  # Target reservoir concentration (mM) - updated
-    substrate_target_outlet: float = 12.0  # Target outlet concentration (mM)
-    substrate_target_cell: float = 15.0  # Target per-cell concentration (mM)
+    # Substrate control thresholds (configurable) - unified target concentrations
+    substrate_target_concentration: float = 25.0  # Universal target concentration for all areas (mM)
+    substrate_target_reservoir: float = 25.0  # Target reservoir concentration (mM) - same as universal
+    substrate_target_outlet: float = 25.0  # Target outlet concentration (mM) - same as universal
+    substrate_target_cell: float = 25.0  # Target per-cell concentration (mM) - same as universal
     substrate_max_threshold: float = 30.0  # Maximum allowed concentration (mM) - updated
     substrate_min_threshold: float = 2.0  # Minimum starvation threshold (mM)
     substrate_addition_max: float = 5.0  # Maximum addition rate (mmol/h)
     
-    # Outlet sensor control parameters
-    outlet_reward_threshold: float = 12.0  # User-configurable threshold for outlet sensor rewards (mM)
-    outlet_penalty_multiplier: float = 1.15  # 15% penalty increase when outlet equals inlet
+    # Outlet sensor control parameters (Bayesian optimized)
+    outlet_reward_threshold: float = 25.0  # User-configurable threshold for outlet sensor rewards (mM) - same as universal target
+    outlet_penalty_multiplier: float = 1.3541821944867105  # Optimized penalty increase when outlet equals inlet
     outlet_reward_scaling: float = 1.0  # Proportional reward scaling factor
     
     # Advanced substrate control penalties (configurable)
     substrate_excess_penalty_exponent: float = 3.0  # Exponential penalty growth factor
     substrate_severe_threshold: float = 50.0  # Threshold for severe penalties (mM)
     substrate_severe_penalty_multiplier: float = 1000.0  # Multiplier for severe penalties
-    substrate_penalty_base_multiplier: float = 1.0  # Base multiplier for penalty scaling
+    substrate_penalty_base_multiplier: float = 1.9691383876591164  # Optimized base multiplier for penalty scaling
     
-    # Reservoir configuration (configurable)
+    # System-wide configuration (configurable)
     initial_substrate_concentration: float = 25.0  # Initial reservoir concentration (mM)
+    initial_cell_concentration: float = 25.0  # Initial per-cell concentration (mM) - same as reservoir
     reservoir_volume_liters: float = 1.0  # Reservoir volume (L)
+    
+    # MFC cell configuration
+    n_cells: int = 5  # Number of MFC cells in the system
+    
+    # Separate electrode areas for different functions
+    anode_area_per_cell: float = 1e-3  # Current-collecting anode area per cell (m²) - 10 cm² default
+    cathode_area_per_cell: float = 1e-3  # Cathode area per cell (m²) - 10 cm² default (can be different from anode)
+    total_anode_area: float = field(init=False)  # Total anode area (m²) - calculated
+    total_cathode_area: float = field(init=False)  # Total cathode area (m²) - calculated
+    
+    # Sensor electrode areas (fixed for optimal sensing)
+    eis_sensor_area: float = 1e-4  # EIS sensor electrode area (m²) - 1 cm² for impedance sensing
+    qcm_sensor_area: float = 0.196e-4  # QCM sensor electrode area (m²) - 0.196 cm² for 5mm diameter
+    
+    # Legacy compatibility (will be deprecated)
+    @property
+    def electrode_area_per_cell(self) -> float:
+        """Legacy property for backward compatibility - returns anode area."""
+        return self.anode_area_per_cell
+    
+    @electrode_area_per_cell.setter  
+    def electrode_area_per_cell(self, value: float):
+        """Legacy setter for backward compatibility - sets anode area."""
+        self.anode_area_per_cell = value
+        self.total_anode_area = self.anode_area_per_cell * self.n_cells
+    
+    @property
+    def total_electrode_area(self) -> float:
+        """Legacy property for backward compatibility - returns total anode area."""
+        return self.total_anode_area
+    
+    def __post_init__(self):
+        """Calculate derived parameters after initialization."""
+        self.total_anode_area = self.anode_area_per_cell * self.n_cells
+        self.total_cathode_area = self.cathode_area_per_cell * self.n_cells
     
     # Biofilm physics parameters
     biofilm_physics: BiofilmPhysicsConfig = field(default_factory=BiofilmPhysicsConfig)
@@ -193,7 +230,7 @@ class QLearningConfig:
     
     # Stability targets
     stability_target_flow_rate: float = 15.0  # Target flow rate for stability (mL/h)
-    stability_target_outlet_concentration: float = 12.0  # Target outlet concentration (mM)
+    stability_target_outlet_concentration: float = 25.0  # Target outlet concentration (mM) - same as universal target
     
     # Substrate concentration bounds
     substrate_concentration_min: float = 5.0  # mmol/L minimum
@@ -233,15 +270,15 @@ class StateSpaceConfig:
     # Enhanced state space with sensors
     sensor_state_bins: int = 12  # Combined sensor state bins
     
-    # Substrate sensor state configuration  
+    # Substrate sensor state configuration - unified ranges around target concentration
     reservoir_substrate_bins: int = 8  # Reservoir substrate concentration bins
     reservoir_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM)
     
     cell_substrate_bins: int = 6  # Per-cell substrate concentration bins
-    cell_substrate_range: Tuple[float, float] = (0.0, 30.0)  # Range (mM)
+    cell_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
     
     outlet_substrate_bins: int = 6  # Outlet substrate concentration bins
-    outlet_substrate_range: Tuple[float, float] = (0.0, 25.0)  # Range (mM)
+    outlet_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
     
     # EIS sensor state configuration
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins

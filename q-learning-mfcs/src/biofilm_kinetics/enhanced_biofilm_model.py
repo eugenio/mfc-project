@@ -94,13 +94,13 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
             
             self.eis_model = EISModel(
                 species=species_map.get(species, BacterialSpecies.MIXED),
-                electrode_area=1e-4,  # 1 cm² electrode
+                electrode_area=1e-4,  # m² (1 cm² electrode) - fixed for optimal EIS sensing
                 use_gpu=use_gpu
             )
         
         if QCMModel and enable_qcm:
             self.qcm_model = QCMModel(
-                electrode_area=0.196,  # 5mm diameter electrode
+                electrode_area=0.196e-4,  # m² (5mm diameter, 0.196 cm²) - fixed for optimal QCM sensing
                 use_gpu=use_gpu
             )
             self.qcm_model.set_biofilm_species(species)
@@ -255,10 +255,10 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
         if self.qcm_model and self.enable_qcm:
             try:
                 # Convert biomass density to total mass (simplified)
-                electrode_area_cm2 = 0.196  # cm²
-                thickness_cm = predicted_thickness * 1e-4  # μm to cm
-                volume_cm3 = electrode_area_cm2 * thickness_cm
-                total_mass_ug = predicted_biomass * volume_cm3 * 1e3  # g/L to μg
+                electrode_area_m2 = self.qcm_model.electrode_area  # m² (get from QCM model)
+                thickness_m = predicted_thickness * 1e-6  # μm to m
+                volume_m3 = electrode_area_m2 * thickness_m
+                total_mass_ug = predicted_biomass * volume_m3 * 1e9  # g/L to μg (1e3 L/m³ * 1e6 μg/g)
                 
                 qcm_measurement = self.qcm_model.simulate_measurement(
                     biofilm_mass=total_mass_ug,
