@@ -112,15 +112,17 @@ run_simulation_comparison.py
 pixi.lock
 .pixi/
 
-# Data files and reports
+# Data files and reports  
 *.json
 !package.json
 !pixi.lock
-data/
 *_data_report.json
 
-# Exclude JSON data files (CSV handled by Git LFS)
-q-learning-mfcs/simulation_data/*.json
+# Exclude most data directories but allow curated simulation results
+data/
+!q-learning-mfcs/data/
+!q-learning-mfcs/data/simulation_data/
+!q-learning-mfcs/data/simulation_data/*/
 
 # Include compressed data archive
 !q-learning-mfcs/simulation_data_archive.tar.gz
@@ -139,6 +141,9 @@ package-lock.json
 *.toc
 *.out
 texput.log
+
+# JAX build directory
+jax/
 
 #.claude directory
 .claude/*
