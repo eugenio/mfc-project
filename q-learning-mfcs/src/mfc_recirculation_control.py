@@ -12,8 +12,11 @@ import numpy as np
 import pandas as pd
 import json
 import argparse
+import logging
+import sys
 from datetime import datetime
 from collections import defaultdict
+from pathlib import Path
 from path_config import get_simulation_data_path
 
 class AnolytereservoirSystem:
@@ -352,8 +355,8 @@ class AdvancedQLearningFlowController:
         
         return (power_idx, biofilm_idx, substrate_idx, reservoir_idx, cell_idx, outlet_idx, time_idx)
     
-    def calculate_substrate_reward(self, reservoir_conc, cell_concentrations, outlet_conc, substrate_addition):
-        """Calculate reward for substrate control based on sensor readings"""
+    def calculate_substrate_reward(self, reservoir_conc, cell_concentrations, outlet_conc, substrate_addition, inlet_conc=None):
+        """Calculate reward for substrate control based on sensor readings with enhanced outlet sensor logic"""
         reward = 0.0
         
         # Reward for maintaining target concentrations
@@ -361,9 +364,28 @@ class AdvancedQLearningFlowController:
         if reservoir_error < 2.0:  # Within 2 mM of target
             reward += self.config.reward_weights.substrate_target_reward * (1.0 - reservoir_error / 2.0)
         
-        outlet_error = abs(outlet_conc - self.config.substrate_target_outlet)
-        if outlet_error < 2.0:  # Within 2 mM of target
-            reward += self.config.reward_weights.substrate_target_reward * (1.0 - outlet_error / 2.0)
+        # Enhanced outlet sensor reward/penalty system
+        outlet_error = abs(outlet_conc - self.config.outlet_reward_threshold)
+        base_outlet_reward = 0.0
+        
+        if outlet_error < 2.0:  # Within 2 mM of user-configurable threshold
+            # Proportional reward when approaching threshold
+            proximity_factor = (1.0 - outlet_error / 2.0)
+            base_outlet_reward = self.config.reward_weights.substrate_target_reward * proximity_factor * self.config.outlet_reward_scaling
+        
+        # Check for outlet sensor penalty condition (outlet equals inlet)
+        if inlet_conc is not None:
+            concentration_difference = abs(inlet_conc - outlet_conc)
+            if concentration_difference < 0.5:  # Outlet approximately equals inlet (< 0.5 mM difference)
+                # Apply 15% penalty increase
+                if base_outlet_reward > 0:
+                    base_outlet_reward *= (1.0 - (self.config.outlet_penalty_multiplier - 1.0))  # Reduce reward
+                else:
+                    # Apply penalty
+                    penalty = self.config.reward_weights.substrate_target_reward * 0.5 * self.config.outlet_penalty_multiplier
+                    base_outlet_reward = -penalty
+        
+        reward += base_outlet_reward
         
         # Reward for each cell maintaining target concentration
         for cell_conc in cell_concentrations:
@@ -371,14 +393,26 @@ class AdvancedQLearningFlowController:
             if cell_error < 3.0:  # Within 3 mM of target
                 reward += self.config.reward_weights.substrate_target_reward * 0.2 * (1.0 - cell_error / 3.0)
         
-        # Penalties for exceeding thresholds
+        # Configurable exponential penalties for exceeding thresholds
         if reservoir_conc > self.config.substrate_max_threshold:
             excess = reservoir_conc - self.config.substrate_max_threshold
-            reward += self.config.reward_weights.substrate_excess_penalty * excess
+            # Exponential penalty that grows with configurable exponent
+            penalty_multiplier = self.config.substrate_penalty_base_multiplier + (excess / self.config.substrate_max_threshold)**self.config.substrate_excess_penalty_exponent
+            reward += self.config.reward_weights.substrate_excess_penalty * excess * penalty_multiplier
         
         if outlet_conc > self.config.substrate_max_threshold:
             excess = outlet_conc - self.config.substrate_max_threshold
-            reward += self.config.reward_weights.substrate_excess_penalty * excess
+            penalty_multiplier = self.config.substrate_penalty_base_multiplier + (excess / self.config.substrate_max_threshold)**self.config.substrate_excess_penalty_exponent
+            reward += self.config.reward_weights.substrate_excess_penalty * excess * penalty_multiplier
+        
+        # Configurable severe penalty for very high concentrations
+        if reservoir_conc > self.config.substrate_severe_threshold:
+            severe_excess = reservoir_conc - self.config.substrate_severe_threshold
+            reward += -self.config.substrate_severe_penalty_multiplier * severe_excess
+        
+        if outlet_conc > self.config.substrate_severe_threshold:
+            severe_excess = outlet_conc - self.config.substrate_severe_threshold
+            reward += -self.config.substrate_severe_penalty_multiplier * severe_excess
         
         # Penalties for starvation
         min_cell_conc = min(cell_concentrations) if cell_concentrations else outlet_conc
@@ -421,6 +455,91 @@ class AdvancedQLearningFlowController:
         
         # Decay epsilon
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+    
+    def save_checkpoint(self, filepath):
+        """Save Q-learning model checkpoint to file"""
+        # Convert defaultdict Q-table to regular dict for JSON serialization
+        q_table_dict = {}
+        for state_key, actions in self.q_table.items():
+            # Convert state tuple to string for JSON compatibility
+            state_str = str(state_key)
+            q_table_dict[state_str] = dict(actions)
+        
+        checkpoint = {
+            'model_info': {
+                'checkpoint_type': 'Q-Learning Controller',
+                'created_at': datetime.now().isoformat(),
+                'algorithm': 'Q-Learning with Epsilon-Greedy',
+                'version': '1.0'
+            },
+            'hyperparameters': {
+                'learning_rate': self.learning_rate,
+                'discount_factor': self.discount_factor,
+                'initial_epsilon': 0.3702,  # Store initial value
+                'current_epsilon': self.epsilon,
+                'epsilon_decay': self.epsilon_decay,
+                'epsilon_min': self.epsilon_min
+            },
+            'state_action_space': {
+                'power_bins': len(self.power_bins),
+                'biofilm_bins': len(self.biofilm_bins),
+                'substrate_bins': len(self.substrate_bins),
+                'reservoir_conc_bins': len(self.reservoir_conc_bins),
+                'cell_conc_bins': len(self.cell_conc_bins),
+                'outlet_error_bins': len(self.outlet_error_bins),
+                'time_bins': len(self.time_bins),
+                'total_actions': self.total_actions,
+                'flow_actions': self.flow_actions.tolist(),
+                'substrate_actions': self.substrate_actions.tolist()
+            },
+            'training_statistics': {
+                'total_rewards': self.total_rewards,
+                'episode_count': self.episode_count,
+                'q_table_size': len(self.q_table),
+                'states_explored': len([state for state in self.q_table if any(self.q_table[state].values())]),
+                'total_q_updates': sum(len(actions) for actions in self.q_table.values())
+            },
+            'q_table': q_table_dict,
+            'configuration': {
+                'substrate_target_reservoir': self.config.substrate_target_reservoir,
+                'substrate_target_outlet': self.config.substrate_target_outlet,
+                'substrate_target_cell': self.config.substrate_target_cell,
+                'substrate_max_threshold': self.config.substrate_max_threshold,
+                'substrate_min_threshold': self.config.substrate_min_threshold,
+                'substrate_addition_max': self.config.substrate_addition_max
+            }
+        }
+        
+        with open(filepath, 'w') as f:
+            json.dump(checkpoint, f, indent=2)
+        
+        return checkpoint
+    
+    def load_checkpoint(self, filepath):
+        """Load Q-learning model checkpoint from file"""
+        with open(filepath, 'r') as f:
+            checkpoint = json.load(f)
+        
+        # Restore hyperparameters
+        self.learning_rate = checkpoint['hyperparameters']['learning_rate']
+        self.discount_factor = checkpoint['hyperparameters']['discount_factor']
+        self.epsilon = checkpoint['hyperparameters']['current_epsilon']
+        self.epsilon_decay = checkpoint['hyperparameters']['epsilon_decay']
+        self.epsilon_min = checkpoint['hyperparameters']['epsilon_min']
+        
+        # Restore training statistics
+        self.total_rewards = checkpoint['training_statistics']['total_rewards']
+        self.episode_count = checkpoint['training_statistics']['episode_count']
+        
+        # Restore Q-table
+        self.q_table = defaultdict(lambda: defaultdict(float))
+        for state_str, actions in checkpoint['q_table'].items():
+            # Convert string back to tuple
+            state_key = eval(state_str)  # Note: eval is used here for tuple conversion
+            for action_idx, q_value in actions.items():
+                self.q_table[state_key][int(action_idx)] = q_value
+        
+        return checkpoint
 
 class MFCCellWithMonitoring:
     """Individual MFC cell with enhanced substrate monitoring"""
@@ -455,32 +574,67 @@ class MFCCellWithMonitoring:
         else:
             residence_time_h = 100.0  # Very long residence time for no flow
         
-        # Substrate consumption based on biofilm activity
-        biofilm_efficiency = min(1.0, self.biofilm_thickness / self.optimal_biofilm_thickness)
-        max_consumption = self.max_reaction_rate * biofilm_efficiency * residence_time_h
+        # Substrate consumption with literature-based diffusion limitations
+        # Get biofilm physics parameters from configuration
+        from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+        biofilm_params = DEFAULT_QLEARNING_CONFIG.biofilm_physics
         
-        # Actual consumption limited by available substrate
-        substrate_consumed = min(max_consumption, inlet_conc * 0.9)  # Max 90% consumption per cell
+        # Monod kinetics with diffusion limitation (Stewart & Franklin 2008)
+        # Convert thickness from μm to m for calculations
+        thickness_m = self.biofilm_thickness * 1e-6
+        
+        # Effective diffusivity in biofilm
+        D_eff = biofilm_params.effective_diffusivity  # m²/s
+        
+        # Thiele modulus: ratio of reaction rate to diffusion rate
+        # φ = L * sqrt(k_max / (D_eff * (Ks + S)))
+        k_max = biofilm_params.max_specific_growth_rate / 3600  # Convert h⁻¹ to s⁻¹
+        Ks = biofilm_params.half_saturation_constant  # mM
+        substrate_conc_mol_m3 = inlet_conc  # Approximate conversion for calculation
+        
+        thiele_modulus = thickness_m * (k_max / (D_eff * (Ks + substrate_conc_mol_m3)))**0.5
+        
+        # Effectiveness factor (Fogler 2006, Chapter 12)
+        if thiele_modulus < 0.3:
+            effectiveness_factor = 1.0 - thiele_modulus**2 / 6.0
+        else:
+            effectiveness_factor = (3.0 / thiele_modulus) * (1.0 / np.tanh(thiele_modulus) - 1.0 / thiele_modulus)
+        
+        # Biofilm activity considering both thickness and diffusion limitations
+        biofilm_activity = (self.biofilm_thickness / biofilm_params.diffusion_length_scale) * effectiveness_factor
+        
+        # Maximum consumption rate with Monod kinetics
+        max_consumption = (self.max_reaction_rate * biofilm_activity * inlet_conc * residence_time_h) / (Ks + inlet_conc)
+        
+        # Actual consumption limited by substrate availability
+        substrate_consumed = min(max_consumption, inlet_conc * 0.95)  # Max 95% consumption per cell
         
         # Update outlet concentration
         self.outlet_concentration = max(0.0, inlet_conc - substrate_consumed)
         self.substrate_concentration = (inlet_conc + self.outlet_concentration) / 2.0
         
-        # Update biofilm based on substrate availability
-        if self.substrate_concentration > 5.0:  # Sufficient substrate
-            growth_factor = 1.0
-        elif self.substrate_concentration > 2.0:  # Limited substrate
-            growth_factor = 0.5
-        else:  # Starved conditions
-            growth_factor = 0.1
+        # Update biofilm based on substrate availability using Monod kinetics
+        # Monod growth kinetics: μ = μ_max * S / (Ks + S)
+        # Limit substrate concentration for numerical stability (max 100 mM for calculation)
+        limited_substrate_conc = min(self.substrate_concentration, 100.0)
+        monod_growth_rate = (biofilm_params.max_specific_growth_rate * limited_substrate_conc) / (biofilm_params.half_saturation_constant + limited_substrate_conc)
         
-        biofilm_growth = self.biofilm_growth_rate * growth_factor * dt_hours
-        biofilm_decay = 0.01 * self.biofilm_thickness * dt_hours  # Increased decay to balance higher growth
+        # Growth and decay with literature parameters - add numerical stability checks
+        net_growth_rate = monod_growth_rate - biofilm_params.decay_rate
         
-        self.biofilm_thickness = np.clip(
-            self.biofilm_thickness + biofilm_growth - biofilm_decay,
-            0.5, 3.0
-        )
+        # Prevent exponential explosion by limiting growth rate per time step
+        max_change_per_step = 0.1  # Maximum 10% change per time step
+        if abs(net_growth_rate * dt_hours) > max_change_per_step:
+            net_growth_rate = np.sign(net_growth_rate) * max_change_per_step / dt_hours
+        
+        biofilm_change = net_growth_rate * self.biofilm_thickness * dt_hours
+        
+        # Natural biofilm growth/decay with diffusion-limited equilibrium
+        # Add maximum reasonable thickness based on diffusion limitations
+        max_diffusion_thickness = biofilm_params.diffusion_length_scale * 2.0  # 200 μm max
+        
+        new_thickness = self.biofilm_thickness + biofilm_change
+        self.biofilm_thickness = np.clip(new_thickness, biofilm_params.minimum_thickness, max_diffusion_thickness)
         
         # Store monitoring data
         self.concentration_history.append(self.substrate_concentration)
@@ -492,13 +646,43 @@ class MFCCellWithMonitoring:
         """Process cell with monitoring - alias for update_concentrations"""
         return self.update_concentrations(inlet_conc, flow_rate_ml_h, dt_hours)
 
-def simulate_mfc_with_recirculation(duration_hours=100):
-    """Main simulation function with recirculation and advanced substrate control"""
+def simulate_mfc_with_recirculation(duration_hours=100, config=None, checkpoint_path=None):
+    """Main simulation function with recirculation and advanced substrate control
     
-    # Initialize components
-    reservoir = AnolytereservoirSystem(initial_substrate_conc=20.0, volume_liters=1.0)
-    controller = SubstrateConcentrationController(target_outlet_conc=12.0, target_reservoir_conc=20.0)
-    q_controller = AdvancedQLearningFlowController()
+    Args:
+        duration_hours: Simulation duration in hours
+        config: Optional configuration object
+        checkpoint_path: Optional path to Q-learning checkpoint to load
+    
+    Returns:
+        results: Dictionary containing time series data
+        cells: List of MFC cell objects
+        reservoir: Reservoir system object
+        controller: Substrate controller object
+        q_controller: Q-learning controller object
+    """
+    
+    # Initialize components with configurable parameters
+    if config is None:
+        from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+        config = DEFAULT_QLEARNING_CONFIG
+    
+    reservoir = AnolytereservoirSystem(
+        initial_substrate_conc=config.initial_substrate_concentration, 
+        volume_liters=config.reservoir_volume_liters
+    )
+    controller = SubstrateConcentrationController(
+        target_outlet_conc=config.substrate_target_outlet, 
+        target_reservoir_conc=config.substrate_target_reservoir
+    )
+    q_controller = AdvancedQLearningFlowController(config=config)
+    
+    # Load checkpoint if provided
+    if checkpoint_path and Path(checkpoint_path).exists():
+        print(f"Loading Q-learning checkpoint from: {checkpoint_path}")
+        checkpoint_info = q_controller.load_checkpoint(checkpoint_path)
+        print(f"Loaded checkpoint with {checkpoint_info['training_statistics']['q_table_size']} states")
+        print(f"Continuing from epsilon: {q_controller.epsilon:.4f}")
     
     # Initialize MFC cells
     n_cells = 5
@@ -521,7 +705,25 @@ def simulate_mfc_with_recirculation(duration_hours=100):
         'substrate_addition_rate': [],
         'total_power': [],
         'biofilm_thicknesses': [],
-        'substrate_halt': []
+        'substrate_halt': [],
+        'q_value': [],
+        'epsilon': [],
+        'q_action': [],
+        'substrate_conc_cell_0': [],
+        'substrate_conc_cell_1': [],
+        'substrate_conc_cell_2': [],
+        'substrate_conc_cell_3': [],
+        'substrate_conc_cell_4': [],
+        'biofilm_thickness_cell_0': [],
+        'biofilm_thickness_cell_1': [],
+        'biofilm_thickness_cell_2': [],
+        'biofilm_thickness_cell_3': [],
+        'biofilm_thickness_cell_4': [],
+        'power_cell_0': [],
+        'power_cell_1': [],
+        'power_cell_2': [],
+        'power_cell_3': [],
+        'power_cell_4': []
     }
     
     print("=== MFC Simulation with Recirculation and Advanced Substrate Control ===")
@@ -587,7 +789,8 @@ def simulate_mfc_with_recirculation(duration_hours=100):
             reservoir.substrate_concentration,
             cell_concentrations,
             outlet_concentration,
-            addition_rate
+            addition_rate,
+            inlet_concentration  # Pass inlet concentration for outlet sensor penalty logic
         )
         
         # Update Q-value if we have previous state
@@ -640,6 +843,19 @@ def simulate_mfc_with_recirculation(duration_hours=100):
         results['biofilm_thicknesses'].append([cell.biofilm_thickness for cell in cells])
         results['substrate_halt'].append(int(addition_rate == 0.0))  # 1 if no substrate added, 0 otherwise
         
+        # Store Q-learning metrics
+        current_q_value = q_controller.q_table[state][action_idx] if state in q_controller.q_table else 0.0
+        results['q_value'].append(current_q_value)
+        results['epsilon'].append(q_controller.epsilon)
+        results['q_action'].append(action_idx)
+        
+        # Store individual cell data
+        for i, cell in enumerate(cells):
+            results[f'substrate_conc_cell_{i}'].append(cell.substrate_concentration)
+            results[f'biofilm_thickness_cell_{i}'].append(cell.biofilm_thickness)
+            cell_power = 0.35 * cell.biofilm_thickness * cell.substrate_concentration * 0.002
+            results[f'power_cell_{i}'].append(cell_power)
+        
         # Progress reporting
         if step % (n_steps // 10) == 0:
             print(f"Time: {time_hours:.1f}h, "
@@ -649,7 +865,7 @@ def simulate_mfc_with_recirculation(duration_hours=100):
                   f"Addition: {addition_rate:.1f} mmol/h, "
                   f"Q-Action: {action_idx}")
     
-    return results, cells, reservoir, controller
+    return results, cells, reservoir, controller, q_controller
 
 def parse_arguments():
     """Parse command line arguments"""
@@ -664,10 +880,38 @@ def parse_arguments():
         help='Simulation duration in hours'
     )
     parser.add_argument(
-        '--suffix', '-s',
+        '--prefix', '-p',
+        type=str,
+        default='mfc_simulation',
+        help='Prefix for output directory and files'
+    )
+    parser.add_argument(
+        '--user-suffix', '-u',
         type=str,
         default='',
-        help='Suffix to add to output filenames (e.g., "_validated", "_100h")'
+        help='Optional user-defined suffix for filenames'
+    )
+    parser.add_argument(
+        '--no-timestamp',
+        action='store_true',
+        help='Suppress timestamp in filenames (directory will still have timestamp)'
+    )
+    parser.add_argument(
+        '--no-plots',
+        action='store_true',
+        help='Suppress generation of plots'
+    )
+    parser.add_argument(
+        '--output-dir', '-o',
+        type=str,
+        default='../data/simulation_data',
+        help='Base output directory for simulation results'
+    )
+    parser.add_argument(
+        '--load-checkpoint',
+        type=str,
+        default=None,
+        help='Path to existing Q-learning checkpoint to load and continue training'
     )
     return parser.parse_args()
 
@@ -677,71 +921,253 @@ if __name__ == "__main__":
     
     print("🔬 Running MFC Simulation with Literature-Validated Parameters")
     print(f"📊 Duration: {args.duration} hours")
-    print(f"📁 Output suffix: '{args.suffix}'")
+    print(f"📁 Output prefix: '{args.prefix}'")
+    print(f"📝 User suffix: '{args.user_suffix}'" if args.user_suffix else "")
+    print(f"⏰ Timestamp in filenames: {'No' if args.no_timestamp else 'Yes'}")
+    print(f"📊 Generate plots: {'No' if args.no_plots else 'Yes'}")
     print("=" * 60)
     
+    # Load configuration
+    from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+    config = DEFAULT_QLEARNING_CONFIG
+    
     # Run simulation with specified duration
-    results, cells, reservoir, controller = simulate_mfc_with_recirculation(args.duration)
+    results, cells, reservoir, controller, q_controller = simulate_mfc_with_recirculation(
+        args.duration, config, args.load_checkpoint)
     
-    # Save results with configurable suffix
+    # Create timestamp (always used for directory, optionally for files)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    suffix = args.suffix if args.suffix else f"_{args.duration}h_validated"
     
-    # Convert to DataFrame for easier analysis
-    df_data = {
-        'time_hours': results['time_hours'],
-        'reservoir_concentration': results['reservoir_concentration'],
-        'outlet_concentration': results['outlet_concentration'],
-        'flow_rate': results['flow_rate'],
-        'substrate_addition_rate': results['substrate_addition_rate'],
-        'total_power': results['total_power'],
-        'substrate_halt': results['substrate_halt']
-    }
+    # Build filename components
+    base_name = args.prefix
+    duration_str = f"{args.duration}h"
+    timestamp_str = f"_{timestamp}" if not args.no_timestamp else ""
+    user_suffix = f"_{args.user_suffix}" if args.user_suffix else ""
     
-    # Add individual cell data
-    for i in range(len(cells)):
-        df_data[f'cell_{i+1}_concentration'] = [concs[i] for concs in results['cell_concentrations']]
-        df_data[f'cell_{i+1}_biofilm'] = [thick[i] for thick in results['biofilm_thicknesses']]
+    # Generate filenames
+    data_filename = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}_data.csv"
+    data_json_filename = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}_data.json"
+    metadata_filename = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}_metadata.json"
+    log_filename = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}_simulation.log"
+    model_checkpoint_filename = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}_model_checkpoint.json"
     
-    df = pd.DataFrame(df_data)
-    csv_file = get_simulation_data_path(f"mfc_recirculation_control{suffix}_{timestamp}.csv")
-    json_file = get_simulation_data_path(f"mfc_recirculation_control{suffix}_{timestamp}.json")
+    # Create output directory
+    dir_suffix = f"_{args.user_suffix}" if args.user_suffix else ""
+    output_dir = Path(args.output_dir) / f"{args.prefix}_{timestamp}{dir_suffix}"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save CSV
+    # Setup logging to file and console
+    log_file = output_dir / log_filename
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    logger = logging.getLogger(__name__)
+    
+    # Log simulation start
+    logger.info("=== MFC SIMULATION STARTED ===")
+    logger.info(f"Duration: {args.duration} hours")
+    logger.info(f"Output directory: {output_dir}")
+    if args.load_checkpoint:
+        logger.info(f"Loading Q-learning checkpoint: {args.load_checkpoint}")
+    logger.info(f"Configuration: {config.__dict__ if hasattr(config, '__dict__') else 'DEFAULT_CONFIG'}")
+    
+    # Prepare DataFrame (keep all columns from results dict)
+    df = pd.DataFrame(results)
+    
+    # Save CSV data file
+    csv_file = output_dir / data_filename
     df.to_csv(csv_file, index=False)
+    logger.info(f"CSV data saved to: {data_filename}")
     
-    # Save JSON with comprehensive data
-    json_data = {
-        'simulation_metadata': {
+    # Save complete data in JSON format
+    json_data_file = output_dir / data_json_filename
+    data_dict = df.to_dict('records')  # Convert DataFrame to list of dictionaries
+    with open(json_data_file, 'w') as f:
+        json.dump({
+            'simulation_data': data_dict,
+            'data_info': {
+                'total_records': len(data_dict),
+                'columns': list(df.columns),
+                'time_range': {
+                    'start_hours': float(df['time_hours'].min()),
+                    'end_hours': float(df['time_hours'].max()),
+                    'time_step': float(df['time_hours'].iloc[1] - df['time_hours'].iloc[0]) if len(df) > 1 else 0
+                }
+            }
+        }, f, indent=2)
+    logger.info(f"JSON data saved to: {data_json_filename}")
+    
+    # Save Q-learning model checkpoint
+    model_checkpoint_file = output_dir / model_checkpoint_filename
+    checkpoint_info = q_controller.save_checkpoint(model_checkpoint_file)
+    logger.info(f"Q-learning checkpoint saved to: {model_checkpoint_filename}")
+    logger.info(f"Checkpoint contains {checkpoint_info['training_statistics']['q_table_size']} states")
+    logger.info(f"States with learned values: {checkpoint_info['training_statistics']['states_explored']}")
+    
+    # Prepare metadata
+    metadata = {
+        'simulation_info': {
             'timestamp': timestamp,
             'duration_hours': args.duration,
+            'prefix': args.prefix,
+            'user_suffix': args.user_suffix,
+            'output_directory': str(output_dir),
+            'checkpoint_loaded': args.load_checkpoint is not None,
+            'checkpoint_source': args.load_checkpoint if args.load_checkpoint else None,
+            'files_generated': {
+                'data_csv': data_filename,
+                'data_json': data_json_filename,
+                'metadata': metadata_filename,
+                'simulation_log': log_filename,
+                'model_checkpoint': model_checkpoint_filename,
+                'plots': [] if args.no_plots else []  # Will be populated below
+            }
+        },
+        'simulation_parameters': {
             'n_cells': 5,
-            'target_outlet_conc': controller.target_outlet_conc,
-            'reservoir_volume_L': reservoir.volume,
             'dt_hours': 10.0 / 3600.0,
-            'n_steps': len(results['time_hours'])
+            'n_steps': len(results['time_hours']),
+            'reservoir_volume_L': reservoir.volume,
+            'initial_substrate_concentration': config.initial_substrate_concentration,
+            'substrate_target_reservoir': config.substrate_target_reservoir,
+            'substrate_target_outlet': config.substrate_target_outlet,
+            'substrate_target_cell': config.substrate_target_cell,
+            'substrate_max_threshold': config.substrate_max_threshold,
+            'substrate_min_threshold': config.substrate_min_threshold,
+            'substrate_addition_max': config.substrate_addition_max,
+            'q_learning_parameters': {
+                'learning_rate': q_controller.learning_rate,
+                'discount_factor': q_controller.discount_factor,
+                'epsilon_initial': 0.3702,
+                'epsilon_final': q_controller.epsilon,
+                'epsilon_decay': q_controller.epsilon_decay,
+                'epsilon_min': q_controller.epsilon_min,
+                'flow_rate_actions': list(q_controller.flow_actions),
+                'substrate_actions': list(q_controller.substrate_actions)
+            }
         },
         'performance_summary': {
+            'initial_reservoir_concentration': config.initial_substrate_concentration,
             'final_reservoir_concentration': reservoir.substrate_concentration,
-            'final_outlet_concentration': results['outlet_concentration'][-1],
+            'initial_outlet_concentration': results['outlet_concentration'][0] if results['outlet_concentration'] else 0,
+            'final_outlet_concentration': results['outlet_concentration'][-1] if results['outlet_concentration'] else 0,
             'total_substrate_added': reservoir.total_substrate_added,
-            'average_biofilm_thickness': np.mean([cell.biofilm_thickness for cell in cells]),
+            'average_substrate_addition_rate': np.mean(results['substrate_addition_rate']),
+            'initial_power_output': results['total_power'][0] if results['total_power'] else 0,
+            'final_power_output': results['total_power'][-1] if results['total_power'] else 0,
+            'average_power_output': np.mean(results['total_power']),
+            'initial_biofilm_thicknesses': results['biofilm_thicknesses'][0] if results['biofilm_thicknesses'] else [],
             'final_biofilm_thicknesses': [cell.biofilm_thickness for cell in cells],
+            'average_biofilm_thickness': np.mean([cell.biofilm_thickness for cell in cells]),
             'total_circulation_cycles': reservoir.circulation_cycles,
-            'total_pump_time': reservoir.total_pump_time
+            'total_pump_time': reservoir.total_pump_time,
+            'final_q_value': results['q_value'][-1] if results['q_value'] else 0,
+            'final_epsilon': results['epsilon'][-1] if results['epsilon'] else 0
         },
-        'time_series_data': df_data,
-        'controller_history': controller.control_history[-100:] if len(controller.control_history) > 100 else controller.control_history,  # Last 100 entries
-        'reservoir_mixing_history': reservoir.mixing_efficiency_history[-50:] if len(reservoir.mixing_efficiency_history) > 50 else reservoir.mixing_efficiency_history  # Last 50 entries
+        'model_checkpoint_info': {
+            'q_table_size': checkpoint_info['training_statistics']['q_table_size'],
+            'states_explored': checkpoint_info['training_statistics']['states_explored'],
+            'total_q_updates': checkpoint_info['training_statistics']['total_q_updates'],
+            'training_episodes': checkpoint_info['training_statistics']['episode_count'],
+            'total_rewards': checkpoint_info['training_statistics']['total_rewards'],
+            'final_epsilon': checkpoint_info['hyperparameters']['current_epsilon'],
+            'checkpoint_created_at': checkpoint_info['model_info']['created_at']
+        },
+        'controller_statistics': {
+            'substrate_halt_percentage': np.mean(results['substrate_halt']) * 100 if results['substrate_halt'] else 0,
+            'control_modes_used': list(set(d['mode'] for d in controller.control_history)) if controller.control_history else [],
+            'average_outlet_error': np.mean([abs(d['outlet_error']) for d in controller.control_history]) if controller.control_history else 0,
+            'average_reservoir_error': np.mean([abs(d['reservoir_error']) for d in controller.control_history]) if controller.control_history else 0
+        },
+        'cell_performance': {
+            f'cell_{i}': {
+                'initial_substrate_conc': results[f'substrate_conc_cell_{i}'][0] if results[f'substrate_conc_cell_{i}'] else 0,
+                'final_substrate_conc': results[f'substrate_conc_cell_{i}'][-1] if results[f'substrate_conc_cell_{i}'] else 0,
+                'average_substrate_conc': np.mean(results[f'substrate_conc_cell_{i}']),
+                'initial_biofilm': results[f'biofilm_thickness_cell_{i}'][0] if results[f'biofilm_thickness_cell_{i}'] else 0,
+                'final_biofilm': results[f'biofilm_thickness_cell_{i}'][-1] if results[f'biofilm_thickness_cell_{i}'] else 0,
+                'average_power': np.mean(results[f'power_cell_{i}']),
+                'final_power': results[f'power_cell_{i}'][-1] if results[f'power_cell_{i}'] else 0
+            } for i in range(5)
+        }
     }
     
-    with open(json_file, 'w') as f:
-        json.dump(json_data, f, indent=2)
+    # Generate plots if not suppressed
+    if not args.no_plots:
+        logger.info("Generating plots...")
+        import sys
+        sys.path.append('.')
+        from plotting_system import plot_mfc_simulation_results
+        
+        plot_prefix = f"{base_name}_{duration_str}{timestamp_str}{user_suffix}"
+        plot_timestamp = plot_mfc_simulation_results(csv_file, output_prefix=str(output_dir / plot_prefix))
+        
+        # Update metadata with generated plot filenames
+        plot_files = [
+            f"{plot_prefix}_overview_{plot_timestamp}.png",
+            f"{plot_prefix}_cells_{plot_timestamp}.png"
+        ]
+        if args.duration > 100:
+            plot_files.append(f"{plot_prefix}_dynamics_{plot_timestamp}.png")
+        
+        metadata['simulation_info']['files_generated']['plots'] = plot_files
+        logger.info(f"Generated {len(plot_files)} plot files")
+    
+    # Convert numpy types to Python native types for JSON serialization
+    def convert_numpy_types(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_numpy_types(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_numpy_types(item) for item in obj]
+        return obj
+    
+    # Save metadata
+    metadata_file = output_dir / metadata_filename
+    metadata_converted = convert_numpy_types(metadata)
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata_converted, f, indent=2)
+    logger.info(f"Metadata saved to: {metadata_filename}")
+    
+    # Log simulation completion
+    logger.info("=== MFC SIMULATION COMPLETE ===")
+    logger.info(f"Duration: {args.duration} hours")
+    logger.info(f"Output directory: {output_dir}")
+    logger.info(f"Files generated:")
+    logger.info(f"  - Data CSV: {data_filename}")
+    logger.info(f"  - Data JSON: {data_json_filename}")
+    logger.info(f"  - Metadata: {metadata_filename}")
+    logger.info(f"  - Simulation log: {log_filename}")
+    logger.info(f"  - Model checkpoint: {model_checkpoint_filename}")
+    if not args.no_plots:
+        logger.info(f"  - Plots: {len(metadata['simulation_info']['files_generated']['plots'])} files")
+    
+    logger.info("PERFORMANCE SUMMARY:")
+    logger.info(f"   Reservoir concentration: {reservoir.substrate_concentration:.3f} mmol/L")
+    logger.info(f"   Final outlet concentration: {results['outlet_concentration'][-1]:.3f} mmol/L")
+    logger.info(f"   Total substrate added: {reservoir.total_substrate_added:.3f} mmol")
+    logger.info(f"   Average biofilm thickness: {np.mean([cell.biofilm_thickness for cell in cells]):.3f}")
+    logger.info(f"   Final power output: {results['total_power'][-1]:.6f} W")
     
     print("\n=== LITERATURE-VALIDATED SIMULATION COMPLETE ===")
     print(f"📊 Duration: {args.duration} hours")
-    print(f"📁 CSV saved to: {csv_file}")
-    print(f"📁 JSON saved to: {json_file}")
+    print(f"📁 Output directory: {output_dir}")
+    print(f"📁 Data files: {data_filename} (CSV), {data_json_filename} (JSON)")
+    print(f"📁 Metadata file: {metadata_filename}")
+    print(f"📁 Simulation log: {log_filename}")
+    print(f"🤖 Model checkpoint: {model_checkpoint_filename}")
+    if not args.no_plots:
+        print(f"📊 Plots generated: {len(metadata['simulation_info']['files_generated']['plots'])} files")
     print("\n🔬 PERFORMANCE SUMMARY:")
     print(f"   Reservoir concentration: {reservoir.substrate_concentration:.3f} mmol/L")
     print(f"   Final outlet concentration: {results['outlet_concentration'][-1]:.3f} mmol/L")
