@@ -7,6 +7,33 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 
 
+@dataclass 
+class BiofilmPhysicsConfig:
+    """Literature-based biofilm physics parameters for realistic modeling."""
+    
+    # Substrate diffusion parameters (literature values for lactate in biofilms)
+    substrate_diffusivity_biofilm: float = 0.6e-9  # m²/s, lactate in biofilm (Stewart 2003)
+    substrate_diffusivity_bulk: float = 1.0e-9     # m²/s, lactate in bulk liquid
+    biofilm_porosity: float = 0.8                  # Dimensionless, typical biofilm porosity
+    biofilm_tortuosity: float = 1.5                # Dimensionless, tortuosity factor
+    
+    # Effective diffusivity in biofilm (Deff = D * porosity / tortuosity)
+    @property
+    def effective_diffusivity(self) -> float:
+        return self.substrate_diffusivity_biofilm * self.biofilm_porosity / self.biofilm_tortuosity
+    
+    # Biofilm kinetic parameters (literature-based)
+    max_specific_growth_rate: float = 0.05          # h⁻¹, maximum growth rate for lactate utilizers
+    yield_coefficient: float = 0.4                  # g-biomass/g-substrate, typical for lactate
+    half_saturation_constant: float = 5.0           # mM, Monod constant for lactate
+    decay_rate: float = 0.01                        # h⁻¹, biomass decay rate
+    
+    # Biofilm physical properties
+    biofilm_density: float = 80.0                   # kg/m³, typical biofilm wet density
+    minimum_thickness: float = 0.1                  # μm, minimum viable biofilm thickness
+    diffusion_length_scale: float = 100.0           # μm, characteristic diffusion length
+
+
 @dataclass
 class QLearningRewardWeights:
     """Reward function weights for Q-learning optimization."""
@@ -115,12 +142,30 @@ class QLearningConfig:
     substrate_actions: List[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
     
     # Substrate control thresholds (configurable)
-    substrate_target_reservoir: float = 20.0  # Target reservoir concentration (mM)
+    substrate_target_reservoir: float = 25.0  # Target reservoir concentration (mM) - updated
     substrate_target_outlet: float = 12.0  # Target outlet concentration (mM)
     substrate_target_cell: float = 15.0  # Target per-cell concentration (mM)
-    substrate_max_threshold: float = 25.0  # Maximum allowed concentration (mM)
+    substrate_max_threshold: float = 30.0  # Maximum allowed concentration (mM) - updated
     substrate_min_threshold: float = 2.0  # Minimum starvation threshold (mM)
     substrate_addition_max: float = 5.0  # Maximum addition rate (mmol/h)
+    
+    # Outlet sensor control parameters
+    outlet_reward_threshold: float = 12.0  # User-configurable threshold for outlet sensor rewards (mM)
+    outlet_penalty_multiplier: float = 1.15  # 15% penalty increase when outlet equals inlet
+    outlet_reward_scaling: float = 1.0  # Proportional reward scaling factor
+    
+    # Advanced substrate control penalties (configurable)
+    substrate_excess_penalty_exponent: float = 3.0  # Exponential penalty growth factor
+    substrate_severe_threshold: float = 50.0  # Threshold for severe penalties (mM)
+    substrate_severe_penalty_multiplier: float = 1000.0  # Multiplier for severe penalties
+    substrate_penalty_base_multiplier: float = 1.0  # Base multiplier for penalty scaling
+    
+    # Reservoir configuration (configurable)
+    initial_substrate_concentration: float = 25.0  # Initial reservoir concentration (mM)
+    reservoir_volume_liters: float = 1.0  # Reservoir volume (L)
+    
+    # Biofilm physics parameters
+    biofilm_physics: BiofilmPhysicsConfig = field(default_factory=BiofilmPhysicsConfig)
     
     # Unified controller action spaces
     unified_flow_actions: List[int] = field(default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4])
