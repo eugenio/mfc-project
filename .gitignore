@@ -118,13 +118,11 @@ pixi.lock
 !pixi.lock
 *_data_report.json
 
-# Exclude most data directories but allow curated simulation results
+# Exclude all data directories completely
 data/
-!q-learning-mfcs/data/
-!q-learning-mfcs/data/simulation_data/
-!q-learning-mfcs/data/simulation_data/*/
+q-learning-mfcs/data/
 
-# Include compressed data archive
+# Include compressed data archive only
 !q-learning-mfcs/simulation_data_archive.tar.gz
 
 # Node.js
