@@ -7,14 +7,12 @@ import json
 import sys
 import subprocess
 from datetime import datetime
-from pathlib import Path
 from utils.constants import ensure_session_log_dir
 from utils.gitlab_client import (
     load_gitlab_config, 
     create_hook_failure_issue, 
     create_large_commit_mr,
-    get_current_branch,
-    test_gitlab_connection
+    get_current_branch
 )
 
 def count_recent_commits(branch: str = None, hours: int = 24) -> int:
@@ -246,7 +244,7 @@ def _analyze_generic_test_output(output: str, analysis: dict):
             break
 
 def _create_test_failure_issues(analysis: dict, command: str):
-    """Create GitLab issues for test failures."""
+    """Create GitLab issues for test failures or update existing ones."""
     try:
         # Import GitLab functions
         from utils.gitlab_client import create_issue
@@ -316,18 +314,149 @@ This issue was automatically created by the Claude Code post-tool-use hook when 
         else:
             labels.append("priority::low")
         
-        # Create the issue
-        issue = create_issue(
-            title=title,
-            description=description,
-            labels=labels
-        )
+        # Check for existing similar issues
+        existing_issue = _find_existing_test_failure_issue(test_type, title)
         
-        if issue:
-            print(f"✅ Created GitLab issue for test failures: {issue['web_url']}", file=sys.stderr)
+        if existing_issue:
+            # Update existing issue
+            updated_issue = _update_existing_issue(existing_issue, analysis, command, description)
+            if updated_issue:
+                print(f"✅ Updated existing GitLab issue for test failures: {updated_issue['web_url']}", file=sys.stderr)
+        else:
+            # Create new issue
+            issue = create_issue(
+                title=title,
+                description=description,
+                labels=labels
+            )
+            
+            if issue:
+                print(f"✅ Created GitLab issue for test failures: {issue['web_url']}", file=sys.stderr)
             
     except Exception as e:
         print(f"❌ Failed to create test failure issue: {e}", file=sys.stderr)
+
+def _find_existing_test_failure_issue(test_type: str, title: str):
+    """
+    Find existing open issue for the same type of test failure.
+    
+    Args:
+        test_type: Type of test (pytest, unittest, linting, etc.)
+        title: Issue title to check
+        
+    Returns:
+        Issue object if found, None otherwise
+    """
+    try:
+        from utils.gitlab_client import get_current_project
+        project = get_current_project()
+        if not project:
+            return None
+        
+        # Search for open issues with similar titles and automated label
+        search_keywords = []
+        if "pytest" in test_type.lower():
+            search_keywords = ["pytest failures", "pytest", "test failing"]
+        elif "unittest" in test_type.lower():
+            search_keywords = ["unit test failures", "unittest", "test failing"]
+        elif "linting" in test_type.lower():
+            search_keywords = ["linting issues", "code linting", "ruff"]
+        elif "type_checking" in test_type.lower():
+            search_keywords = ["type checking", "mypy", "type errors"]
+        else:
+            search_keywords = ["test failures", "test"]
+        
+        # Get open issues with automated label
+        issues = project.issues.list(
+            state='opened',
+            labels=['automated', 'bug'],
+            per_page=50
+        )
+        
+        # Look for issues with matching keywords in title
+        for issue in issues:
+            issue_title_lower = issue.title.lower()
+            for keyword in search_keywords:
+                if keyword in issue_title_lower and test_type in issue_title_lower:
+                    return issue
+                    
+        return None
+        
+    except Exception as e:
+        print(f"Failed to search for existing issues: {e}", file=sys.stderr)
+        return None
+
+def _update_existing_issue(existing_issue, analysis: dict, command: str, new_description: str):
+    """
+    Update existing issue with new failure information.
+    
+    Args:
+        existing_issue: GitLab issue object
+        analysis: Test failure analysis
+        command: Command that was executed
+        new_description: New description content
+        
+    Returns:
+        Updated issue object if successful, None otherwise
+    """
+    try:
+        current_time = datetime.now().isoformat()
+        failure_count = analysis["failure_count"]
+        
+        # Build update comment
+        update_comment = f"""**New test failure detected - {current_time}**
+
+**Command executed:** `{command}`
+**Failure count:** {failure_count}
+
+**Recent failures:**
+"""
+        
+        # Add first few failures to the comment
+        for i, failure in enumerate(analysis["failures"][:3], 1):
+            update_comment += f"\n{i}. **{failure['type']}** (severity: {failure['severity']})\\n   {failure['description']}\\n"
+        
+        if len(analysis["failures"]) > 3:
+            update_comment += f"\n... and {len(analysis['failures']) - 3} more failures"
+        
+        update_comment += """
+
+This issue was automatically updated by the Claude Code post-tool-use hook."""
+        
+        # Add comment to the issue
+        existing_issue.notes.create({'body': update_comment})
+        
+        # Update issue priority if needed
+        high_severity_count = sum(1 for f in analysis["failures"] if f.get("severity") == "high")
+        current_labels = existing_issue.labels
+        
+        # Remove old priority labels and add new one
+        priority_labels = ['priority::low', 'priority::medium', 'priority::high']
+        updated_labels = [label for label in current_labels if label not in priority_labels]
+        
+        if high_severity_count > 0:
+            updated_labels.append('priority::high')
+        elif failure_count > 5:
+            updated_labels.append('priority::medium')
+        else:
+            updated_labels.append('priority::low')
+        
+        # Update labels if they changed
+        if set(updated_labels) != set(current_labels):
+            existing_issue.labels = updated_labels
+            existing_issue.save()
+        
+        # Reopen issue if it was closed
+        if existing_issue.state == 'closed':
+            existing_issue.state_event = 'reopen'
+            existing_issue.save()
+            print("🔄 Reopened closed issue due to new test failures", file=sys.stderr)
+        
+        return existing_issue
+        
+    except Exception as e:
+        print(f"Failed to update existing issue: {e}", file=sys.stderr)
+        return None
 
 def handle_hook_failure(input_data: dict):
     """
