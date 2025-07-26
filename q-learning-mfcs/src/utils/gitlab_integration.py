@@ -22,6 +22,13 @@ except ImportError:
     GITLAB_AVAILABLE = False
     print("⚠️  python-gitlab not available. Install with: pixi add python-gitlab")
 
+# Load configuration from .env file
+try:
+    from .config_loader import setup_gitlab_config
+    setup_gitlab_config()
+except ImportError:
+    print("⚠️  Config loader not available, using environment variables only")
+
 class GitLabIssueManager:
     """Manages GitLab issues for bug reports and feature requests."""
     

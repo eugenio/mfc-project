@@ -97,43 +97,61 @@ class SimulationRunner:
     def _cleanup_resources(self):
         """Clean up GPU/CPU resources after simulation stops"""
         try:
-            # Clear JAX GPU memory if available
+            print("🧹 Starting aggressive GPU memory cleanup...")
+            
+            # Force delete any simulation objects first
+            if hasattr(self, 'simulation'):
+                del self.simulation
+                
+            # Clear JAX GPU memory aggressively
             try:
                 import jax
-                if hasattr(jax, 'clear_backends'):
-                    jax.clear_backends()
+                import jax.numpy as jnp
+                
+                # Clear all JAX compilation cache
                 if hasattr(jax, 'clear_caches'):
                     jax.clear_caches()
+                    print("   ✅ JAX caches cleared")
+                    
+                # Clear all backends
+                if hasattr(jax, 'clear_backends'):
+                    jax.clear_backends()
+                    print("   ✅ JAX backends cleared")
+                
+                # For ROCm specifically, clear device arrays
+                try:
+                    # Get all live arrays and delete them
+                    import gc
+                    for obj in gc.get_objects():
+                        if hasattr(obj, '__class__') and 'DeviceArray' in str(type(obj)):
+                            del obj
+                    print("   ✅ JAX device arrays cleared")
+                except Exception:
+                    pass
+                    
             except ImportError:
                 pass
             
-            # Clear CUDA cache if using NVIDIA
+            # Clear PyTorch CUDA cache if using NVIDIA
             try:
                 import torch
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                     torch.cuda.synchronize()
+                    print("   ✅ CUDA cache cleared")
             except ImportError:
-                pass
-            
-            # For ROCm/HIP, try to reset GPU state (without requiring sudo)
-            try:
-                # Try to access ROCm environment variables instead of system commands
-                import os
-                os.environ.pop('HIP_VISIBLE_DEVICES', None)
-                os.environ.pop('ROCR_VISIBLE_DEVICES', None)
-            except Exception:
                 pass
             
             # Force multiple garbage collections
             import gc
-            for _ in range(3):
-                gc.collect()
+            for i in range(5):  # More aggressive cleanup
+                collected = gc.collect()
+                print(f"   🗑️ GC cycle {i+1}: {collected} objects collected")
                 
-            print("🧹 Resources cleaned up")
+            print("🧹 Aggressive GPU cleanup completed")
                 
         except Exception as e:
-            print(f"Warning: Failed to clean up resources: {e}")
+            print(f"⚠️ Warning: Failed to clean up resources: {e}")
         
     def _run_simulation(self, config, duration_hours, n_cells=None, electrode_area_m2=None, target_conc=None, gui_refresh_interval=5.0):
         """Run simulation in background"""
@@ -192,9 +210,10 @@ class SimulationRunner:
                 'reward': []
             }
             
-            # Run simulation with stop check
+            # Run simulation with stop check and progress reporting
             for step in range(n_steps):
                 if self.should_stop:
+                    print(f"Simulation stopped by user at step {step}/{n_steps}")
                     break
                     
                 current_time = step * dt_hours
@@ -218,6 +237,15 @@ class SimulationRunner:
                     df = pd.DataFrame(results)
                     data_file = output_dir / f"gui_simulation_data_{timestamp}.csv.gz"
                     df.to_csv(data_file, compression='gzip', index=False)
+                    
+                    # Send progress update to GUI
+                    progress_pct = (step / n_steps) * 100
+                    self.results_queue.put(('progress', f"Step {step}/{n_steps} ({progress_pct:.1f}%)", current_time))
+                
+                # Progress logging for longer simulations
+                if step > 0 and step % max(1, n_steps // 20) == 0:  # Log every 5% progress
+                    progress_pct = (step / n_steps) * 100
+                    print(f"GUI simulation progress: {progress_pct:.1f}% ({step}/{n_steps} steps, {current_time:.1f}h)")
             
             # Save final results
             df = pd.DataFrame(results)
@@ -260,12 +288,14 @@ class SimulationRunner:
             
     def get_status(self):
         """Get current simulation status"""
+        # Get the most recent status from the queue
+        latest_status = None
         try:
             while not self.results_queue.empty():
-                return self.results_queue.get_nowait()
+                latest_status = self.results_queue.get_nowait()
         except queue.Empty:
             pass
-        return None
+        return latest_status
 
 # Initialize session state
 if 'sim_runner' not in st.session_state:
@@ -278,7 +308,7 @@ if 'last_output_dir' not in st.session_state:
     st.session_state.last_output_dir = None
 
 def load_simulation_data(data_dir):
-    """Load simulation data from directory"""
+    """Load simulation data from directory with real-time updates"""
     data_dir = Path(data_dir)
     
     # Find compressed CSV file
@@ -289,8 +319,21 @@ def load_simulation_data(data_dir):
     csv_file = csv_files[0]
     
     try:
+        # Check if file was recently modified (for real-time detection)
+        file_mtime = csv_file.stat().st_mtime
+        current_time = time.time()
+        is_recent = (current_time - file_mtime) < 60  # Modified within last minute
+        
         with gzip.open(csv_file, 'rt') as f:
             df = pd.read_csv(f)
+            
+        if is_recent:
+            # Add metadata about freshness for GUI display
+            df.attrs['is_live_data'] = True
+            df.attrs['last_modified'] = file_mtime
+        else:
+            df.attrs['is_live_data'] = False
+            
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
@@ -519,18 +562,50 @@ def main():
     with tab1:
         st.header("Simulation Control")
         
-        # Status display
+        # Status display with enhanced debugging
         status = st.session_state.sim_runner.get_status()
+        
+        # Always show current simulation state
+        if st.session_state.sim_runner.is_running:
+            st.info("🔄 Simulation is running...")
+            if st.session_state.sim_runner.current_output_dir:
+                st.text(f"Output directory: {st.session_state.sim_runner.current_output_dir}")
+        else:
+            st.text("🔴 No simulation currently running")
+        
+        # Handle status messages
         if status:
             if status[0] == 'completed':
                 st.success("✅ Simulation completed successfully!")
                 st.session_state.simulation_results = status[1]
                 st.session_state.last_output_dir = status[2]
+                # Clear running state
+                st.session_state.sim_runner.is_running = False
             elif status[0] == 'stopped':
                 st.warning(f"⏹️ {status[1]}")
                 st.session_state.last_output_dir = status[2]
+                # Clear running state
+                st.session_state.sim_runner.is_running = False
             elif status[0] == 'error':
                 st.error(f"❌ Simulation failed: {status[1]}")
+                # Clear running state
+                st.session_state.sim_runner.is_running = False
+            elif status[0] == 'progress':
+                # Show real-time progress
+                progress_text = status[1]
+                sim_time = status[2]
+                
+                # Extract progress percentage from text
+                import re
+                progress_match = re.search(r'\((\d+\.?\d*)%\)', progress_text)
+                if progress_match:
+                    progress_pct = float(progress_match.group(1))
+                    st.progress(progress_pct / 100.0, text=f"🔄 {progress_text} - Simulation time: {sim_time:.1f}h")
+                else:
+                    st.info(f"🔄 {progress_text} - Simulation time: {sim_time:.1f}h")
+                
+                # Store progress for monitoring tab
+                st.session_state.last_progress = status
         
         # Control buttons
         col1, col2, col3 = st.columns(3)
@@ -565,6 +640,14 @@ def main():
         with col3:
             if st.button("🔄 Refresh Status"):
                 st.rerun()
+        
+        # GPU cleanup button (separate row)
+        col1, col2, col3 = st.columns(3)
+        with col2:
+            if st.button("🧹 Force GPU Cleanup", key="gpu_cleanup_btn"):
+                st.info("🧹 Performing manual GPU cleanup...")
+                st.session_state.sim_runner._cleanup_resources()
+                st.success("✅ GPU cleanup completed!")
         
         # Simulation status
         if st.session_state.sim_runner.is_running:
@@ -626,11 +709,26 @@ def main():
                 if st.session_state.sim_runner.is_running:
                     st.success("📊 Data sync enabled with simulation")
                 
-        # Implement auto-refresh
-        if auto_refresh:
-            st.empty()  # Force redraw
-            time.sleep(refresh_interval)
+        # Manual refresh button for immediate updates
+        if st.button("🔄 Manual Refresh", key="manual_refresh_monitor"):
             st.rerun()
+        
+        # Implement auto-refresh using session state and JavaScript
+        if auto_refresh:
+            current_time = time.time()
+            last_refresh = st.session_state.get('last_auto_refresh', 0)
+            
+            if current_time - last_refresh >= refresh_interval:
+                st.session_state.last_auto_refresh = current_time
+                st.rerun()
+            else:
+                time_until_refresh = refresh_interval - (current_time - last_refresh)
+                st.write(f"⏱️ Next refresh in {time_until_refresh:.1f}s")
+                
+                # Force page refresh using meta tag
+                st.markdown(f"""
+                <meta http-equiv="refresh" content="{int(time_until_refresh) + 1}">
+                """, unsafe_allow_html=True)
         
         # Check if simulation is running and show live data
         if st.session_state.sim_runner.is_running and st.session_state.sim_runner.current_output_dir:
@@ -642,10 +740,20 @@ def main():
                 # Get actual elapsed time from simulation data
                 actual_hours = df['time_hours'].iloc[-1] if 'time_hours' in df.columns else 0
                 refresh_rate = st.session_state.get('current_refresh_interval', 5.0)
-                st.info(f"📊 Simulation running: {actual_hours:.1f} hours elapsed, {len(df)} data points")
-                st.success(f"⚡ Real-time sync: Data saved every {refresh_rate}s")
+                
+                # Show data freshness info
+                is_live = getattr(df, 'attrs', {}).get('is_live_data', False)
+                last_modified = getattr(df, 'attrs', {}).get('last_modified', 0)
+                
+                if is_live:
+                    time_since_update = time.time() - last_modified
+                    st.success(f"🟢 LIVE DATA: {actual_hours:.1f}h elapsed, {len(df)} points (updated {time_since_update:.0f}s ago)")
+                else:
+                    st.info(f"📊 Simulation data: {actual_hours:.1f} hours elapsed, {len(df)} data points")
+                    
+                st.info(f"⚡ Real-time sync: Data saved every {refresh_rate}s")
             else:
-                st.info("Waiting for simulation data...")
+                st.warning("⏳ Waiting for simulation data...")
                 df = None
         else:
             # Load most recent simulation data
