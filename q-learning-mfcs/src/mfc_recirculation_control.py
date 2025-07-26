@@ -915,6 +915,69 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+def run_mfc_simulation(duration_hours, output_dir, config=None, n_cells=5, 
+                      initial_substrate_concentration=25.0, user_suffix="", 
+                      verbose=True, generate_plots=True):
+    """
+    Run MFC simulation programmatically for optimization.
+    
+    Args:
+        duration_hours: Simulation duration in hours
+        output_dir: Output directory path
+        config: QLearningConfig object (uses default if None)
+        n_cells: Number of MFC cells
+        initial_substrate_concentration: Initial substrate concentration (mM)
+        user_suffix: Suffix for output files
+        verbose: Enable logging output
+        generate_plots: Generate visualization plots
+        
+    Returns:
+        Dictionary with simulation results
+    """
+    import tempfile
+    from pathlib import Path
+    
+    # Load configuration
+    if config is None:
+        from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+        config = DEFAULT_QLEARNING_CONFIG
+    
+    # Ensure output directory exists
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Run simulation 
+    results, cells, reservoir, controller, q_controller = simulate_mfc_with_recirculation(
+        duration_hours, config, None)
+    
+    # Create timestamp for files
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Build filename components
+    base_name = "lactate_controlled"
+    duration_str = f"{duration_hours}h"
+    user_suffix_str = f"_{user_suffix}" if user_suffix else ""
+    
+    # Generate filenames
+    data_filename = f"{base_name}_{duration_str}_{timestamp}{user_suffix_str}_data.csv"
+    
+    # Setup logging if verbose
+    if verbose:
+        log_filename = f"{base_name}_{duration_str}_{timestamp}{user_suffix_str}_simulation.log"
+        log_file = output_dir / log_filename
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler(sys.stdout)
+            ]
+        )
+    
+    # Return results dictionary for optimization
+    return results
+
+
 if __name__ == "__main__":
     # Parse command line arguments
     args = parse_arguments()

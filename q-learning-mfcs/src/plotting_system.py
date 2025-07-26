@@ -13,8 +13,16 @@ import numpy as np
 from typing import List, Tuple, Optional, Any, Dict, Union
 from pathlib import Path
 import json
+import gzip
 from datetime import datetime
 import string
+
+# Import path configuration
+try:
+    from path_config import get_figure_path
+except ImportError:
+    def get_figure_path(filename): 
+        return f"../data/figures/{filename}"
 
 
 class SubplotLabeler:
@@ -311,7 +319,7 @@ def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str 
             bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
     
     plt.tight_layout()
-    save_figure(fig1, f"{output_prefix}_overview_{timestamp}.png")
+    save_figure(fig1, get_figure_path(f"{output_prefix}_overview_{timestamp}.png"))
     
     # ===== FIGURE 2: Cell-by-cell analysis (if cell data available) =====
     if 'power_cell_0' in df.columns:
@@ -379,7 +387,7 @@ def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str 
         ax.grid(True, alpha=0.3)
         
         plt.tight_layout()
-        save_figure(fig2, f"{output_prefix}_cells_{timestamp}.png")
+        save_figure(fig2, get_figure_path(f"{output_prefix}_cells_{timestamp}.png"))
     
     # ===== FIGURE 3: Long-term dynamics (for simulations > 100h) =====
     if duration > 100:
@@ -425,7 +433,7 @@ def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str 
         add_text_annotation(ax, trend_text, x=0.5, y=0.95, ha='center', va='top')
         
         plt.tight_layout()
-        save_figure(fig3, f"{output_prefix}_dynamics_{timestamp}.png")
+        save_figure(fig3, get_figure_path(f"{output_prefix}_dynamics_{timestamp}.png"))
     
     # Close all figures to prevent memory leaks
     plt.close('all')
@@ -463,7 +471,241 @@ def plot_latest_simulation(pattern: str = "mfc_recirculation_control_*.csv",
     return plot_mfc_simulation_results(latest_file, output_prefix)
 
 
+def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str = "gpu_simulation"):
+    """
+    Plot GPU-accelerated MFC simulation results with control failure analysis
+    
+    Args:
+        data_dir: Directory containing GPU simulation data files
+        output_prefix: Prefix for output filenames
+    
+    Returns:
+        timestamp: Timestamp used for output files
+    """
+    data_dir = Path(data_dir)
+    
+    # Find compressed CSV and JSON files
+    csv_files = list(data_dir.glob("*.csv.gz"))
+    json_files = list(data_dir.glob("*.json"))
+    
+    if not csv_files:
+        print(f"No compressed CSV files found in {data_dir}")
+        return None
+    
+    csv_file = csv_files[0]
+    json_file = json_files[0] if json_files else None
+    
+    print(f"Loading GPU simulation data from: {csv_file}")
+    
+    # Load compressed CSV data
+    with gzip.open(csv_file, 'rt') as f:
+        df = pd.read_csv(f)
+    
+    # Load metadata if available
+    metadata = {}
+    if json_file:
+        with open(json_file, 'r') as f:
+            metadata = json.load(f)
+        print(f"Loaded metadata from: {json_file}")
+    
+    # Create timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Convert time to days for better readability
+    df['time_days'] = df['time_hours'] / 24.0
+    duration_days = df['time_days'].max()
+    
+    # Extract performance metrics
+    performance = metadata.get('performance_metrics', {})
+    sim_info = metadata.get('simulation_info', {})
+    
+    # ===== FIGURE 1: GPU Simulation Overview =====
+    fig1, axes1, labeler1 = create_labeled_subplots(2, 3, figsize=(18, 12),
+                                                   title=f'GPU-Accelerated MFC Simulation - Control Analysis ({duration_days:.0f} days)')
+    
+    # (a) Substrate concentration control failure
+    ax = axes1[0]
+    plot_time_series(ax, df, 'time_days', 
+                    ['reservoir_concentration', 'outlet_concentration'],
+                    labels=['Reservoir', 'Outlet'],
+                    colors=['blue', 'red'], linewidths=[2, 1.5])
+    
+    # Add target and tolerance zones
+    target = 25.0
+    ax.axhline(y=target, color='green', linestyle='--', linewidth=2, label='Target (25 mM)')
+    ax.fill_between(df['time_days'], 23, 27, alpha=0.2, color='green', label='±2 mM tolerance')
+    ax.fill_between(df['time_days'], 20, 30, alpha=0.1, color='yellow', label='±5 mM tolerance')
+    
+    # Annotate control failure
+    final_conc = performance.get('final_reservoir_concentration', df['reservoir_concentration'].iloc[-1])
+    ax.annotate(f'CONTROL FAILURE\nFinal: {final_conc:.1f} mM\n(4x target)', 
+                xy=(duration_days*0.8, final_conc), 
+                xytext=(duration_days*0.5, final_conc*0.7),
+                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='red', alpha=0.3),
+                fontsize=10, color='red', weight='bold')
+    
+    setup_axis(ax, 'Time (days)', 'Substrate Concentration (mM)', 'Substrate Control Performance')
+    ax.set_ylim(0, min(df['reservoir_concentration'].max() * 1.1, 150))
+    
+    # (b) Power output failure
+    ax = axes1[1]
+    plot_time_series(ax, df, 'time_days', ['total_power'], 
+                    colors=['purple'], linewidths=[2])
+    mean_power = performance.get('mean_power', df['total_power'].mean()) * 1000  # Convert to mW
+    ax.annotate(f'POWER FAILURE\nMean: {mean_power:.3f} mW', 
+                xy=(duration_days*0.5, df['total_power'].mean()), 
+                xytext=(duration_days*0.3, df['total_power'].max()*0.5),
+                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='red', alpha=0.3),
+                fontsize=10, color='red', weight='bold')
+    setup_axis(ax, 'Time (days)', 'Power Output (W)', 'Power Generation', legend=False)
+    
+    # (c) Q-learning actions and control response
+    ax = axes1[2]
+    ax.plot(df['time_days'], df['q_action'], color='orange', linewidth=1.5, alpha=0.8, label='Q-Action')
+    ax2 = ax.twinx()
+    ax2.plot(df['time_days'], df['substrate_addition_rate'], color='cyan', linewidth=2, label='Addition Rate')
+    ax.set_xlabel('Time (days)')
+    ax.set_ylabel('Q-Learning Action', color='orange')
+    ax2.set_ylabel('Substrate Addition (mmol/h)', color='cyan')
+    ax.set_title('Q-Learning Control Actions')
+    ax.grid(True, alpha=0.3)
+    
+    # (d) Control error analysis
+    ax = axes1[3]
+    control_error = df['reservoir_concentration'] - target
+    ax.plot(df['time_days'], control_error, 'red', linewidth=2)
+    ax.axhline(y=0, color='green', linestyle='--', linewidth=2, label='Perfect Control')
+    ax.fill_between(df['time_days'], -2, 2, alpha=0.2, color='green', label='±2 mM tolerance')
+    ax.fill_between(df['time_days'], -5, 5, alpha=0.1, color='yellow', label='±5 mM tolerance')
+    setup_axis(ax, 'Time (days)', 'Control Error (mM)', 'Error from Target (25 mM)')
+    
+    # (e) Q-learning exploration
+    ax = axes1[4]
+    ax.plot(df['time_days'], df['epsilon'], color='purple', linewidth=2, label='Epsilon')
+    ax2 = ax.twinx()
+    ax2.plot(df['time_days'], df['reward'], color='brown', linewidth=1, alpha=0.7, label='Reward')
+    ax.set_xlabel('Time (days)')
+    ax.set_ylabel('Epsilon (exploration)', color='purple')
+    ax2.set_ylabel('Reward', color='brown')
+    ax.set_title('Q-Learning Exploration & Rewards')
+    ax.grid(True, alpha=0.3)
+    
+    # (f) Performance summary
+    ax = axes1[5]
+    ax.axis('off')
+    
+    # Performance metrics from metadata
+    control_eff_2mm = performance.get('control_effectiveness_2mM', 0) * 100
+    control_eff_5mm = performance.get('control_effectiveness_5mM', 0) * 100
+    runtime_hours = sim_info.get('total_runtime_hours', 0)
+    backend = sim_info.get('acceleration_backend', 'Unknown')
+    
+    summary_text = f"🔥 GPU SIMULATION RESULTS\n{'='*35}\n"
+    summary_text += f"Backend: {backend}\n"
+    summary_text += f"Runtime: {runtime_hours:.2f} hours\n"
+    summary_text += f"Speedup: {duration_days*24/runtime_hours:.0f}x\n\n"
+    summary_text += f"❌ CRITICAL CONTROL ISSUES:\n{'-'*25}\n"
+    summary_text += f"Final concentration: {final_conc:.1f} mM\n"
+    summary_text += f"Target deviation: {final_conc - target:.1f} mM\n"
+    summary_text += f"Control effectiveness (±2mM): {control_eff_2mm:.1f}%\n"
+    summary_text += f"Control effectiveness (±5mM): {control_eff_5mm:.1f}%\n"
+    summary_text += f"Mean power: {mean_power:.3f} mW\n\n"
+    summary_text += f"⚠️  REQUIRES IMMEDIATE ATTENTION:\n"
+    summary_text += f"• Q-learning parameters need revision\n"
+    summary_text += f"• Control algorithm failure\n"
+    summary_text += f"• System essentially non-functional"
+    
+    ax.text(0.05, 0.95, summary_text, transform=ax.transAxes, fontsize=11,
+            verticalalignment='top', fontfamily='monospace',
+            bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
+    
+    plt.tight_layout()
+    save_figure(fig1, get_figure_path(f"{output_prefix}_control_failure_analysis_{timestamp}.png"))
+    
+    # ===== FIGURE 2: Detailed Control Analysis =====
+    fig2, axes2, labeler2 = create_labeled_subplots(2, 2, figsize=(16, 10),
+                                                   title=f'GPU Simulation - Detailed Control System Analysis')
+    
+    # (a) Action distribution
+    ax = axes2[0]
+    action_counts = df['q_action'].value_counts().sort_index()
+    ax.bar(action_counts.index, action_counts.values, alpha=0.7, color='orange')
+    setup_axis(ax, 'Q-Learning Action', 'Frequency', 'Action Distribution', legend=False)
+    
+    # (b) Substrate mass balance
+    ax = axes2[1]
+    dt = 1.0  # 1 hour timestep
+    cumulative_added = df['substrate_addition_rate'].cumsum() * dt
+    ax.plot(df['time_days'], cumulative_added, 'blue', linewidth=2, label='Total Added')
+    
+    # Expected consumption from metadata
+    if 'substrate_consumption' in metadata:
+        daily_rate = metadata['substrate_consumption']['daily_rate_mmol']
+        expected_total = daily_rate * df['time_days']
+        ax.plot(df['time_days'], expected_total, 'green', linestyle='--', linewidth=2, label='Expected')
+    
+    setup_axis(ax, 'Time (days)', 'Cumulative Substrate (mmol)', 'Substrate Mass Balance')
+    
+    # (c) Control effectiveness over time
+    ax = axes2[2]
+    window_size = max(240, len(df)//50)  # Adaptive window
+    effectiveness_2mm = []
+    effectiveness_5mm = []
+    window_centers = []
+    
+    for i in range(0, len(df) - window_size, window_size//4):
+        window_data = df.iloc[i:i+window_size]
+        error_abs = abs(window_data['reservoir_concentration'] - target)
+        
+        eff_2mm = (error_abs <= 2).mean()
+        eff_5mm = (error_abs <= 5).mean()
+        
+        effectiveness_2mm.append(eff_2mm)
+        effectiveness_5mm.append(eff_5mm)
+        window_centers.append(window_data['time_days'].mean())
+    
+    ax.plot(window_centers, np.array(effectiveness_2mm)*100, 'b-', linewidth=2, 
+             marker='o', label='±2 mM', markersize=4)
+    ax.plot(window_centers, np.array(effectiveness_5mm)*100, 'g-', linewidth=2, 
+             marker='s', label='±5 mM', markersize=4)
+    setup_axis(ax, 'Time (days)', 'Control Effectiveness (%)', 'Control Effectiveness Over Time')
+    ax.set_ylim(0, 100)
+    
+    # (d) Phase portrait: Concentration vs Addition Rate
+    ax = axes2[3]
+    scatter = ax.scatter(df['reservoir_concentration'], df['substrate_addition_rate'], 
+                        c=df['time_days'], cmap='viridis', alpha=0.6, s=8)
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Time (days)')
+    setup_axis(ax, 'Reservoir Concentration (mM)', 'Addition Rate (mmol/h)', 
+               'Control Phase Portrait', legend=False)
+    
+    plt.tight_layout()
+    save_figure(fig2, get_figure_path(f"{output_prefix}_detailed_analysis_{timestamp}.png"))
+    
+    # Close figures
+    plt.close('all')
+    
+    print(f"\n{'='*70}")
+    print(f"🎯 GPU SIMULATION PLOTTING COMPLETE")
+    print(f"{'='*70}")
+    print(f"✅ Plots saved with timestamp: {timestamp}")
+    print(f"📊 Data duration: {duration_days:.1f} days ({len(df)} data points)")
+    print(f"🚀 GPU backend: {backend}")
+    print(f"⏱️  Runtime: {runtime_hours:.2f} hours")
+    print(f"❌ CRITICAL: Control system completely failed - needs parameter revision")
+    print(f"{'='*70}")
+    
+    return timestamp
+
+
 if __name__ == "__main__":
     # Example: Plot the latest 1000h simulation
-    timestamp = plot_latest_simulation("mfc_recirculation_control_25mM_1000h_*.csv", 
-                                      output_prefix="mfc_1000h")
+    # timestamp = plot_latest_simulation("mfc_recirculation_control_25mM_1000h_*.csv", 
+    #                                   output_prefix="mfc_1000h")
+    
+    # Plot GPU simulation results
+    gpu_data_dir = "../data/simulation_data/gpu_1year_20250726_160123"
+    timestamp = plot_gpu_simulation_results(gpu_data_dir, output_prefix="gpu_1year_analysis")
