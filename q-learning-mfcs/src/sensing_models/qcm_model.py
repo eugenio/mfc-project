@@ -345,7 +345,7 @@ class QCMModel:
     
     def __init__(self, crystal_type: CrystalType = CrystalType.AT_CUT_5MHZ,
                  electrode_type: ElectrodeType = ElectrodeType.GOLD,
-                 electrode_area: float = 0.196,  # cm² (5mm diameter)
+                 electrode_area: float = 0.196e-4,  # m² (5mm diameter, 0.196 cm²)
                  use_gpu: bool = True):
         """
         Initialize QCM model.
@@ -353,7 +353,7 @@ class QCMModel:
         Args:
             crystal_type: QCM crystal specification
             electrode_type: Electrode material
-            electrode_area: Active electrode area (cm²)
+            electrode_area: Active electrode area (m²)
             use_gpu: Enable GPU acceleration
         """
         self.crystal_type = crystal_type
@@ -460,7 +460,7 @@ class QCMModel:
             QCM measurement data
         """
         # Calculate mass per unit area
-        mass_per_area = biofilm_mass / self.electrode_area  # μg/cm²
+        mass_per_area = biofilm_mass / (self.electrode_area * 1e4)  # μg/cm² (electrode_area is in m²)
         mass_per_area_ng = mass_per_area * 1000  # Convert to ng/cm²
         
         # Calculate frequency shift using Sauerbrey equation
@@ -609,7 +609,7 @@ class QCMModel:
         # Calibrate density from mass-thickness relationship
         if len(np.unique(thicknesses)) > 2:
             density_slope = np.polyfit(thicknesses, masses, 1)[0]
-            estimated_density = density_slope * self.electrode_area * 1e-7  # Convert units
+            estimated_density = density_slope * (self.electrode_area * 1e4) * 1e-7  # Convert units (electrode_area is in m²)
             self.current_biofilm_props['density'] = max(0.5, min(2.0, estimated_density))
         
         # Update practical sensitivity from mass-frequency relationship
@@ -617,7 +617,7 @@ class QCMModel:
             sensitivity_slope = np.polyfit(masses, frequency_shifts, 1)[0]
             # Update Sauerbrey sensitivity if significantly different
             if abs(sensitivity_slope / self.sauerbrey.practical_sensitivity - 1) > 0.2:
-                self.sauerbrey.practical_sensitivity = abs(sensitivity_slope) * self.electrode_area
+                self.sauerbrey.practical_sensitivity = abs(sensitivity_slope) * (self.electrode_area * 1e4)  # electrode_area is in m²
         
         print(f"QCM calibration updated: density={self.current_biofilm_props['density']:.2f} g/cm³")
     
@@ -635,7 +635,7 @@ class QCMModel:
         return {
             'crystal_type': self.crystal_type.value,
             'electrode_type': self.electrode_type.value,
-            'electrode_area_cm2': self.electrode_area,
+            'electrode_area_m2': self.electrode_area,
             'fundamental_frequency_Hz': self.fundamental_frequency,
             'current_frequency_Hz': self.current_frequency,
             'current_mass_ng_per_cm2': self.current_mass,

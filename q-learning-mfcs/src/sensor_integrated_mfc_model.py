@@ -198,7 +198,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
             if self.enable_eis:
                 eis_model = EISModel(
                     species=species_map.get(self.species, BacterialSpecies.MIXED),
-                    electrode_area=1e-4,  # 1 cm² per cell
+                    electrode_area=1e-4,  # m² (1 cm² per cell)
                     use_gpu=self.use_gpu
                 )
                 self.eis_models.append(eis_model)
@@ -206,7 +206,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
             # QCM sensor for each cell
             if self.enable_qcm:
                 qcm_model = QCMModel(
-                    electrode_area=0.196,  # 5mm diameter
+                    electrode_area=0.196e-4,  # m² (5mm diameter, 0.196 cm²)
                     use_gpu=self.use_gpu
                 )
                 qcm_model.set_biofilm_species(self.species)
@@ -530,10 +530,10 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
                                           biofilm_state['biomass_density'])
                 
                 # Estimate mass from biomass and thickness
-                electrode_area = 0.196  # cm²
-                thickness_cm = thickness * 1e-4
-                volume_cm3 = electrode_area * thickness_cm
-                mass_ug = biomass * volume_cm3 * 1e3  # g/L to μg
+                electrode_area_m2 = self.qcm_models[cell_index].electrode_area  # m² (get from QCM model)
+                thickness_m = thickness * 1e-6  # μm to m
+                volume_m3 = electrode_area_m2 * thickness_m
+                mass_ug = biomass * volume_m3 * 1e9  # g/L to μg (1e3 L/m³ * 1e6 μg/g)
                 
                 qcm_measurement = self.qcm_models[cell_index].simulate_measurement(
                     biofilm_mass=mass_ug,

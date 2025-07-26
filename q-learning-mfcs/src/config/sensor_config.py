@@ -111,7 +111,7 @@ class QCMConfig:
     dissipation_range: Tuple[float, float] = (0.0, 0.01)  # Dissipation factor
     
     # Electrode configuration
-    electrode_area: float = 0.196  # cm² (5mm diameter electrode)
+    electrode_area: float = 0.196e-4  # m² (5mm diameter electrode, 0.196 cm²)
     
     # Measurement noise parameters
     frequency_noise: float = 0.1  # Hz, frequency measurement noise
