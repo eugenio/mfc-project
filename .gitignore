@@ -143,6 +143,9 @@ texput.log
 # JAX build directory
 jax/
 
+# Export directories
+export/
+
 #.claude directory
 .claude/*
 .claude/settings.json
