@@ -59,3 +59,5 @@ pymupdf = "*"
 [pypi-dependencies]
 detect-secrets = ">=1.5.0, <2"
 python-gitlab = ">=4.0.0"
+ray = {version = ">=2.0.0", extras = ["tune"]}
+scikit-optimize = ">=0.9.0"
