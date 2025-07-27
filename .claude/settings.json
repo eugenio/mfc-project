@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pixi run pre-tool-hook"
+            "command": "pixi run /home/uge/mfc-project/.claude/hooks/pre_tool_use.py"
           },
           {
             "type": "command",
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pixi run post-tool-hook"
+            "command": "pixi run /home/uge/mfc-project/.claude/hooks/post_tool_use.py"
           },
           {
             "type": "command",
@@ -100,48 +100,5 @@
         ]
       }
     ]
-  },
-  "edit_thresholds": {
-    "max_lines_added": 25,
-    "max_lines_removed": 25,
-    "max_total_changes": 50,
-    "enabled": true,
-    "auto_commit": true,
-    "commit_message_prefix": "Auto-commit: Large file changes detected - "
-  },
-  "file_creation_thresholds": {
-    "max_new_file_lines": 20,
-    "max_files_per_session": 5,
-    "enabled": true,
-    "auto_commit": true,
-    "commit_message_prefix": "Auto-commit: New file created - ",
-    "exclude_patterns": [
-      "*.tmp",
-      "*.log",
-      "*.cache",
-      ".DS_Store",
-      "Thumbs.db"
-    ],
-    "include_patterns": [
-      "*.py",
-      "*.md",
-      "*.yaml",
-      "*.yml",
-      "*.json",
-      "*.toml",
-      "*.txt"
-    ]
-  },
-  "gitlab": {
-    "enabled": true,
-    "url": "https://gitlab-runner.tail301d0a.ts.net",
-    "project_id": "4",
-    "default_branch": "main",
-    "features": {
-      "auto_issue_on_hook_failure": true,
-      "auto_mr_on_multiple_commits": true,
-      "commit_comments": false,
-      "commit_threshold_for_mr": 5
-    }
   }
 }
