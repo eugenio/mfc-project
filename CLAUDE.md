@@ -1,6 +1,0 @@
-- Before running any Mojo file, run `mojo format` to the file in question, and fix obvious errors
-- From now stage one file per commit, and if there's any modification of any file done by you or me with more than 50 lines, do a commit for each 50 lines of modifications
-- From now on write all the commands you want to execute, in a way that all the commands are visible in the prompt area, and if a command is blocked by the hooks you have to stop, print the command in full and ask me to review it. If I think it's ok, I'll execute the command in another terminal and then I'll tell you to continue
-- Do not use hardcoded values unless it's pysical or biological constants derived from literature
-- If you write in a file metadata "created_at" you should add today's date. If you modify an existing file metadata use the tag "last_modified_at"
-- Use parametrizable variables for all the constant, initialization values and any other variable that might be useful to be set by the user. Use literature-derived values for physical, biological, and engineering constants and default initialization values
