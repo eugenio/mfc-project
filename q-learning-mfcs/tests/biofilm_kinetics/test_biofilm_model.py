@@ -11,10 +11,8 @@ Tests cover:
 """
 
 import unittest
-import numpy as np
 import sys
 import os
-import tempfile
 import warnings
 
 # Suppress matplotlib backend warnings

@@ -6,7 +6,6 @@ Test suite for GPU acceleration functionality with CPU fallback testing.
 import unittest
 import numpy as np
 import sys
-import os
 from pathlib import Path
 
 # Add the src directory to the path

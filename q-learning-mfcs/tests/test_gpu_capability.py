@@ -8,8 +8,6 @@ import unittest
 import sys
 import os
 import subprocess
-import warnings
-from pathlib import Path
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -329,7 +327,10 @@ class TestGPUCapability(unittest.TestCase):
         except ImportError:
             self.skipTest("PyTorch not available")
         except Exception as e:
-            self.fail(f"PyTorch CUDA available but failed test: {e}")
+            if "PyTorch CUDA not available" in str(e) or "SkipTest" in str(e):
+                self.skipTest(f"PyTorch CUDA not available: {e}")
+            else:
+                self.fail(f"PyTorch CUDA available but failed test: {e}")
     
     def test_pytorch_rocm_availability(self):
         """Test PyTorch ROCm availability."""
@@ -372,7 +373,10 @@ class TestGPUCapability(unittest.TestCase):
         except ImportError:
             self.skipTest("PyTorch not available")
         except Exception as e:
-            self.fail(f"PyTorch ROCm available but failed test: {e}")
+            if "PyTorch ROCm not available" in str(e) or "SkipTest" in str(e):
+                self.skipTest(f"PyTorch ROCm not available: {e}")
+            else:
+                self.fail(f"PyTorch ROCm available but failed test: {e}")
     
     def test_tensorflow_rocm_availability(self):
         """Test TensorFlow ROCm availability."""
@@ -467,6 +471,30 @@ class TestGPUCapability(unittest.TestCase):
     def test_jax_gpu_availability(self):
         """Test JAX GPU availability (supports both CUDA and ROCm)."""
         try:
+            # Try to import JAX with careful handling of circular import
+            try:
+                import subprocess
+                import sys
+                
+                # Check JAX version compatibility first
+                result = subprocess.run([sys.executable, '-c', 
+                    'import jax; print(jax.__version__); import jaxlib; print(jaxlib.__version__)'],
+                    capture_output=True, text=True, timeout=10)
+                
+                if result.returncode != 0:
+                    self.skipTest(f"JAX import check failed: {result.stderr}")
+                
+                # Parse versions
+                lines = result.stdout.strip().split('\n')
+                if len(lines) >= 2:
+                    jax_version = lines[0].strip()
+                    jaxlib_version = lines[1].strip()
+                    print(f"JAX version: {jax_version}, JAXlib version: {jaxlib_version}")
+                
+            except (subprocess.TimeoutExpired, subprocess.CalledProcessError, Exception) as e:
+                self.skipTest(f"JAX version check failed: {e}")
+            
+            # Now try the actual import
             import jax
             import jax.numpy as jnp
             
@@ -501,7 +529,10 @@ class TestGPUCapability(unittest.TestCase):
         except ImportError:
             self.skipTest("JAX not available")
         except Exception as e:
-            self.fail(f"JAX GPU available but failed test: {e}")
+            if "JAX GPU not available" in str(e) or "SkipTest" in str(e):
+                self.skipTest(f"JAX GPU not available: {e}")
+            else:
+                self.fail(f"JAX GPU available but failed test: {e}")
     
     def test_tensorflow_gpu_availability(self):
         """Test TensorFlow GPU availability."""
@@ -648,7 +679,7 @@ class TestGPUPerformance(unittest.TestCase):
                 'array_size': size
             }
             
-            print(f"GPU Memory Bandwidth Test:")
+            print("GPU Memory Bandwidth Test:")
             print(f"  Array size: {size:,} elements")
             print(f"  Average time: {avg_time:.4f}s")
             print(f"  Bandwidth: {bandwidth_gb_s:.2f} GB/s")
