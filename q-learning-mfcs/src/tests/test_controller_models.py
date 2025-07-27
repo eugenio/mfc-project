@@ -35,7 +35,8 @@ from controller_models.hardware_abstraction import (
 )
 from controller_models.controller_cost_analysis import (
     ControllerCostAnalyzer, ControllerSystemSpecs, PowerRequirement,
-
+    CostItem, CostCategory, create_standard_controller_configurations
+)
 
 
 class TestModelInferenceEngine:
