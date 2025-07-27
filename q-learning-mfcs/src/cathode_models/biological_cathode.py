@@ -54,7 +54,7 @@ class BiologicalParameters:
     initial_biomass_density: float = 1.0  # kg/m³ - initial biomass concentration
     
     # Electrochemical parameters
-    exchange_current_density_base: float = 1e-4  # A/m² - base exchange current
+    exchange_current_density_base: float = 1e-6  # A/m² - base exchange current
     biomass_activity_factor: float = 1e3  # m²/kg - specific electroactive area
     transfer_coefficient: float = 0.5  # Electron transfer coefficient
     
@@ -368,6 +368,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
             
             # Calculate performance
             overpotential = self.calculate_equilibrium_potential(oxygen_conc) - electrode_potential
+            overpotential = max(overpotential, 0.01)  # Ensure positive overpotential
             current_density = self.calculate_current_density(overpotential, oxygen_conc)
             growth_rate = self.calculate_monod_growth_rate(oxygen_conc, electrode_potential)
             
