@@ -467,6 +467,14 @@ class TestGPUCapability(unittest.TestCase):
     def test_jax_gpu_availability(self):
         """Test JAX GPU availability (supports both CUDA and ROCm)."""
         try:
+            # Import jax with error handling for circular import issue
+            import sys
+            if 'jax' in sys.modules:
+                # Clear jax from modules to avoid circular import
+                del sys.modules['jax']
+                if 'jax.version' in sys.modules:
+                    del sys.modules['jax.version']
+            
             import jax
             import jax.numpy as jnp
             
