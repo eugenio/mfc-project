@@ -115,5 +115,13 @@
       "auto_mr_on_multiple_commits": false,
       "commit_threshold_for_mr": 5
     }
+  },
+  "chunked_file_creation": {
+    "enabled": true,
+    "max_new_file_lines": 50,
+    "max_lines_per_chunk": 25,
+    "min_segments_for_chunking": 3,
+    "commit_message_prefix": "Auto-commit: ",
+    "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥", ".java", ".cpp", ".c", ".h"]
   }
 }

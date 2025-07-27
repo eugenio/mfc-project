@@ -1039,7 +1039,16 @@ def main():
             print("BLOCKED: Edit operation exceeds configured thresholds", file=sys.stderr)
             sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
         
-        # Check file creation thresholds for new file creation
+        # Check for chunked file creation (enhanced system)
+        try:
+            from enhanced_file_chunking import check_chunked_file_creation
+            if check_chunked_file_creation(tool_name, tool_input):
+                print("CHUNKED CREATION: Large file created in chunks, blocking original Write operation", file=sys.stderr)
+                sys.exit(2)  # Block original operation since chunked creation already completed
+        except ImportError:
+            print("DEBUG: Enhanced file chunking not available, using standard approach", file=sys.stderr)
+        
+        # Check file creation thresholds for new file creation (fallback)
         if check_file_creation_thresholds(tool_name, tool_input):
             print("FILE CREATION: Threshold exceeded, auto-commit triggered", file=sys.stderr)
             # Note: We don't block file creation, just trigger auto-commit
