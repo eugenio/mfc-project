@@ -377,10 +377,12 @@ class AnionExchangeMembrane(BaseMembraneModel):
         mitigated_rate = (base_carbonation_rate * carbonation_rate_factor * 
                          (1 - pulse_mitigation))
         
-        # Performance retention
+        # Performance retention (fraction of initial performance after time constant)
         carbonation_time_constant = 100  # hours to 63% carbonation
-        performance_retention = jnp.exp(-mitigated_rate * carbonation_time_constant / 
-                                      self.aem_params.co2_absorption_rate)
+        # Normalize by reference absorption rate to get dimensionless exponent
+        ref_absorption_rate = 1e-8  # mol/m²/s/Pa - reference rate
+        normalized_rate = mitigated_rate / ref_absorption_rate
+        performance_retention = jnp.exp(-normalized_rate * 0.01)  # Small decay factor
         
         return {
             'effective_co2_ppm': float(effective_co2_ppm),
@@ -464,10 +466,12 @@ class AnionExchangeMembrane(BaseMembraneModel):
         deg_rate = self.calculate_degradation_rate(average_temperature, average_ph, 5000)
         self.cumulative_degradation = 1 - jnp.exp(-deg_rate * operating_hours)
         
-        # Conductivity retention
+        # Conductivity retention (degradation should reduce conductivity)
         initial_cond = self.aem_params.hydroxide_conductivity_ref * 100  # S/m
         current_cond = self.calculate_ionic_conductivity()
-        conductivity_retention = current_cond / initial_cond
+        # Apply degradation effect to ensure retention is <= 1.0
+        degradation_factor = 1.0 - self.cumulative_degradation
+        conductivity_retention = min(1.0, (current_cond / initial_cond) * degradation_factor)
         
         # Estimate remaining lifetime (to 50% conductivity)
         if deg_rate > 0:

@@ -127,8 +127,12 @@ class FoulingModel:
             # Anodic conditions might inhibit
             current_factor = 1.0 - 0.05 * jnp.tanh(abs(current_density) / 1000)
         
-        # Growth term
-        growth_term = growth_rate * current_factor * self.biofilm_thickness
+        # Growth term (include nucleation for initial growth)
+        if self.biofilm_thickness < 1e-6:  # Less than 1 μm, add nucleation
+            nucleation_rate = 1e-7  # m/h - initial nucleation rate
+            growth_term = nucleation_rate + growth_rate * current_factor * self.biofilm_thickness
+        else:
+            growth_term = growth_rate * current_factor * self.biofilm_thickness
         
         # Detachment term
         detachment_term = self.params.biofilm_detachment_rate * self.biofilm_thickness
