@@ -5,7 +5,6 @@ Test runner for the MFC Q-Learning project path output tests.
 
 import unittest
 import sys
-import os
 from pathlib import Path
 
 # Add the tests directory and src directory to the path

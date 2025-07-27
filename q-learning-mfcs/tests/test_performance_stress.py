@@ -11,7 +11,6 @@ import os
 import time
 import psutil
 import warnings
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import threading
 
 # Suppress warnings for clean test output

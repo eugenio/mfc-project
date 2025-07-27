@@ -8,10 +8,8 @@ import unittest
 import numpy as np
 import sys
 import os
-import tempfile
 import warnings
 import time
-from unittest.mock import patch, MagicMock
 
 # Suppress warnings for clean test output
 warnings.filterwarnings('ignore', category=UserWarning)

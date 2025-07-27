@@ -14,7 +14,6 @@ import unittest
 import numpy as np
 import sys
 import os
-import tempfile
 import warnings
 
 # Suppress matplotlib backend warnings
@@ -661,7 +660,6 @@ class TestIntegration(unittest.TestCase):
         
         # Create dummy measurements
         from sensing_models.eis_model import EISMeasurement
-        from sensing_models.qcm_model import QCMMeasurement
         
         eis_measurement = EISMeasurement(
             frequency=1000, impedance_magnitude=1500, impedance_phase=0.5,

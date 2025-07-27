@@ -4,9 +4,6 @@ Tests EIS, QCM, and sensor fusion configuration validation.
 """
 
 import pytest
-import numpy as np
-from enum import Enum
-from typing import Dict, Tuple
 
 # Import the configuration classes to test
 import sys
