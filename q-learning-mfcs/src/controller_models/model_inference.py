@@ -165,7 +165,7 @@ class ModelInferenceEngine:
                         # Try to evaluate as tuple
                         state = eval(state_key) if isinstance(state_key, str) else state_key
                         q_table[state] = action_values
-                    except:
+                    except (ValueError, SyntaxError, NameError):
                         # Fallback to string key
                         q_table[state_key] = action_values
                 return q_table

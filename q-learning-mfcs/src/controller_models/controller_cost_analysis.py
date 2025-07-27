@@ -6,16 +6,12 @@ for the complete controller system including hardware, software, development,
 and operational costs.
 """
 
-import numpy as np
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, Any
 from enum import Enum
 import logging
 
-from .model_inference import ModelInferenceEngine, InferenceSpecs
-from .control_electronics import ControlElectronics
-from .real_time_controller import RealTimeController
-from .hardware_abstraction import HardwareAbstractionLayer
+from .model_inference import InferenceSpecs, ModelFormat
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +61,6 @@ class ControllerSystemSpecs:
     hal_power_w: float
     communication_power_w: float
     cooling_power_w: float
-    redundancy_factor: float = 1.2  # 20% power margin
     
     # Development specifications
     development_person_months: float
@@ -77,6 +72,9 @@ class ControllerSystemSpecs:
     expected_lifetime_years: float
     maintenance_interval_months: float
     software_update_frequency_months: float
+    
+    # Optional specifications with defaults
+    redundancy_factor: float = 1.2  # 20% power margin
 
 
 class ControllerCostAnalyzer:
@@ -606,7 +604,7 @@ def create_standard_controller_configurations() -> Dict[str, ControllerCostAnaly
     
     # High-performance configuration
     hp_inference_specs = InferenceSpecs(
-        model_format=None,  # Placeholder
+        model_format=ModelFormat.NUMPY,  # Use actual enum value
         max_inference_time_ms=1.0,
         memory_limit_mb=512.0,
         cache_size=1000,
@@ -640,7 +638,7 @@ def create_standard_controller_configurations() -> Dict[str, ControllerCostAnaly
     
     # Low-cost configuration
     lc_inference_specs = InferenceSpecs(
-        model_format=None,  # Placeholder
+        model_format=ModelFormat.JSON,  # Use actual enum value
         max_inference_time_ms=10.0,
         memory_limit_mb=64.0,
         cache_size=100,
@@ -696,7 +694,7 @@ if __name__ == "__main__":
     # Generate cost analysis
     analysis = hp_analyzer.calculate_cost_analysis(analysis_years=10)
     
-    print(f"High-Performance Configuration:")
+    print("High-Performance Configuration:")
     print(f"Total Initial Cost: ${analysis['total_initial_cost']:,.2f}")
     print(f"Annual Operating Cost: ${analysis['total_recurring_cost_per_year']:,.2f}")
     print(f"10-Year Total Cost: ${analysis['total_cost_of_ownership']:,.2f}")
@@ -707,7 +705,7 @@ if __name__ == "__main__":
     lc_analyzer = configurations['low_cost']
     lc_analysis = lc_analyzer.calculate_cost_analysis(analysis_years=10)
     
-    print(f"Low-Cost Configuration:")
+    print("Low-Cost Configuration:")
     print(f"Total Initial Cost: ${lc_analysis['total_initial_cost']:,.2f}")
     print(f"Annual Operating Cost: ${lc_analysis['total_recurring_cost_per_year']:,.2f}")
     print(f"10-Year Total Cost: ${lc_analysis['total_cost_of_ownership']:,.2f}")

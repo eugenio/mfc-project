@@ -10,7 +10,7 @@ import numpy as np
 import time
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Any, Protocol, Union
+from typing import Dict, List, Tuple, Optional, Any, Protocol
 from enum import Enum
 from abc import ABC, abstractmethod
 
@@ -726,32 +726,32 @@ if __name__ == "__main__":
     
     # Get system status
     status = hal.control_interface.get_system_status()
-    print(f"\nSystem Status:")
+    print("\nSystem Status:")
     print(f"Total devices: {status['device_count']}")
     print(f"System health: {status['system_health']:.1%}")
     print(f"Status summary: {status['status_summary']}")
     
     # Test sensor readings
-    print(f"\nSensor Readings:")
+    print("\nSensor Readings:")
     ph_value = hal.control_interface.read_sensor('pH_001')
     temp_value = hal.control_interface.read_sensor('TEMP_001')
     print(f"pH: {ph_value:.2f}")
     print(f"Temperature: {temp_value:.1f}°C")
     
     # Test actuator control
-    print(f"\nActuator Control:")
+    print("\nActuator Control:")
     success = hal.control_interface.write_actuator('PUMP_001', 50.0)
     print(f"Pump set to 50%: {success}")
     
     # Test power management
-    print(f"\nPower Management:")
+    print("\nPower Management:")
     power_success = hal.control_interface.set_power_output('PSU_001', 12.0, 2.0)
     power_status = hal.control_interface.read_power_status('PSU_001')
     print(f"Power set to 12V, 2A: {power_success}")
     print(f"Power status: {power_status}")
     
     # Run diagnostics
-    print(f"\nSystem Diagnostics:")
+    print("\nSystem Diagnostics:")
     diagnostics = hal.control_interface.run_diagnostics()
     print(f"System health: {diagnostics['performance']['system_health']:.1%}")
     if diagnostics['recommendations']:
@@ -762,6 +762,6 @@ if __name__ == "__main__":
         print("No recommendations - system operating normally")
     
     # Test calibration
-    print(f"\nSensor Calibration:")
+    print("\nSensor Calibration:")
     cal_results = hal.control_interface.calibrate_sensors('sensors')
     print(f"Calibration results: {cal_results}")
