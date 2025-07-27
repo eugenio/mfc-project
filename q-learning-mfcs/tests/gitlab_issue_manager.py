@@ -603,6 +603,56 @@ def main():
                 labels_str = ', '.join(issue['labels'][:3])  # Show first 3 labels
                 print(f"  #{issue['iid']}: {issue['title'][:60]}... [{labels_str}]")
         
+        elif args.close_issue:
+            # Close specific issue
+            issue_manager.close_issue(args.close_issue, "Issue resolved via automated testing.")
+        
+        elif args.get_issue:
+            # Get issue details
+            issue_details = issue_manager.get_issue_details(args.get_issue)
+            if issue_details:
+                print(f"\n📋 Issue #{issue_details['iid']}: {issue_details['title']}")
+                print(f"🔗 URL: {issue_details['web_url']}")
+                print(f"📊 State: {issue_details['state']}")
+                print(f"🏷️ Labels: {', '.join(issue_details['labels'])}")
+                print(f"👤 Author: {issue_details['author']['name']} (@{issue_details['author']['username']})")
+                print(f"📅 Created: {issue_details['created_at']}")
+                print(f"📅 Updated: {issue_details['updated_at']}")
+                
+                if issue_details['assignees']:
+                    assignees = [f"{a['name']} (@{a['username']})" for a in issue_details['assignees']]
+                    print(f"👥 Assignees: {', '.join(assignees)}")
+                
+                if issue_details['milestone']:
+                    print(f"🎯 Milestone: {issue_details['milestone']['title']}")
+                
+                print(f"\n📝 Description:")
+                print("=" * 80)
+                print(issue_details['description'])
+                print("=" * 80)
+                
+                if issue_details['comments']:
+                    print(f"\n💬 Comments ({len(issue_details['comments'])}):")
+                    print("-" * 80)
+                    for i, comment in enumerate(issue_details['comments'], 1):
+                        if not comment['system']:  # Skip system comments
+                            print(f"\n#{i} {comment['author']} - {comment['created_at']}")
+                            print(f"{comment['body']}")
+                            if i < len(issue_details['comments']):
+                                print("-" * 40)
+                    print("-" * 80)
+                
+                print(f"\n📊 Metadata:")
+                print(f"  - Comments: {issue_details['user_notes_count']}")
+                print(f"  - Upvotes: {issue_details['upvotes']}")
+                print(f"  - Downvotes: {issue_details['downvotes']}")
+                if issue_details['has_tasks']:
+                    print(f"  - Task Status: {issue_details['task_status']}")
+                if issue_details['confidential']:
+                    print(f"  - Confidential: Yes")
+            else:
+                print(f"❌ Issue #{args.get_issue} not found or could not be retrieved")
+        
 
             # Interactive issue creation
             print("Creating new issue interactively...")
