@@ -8,13 +8,10 @@ Useful for pH gradient systems and specific electrosynthesis applications.
 Created: 2025-07-27
 """
 
-import jax.numpy as jnp
-from typing import Optional, Dict, Any
+from typing import Optional
 from dataclasses import dataclass
 
 from .base_membrane import BaseMembraneModel, MembraneParameters, IonType
-from .proton_exchange import PEMParameters
-from .anion_exchange import AEMParameters
 
 
 @dataclass

@@ -452,14 +452,9 @@ class ProtonExchangeMembrane(BaseMembraneModel):
         material_cost = self.pem_params.material_cost_per_m2 * area_m2
         
         # Performance metrics at standard conditions
-        conductivity = self.calculate_ionic_conductivity(temperature=353.0)  # 80°C
-        resistance = self.calculate_membrane_resistance(conductivity)
-        
-        # Power loss at 1 A/cm² (typical high performance)
-        current_density = 10000  # A/m²
-        power_loss = current_density**2 * resistance * area_m2
         
         # Cost per unit power (at 0.6V cell voltage)
+        current_density = 10000  # A/m² (1 A/cm²)
         cell_power = 0.6 * current_density * area_m2  # W
         cost_per_kW = material_cost / (cell_power / 1000)
         
