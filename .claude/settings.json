@@ -100,5 +100,20 @@
         ]
       }
     ]
+  },
+  "gitlab": {
+    "enabled": true,
+    "url": "https://gitlab.com",
+    "project_id": null,
+    "default_branch": "main",
+    "features": {
+      "auto_issue_on_test_failure": true,
+      "auto_issue_on_build_failure": true,
+      "auto_issue_on_performance_regression": true,
+      "auto_issue_on_documentation_gap": true,
+      "auto_issue_on_hook_failure": true,
+      "auto_mr_on_multiple_commits": false,
+      "commit_threshold_for_mr": 5
+    }
   }
 }
