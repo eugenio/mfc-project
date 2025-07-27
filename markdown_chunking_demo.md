@@ -74,3 +74,57 @@ def clean_dataset(df, strategy='comprehensive'):
     
     return cleaned_df
 ```
+## Exploratory Data Analysis
+
+EDA reveals patterns, relationships, and insights that guide modeling decisions and feature engineering.
+
+### Statistical Analysis
+
+```python
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def comprehensive_eda(df, target_column=None):
+    """
+    Perform comprehensive exploratory data analysis
+    """
+    # Basic statistics
+    print("Dataset Shape:", df.shape)
+    print("\nBasic Statistics:")
+    print(df.describe())
+    
+    # Correlation analysis
+    if len(df.select_dtypes(include=[np.number]).columns) > 1:
+        plt.figure(figsize=(12, 8))
+        correlation_matrix = df.corr()
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+        plt.title('Feature Correlation Matrix')
+        plt.show()
+    
+    # Distribution plots
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
+    n_cols = min(4, len(numeric_columns))
+    n_rows = (len(numeric_columns) + n_cols - 1) // n_cols
+    
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 4*n_rows))
+    axes = axes.flatten() if n_rows > 1 else [axes]
+    
+    for i, col in enumerate(numeric_columns):
+        if i < len(axes):
+            df[col].hist(bins=30, ax=axes[i])
+            axes[i].set_title(f'Distribution of {col}')
+    
+    plt.tight_layout()
+    plt.show()
+```
+
+### Feature Relationships
+
+Understanding relationships between features and the target variable guides feature selection and engineering.
+
+| Analysis Type | Purpose | Method |
+|---------------|---------|--------|
+| Correlation | Linear relationships | Pearson correlation |
+| Mutual Information | Non-linear dependencies | Information theory |
+| Statistical Tests | Significance testing | Chi-square, ANOVA |
+| Visualization | Pattern discovery | Scatter plots, boxplots |
