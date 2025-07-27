@@ -252,7 +252,42 @@ class GitLabIssueManager:
                 'title': issue.title,
                 'description': issue.description,
                 'state': issue.state,
-
+                'labels': issue.labels,
+                'assignees': assignees,
+                'author': {
+                    'id': issue.author.get('id') if issue.author else None,
+                    'name': issue.author.get('name') if issue.author else 'Unknown',
+                    'username': issue.author.get('username') if issue.author else 'unknown'
+                },
+                'created_at': issue.created_at,
+                'updated_at': issue.updated_at,
+                'closed_at': getattr(issue, 'closed_at', None),
+                'web_url': issue.web_url,
+                'milestone': {
+                    'id': issue.milestone.get('id'),
+                    'title': issue.milestone.get('title'),
+                    'description': issue.milestone.get('description')
+                } if issue.milestone else None,
+                'comments': comments,
+                'user_notes_count': issue.user_notes_count,
+                'upvotes': getattr(issue, 'upvotes', 0),
+                'downvotes': getattr(issue, 'downvotes', 0),
+                'merge_requests_count': getattr(issue, 'merge_requests_count', 0),
+                'has_tasks': getattr(issue, 'has_tasks', False),
+                'task_status': getattr(issue, 'task_status', None),
+                'confidential': getattr(issue, 'confidential', False),
+                'discussion_locked': getattr(issue, 'discussion_locked', False),
+                'issue_type': getattr(issue, 'issue_type', 'issue'),
+                'severity': getattr(issue, 'severity', None),
+                'priority': getattr(issue, 'priority', None)
+            }
+            
+        except gitlab.exceptions.GitlabGetError as e:
+            print(f"❌ Issue #{issue_iid} not found: {e}")
+            return None
+        except Exception as e:
+            print(f"❌ Failed to get issue details for #{issue_iid}: {e}")
+            return None
     
     def _prepare_labels(self, issue_data: IssueData) -> List[str]:
         """Prepare labels for the issue."""
