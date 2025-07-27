@@ -8,6 +8,11 @@ version = "0.1.0"
 [tasks]
 pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
 post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
+detect-gpu = "python scripts/detect_gpu.py"
+install-gpu-deps = "python scripts/install_gpu_deps.py"
+
+[feature.amd.activation]
+env = { LLVM_PATH = "/opt/rocm/llvm" }
 
 [dependencies]
 scipy = ">=1.16.0,<2"
@@ -31,10 +36,9 @@ nox = ">=2025.5.1,<2026"
 pyyaml = ">=6.0.2,<7"
 types-pyyaml = ">=6.0.12.20250516,<7"
 yamllint = ">=1.37.1,<2"
-jax = ">=0.6.2"
+
 streamlit = ">=1.47.1,<2"
 plotly = ">=6.2.0,<7"
-jaxlib = ">=0.6.2"
 
 [feature.dev.dependencies]
 pytest = ">=7.0.0"
@@ -61,15 +65,20 @@ detect-secrets = ">=1.5.0, <2"
 python-gitlab = ">=4.0.0"
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
-jax = { version = "*", extras = ["rocm"] }
-jaxlib = "*"
+jax = {version = ">=0.4.20,<=0.4.31", extras = ["rocm"]}
+jaxlib = ">=0.4.20,<=0.4.31"
+
+[feature.amd.pypi-dependencies]
+# ROCm-specific JAX installation
+jax = {version = ">=0.4.20,<=0.4.31", extras = ["rocm"]}
+jaxlib = ">=0.4.20,<=0.4.31"
 
 [feature.nvidia.pypi-dependencies]
 # NVIDIA CUDA support packages
-jax = {version = ">=0.4.0", extras = ["cuda12"]}
-jaxlib = {version = ">=0.4.0", extras = ["cuda12"]}
+jax = {version = ">=0.4.20,<=0.4.31", extras = ["cuda12"]}
+jaxlib = ">=0.4.20,<=0.4.31"
 cupy-cuda12x = ">=12.0.0"
-torch = {version = ">=2.0.0", extras = ["cu121"]}
+torch = ">=2.0.0"
 nvidia-ml-py3 = ">=7.352.0"
 
 [feature.nvidia.dependencies]
@@ -80,4 +89,5 @@ cudnn = ">=8.0"
 [environments]
 dev = ["dev"]
 nvidia = ["nvidia"]
-amd = []
+amd = ["amd"]
+rocm = ["amd"]

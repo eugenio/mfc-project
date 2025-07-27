@@ -208,14 +208,15 @@ class PlatinumCathodeModel(BaseCathodeModel):
         # Overall limiting current (harmonic mean)
         i_limiting = (1.0 / (1.0/boundary_layer_limiting + 1.0/catalyst_layer_limiting)) ** -1
         
-        # Only apply mass transport limitation if kinetic current approaches limiting current
-        if i_kinetic > 0.1 * i_limiting:
-            # Combined kinetic and mass transport (using resistor analogy)
-            # 1/i_total = 1/i_kinetic + 1/i_limiting
-            current_density = (i_kinetic * i_limiting) / (i_kinetic + i_limiting)
-        else:
-            # At low currents, kinetics dominates
+        # Apply mass transport limitation when kinetic current approaches limiting current
+        # Use the minimum of kinetic current and limiting current with smooth transition
+        if i_kinetic < i_limiting:
+            # Kinetics dominates - use kinetic current directly
             current_density = i_kinetic
+        else:
+            # Mass transport limitation becomes significant
+            # Use parallel resistance model: 1/i_total = 1/i_kinetic + 1/i_limiting
+            current_density = (i_kinetic * i_limiting) / (i_kinetic + i_limiting)
         
         return current_density
     
