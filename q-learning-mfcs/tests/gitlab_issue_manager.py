@@ -653,7 +653,7 @@ def main():
             else:
                 print(f"❌ Issue #{args.get_issue} not found or could not be retrieved")
         
-
+        elif args.create_issue:
             # Interactive issue creation
             print("Creating new issue interactively...")
             title = input("Issue title: ")
