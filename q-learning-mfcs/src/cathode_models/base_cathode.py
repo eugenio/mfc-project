@@ -72,14 +72,21 @@ class BaseCathodeModel(ABC):
         if ph is None:
             ph = self.params.ph
         
-        # Standard potential for O2/H2O at pH=0
-        E0_O2_H2O = 1.229  # V vs SHE
+        # Standard potential for O2/H2O at pH=0 and 25°C
+        E0_O2_H2O_298K = 1.229  # V vs SHE at 298.15 K
         
-        # Nernst equation: E = E0 + (RT/nF) * ln(C_O2 * [H+]^4)
-        # At pH != 0: E = E0 - 0.059*pH + (RT/4F)*ln(C_O2/C_O2_ref)
+        # Temperature dependency of standard potential (literature: ~-0.8 mV/K)
+        # ΔE0/ΔT ≈ -8.5e-4 V/K for O2/H2O reaction
+        dE0_dT = -8.5e-4  # V/K
+        temp_correction = dE0_dT * (self.temperature_K - 298.15)
+        E0_O2_H2O = E0_O2_H2O_298K + temp_correction
+        
+        # Nernst equation: E = E0(T) + (RT/nF) * ln(C_O2 * [H+]^4)
+        # At pH != 0: E = E0(T) - (RT/F)*ln(10)*pH + (RT/4F)*ln(C_O2/C_O2_ref)
         
         RT_over_4F = self.params.gas_constant * self.temperature_K / (4.0 * self.params.faraday_constant)
-        ph_correction = -0.059 * ph  # V per pH unit
+        RT_over_F = self.params.gas_constant * self.temperature_K / self.params.faraday_constant
+        ph_correction = -RT_over_F * jnp.log(10.0) * ph  # Temperature-dependent pH correction
         concentration_term = RT_over_4F * jnp.log(oxygen_conc / self.params.oxygen_reference_conc)
         
         equilibrium_potential = E0_O2_H2O + ph_correction + concentration_term

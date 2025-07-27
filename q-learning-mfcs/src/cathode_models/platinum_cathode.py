@@ -158,7 +158,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
             return 0.0
         
         # Concentration ratio effect
-        concentration_ratio = jnp.maximum(oxygen_conc / self.params.oxygen_reference_conc, 0.01)
+        concentration_ratio = oxygen_conc / self.params.oxygen_reference_conc
         
         # Calculate kinetic current density
         if overpotential <= self.overpotential_transition:
@@ -188,8 +188,25 @@ class PlatinumCathodeModel(BaseCathodeModel):
                 concentration_ratio=1.0
             )
         
-        # Apply mass transport limitation only if significant
-        i_limiting = self.limiting_current_density * concentration_ratio
+        # Calculate dynamic limiting current based on actual oxygen concentration
+        n_electrons = 4.0
+        F = self.params.faraday_constant
+        
+        # Dynamic limiting current from diffusion
+        boundary_layer_limiting = (n_electrons * F * 
+                                 self.pt_params.oxygen_mass_transfer_coeff * 
+                                 oxygen_conc)
+        
+        effective_diffusivity = (self.oxygen_diffusion_coeff * 
+                               self.pt_params.porosity / 
+                               self.pt_params.tortuosity)
+        
+        catalyst_layer_limiting = (n_electrons * F * effective_diffusivity * 
+                                 oxygen_conc / 
+                                 self.pt_params.catalyst_layer_thickness)
+        
+        # Overall limiting current (harmonic mean)
+        i_limiting = (1.0 / (1.0/boundary_layer_limiting + 1.0/catalyst_layer_limiting)) ** -1
         
         # Only apply mass transport limitation if kinetic current approaches limiting current
         if i_kinetic > 0.1 * i_limiting:
