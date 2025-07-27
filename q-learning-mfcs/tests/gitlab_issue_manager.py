@@ -202,6 +202,56 @@ class GitLabIssueManager:
             print(f"❌ Failed to search issues: {e}")
             return []
     
+    def get_issue_by_title(self, title: str) -> Optional[Dict]:
+        """Get issue by exact title match."""
+        issues = self.search_issues([title])
+        
+        for issue in issues:
+            if issue['title'] == title:
+                return issue
+        
+        return None
+    
+    def get_issue_details(self, issue_iid: int) -> Optional[Dict]:
+        """Get full details of a specific issue including description, comments, and metadata."""
+        try:
+            issue = self.project.issues.get(issue_iid)
+            
+            # Get all notes/comments for the issue
+            notes = issue.notes.list(all=True)
+            comments = []
+            for note in notes:
+                comments.append({
+                    'id': note.id,
+                    'author': note.author.get('name', 'Unknown') if note.author else 'System',
+                    'created_at': note.created_at,
+                    'updated_at': note.updated_at,
+                    'body': note.body,
+                    'system': note.system
+                })
+            
+            # Get assignees if any
+            assignees = []
+            if hasattr(issue, 'assignees') and issue.assignees:
+                for assignee in issue.assignees:
+                    assignees.append({
+                        'id': assignee.get('id'),
+                        'name': assignee.get('name'),
+                        'username': assignee.get('username')
+                    })
+            elif hasattr(issue, 'assignee') and issue.assignee:
+                assignees.append({
+                    'id': issue.assignee.get('id'),
+                    'name': issue.assignee.get('name'),
+                    'username': issue.assignee.get('username')
+                })
+            
+            return {
+                'id': issue.id,
+                'iid': issue.iid,
+                'title': issue.title,
+                'description': issue.description,
+                'state': issue.state,
 
     
     def _prepare_labels(self, issue_data: IssueData) -> List[str]:
