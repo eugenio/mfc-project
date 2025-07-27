@@ -128,3 +128,82 @@ Understanding relationships between features and the target variable guides feat
 | Mutual Information | Non-linear dependencies | Information theory |
 | Statistical Tests | Significance testing | Chi-square, ANOVA |
 | Visualization | Pattern discovery | Scatter plots, boxplots |
+## Feature Engineering
+
+Feature engineering transforms raw data into meaningful representations that improve model performance.
+
+### Automated Feature Engineering
+
+```python
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.feature_selection import SelectKBest, f_classif
+
+class AutoFeatureEngineer:
+    def __init__(self):
+        self.scalers = {}
+        self.encoders = {}
+        self.feature_selector = None
+    
+    def engineer_features(self, df, target_column, k_best=10):
+        """
+        Automated feature engineering pipeline
+        """
+        engineered_df = df.copy()
+        
+        # Separate features and target
+        X = engineered_df.drop(columns=[target_column])
+        y = engineered_df[target_column]
+        
+        # Handle categorical variables
+        categorical_columns = X.select_dtypes(include=['object']).columns
+        for col in categorical_columns:
+            le = LabelEncoder()
+            X[col] = le.fit_transform(X[col].astype(str))
+            self.encoders[col] = le
+        
+        # Scale numerical features
+        numerical_columns = X.select_dtypes(include=[np.number]).columns
+        for col in numerical_columns:
+            scaler = StandardScaler()
+            X[col] = scaler.fit_transform(X[[col]])
+            self.scalers[col] = scaler
+        
+        # Feature selection
+        self.feature_selector = SelectKBest(score_func=f_classif, k=k_best)
+        X_selected = self.feature_selector.fit_transform(X, y)
+        
+        return X_selected, y
+```
+
+### Domain-Specific Features
+
+Create features that capture domain knowledge and business logic specific to your problem.
+
+```python
+def create_time_features(df, datetime_column):
+    """
+    Extract comprehensive time-based features
+    """
+    df[datetime_column] = pd.to_datetime(df[datetime_column])
+    
+    # Extract basic time components
+    df['year'] = df[datetime_column].dt.year
+    df['month'] = df[datetime_column].dt.month
+    df['day'] = df[datetime_column].dt.day
+    df['hour'] = df[datetime_column].dt.hour
+    df['day_of_week'] = df[datetime_column].dt.dayofweek
+    df['day_of_year'] = df[datetime_column].dt.dayofyear
+    df['week_of_year'] = df[datetime_column].dt.isocalendar().week
+    
+    # Create cyclical features
+    df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
+    df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+    df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
+    
+    # Create business logic features
+    df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
+    df['is_business_hour'] = ((df['hour'] >= 9) & (df['hour'] <= 17)).astype(int)
+    
+    return df
+```
