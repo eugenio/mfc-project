@@ -571,6 +571,7 @@ def main():
     parser.add_argument('--create-issue', action='store_true', help='Create a new issue interactively')
     parser.add_argument('--list-issues', action='store_true', help='List open issues')
     parser.add_argument('--close-issue', type=int, help='Close issue by IID')
+    parser.add_argument('--get-issue', type=int, help='Get full details of issue by IID')
     
     args = parser.parse_args()
     
@@ -602,11 +603,7 @@ def main():
                 labels_str = ', '.join(issue['labels'][:3])  # Show first 3 labels
                 print(f"  #{issue['iid']}: {issue['title'][:60]}... [{labels_str}]")
         
-        elif args.close_issue:
-            # Close specific issue
-            issue_manager.close_issue(args.close_issue, "Issue resolved via automated testing.")
-        
-        elif args.create_issue:
+
             # Interactive issue creation
             print("Creating new issue interactively...")
             title = input("Issue title: ")
