@@ -74,17 +74,31 @@ def handle_gitlab_integrations(input_data: dict):
     if features.get("auto_issue_on_test_failure", True) and tool_name == "Bash":
         handle_test_failures(input_data)
     
-    # Handle build failures
+    # Handle build failures using enhanced detection
     if features.get("auto_issue_on_build_failure", True) and tool_name == "Bash":
-        handle_build_failures(input_data)
+        try:
+            from .enhanced_issue_detection import handle_build_failures as enhanced_build_failures
+            enhanced_build_failures(input_data)
+        except ImportError:
+            handle_build_failures(input_data)
     
-    # Handle performance regressions
+    # Handle performance regressions using enhanced detection
     if features.get("auto_issue_on_performance_regression", True) and tool_name == "Bash":
-        handle_performance_analysis(input_data)
+        try:
+            from .enhanced_issue_detection import handle_performance_analysis as enhanced_performance_analysis
+            enhanced_performance_analysis(input_data)
+        except ImportError:
+            # Fallback to basic implementation
+            pass
     
-    # Handle documentation gaps
+    # Handle documentation gaps using enhanced detection
     if features.get("auto_issue_on_documentation_gap", True):
-        handle_documentation_gaps(input_data)
+        try:
+            from .enhanced_issue_detection import handle_documentation_gaps as enhanced_documentation_gaps
+            enhanced_documentation_gaps(input_data)
+        except ImportError:
+            # Fallback to basic implementation
+            pass
 
 def handle_test_failures(input_data: dict):
     """
@@ -545,8 +559,12 @@ def mr_exists_for_branch(branch: str) -> bool:
         )
         
         return len(mrs) > 0
-    
+    except Exception as e:
+        print(f"Failed to check for existing MRs: {e}", file=sys.stderr)
+        return False
 
+def main():
+    """Main entry point for the post_tool_use hook."""
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
