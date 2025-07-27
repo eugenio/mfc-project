@@ -73,6 +73,18 @@ def handle_gitlab_integrations(input_data: dict):
     # Handle test failures and create automatic bug issues
     if features.get("auto_issue_on_test_failure", True) and tool_name == "Bash":
         handle_test_failures(input_data)
+    
+    # Handle build failures
+    if features.get("auto_issue_on_build_failure", True) and tool_name == "Bash":
+        handle_build_failures(input_data)
+    
+    # Handle performance regressions
+    if features.get("auto_issue_on_performance_regression", True) and tool_name == "Bash":
+        handle_performance_analysis(input_data)
+    
+    # Handle documentation gaps
+    if features.get("auto_issue_on_documentation_gap", True):
+        handle_documentation_gaps(input_data)
 
 def handle_test_failures(input_data: dict):
     """
@@ -534,34 +546,7 @@ def mr_exists_for_branch(branch: str) -> bool:
         
         return len(mrs) > 0
     
-    except Exception:
-        return False
 
-def handle_successful_edit(input_data: dict):
-    """
-    Handle successful edit operations for GitLab integration.
-    
-    Args:
-        input_data: Tool input data
-    """
-    try:
-        tool_name = input_data.get("tool_name")
-        
-        # Log successful operations (could be extended for GitLab commit comments)
-        if tool_name in ["Edit", "MultiEdit"]:
-            file_path = input_data.get("tool_input", {}).get("file_path")
-            if file_path:
-                print(f"GitLab: Successful {tool_name} operation on {file_path}", file=sys.stderr)
-        
-        elif tool_name == "Write":
-            file_path = input_data.get("tool_input", {}).get("file_path")
-            if file_path:
-                print(f"GitLab: Successful file creation: {file_path}", file=sys.stderr)
-    
-    except Exception as e:
-        print(f"Failed to handle successful edit: {e}", file=sys.stderr)
-
-def main():
     try:
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
