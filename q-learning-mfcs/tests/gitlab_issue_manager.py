@@ -202,15 +202,7 @@ class GitLabIssueManager:
             print(f"❌ Failed to search issues: {e}")
             return []
     
-    def get_issue_by_title(self, title: str) -> Optional[Dict]:
-        """Get issue by exact title match."""
-        issues = self.search_issues([title])
-        
-        for issue in issues:
-            if issue['title'] == title:
-                return issue
-        
-        return None
+
     
     def _prepare_labels(self, issue_data: IssueData) -> List[str]:
         """Prepare labels for the issue."""
