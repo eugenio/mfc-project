@@ -76,12 +76,13 @@ class AnionExchangeMembrane(BaseMembraneModel):
     
     def __init__(self, parameters: AEMParameters):
         self.aem_params = parameters
-        super().__init__(parameters)
         
-        # AEM-specific state
+        # AEM-specific state (initialize before super().__init__)
         self.carbonate_fraction = 0.0  # Fraction of sites with CO3--
         self.cumulative_degradation = 0.0
         self.ph_gradient_history = []
+        
+        super().__init__(parameters)
     
     def _setup_ion_transport(self):
         """Setup anion transport mechanisms for AEM."""

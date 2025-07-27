@@ -13,7 +13,7 @@ Created: 2025-07-27
 
 import jax.numpy as jnp
 import numpy as np
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 

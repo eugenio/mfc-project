@@ -8,7 +8,7 @@ Created: 2025-07-27
 """
 
 import jax.numpy as jnp
-from typing import Optional, Dict, Any
+from typing import Optional
 from dataclasses import dataclass
 
 from .base_membrane import BaseMembraneModel, MembraneParameters, IonType
