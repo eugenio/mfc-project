@@ -7,8 +7,8 @@ The enhanced file chunking system automatically breaks large file creation into 
 ## Features
 
 ### 🧠 **Intelligent Code Analysis**
-- **Structure Recognition**: Analyzes code to identify imports, classes, functions, constants
-- **Language Support**: Python, JavaScript/TypeScript, Mojo, Java, C/C++
+- **Structure Recognition**: Analyzes code to identify imports, classes, functions, constants, and Markdown sections
+- **Language Support**: Python, JavaScript/TypeScript, Mojo, and Markdown documents
 - **Logical Segmentation**: Breaks code along natural boundaries rather than arbitrary line counts
 
 ### 📦 **Smart Chunking Strategy**
@@ -27,8 +27,8 @@ The enhanced file chunking system automatically breaks large file creation into 
 ```python
 # Triggers when Write tool creates files meeting criteria:
 - File size > 50 lines (configurable)
-- File type in supported list (.py, .js, .ts, etc.)
-- Code has >= 3 logical segments (imports, classes, functions)
+- File type in supported list (.py, .js, .ts, .md, etc.)
+- Code/document has >= 3 logical segments (imports, classes, functions, sections)
 ```
 
 ### 2. **Analysis Phase**
@@ -39,15 +39,17 @@ The enhanced file chunking system automatically breaks large file creation into 
 - Constants and module-level variables
 - Class definitions with methods
 - Function definitions and implementations
+- Markdown titles, sections, subsections
+- Code blocks and tables in Markdown
 ```
 
 ### 3. **Chunking Phase**
 ```python
 # Creates logical chunks based on:
-Priority 1: Module documentation
-Priority 2: Imports and constants
-Priority 3: Classes (with complete methods)
-Priority 4: Functions and utilities
+Priority 1: Module documentation / Document titles
+Priority 2: Imports and constants / Main sections (H2)
+Priority 3: Classes (with complete methods) / Subsections (H3)
+Priority 4: Functions and utilities / Code blocks and tables
 ```
 
 ### 4. **Commit Phase**
@@ -71,7 +73,7 @@ Priority 4: Functions and utilities
     "max_lines_per_chunk": 25,
     "min_segments_for_chunking": 3,
     "commit_message_prefix": "Auto-commit: ",
-    "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥", ".java", ".cpp", ".c", ".h"]
+    "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥", ".md", ".markdown"]
   }
 }
 ```
@@ -182,6 +184,13 @@ Auto-commit: chunk 4/4 - large_module.py (29 lines) - functions: utility_functio
 - **Classes**: `class ClassName` (C++)
 - **Structs**: `struct name`
 
+### Markdown (`.md`, `.markdown`)
+- **Titles**: `# Document Title` (H1 at beginning)
+- **Sections**: `## Section Name` (H2 headers)
+- **Subsections**: `### Subsection Name` (H3 headers)
+- **Code Blocks**: Triple backticks with language
+- **Tables**: Markdown table syntax with pipes
+
 ## Commit Message Format
 
 ### Template
@@ -190,10 +199,24 @@ Auto-commit: chunk {N}/{total} - {filename} ({lines} lines) - {description}
 ```
 
 ### Examples
+
+**Python Code:**
 ```bash
 Auto-commit: chunk 1/3 - utils.py (15 lines) - 4 imports | 2 constants | module documentation
 Auto-commit: chunk 2/3 - utils.py (22 lines) - class ConfigManager  
 Auto-commit: chunk 3/3 - utils.py (18 lines) - functions: parse_config, validate_settings
+```
+
+**Markdown Document:**
+```bash
+Auto-commit: chunk 1/8 - guide.md (1 lines) - document title
+Auto-commit: chunk 2/8 - guide.md (76 lines) - section: Data Collection and Preprocessing
+Auto-commit: chunk 3/8 - guide.md (55 lines) - section: Exploratory Data Analysis
+Auto-commit: chunk 4/8 - guide.md (80 lines) - section: Feature Engineering
+Auto-commit: chunk 5/8 - guide.md (69 lines) - section: Model Development
+Auto-commit: chunk 6/8 - guide.md (59 lines) - section: Model Evaluation and Validation
+Auto-commit: chunk 7/8 - guide.md (101 lines) - section: Production Deployment
+Auto-commit: chunk 8/8 - guide.md (17 lines) - section: Conclusion
 ```
 
 ## Benefits
