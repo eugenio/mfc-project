@@ -22,7 +22,7 @@ from datetime import datetime
 from utils.summarizer import generate_event_summary
 
 
-def send_event_to_server(event_data, server_url="http://localhost:4000/events"):
+def send_event_to_server(event_data, server_url="http://localhost:4000/events", verbose=False):
     """Send event data to the observability server."""
     try:
         # Prepare the request
@@ -36,18 +36,23 @@ def send_event_to_server(event_data, server_url="http://localhost:4000/events"):
         )
 
         # Send the request
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=2) as response:
             if response.status == 200:
+                if verbose:
+                    print(f"Successfully sent event to observability server", file=sys.stderr)
                 return True
             else:
-                print(f"Server returned status: {response.status}", file=sys.stderr)
+                if verbose:
+                    print(f"Server returned status: {response.status}", file=sys.stderr)
                 return False
 
     except urllib.error.URLError as e:
-        print(f"Failed to send event: {e}", file=sys.stderr)
+        if verbose:
+            print(f"Observability server not reachable: {e}", file=sys.stderr)
         return False
     except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        if verbose:
+            print(f"Unexpected error: {e}", file=sys.stderr)
         return False
 
 
@@ -70,6 +75,9 @@ def main():
     )
     parser.add_argument(
         "--summarize", action="store_true", help="Generate AI summary of the event"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose output for debugging"
     )
 
     args = parser.parse_args()
@@ -122,7 +130,7 @@ def main():
         # Continue even if summary generation fails
 
     # Send to server
-    send_event_to_server(event_data, args.server_url)
+    send_event_to_server(event_data, args.server_url, verbose=args.verbose)
 
     # Always exit with 0 to not block Claude Code operations
     sys.exit(0)
