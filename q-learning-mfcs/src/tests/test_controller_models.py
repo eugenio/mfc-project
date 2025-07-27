@@ -10,6 +10,31 @@ from unittest.mock import Mock, patch
 import tempfile
 import json
 
+# Import controller modules
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from controller_models.model_inference import (
+    ModelInferenceEngine, InferenceSpecs, ModelFormat, InferenceMeasurement,
+    create_standard_inference_engines
+)
+from controller_models.control_electronics import (
+    ControlElectronics, MCUSpecs, ADCSpecs, DACSpecs, GPIOSpecs,
+    CommunicationInterface, InterfaceType, MCUArchitecture,
+    create_standard_control_electronics
+)
+from controller_models.real_time_controller import (
+    RealTimeController, ControlLoop, TimingConstraints, ControllerMode,
+    ControlTask, TaskPriority, create_standard_real_time_controllers
+)
+from controller_models.hardware_abstraction import (
+    HardwareAbstractionLayer, MFCControlInterface, SensorDevice, ActuatorDevice,
+    PowerDevice, DeviceInfo, DeviceConfiguration, DeviceType, DeviceStatus,
+    create_mfc_hardware_system
+)
+from controller_models.controller_cost_analysis import (
+    ControllerCostAnalyzer, ControllerSystemSpecs, PowerRequirement,
 
 
 
