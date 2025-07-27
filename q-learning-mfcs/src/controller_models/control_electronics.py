@@ -10,7 +10,7 @@ import numpy as np
 import time
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Any, Union
+from typing import Dict, List, Tuple, Optional
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -739,7 +739,7 @@ if __name__ == "__main__":
     
     # Get measurement
     measurement = hp_system.get_measurement()
-    print(f"\nSystem status:")
+    print("\nSystem status:")
     print(f"Temperature: {measurement.mcu_temperature_c:.1f}°C")
     print(f"Power: {measurement.power_consumption_mw:.1f}mW")
     print(f"CPU utilization: {measurement.cpu_utilization_pct:.1f}%")
@@ -747,6 +747,6 @@ if __name__ == "__main__":
     
     # Cost analysis
     cost_analysis = hp_system.get_cost_analysis()
-    print(f"\nCost analysis:")
+    print("\nCost analysis:")
     print(f"Initial cost: ${cost_analysis['initial_cost']:.2f}")
     print(f"Operating cost: ${cost_analysis['total_cost_per_hour']:.6f}/hour")

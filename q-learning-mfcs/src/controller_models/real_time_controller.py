@@ -11,9 +11,8 @@ import threading
 import queue
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any, Callable
+from typing import Dict, List, Tuple, Any, Callable
 from enum import Enum
-import heapq
 from collections import deque
 
 logger = logging.getLogger(__name__)
@@ -293,7 +292,7 @@ class RealTimeController:
                     continue
                 
                 # Execute task
-                result = task.callback()
+                task.callback()
                 
                 # Update task timing
                 execution_time = (time.time() - task_start) * 1000  # ms
@@ -404,8 +403,8 @@ class RealTimeController:
         # This would interface with the ModelInferenceEngine
         # For now, implement a simple placeholder
         
-        # Convert inputs to state vector
-        state = np.array(list(inputs.values()) + [loop.setpoint])
+        # Convert inputs to state vector (for future Q-learning integration)
+        # state = np.array(list(inputs.values()) + [loop.setpoint])
         
         # Placeholder: simple bang-bang control based on error
         if not inputs:
@@ -652,7 +651,7 @@ if __name__ == "__main__":
     # Test high-performance controller
     hp_controller = controllers['high_performance']
     
-    print(f"Testing real-time controller")
+    print("Testing real-time controller")
     print(f"Control period: {hp_controller.timing_constraints.control_loop_period_ms}ms")
     print(f"Max jitter: {hp_controller.timing_constraints.max_jitter_ms}ms")
     
