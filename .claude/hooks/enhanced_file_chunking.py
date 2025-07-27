@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Enhanced file chunking system for large code file creation.
+Enhanced file chunking system with Markdown support for large file creation.
 
 This module provides intelligent code segmentation and incremental file building
 to break large file creation into smaller, logical commits.
 
-Integrates with the existing pre_tool_use hook system.
+Supports Python, JavaScript/TypeScript, Mojo, and Markdown files.
 """
 
 import os
@@ -47,6 +47,8 @@ def analyze_code_structure(content: str, file_path: str) -> Dict[str, Any]:
         structure.update(_analyze_javascript_structure(lines))
     elif file_ext in ['.mojo', '.🔥']:
         structure.update(_analyze_mojo_structure(lines))
+    elif file_ext in ['.md', '.markdown']:
+        structure.update(_analyze_markdown_structure(lines))
     else:
         structure.update(_analyze_generic_structure(lines))
     
@@ -58,7 +60,6 @@ def _analyze_python_structure(lines: List[str]) -> Dict[str, Any]:
     imports = []
     classes = []
     functions = []
-    current_segment = None
     
     i = 0
     while i < len(lines):
@@ -176,6 +177,126 @@ def _analyze_python_structure(lines: List[str]) -> Dict[str, Any]:
         "imports": imports,
         "classes": classes,
         "functions": functions
+    }
+
+def _analyze_markdown_structure(lines: List[str]) -> Dict[str, Any]:
+    """Analyze Markdown structure for logical chunking."""
+    segments = []
+    headings = []
+    code_blocks = []
+    tables = []
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        
+        # Title/Header (highest priority - goes first)
+        if i < 5 and line.startswith('# ') and not line.startswith('## '):
+            title = line[2:].strip()
+            segments.append({
+                "type": "title",
+                "name": title,
+                "start_line": i,
+                "end_line": i,
+                "priority": 1,
+                "description": f"Document title: {title}"
+            })
+            headings.append(title)
+        
+        # H2 sections (major sections)
+        elif line.startswith('## '):
+            section_title = line[3:].strip()
+            start_i = i
+            
+            # Find end of section (next H2 or end of file)
+            i += 1
+            while i < len(lines):
+                current_line = lines[i].strip()
+                if current_line.startswith('## '):
+                    break
+                i += 1
+            i -= 1  # Back up one
+            
+            segments.append({
+                "type": "section",
+                "name": section_title,
+                "start_line": start_i,
+                "end_line": i,
+                "priority": 2,
+                "description": f"Section: {section_title}"
+            })
+            headings.append(section_title)
+        
+        # H3 subsections
+        elif line.startswith('### '):
+            subsection_title = line[4:].strip()
+            start_i = i
+            
+            # Find end of subsection (next H3/H2 or end of file)
+            i += 1
+            while i < len(lines):
+                current_line = lines[i].strip()
+                if current_line.startswith(('### ', '## ')):
+                    break
+                i += 1
+            i -= 1  # Back up one
+            
+            segments.append({
+                "type": "subsection",
+                "name": subsection_title,
+                "start_line": start_i,
+                "end_line": i,
+                "priority": 3,
+                "description": f"Subsection: {subsection_title}"
+            })
+            headings.append(subsection_title)
+        
+        # Code blocks
+        elif line.startswith('```'):
+            start_i = i
+            language = line[3:].strip() if len(line) > 3 else "code"
+            
+            # Find end of code block
+            i += 1
+            while i < len(lines) and not lines[i].strip().startswith('```'):
+                i += 1
+            
+            if i < len(lines):  # Found closing ```
+                segments.append({
+                    "type": "code_block",
+                    "name": language,
+                    "start_line": start_i,
+                    "end_line": i,
+                    "priority": 4,
+                    "description": f"Code block ({language})"
+                })
+                code_blocks.append(language)
+        
+        # Tables (markdown tables starting with |)
+        elif line.startswith('|') and '|' in line[1:]:
+            start_i = i
+            
+            # Find end of table
+            while i < len(lines) and lines[i].strip().startswith('|'):
+                i += 1
+            i -= 1  # Back up one
+            
+            segments.append({
+                "type": "table",
+                "start_line": start_i,
+                "end_line": i,
+                "priority": 4,
+                "description": "Table data"
+            })
+            tables.append(f"table_{len(tables)+1}")
+        
+        i += 1
+    
+    return {
+        "segments": segments,
+        "headings": headings,
+        "code_blocks": code_blocks,
+        "tables": tables
     }
 
 def _analyze_javascript_structure(lines: List[str]) -> Dict[str, Any]:
@@ -362,7 +483,7 @@ def create_logical_chunks(structure: Dict[str, Any], content: str, max_lines_per
 def _generate_chunk_description(segments: List[Dict[str, Any]]) -> str:
     """Generate descriptive text for a chunk based on its segments."""
     if not segments:
-        return "code content"
+        return "content"
     
     types = {}
     names = []
@@ -376,6 +497,31 @@ def _generate_chunk_description(segments: List[Dict[str, Any]]) -> str:
     
     parts = []
     
+    # Markdown-specific descriptions
+    if types.get("title"):
+        parts.append("document title")
+    
+    if types.get("section"):
+        section_names = [name for seg in segments if seg["type"] == "section" for name in [seg.get("name")] if name]
+        if section_names:
+            parts.append(f"section: {', '.join(section_names[:2])}")
+        else:
+            parts.append(f"{types['section']} sections")
+    
+    if types.get("subsection"):
+        subsection_names = [name for seg in segments if seg["type"] == "subsection" for name in [seg.get("name")] if name]
+        if subsection_names:
+            parts.append(f"subsection: {', '.join(subsection_names[:2])}")
+        else:
+            parts.append(f"{types['subsection']} subsections")
+    
+    if types.get("code_block"):
+        parts.append(f"{types['code_block']} code blocks")
+    
+    if types.get("table"):
+        parts.append(f"{types['table']} tables")
+    
+    # Code-specific descriptions
     if types.get("imports"):
         parts.append(f"{types['imports']} imports")
     
@@ -399,7 +545,76 @@ def _generate_chunk_description(segments: List[Dict[str, Any]]) -> str:
     if types.get("module_docstring"):
         parts.append("module documentation")
     
-    return " | ".join(parts) if parts else "code content"
+    return " | ".join(parts) if parts else "content"
+
+def should_use_chunked_creation(file_path: str, content: str, config: Dict[str, Any]) -> bool:
+    """
+    Determine if a file creation should use chunked approach.
+    
+    Args:
+        file_path: Path to the file being created
+        content: File content
+        config: Configuration settings
+        
+    Returns:
+        bool: True if chunked creation should be used
+    """
+    if not config.get('enabled', True):
+        return False
+    
+    lines = content.splitlines()
+    line_count = len(lines)
+    
+    # Check size threshold
+    max_lines = config.get('max_new_file_lines', 50)
+    if line_count <= max_lines:
+        return False
+    
+    # Check file type (now includes Markdown)
+    file_ext = Path(file_path).suffix.lower()
+    supported_types = config.get('supported_extensions', ['.py', '.js', '.ts', '.jsx', '.tsx', '.mojo', '.🔥', '.md', '.markdown'])
+    
+    if file_ext not in supported_types:
+        return False
+    
+    # Analyze structure complexity
+    structure = analyze_code_structure(content, file_path)
+    segment_count = len(structure.get('segments', []))
+    
+    # Use chunking if file has multiple logical segments
+    min_segments = config.get('min_segments_for_chunking', 3)
+    
+    return segment_count >= min_segments
+
+def load_chunking_config() -> Dict[str, Any]:
+    """
+    Load chunking configuration from settings.json.
+    
+    Returns:
+        dict: Chunking configuration with defaults
+    """
+    default_config = {
+        "enabled": True,
+        "max_new_file_lines": 50,
+        "max_lines_per_chunk": 25,
+        "min_segments_for_chunking": 3,
+        "commit_message_prefix": "Auto-commit: ",
+        "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥", ".md", ".markdown"]
+    }
+    
+    try:
+        settings_path = Path(__file__).parent.parent / "settings.json"
+        if settings_path.exists():
+            import json
+            with open(settings_path, 'r') as f:
+                settings = json.load(f)
+                chunking_config = settings.get("chunked_file_creation", {})
+                # Merge with defaults
+                default_config.update(chunking_config)
+    except Exception:
+        pass
+    
+    return default_config
 
 def perform_chunked_file_creation(file_path: str, content: str, config: Dict[str, Any]) -> bool:
     """
@@ -471,77 +686,6 @@ def perform_chunked_file_creation(file_path: str, content: str, config: Dict[str
         import traceback
         traceback.print_exc(file=sys.stderr)
         return False
-
-def should_use_chunked_creation(file_path: str, content: str, config: Dict[str, Any]) -> bool:
-    """
-    Determine if a file creation should use chunked approach.
-    
-    Args:
-        file_path: Path to the file being created
-        content: File content
-        config: Configuration settings
-        
-    Returns:
-        bool: True if chunked creation should be used
-    """
-    if not config.get('enabled', True):
-        return False
-    
-    lines = content.splitlines()
-    line_count = len(lines)
-    
-    # Check size threshold
-    max_lines = config.get('max_new_file_lines', 100)
-    if line_count <= max_lines:
-        return False
-    
-    # Check file type (only chunk code files)
-    file_ext = Path(file_path).suffix.lower()
-    supported_types = ['.py', '.js', '.ts', '.jsx', '.tsx', '.mojo', '.🔥', '.java', '.cpp', '.c', '.h']
-    
-    if file_ext not in supported_types:
-        return False
-    
-    # Analyze structure complexity
-    structure = analyze_code_structure(content, file_path)
-    segment_count = len(structure.get('segments', []))
-    
-    # Use chunking if file has multiple logical segments
-    min_segments = config.get('min_segments_for_chunking', 3)
-    
-    return segment_count >= min_segments
-
-def load_chunking_config() -> Dict[str, Any]:
-    """
-    Load chunking configuration from settings.json.
-    
-    Returns:
-        dict: Chunking configuration with defaults
-    """
-    default_config = {
-        "enabled": True,
-        "max_new_file_lines": 50,  # Lower threshold than existing
-        "max_lines_per_chunk": 25,
-        "min_segments_for_chunking": 3,
-        "commit_message_prefix": "Auto-commit: ",
-        "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥"]
-    }
-    
-    try:
-        settings_path = Path(__file__).parent.parent / "settings.json"
-        if settings_path.exists():
-            import json
-            with open(settings_path, 'r') as f:
-                settings = json.load(f)
-                chunking_config = settings.get("chunked_file_creation", {})
-                # Merge with defaults
-                default_config.update(chunking_config)
-    except Exception:
-        pass
-    
-    return default_config
-
-# Integration functions for pre_tool_use.py
 
 def check_chunked_file_creation(tool_name: str, tool_input: Dict[str, Any]) -> bool:
     """
