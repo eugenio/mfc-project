@@ -6,12 +6,8 @@ Unit tests for verifying that source files output to correct paths.
 import unittest
 import os
 import sys
-import tempfile
-import shutil
 import json
 import pickle
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend for testing
 import matplotlib.pyplot as plt
@@ -22,8 +18,7 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from path_config import (
-    get_figure_path, get_simulation_data_path, get_model_path, 
-    get_report_path, get_log_path
+    get_figure_path, get_simulation_data_path, get_model_path
 )
 
 

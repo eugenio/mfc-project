@@ -31,9 +31,10 @@ nox = ">=2025.5.1,<2026"
 pyyaml = ">=6.0.2,<7"
 types-pyyaml = ">=6.0.12.20250516,<7"
 yamllint = ">=1.37.1,<2"
-jax = ">=0.4.36,<0.7"
+jax = ">=0.6.2"
 streamlit = ">=1.47.1,<2"
 plotly = ">=6.2.0,<7"
+jaxlib = ">=0.6.2"
 
 [feature.dev.dependencies]
 pytest = ">=7.0.0"

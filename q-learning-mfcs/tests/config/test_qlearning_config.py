@@ -4,9 +4,6 @@ Tests parameter validation, default values, and configuration relationships.
 """
 
 import pytest
-import numpy as np
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
 
 # Import the configuration classes to test
 import sys
@@ -415,7 +412,6 @@ class TestConfigurationIntegration:
         
     def test_config_serialization_roundtrip(self):
         """Test that configuration can be serialized and deserialized."""
-        import json
         
         config = QLearningConfig(
             learning_rate=0.15,

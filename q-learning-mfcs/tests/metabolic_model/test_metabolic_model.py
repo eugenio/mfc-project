@@ -10,7 +10,6 @@ Tests cover:
 """
 
 import unittest
-import numpy as np
 import sys
 import os
 import warnings
@@ -24,7 +23,7 @@ matplotlib.use('Agg')  # Non-interactive backend
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from metabolic_model import MetabolicModel, PathwayDatabase, MembraneTransport, ElectronShuttleModel
-from metabolic_model.pathway_database import Species, Substrate, MetabolicReaction
+from metabolic_model.pathway_database import Species, Substrate
 from metabolic_model.electron_shuttles import ShuttleType
 
 

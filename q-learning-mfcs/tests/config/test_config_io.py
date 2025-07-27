@@ -5,8 +5,6 @@ Tests for configuration I/O functionality.
 import pytest
 import tempfile
 from pathlib import Path
-import json
-import yaml
 
 from src.config import (
     QLearningConfig, SensorConfig, 

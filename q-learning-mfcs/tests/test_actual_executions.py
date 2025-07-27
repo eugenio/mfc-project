@@ -8,10 +8,7 @@ import unittest
 import os
 import sys
 import subprocess
-import tempfile
-import time
 from pathlib import Path
-from unittest.mock import patch
 import matplotlib
 matplotlib.use('Agg')
 
