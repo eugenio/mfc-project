@@ -22,3 +22,20 @@ import os
 
 from config.real_time_processing import (
 from integrated_mfc_model import IntegratedMFCModel
+class StreamEventType(Enum):
+    """Types of streaming events"""
+    METRICS_UPDATE = "metrics_update"
+    ALERT = "alert"
+    STATUS_CHANGE = "status_change"
+    COMMAND_RESULT = "command_result"
+    SENSOR_DATA = "sensor_data"
+    CONTROL_UPDATE = "control_update"
+
+class StreamEvent:
+    """Stream event data structure"""
+    event_id: str
+    event_type: StreamEventType
+    timestamp: datetime
+    data: Dict[str, Any]
+    priority: int = 1  # 1=highest, 10=lowest
+    client_filter: Optional[List[str]] = None  # Specific clients
