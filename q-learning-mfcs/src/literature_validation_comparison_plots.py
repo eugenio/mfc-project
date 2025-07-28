@@ -52,7 +52,7 @@ def create_literature_comparison_plots():
         return
     
     # Create comprehensive comparison figure
-    fig = plt.figure(figsize=(20, 16))
+    plt.figure(figsize=(20, 16))
     
     # Define colors
     color_original = '#FF6B6B'      # Red for original

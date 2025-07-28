@@ -7,10 +7,9 @@ Supports arbitrary data length with Latin character subplot labels
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import pandas as pd
 import numpy as np
-from typing import List, Tuple, Optional, Any, Dict, Union
+from typing import List, Tuple, Optional, Union
 from pathlib import Path
 import json
 import gzip
@@ -612,10 +611,10 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     summary_text += f"Control effectiveness (±2mM): {control_eff_2mm:.1f}%\n"
     summary_text += f"Control effectiveness (±5mM): {control_eff_5mm:.1f}%\n"
     summary_text += f"Mean power: {mean_power:.3f} mW\n\n"
-    summary_text += f"⚠️  REQUIRES IMMEDIATE ATTENTION:\n"
-    summary_text += f"• Q-learning parameters need revision\n"
-    summary_text += f"• Control algorithm failure\n"
-    summary_text += f"• System essentially non-functional"
+    summary_text += "⚠️  REQUIRES IMMEDIATE ATTENTION:\n"
+    summary_text += "• Q-learning parameters need revision\n"
+    summary_text += "• Control algorithm failure\n"
+    summary_text += "• System essentially non-functional"
     
     ax.text(0.05, 0.95, summary_text, transform=ax.transAxes, fontsize=11,
             verticalalignment='top', fontfamily='monospace',
@@ -626,7 +625,7 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     
     # ===== FIGURE 2: Detailed Control Analysis =====
     fig2, axes2, labeler2 = create_labeled_subplots(2, 2, figsize=(16, 10),
-                                                   title=f'GPU Simulation - Detailed Control System Analysis')
+                                                   title='GPU Simulation - Detailed Control System Analysis')
     
     # (a) Action distribution
     ax = axes2[0]
@@ -689,13 +688,13 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     plt.close('all')
     
     print(f"\n{'='*70}")
-    print(f"🎯 GPU SIMULATION PLOTTING COMPLETE")
+    print("🎯 GPU SIMULATION PLOTTING COMPLETE")
     print(f"{'='*70}")
     print(f"✅ Plots saved with timestamp: {timestamp}")
     print(f"📊 Data duration: {duration_days:.1f} days ({len(df)} data points)")
     print(f"🚀 GPU backend: {backend}")
     print(f"⏱️  Runtime: {runtime_hours:.2f} hours")
-    print(f"❌ CRITICAL: Control system completely failed - needs parameter revision")
+    print("❌ CRITICAL: Control system completely failed - needs parameter revision")
     print(f"{'='*70}")
     
     return timestamp

@@ -29,7 +29,7 @@ def generate_synthetic_detailed_data():
     
     # Time arrays
     hours = np.linspace(0, 100, 100)
-    minutes = np.linspace(0, 100*60, 100*60)  # Minute-by-minute data
+    np.linspace(0, 100*60, 100*60)  # Minute-by-minute data
     
     # Realistic MFC power evolution (scaled to realistic 5-cell stack values)
     base_power_hourly = np.array([
@@ -447,7 +447,7 @@ def create_additional_analysis_plots(data):
     # Add correlation values
     for i in range(5):
         for j in range(5):
-            text = ax2.text(j, i, f'{correlation_matrix[i, j]:.2f}',
+            ax2.text(j, i, f'{correlation_matrix[i, j]:.2f}',
                            ha="center", va="center", color="black", fontsize=9)
     
     plt.colorbar(im, ax=ax2, shrink=0.8)
