@@ -73,3 +73,13 @@ class FailureModeEffect:
     rpn: int = 0                       # Risk Priority Number
     recommended_actions: List[str] = field(default_factory=list)
     current_controls: List[str] = field(default_factory=list)
+class ReliabilityPrediction:
+    """Reliability prediction results."""
+    system_mtbf_hours: float
+    system_failure_rate: float
+    mission_reliability: float          # For specific mission duration
+    availability: float
+    component_contributions: Dict[str, float]  # Contribution to system failure rate
+    critical_components: List[str]      # Components with highest failure rates
+    maintenance_requirements: Dict[str, float]  # Maintenance intervals
+    confidence_bounds: Dict[str, Tuple[float, float]]
