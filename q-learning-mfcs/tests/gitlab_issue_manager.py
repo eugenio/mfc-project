@@ -753,7 +753,22 @@ def main():
                 try:
                     confirm = input("\nProceed? (y/N): ")
                     if confirm.lower() != 'y':
-
+                        print("❌ Issue creation cancelled")
+                        sys.exit(0)
+                except EOFError:
+                    print("❌ Issue creation cancelled")
+                    sys.exit(0)
+                
+                created_issue = issue_manager.create_issue(issue_data)
+                print(f"✅ Created issue: {created_issue['web_url']}")
+                
+            except KeyboardInterrupt:
+                print("\n❌ Issue creation cancelled by user")
+                sys.exit(0)
+            except EOFError:
+                print("❌ Error: EOF when reading a line")
+                print("💡 Try providing input manually or using a different terminal")
+                sys.exit(1)
         
         else:
             parser.print_help()
