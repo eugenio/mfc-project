@@ -23,3 +23,4 @@ import os
 import sys
 
 API_BASE_URL = "http://localhost:8000/api"
+WEBSOCKET_URL = "ws://localhost:8000/ws"
