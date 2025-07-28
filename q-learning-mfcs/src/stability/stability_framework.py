@@ -737,3 +737,92 @@ class StabilityAnalyzer:
             json.dump(export_data, f, indent=2, default=str)
         
         logger.info(f"Analysis data exported to {output_file}")
+def run_long_term_stability_study(simulation_hours: int = 8760,  # 1 year
+                                 output_dir: Optional[Path] = None) -> StabilityAnalyzer:
+    """
+    Run a comprehensive long-term stability study.
+    
+    Args:
+        simulation_hours: Duration of stability study in hours
+        output_dir: Directory for outputs
+        
+    Returns:
+        StabilityAnalyzer with completed analysis
+    """
+    output_dir = output_dir or Path("stability_study_results")
+    output_dir.mkdir(exist_ok=True)
+    
+    logger.info(f"Starting {simulation_hours}-hour stability study")
+    
+    # Initialize stability analyzer
+    analyzer = StabilityAnalyzer(output_dir)
+    
+    # Run simulation (simplified - would use actual MFC model)
+    # Generate synthetic data for demonstration
+    time_points = np.linspace(0, simulation_hours, simulation_hours)
+    
+    # Simulate gradual degradation
+    baseline_power = 5.0  # W
+    degradation_rate = 0.0001  # Per hour
+    noise_level = 0.1
+    
+    power_data = []
+    voltage_data = []
+    current_data = []
+    efficiency_data = []
+    
+    for t in time_points:
+        # Add degradation and noise
+        degradation_factor = 1.0 - (degradation_rate * t)
+        noise = np.random.normal(0, noise_level)
+        
+        power = baseline_power * degradation_factor * (1 + noise)
+        voltage = 0.7 * degradation_factor * (1 + noise * 0.5)
+        current = power / voltage if voltage > 0 else 0
+        efficiency = 0.8 * degradation_factor * (1 + noise * 0.3)
+        
+        power_data.append(max(0, power))
+        voltage_data.append(max(0, voltage))
+        current_data.append(max(0, current))
+        efficiency_data.append(max(0, min(1.0, efficiency)))
+    
+    # Create simulation data dictionary
+    simulation_data = {
+        'time': time_points.tolist(),
+        'power': power_data,
+        'voltage': voltage_data,
+        'current': current_data,
+        'efficiency': efficiency_data,
+        'biofilm_thickness': (np.cumsum(np.random.exponential(0.01, len(time_points))) * 0.1).tolist()
+    }
+    
+    # Perform stability analysis
+    metrics = analyzer.analyze_stability(simulation_data, StabilityTimeScale.ULTRA_LONG)
+    
+    # Generate report
+    report_file = output_dir / f"stability_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    report_text = analyzer.generate_stability_report(metrics, report_file)
+    
+    # Export analysis data
+    data_file = output_dir / f"stability_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    analyzer.export_analysis_data(data_file)
+    
+    # Get maintenance schedule
+    maintenance_schedule = analyzer.get_maintenance_schedule()
+    
+    logger.info(f"Stability study completed. Results saved to {output_dir}")
+    logger.info(f"System availability: {metrics.availability*100:.1f}%")
+    logger.info(f"MTBF: {metrics.mtbf_hours:.1f} hours")
+    logger.info(f"Upcoming maintenance tasks: {len(maintenance_schedule)}")
+    
+    return analyzer
+
+if __name__ == "__main__":
+    # Run example stability study
+    analyzer = run_long_term_stability_study(
+        simulation_hours=8760,  # 1 year
+        output_dir=Path("stability_analysis_results")
+    )
+    
+    print("Long-term stability study completed!")
+    print(f"Results available in: stability_analysis_results/")
