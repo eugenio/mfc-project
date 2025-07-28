@@ -87,3 +87,16 @@ class StabilityMetrics:
     trend_slope: float
     seasonal_component: float
     residual_variance: float
+class ComponentHealth:
+    """Health status of individual components."""
+    
+    component: ComponentType
+    health_score: float             # 0-100 scale
+    remaining_lifetime: float       # Days
+    degradation_rate: float         # %/day
+    last_maintenance: datetime
+    next_maintenance: datetime
+    failure_probability: float      # 0-1 probability in next 30 days
+    degradation_modes: List[DegradationMode]
+    performance_history: List[float] = field(default_factory=list)
+    
