@@ -73,3 +73,25 @@ class SystemMetrics(BaseModel):
     learning_progress_pct: float
     epsilon_value: float
     
+class AlertMessage(BaseModel):
+    """Safety/operational alert"""
+    id: str
+    level: AlertLevel
+    timestamp: datetime
+    message: str
+    category: str
+    acknowledged: bool = False
+    auto_action: Optional[str] = None
+
+class ControlCommand(BaseModel):
+    """Control system command"""
+    command: str
+    parameters: Optional[Dict[str, Any]] = None
+    user_id: Optional[str] = None
+    safety_override: bool = False
+
+class ConfigurationUpdate(BaseModel):
+    """System configuration update"""
+    section: str
+    parameters: Dict[str, Any]
+    apply_immediately: bool = True
