@@ -7,6 +7,56 @@ import os
 # Add tests directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
+from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueType, IssueSeverity, IssueUrgency
+
+def create_mypy_issue():
+    """Create the mypy type checking issue"""
+    
+    # Create issue data
+    issue_data = IssueData(
+        title="🔧 TYPE CHECKING: Fix mypy type annotation errors in stability analysis system",
+        description="""## Type Checking Issue Summary
+
+MyPy analysis of the stability analysis system revealed **175 type errors** across 6 files that need to be addressed for production-quality code.
+
+### Error Categories:
+
+#### 1. Missing Dataclass Definitions (Major Impact)
+**Files Affected**: All stability modules
+**Problem**: Custom dataclasses not properly defined, causing mypy to treat them as builtin types
+- StabilityMetrics - 17 field errors
+- ReliabilityPrediction - 8 field errors  
+- TimeSeriesMetrics - 10 field errors
+- ComponentReliability - Multiple attribute errors
+- OptimizationResult - 4 field errors
+
+#### 2. Missing Type Annotations (Moderate Impact)  
+**Count**: ~15 variables need explicit type annotations
+
+#### 3. Type Compatibility Issues (Low-Medium Impact)
+**Count**: ~10 return type mismatches
+
+#### 4. Collection Type Issues (Low Impact)
+**Count**: ~8 attribute access errors
+
+### Files Requiring Fixes:
+
+1. **src/stability/stability_framework.py** - 21 errors
+2. **src/stability/reliability_analyzer.py** - 30 errors  
+3. **src/stability/degradation_detector.py** - 45 errors
+4. **src/stability/maintenance_scheduler.py** - 25 errors
+5. **src/stability/data_manager.py** - 20 errors
+6. **src/stability/stability_visualizer.py** - 34 errors
+
+### Impact Assessment:
+- **Severity**: Medium (code works but lacks type safety)
+- **Priority**: Medium (improvement, not breaking) 
+- **Effort**: 2-3 days for complete resolution
+- **Risk**: Low (isolated to type system)
+
+### Success Criteria:
+- MyPy passes with 0 errors on src/stability/
+- All dataclasses properly defined with type hints
 
     """Create the HTTPS/SSL enhancement issue"""
     
