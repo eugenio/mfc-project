@@ -37,3 +37,10 @@ from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState
 from path_config import get_simulation_data_path, get_model_path
 
     import uvicorn
+class SystemStatus(str, Enum):
+    OFFLINE = "offline"
+    INITIALIZING = "initializing"
+    RUNNING = "running"
+    PAUSED = "paused"
+    ERROR = "error"
+    MAINTENANCE = "maintenance"
