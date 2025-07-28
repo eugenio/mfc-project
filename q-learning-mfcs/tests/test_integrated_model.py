@@ -153,7 +153,7 @@ class TestIntegratedModel(unittest.TestCase):
         
         # Verify Q-learning progress
         self.assertGreater(states[-1].q_table_size, 0)
-        self.assertLessEqual(states[-1].epsilon, 0.3)
+        self.assertLess(states[-1].epsilon, states[0].epsilon)  # Epsilon should decay
         
         # Verify energy accumulation
         self.assertGreaterEqual(states[-1].total_energy, 0)
