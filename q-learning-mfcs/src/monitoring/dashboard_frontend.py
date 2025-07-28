@@ -135,3 +135,37 @@ def create_performance_charts(metrics: Dict[str, Any]):
                      title_text="MFC System Performance Overview")
     
     return fig
+def create_biofilm_monitoring_chart(metrics: Dict[str, Any]):
+    """Create biofilm monitoring visualization"""
+    
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=('Biofilm Thickness', 'Substrate Concentrations')
+    )
+    
+    # Biofilm thickness
+    biofilm_data = metrics.get('biofilm_thickness', [10, 12, 8, 11, 9])
+    if biofilm_data:
+        fig.add_trace(
+            go.Bar(x=[f"Cell {i+1}" for i in range(len(biofilm_data))],
+                   y=biofilm_data, name="Thickness (μm)",
+                   marker_color='purple'),
+            row=1, col=1
+        )
+    
+    # Substrate concentrations
+    substrate_data = metrics.get('substrate_concentrations', [50, 48, 52, 49, 51])
+    if substrate_data:
+        fig.add_trace(
+            go.Scatter(x=[f"Cell {i+1}" for i in range(len(substrate_data))],
+                      y=substrate_data, name="Concentration (mg/L)",
+                      mode='markers+lines',
+                      line=dict(color='brown', width=3),
+                      marker=dict(size=8)),
+            row=1, col=2
+        )
+    
+    fig.update_layout(height=400, showlegend=True,
+                     title_text="Biological System Monitoring")
+    
+    return fig
