@@ -59,3 +59,17 @@ class ComponentReliability:
     operating_hours: float = 0.0        # Total operating time
     failure_count: int = 0              # Number of observed failures
     last_failure: Optional[datetime] = None
+class FailureModeEffect:
+    """FMEA entry for a failure mode."""
+    component: str
+    failure_mode: str
+    failure_cause: str
+    local_effect: str
+    system_effect: str
+    detection_method: str
+    occurrence_rating: int              # 1-10 scale
+    severity_rating: int                # 1-10 scale  
+    detection_rating: int               # 1-10 scale
+    rpn: int = 0                       # Risk Priority Number
+    recommended_actions: List[str] = field(default_factory=list)
+    current_controls: List[str] = field(default_factory=list)
