@@ -73,3 +73,32 @@ Executes before any tool operation:
 - **SubagentStop**: Subagent termination
 - **PreCompact**: Before compacting conversation
 - **UserPromptSubmit**: User input processing
+## GitLab Integration
+
+### Configuration Options
+```json
+"gitlab": {
+  "enabled": true,
+  "url": "https://gitlab.com",
+  "project_id": null,
+  "default_branch": "main",
+  "features": {
+    "auto_issue_on_test_failure": true,
+    "auto_issue_on_build_failure": true,
+    "auto_issue_on_performance_regression": true,
+    "auto_issue_on_documentation_gap": true,
+    "auto_issue_on_hook_failure": true,
+    "auto_mr_on_multiple_commits": false,
+    "commit_threshold_for_mr": 5
+  }
+}
+```
+
+### Feature Flags
+- **auto_issue_on_test_failure**: Create issues for test failures
+- **auto_issue_on_build_failure**: Create issues for build failures
+- **auto_issue_on_performance_regression**: Track performance issues
+- **auto_issue_on_documentation_gap**: Flag missing documentation
+- **auto_issue_on_hook_failure**: Report hook execution failures
+- **auto_mr_on_multiple_commits**: Auto-create merge requests
+- **commit_threshold_for_mr**: Number of commits before MR
