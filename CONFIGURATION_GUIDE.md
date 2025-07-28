@@ -43,3 +43,33 @@ The MFC project uses a sophisticated hierarchical configuration system that supp
   }
 }
 ```
+## Hook Configuration
+
+### Pre-Tool Use Hooks
+Executes before any tool operation:
+```json
+"PreToolUse": [
+  {
+    "matcher": "",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "pixi run /home/uge/mfc-project/.claude/hooks/pre_tool_use.py"
+      },
+      {
+        "type": "command",
+        "command": "pixi run /home/uge/mfc-project/.claude/hooks/send_event.py --source-app mfc-project --event-type PreToolUse --summarize"
+      }
+    ]
+  }
+]
+```
+
+### Hook Types
+- **PreToolUse**: Before tool execution
+- **PostToolUse**: After tool execution
+- **Notification**: System notifications
+- **Stop**: Session termination
+- **SubagentStop**: Subagent termination
+- **PreCompact**: Before compacting conversation
+- **UserPromptSubmit**: User input processing
