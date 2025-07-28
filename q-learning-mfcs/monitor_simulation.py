@@ -7,7 +7,7 @@ import os
 import json
 import time
 import glob
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 def find_latest_simulation():
     """Find the latest simulation directory."""

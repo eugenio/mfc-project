@@ -249,9 +249,9 @@ def main():
         # Safety thresholds
         st.subheader("🛡️ Safety Thresholds")
         
-        max_temp = st.number_input("Max Temperature (°C)", value=45.0, step=1.0)
-        max_current = st.number_input("Max Current Density (mA/cm²)", value=10.0, step=0.5)
-        min_voltage = st.number_input("Min Voltage (V)", value=0.1, step=0.01)
+        st.number_input("Max Temperature (°C)", value=45.0, step=1.0)
+        st.number_input("Max Current Density (mA/cm²)", value=10.0, step=0.5)
+        st.number_input("Min Voltage (V)", value=0.1, step=0.01)
     
     # Main content area
     
