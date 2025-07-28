@@ -187,3 +187,25 @@ Content-Type: application/json
 
 ### Dashboard Settings
 Customize dashboard appearance and refresh rates in the web interface sidebar.
+## Development
+
+### Running Tests
+```bash
+cd q-learning-mfcs
+python -m pytest tests/test_monitoring_system.py -v
+```
+
+### Code Quality
+```bash
+# Linting
+ruff check src/monitoring/ --fix
+
+# Type checking  
+mypy src/monitoring/ --ignore-missing-imports
+```
+
+### Adding New Metrics
+1. Update the metrics collection in `dashboard_api.py`
+2. Add visualization in `dashboard_frontend.py`
+3. Configure safety thresholds in `safety_monitor.py`
+4. Add WebSocket streaming in `realtime_streamer.py`
