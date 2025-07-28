@@ -63,3 +63,23 @@ class DataQuery:
     filters: Dict[str, Any] = field(default_factory=dict)
     aggregation: Optional[str] = None  # 'mean', 'max', 'min', 'std'
 
+class DataSummary:
+    """Summary statistics for stored data."""
+    data_type: DataType
+    start_time: datetime
+    end_time: datetime
+    record_count: int
+    size_bytes: int
+    metrics: List[str]
+    components: List[str]
+    sampling_intervals: List[str]
+
+
+class AnalysisResult:
+    """Result of data analysis operation."""
+    analysis_type: str
+    parameters: Dict[str, Any]
+    results: Dict[str, Any]
+    metadata: Dict[str, Any]
+    generated_at: datetime = field(default_factory=datetime.now)
+
