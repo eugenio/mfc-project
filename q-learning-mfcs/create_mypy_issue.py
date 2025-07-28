@@ -1,8 +1,6 @@
 """
 Create GitLab issue for mypy type checking errors
 """
-import sys
-import os
 
 from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueType, IssueSeverity, IssueUrgency
 def create_mypy_issue():
@@ -127,15 +125,15 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         print("🚀 Creating GitLab issue for mypy type checking errors...")
         created_issue = issue_manager.create_issue(issue_data)
         
-        print(f"\n✅ Successfully created GitLab issue:")
+        print("\n✅ Successfully created GitLab issue:")
         print(f"   📝 Title: {created_issue['title']}")
         print(f"   🔗 URL: {created_issue['web_url']}")
         print(f"   🆔 Issue ID: #{created_issue['iid']}")
         print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
         print(f"   📊 State: {created_issue['state']}")
         
-        print(f"\n📋 MyPy type checking issue now tracked in GitLab")
-        print(f"🎯 175 type errors identified across 6 stability analysis files")
+        print("\n📋 MyPy type checking issue now tracked in GitLab")
+        print("🎯 175 type errors identified across 6 stability analysis files")
         
         return created_issue
         
@@ -147,13 +145,13 @@ if __name__ == "__main__":
     result = create_mypy_issue()
     
     if result:
-        print(f"\n🎯 Next Steps:")
+        print("\n🎯 Next Steps:")
         print("1. GitLab issue created for comprehensive type checking fixes")
         print("2. Issue will help track progress on type safety improvements")
         print("3. Priority set to medium - improvement but not blocking")
         print("4. All 175 mypy errors documented and categorized")
     else:
-        print(f"\n⚠️  Issue creation failed, but analysis is complete")
+        print("\n⚠️  Issue creation failed, but analysis is complete")
         print("1. 175 mypy errors identified in stability analysis system")
         print("2. Main issues: missing dataclass definitions and type annotations")
         print("3. Code functions correctly but lacks type safety")
