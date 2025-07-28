@@ -225,16 +225,16 @@ This enhancement is essential for production deployment of the monitoring system
         return None
 
 if __name__ == "__main__":
-    result = create_https_ssl_issue()
+    result = create_mypy_issue()
     
     if result:
         print(f"\n🎯 Next Steps:")
         print("1. GitLab issue created and ready for implementation")
-        print("2. Issue will be referenced in commits and pull requests")
+        print("2. Type checking errors can be systematically addressed")
         print("3. Progress can be tracked through GitLab")
-        print("4. Todo item is now properly documented")
+        print("4. Code quality improvement is now documented")
     else:
         print(f"\n⚠️  Issue creation failed, but the requirement is documented")
-        print("1. The HTTPS/SSL enhancement is still needed for production")
+        print("1. The mypy type checking errors still need to be addressed")
         print("2. Implementation details have been prepared")
         print("3. Manual issue creation may be required")
