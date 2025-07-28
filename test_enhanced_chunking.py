@@ -150,3 +150,19 @@ def verify_password(password: str, hashed_password: str) -> bool:
         return computed_hash == stored_hash
     except ValueError:
         return False
+def format_timestamp(timestamp: datetime, format_type: str = "iso") -> str:
+    """Format timestamp according to specified format type."""
+    formats = {
+        "iso": "%Y-%m-%dT%H:%M:%S",
+        "human": "%B %d, %Y at %I:%M %p",
+        "short": "%m/%d/%Y %H:%M",
+        "date_only": "%Y-%m-%d"
+    }
+    
+    format_string = formats.get(format_type, formats["iso"])
+    return timestamp.strftime(format_string)
+
+def calculate_age(birth_date: datetime) -> int:
+    """Calculate age in years from birth date."""
+    today = datetime.now()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
