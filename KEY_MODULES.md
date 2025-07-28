@@ -100,3 +100,32 @@ class SensorIntegratedMFCModel:
 - Maximum likelihood
 - Bayesian inference
 - Machine learning fusion
+## Configuration Management
+
+### 7. `config/config_manager.py`
+**Purpose**: Hierarchical configuration management  
+**Location**: `q-learning-mfcs/src/config/config_manager.py`
+
+**Key Features**:
+- YAML-based configuration
+- Profile system (conservative, research, precision)
+- Schema validation
+- Environment variable substitution
+- Runtime overrides
+
+**Usage**:
+```python
+config = ConfigurationManager()
+config.load_profile('research')
+bio_params = config.get('biological')
+```
+
+### 8. `config/validation_schemas.py`
+**Purpose**: Configuration validation schemas  
+**Location**: `q-learning-mfcs/src/config/validation_schemas.py`
+
+**Validates**:
+- Biological parameters (growth rates, kinetics)
+- Control parameters (PID gains, Q-learning)
+- Visualization settings
+- Hardware configurations
