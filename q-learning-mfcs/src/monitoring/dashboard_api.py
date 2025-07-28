@@ -126,3 +126,65 @@ class ConnectionManager:
             # Remove disconnected clients
             for conn in disconnected:
                 self.active_connections.remove(conn)
+def initialize_monitoring():
+    """Initialize the monitoring systems"""
+    try:
+        # Initialize MFC model (in monitoring mode)
+        dashboard_state["mfc_model"] = IntegratedMFCModel(
+            n_cells=5,
+            species="mixed",
+            substrate="lactate",
+            use_gpu=True,
+            simulation_hours=1000
+        )
+        
+        # Initialize real-time controller
+        dashboard_state["controller"] = RealTimeController(
+            control_loop_period_ms=100.0,
+            max_jitter_ms=5.0
+        )
+        
+        # Initialize data streaming
+        dashboard_state["data_stream"] = MFCDataStream(
+            buffer_size=10000,
+            sampling_rate_hz=10.0
+        )
+        
+        # Initialize alert system
+        dashboard_state["alert_system"] = AlertSystem(
+            alert_history_size=1000
+        )
+        
+        logger.info("Monitoring systems initialized successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize monitoring systems: {e}")
+        return False
+
+# Background task for data collection
+async def data_collection_task():
+    """Background task for continuous data collection"""
+    while True:
+        try:
+            if dashboard_state["simulation_running"] and dashboard_state["mfc_model"]:
+                # Collect current metrics
+                metrics = collect_current_metrics()
+                dashboard_state["current_metrics"] = metrics
+                
+                # Check for alerts
+                alerts = check_safety_conditions(metrics)
+                if alerts:
+                    await broadcast_alerts(alerts)
+                
+                # Broadcast metrics to connected clients
+                await manager.broadcast({
+                    "type": "metrics_update",
+                    "data": metrics,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+        except Exception as e:
+            logger.error(f"Error in data collection task: {e}")
+        
+        await asyncio.sleep(1.0)  # Update every second
