@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""
+Test script to verify GUI autorefresh functionality
+"""
+
+import sys
+import os
+import time
+import threading
+from pathlib import Path
+
+# Add src to path (go up two directories from tests/gui to reach src)
+src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'src')
+sys.path.insert(0, src_path)
+
+from path_config import enable_debug_mode, disable_debug_mode
+from mfc_streamlit_gui import SimulationRunner
+from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+
+def test_gui_autorefresh():
+    """Test that GUI autorefresh properly tracks simulation status"""
+    
+    print("🧪 Testing GUI Autorefresh Functionality")
+    print("=" * 50)
+    
+    # Enable debug mode
+    enable_debug_mode()
+    print("🐛 Debug mode enabled")
+    
+    try:
+        # Create runner
+        runner = SimulationRunner()
+        print("✅ SimulationRunner created")
+        
+        # Test initial state
+        print(f"Initial is_running: {runner.is_running}")
+        print(f"Initial is_actually_running: {runner.is_actually_running()}")
+        print(f"Initial thread: {runner.thread}")
+        
+        # Start a short simulation
+        print("\n🚀 Starting simulation...")
+        success = runner.start_simulation(
+            config=DEFAULT_QLEARNING_CONFIG,
+            duration_hours=0.005,  # ~18 seconds
+            n_cells=3,
+            electrode_area_m2=0.001,
+            target_conc=25.0,
+            gui_refresh_interval=2.0,
+            debug_mode=True
+        )
+        
+        if success:
+            print("✅ Simulation started successfully")
+            print(f"After start - is_running: {runner.is_running}")
+            print(f"After start - is_actually_running: {runner.is_actually_running()}")
+            print(f"After start - thread alive: {runner.thread and runner.thread.is_alive()}")
+            
+            # Monitor for a while
+            for i in range(10):  # Monitor for 20 seconds
+                time.sleep(2)
+                
+                status = runner.get_status()
+                is_running = runner.is_running
+                is_actually_running = runner.is_actually_running()
+                thread_alive = runner.thread and runner.thread.is_alive()
+                
+                print(f"Step {i+1}:")
+                print(f"  Status: {status[0] if status else 'None'} - {status[1] if status else 'None'}")
+                print(f"  is_running: {is_running}")
+                print(f"  is_actually_running: {is_actually_running}")
+                print(f"  thread_alive: {thread_alive}")
+                
+                # Check for consistency
+                if is_running != is_actually_running:
+                    print(f"  ⚠️  INCONSISTENCY: is_running={is_running} but is_actually_running={is_actually_running}")
+                
+                # If simulation finished, break
+                if status and status[0] in ['completed', 'stopped', 'error'] and not thread_alive:
+                    print("  ✅ Simulation properly finished")
+                    break
+                    
+                if not is_actually_running and not thread_alive:
+                    print("  ✅ Simulation properly stopped")
+                    break
+            
+            # Stop if still running
+            if runner.is_actually_running():
+                print("\n⏹️ Stopping simulation...")
+                runner.stop_simulation()
+                time.sleep(3)  # Wait for cleanup
+                
+            print(f"\nFinal state:")
+            print(f"  is_running: {runner.is_running}")
+            print(f"  is_actually_running: {runner.is_actually_running()}")
+            print(f"  thread_alive: {runner.thread and runner.thread.is_alive()}")
+            
+        else:
+            print("❌ Failed to start simulation")
+            
+    except Exception as e:
+        print(f"❌ Error during test: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    finally:
+        # Cleanup
+        disable_debug_mode()
+        print("\n✅ Test completed!")
+
+if __name__ == "__main__":
+    test_gui_autorefresh()
