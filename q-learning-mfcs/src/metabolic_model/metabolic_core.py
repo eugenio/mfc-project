@@ -283,11 +283,11 @@ class MetabolicModel:
                 # Calculate actual ΔG based on concentrations
                 delta_g = self._calculate_reaction_delta_g(reaction)
                 if delta_g > 0:
-                    flux *= np.exp(-delta_g / (8.314 * 303))  # RT at 30°C
+                    flux *= float(np.exp(-delta_g / (8.314 * 303)))  # RT at 30°C
             
             # Electron transport dependency on anode potential
             if "electron" in reaction.name.lower():
-                potential_factor = 1 / (1 + np.exp(-(anode_potential + 0.3) / 0.05))
+                potential_factor = float(1 / (1 + np.exp(-(anode_potential + 0.3) / 0.05)))
                 flux *= potential_factor
             
             # Apply bounds
@@ -317,7 +317,7 @@ class MetabolicModel:
         
         # Actual ΔG = ΔG° + RT ln(Q)
         if Q > 0:
-            delta_g += RT * np.log(Q)
+            delta_g += float(RT * np.log(Q))
         
         return delta_g
     

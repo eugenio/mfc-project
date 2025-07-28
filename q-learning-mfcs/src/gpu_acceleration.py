@@ -5,8 +5,18 @@ Provides abstraction layer for both NVIDIA CUDA and AMD ROCm support.
 """
 
 import sys
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union, Callable, List
 import numpy as np
+
+# Type stubs for external dependencies
+try:
+    import jax
+    import jax.numpy as jnp
+    from jax import Array as JaxArray
+except ImportError:
+    jax = None
+    jnp = None
+    JaxArray = Any
 
 
 class GPUAccelerator:
@@ -22,9 +32,19 @@ class GPUAccelerator:
         Args:
             prefer_backend: 'auto', 'cuda', 'rocm', or 'cpu'
         """
-        self.backend = None
-        self.device_info = {}
-        self.available_backends = []
+        self.backend: Optional[str] = None
+        self.device_info: Dict[str, Any] = {}
+        self.available_backends: List[str] = []
+        
+        # JAX-related attributes
+        self.jax: Optional[Any] = None
+        self.jnp: Optional[Any] = None
+        self.jax_gpu_available: bool = False
+        
+        # Other backend attributes
+        self.cp: Optional[Any] = None
+        self.torch: Optional[Any] = None
+        
         self._detect_backends()
         self._initialize_backend(prefer_backend)
     
@@ -70,6 +90,8 @@ class GPUAccelerator:
         # Test for JAX (supports both CUDA and ROCm)
         try:
             import jax
+            import jax.numpy as jnp
+            
             devices = jax.devices()
             gpu_devices = [d for d in devices if d.device_kind == 'gpu']
             
@@ -79,10 +101,13 @@ class GPUAccelerator:
                     if 'rocm' not in self.available_backends:
                         self.available_backends.append('rocm')
                     print(f"✅ AMD ROCm backend detected (JAX) - {len(gpu_devices)} device(s)")
-                elif platform == 'gpu':  # JAX CUDA
+                elif platform in ['gpu', 'cuda']:  # JAX CUDA
                     if 'cuda' not in self.available_backends:
                         self.available_backends.append('cuda')
                     print(f"✅ NVIDIA CUDA backend detected (JAX) - {len(gpu_devices)} device(s)")
+            else:
+                print("ℹ️  JAX available (CPU-only mode)")
+                
         except ImportError:
             print("❌ JAX not available")
         except Exception as e:
@@ -123,6 +148,9 @@ class GPUAccelerator:
             self._setup_rocm()
         else:
             self._setup_cpu()
+        
+        # Always try to initialize JAX for high-performance computing
+        self._setup_jax()
     
     def _setup_cuda(self):
         """Setup NVIDIA CUDA backend."""
@@ -188,6 +216,35 @@ class GPUAccelerator:
             'device_name': 'CPU'
         }
         print("   Using CPU-only computation")
+    
+    def _setup_jax(self):
+        """Setup JAX for high-performance computing."""
+        try:
+            import jax
+            import jax.numpy as jnp
+            self.jax = jax
+            self.jnp = jnp
+            
+            devices = jax.devices()
+            gpu_devices = [d for d in devices if d.device_kind == 'gpu']
+            
+            if gpu_devices:
+                print(f"   JAX GPU support: {len(gpu_devices)} device(s) available")
+                self.jax_gpu_available = True
+            else:
+                print("   JAX: CPU-only mode")
+                self.jax_gpu_available = False
+                
+        except ImportError:
+            print("   JAX not available")
+            self.jax = None
+            self.jnp = None
+            self.jax_gpu_available = False
+        except Exception as e:
+            print(f"   JAX setup failed: {e}")
+            self.jax = None
+            self.jnp = None
+            self.jax_gpu_available = False
     
     def array(self, data, dtype=np.float32):
         """Create array on appropriate device."""
@@ -264,7 +321,9 @@ class GPUAccelerator:
         return {
             'backend': self.backend,
             'available_backends': self.available_backends,
-            'device_info': self.device_info
+            'device_info': self.device_info,
+            'jax_available': self.jax is not None,
+            'jax_gpu_available': getattr(self, 'jax_gpu_available', False)
         }
     
     def is_gpu_available(self) -> bool:
@@ -404,6 +463,88 @@ class GPUAccelerator:
             return self.torch.normal(mean, std, shape, dtype=self._np_to_torch_dtype(dtype)).cuda()
         else:
             return np.random.normal(mean, std, shape).astype(dtype)
+    
+    # JAX-specific high-performance methods
+    def jax_array(self, data: Any, dtype=np.float32) -> Union[np.ndarray, Any]:
+        """Create JAX array with automatic device placement."""
+        if self.jax is None:
+            return np.asarray(data, dtype=dtype)
+        return self.jnp.asarray(data, dtype=dtype)
+    
+    def jax_zeros(self, shape: tuple, dtype=np.float32) -> Union[np.ndarray, Any]:
+        """Create JAX zeros array."""
+        if self.jax is None:
+            return np.zeros(shape, dtype=dtype)
+        return self.jnp.zeros(shape, dtype=dtype)
+    
+    def jax_ones(self, shape: tuple, dtype=np.float32) -> Union[np.ndarray, Any]:
+        """Create JAX ones array."""
+        if self.jax is None:
+            return np.ones(shape, dtype=dtype)
+        return self.jnp.ones(shape, dtype=dtype)
+    
+    def jax_solve_ode(self, func, y0, t_span, rtol=1e-6, atol=1e-8):
+        """Solve ODE using JAX's high-performance ODE solver."""
+        if self.jax is None:
+            raise RuntimeError("JAX not available for ODE solving")
+        
+        try:
+            from jax.experimental.ode import odeint
+            
+            def ode_func(y, t):
+                return func(t, y)  # Note: JAX uses (y, t) convention
+            
+            t_eval = self.jnp.linspace(t_span[0], t_span[1], 100)
+            solution = odeint(ode_func, y0, t_eval, rtol=rtol, atol=atol)
+            return t_eval, solution
+            
+        except ImportError:
+            raise RuntimeError("JAX ODE solver not available")
+    
+    def jax_fft(self, array):
+        """Fast Fourier Transform using JAX."""
+        if self.jax is None:
+            return np.fft.fft(array)
+        return self.jnp.fft.fft(array)
+    
+    def jax_grad(self, func: Callable) -> Callable:
+        """Create gradient function using JAX autodiff."""
+        if self.jax is None:
+            raise RuntimeError("JAX not available for automatic differentiation")
+        return self.jax.grad(func)
+    
+    def jax_jit(self, func: Callable) -> Callable:
+        """JIT compile function using JAX."""
+        if self.jax is None:
+            return func  # Return original function if JAX not available
+        return self.jax.jit(func)
+    
+    def jax_vmap(self, func: Callable, in_axes: Union[int, tuple] = 0) -> Callable:
+        """Vectorize function using JAX."""
+        if self.jax is None:
+            return func  # Return original function if JAX not available
+        return self.jax.vmap(func, in_axes=in_axes)
+    
+    def jax_linalg_solve(self, A, b):
+        """Solve linear system using JAX."""
+        if self.jax is None:
+            return np.linalg.solve(A, b)
+        return self.jnp.linalg.solve(A, b)
+    
+    def jax_optimize_minimize(self, func, x0, method='BFGS', options=None):
+        """Optimization using JAX-based optimizers."""
+        if self.jax is None:
+            from scipy.optimize import minimize
+            return minimize(func, x0, method=method, options=options)
+        
+        try:
+            from jaxopt import ScipyMinimize
+            optimizer = ScipyMinimize(fun=func, method=method)
+            return optimizer.run(x0)
+        except ImportError:
+            print("JAXopt not available, falling back to scipy")
+            from scipy.optimize import minimize
+            return minimize(func, x0, method=method, options=options)
     
     def force_cpu_fallback(self):
         """Force CPU fallback mode for testing or when GPU fails."""
