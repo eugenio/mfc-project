@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Enhanced file chunking system with Markdown support for large file creation.
+Enhanced file chunking system with improved commit messages for large file creation.
 
 This module provides intelligent code segmentation and incremental file building
-to break large file creation into smaller, logical commits.
+to break large file creation into smaller, logical commits with meaningful messages
+and comprehensive final summaries.
 
 Supports Python, JavaScript/TypeScript, Mojo, and Markdown files.
 """
@@ -478,7 +479,223 @@ def create_logical_chunks(structure: Dict[str, Any], content: str, max_lines_per
             "description": _generate_chunk_description(current_chunk_segments)
         })
     
+    return chunks
 
+def _generate_chunk_description(segments: List[Dict[str, Any]]) -> str:
+    """Generate descriptive text for a chunk based on its segments."""
+    if not segments:
+        return "content"
+    
+    types = {}
+    names = []
+    
+    for segment in segments:
+        seg_type = segment["type"]
+        types[seg_type] = types.get(seg_type, 0) + 1
+        
+        if "name" in segment:
+            names.append(segment["name"])
+    
+    parts = []
+    
+    # Markdown-specific descriptions
+    if types.get("title"):
+        parts.append("document title")
+    
+    if types.get("section"):
+        section_names = [name for seg in segments if seg["type"] == "section" for name in [seg.get("name")] if name]
+        if section_names:
+            parts.append(f"section: {', '.join(section_names[:2])}")
+        else:
+            parts.append(f"{types['section']} sections")
+    
+    if types.get("subsection"):
+        subsection_names = [name for seg in segments if seg["type"] == "subsection" for name in [seg.get("name")] if name]
+        if subsection_names:
+            parts.append(f"subsection: {', '.join(subsection_names[:2])}")
+        else:
+            parts.append(f"{types['subsection']} subsections")
+    
+    if types.get("code_block"):
+        parts.append(f"{types['code_block']} code blocks")
+    
+    if types.get("table"):
+        parts.append(f"{types['table']} tables")
+    
+    # Code-specific descriptions
+    if types.get("imports"):
+        parts.append(f"{types['imports']} imports")
+    
+    if types.get("class"):
+        if names:
+            class_names = [name for seg in segments if seg["type"] == "class" for name in [seg.get("name")] if name]
+            parts.append(f"class {', '.join(class_names[:2])}")
+        else:
+            parts.append(f"{types['class']} classes")
+    
+    if types.get("function"):
+        if len(names) <= 2:
+            func_names = [name for seg in segments if seg["type"] == "function" for name in [seg.get("name")] if name]
+            parts.append(f"functions: {', '.join(func_names)}")
+        else:
+            parts.append(f"{types['function']} functions")
+    
+    if types.get("constant"):
+        parts.append(f"{types['constant']} constants")
+    
+    if types.get("module_docstring"):
+        parts.append("module documentation")
+    
+    return " | ".join(parts) if parts else "content"
+
+def _generate_detailed_commit_message(chunk: Dict[str, Any], chunk_index: int, total_chunks: int, file_name: str, config: Dict[str, Any]) -> str:
+    """Generate a detailed, meaningful commit message for a chunk."""
+    prefix = config.get('commit_message_prefix', 'Auto-commit: ')
+    
+    # Extract key information from the chunk
+    segments = chunk.get('segments', [])
+    line_count = chunk['line_count']
+    
+    # Build commit message parts
+    header = f"{prefix}chunk {chunk_index + 1}/{total_chunks} - {file_name}"
+    
+    # Generate detailed description based on segment types
+    segment_details = []
+    
+    for segment in segments:
+        seg_type = segment['type']
+        seg_desc = segment.get('description', '')
+        
+        if seg_type == 'class' and 'name' in segment:
+            segment_details.append(f"Added class '{segment['name']}' with its methods")
+        elif seg_type == 'function' and 'name' in segment:
+            segment_details.append(f"Implemented function '{segment['name']}'")
+        elif seg_type == 'imports':
+            segment_details.append("Added import statements and dependencies")
+        elif seg_type == 'module_docstring':
+            segment_details.append("Added module documentation and metadata")
+        elif seg_type == 'section' and 'name' in segment:
+            segment_details.append(f"Added section '{segment['name']}'")
+        elif seg_type == 'title':
+            segment_details.append("Added document title and introduction")
+        elif seg_type == 'code_block':
+            lang = segment.get('name', 'code')
+            segment_details.append(f"Added {lang} code example")
+        elif seg_type == 'table':
+            segment_details.append("Added data table")
+        elif seg_type == 'constant' and 'name' in segment:
+            segment_details.append(f"Defined constant '{segment['name']}'")
+    
+    # Fallback to generic description if no specific details
+    if not segment_details:
+        segment_details.append(chunk['description'])
+    
+    # Combine into final message
+    message = f"{header} ({line_count} lines)\n\n"
+    message += "This chunk includes:\n"
+    for detail in segment_details[:5]:  # Limit to 5 items
+        message += f"- {detail}\n"
+    
+    if len(segment_details) > 5:
+        message += f"- ... and {len(segment_details) - 5} more items\n"
+    
+    return message.strip()
+
+def _generate_final_summary_message(chunks: List[Dict[str, Any]], file_path: str, structure: Dict[str, Any], config: Dict[str, Any]) -> str:
+    """Generate a comprehensive summary commit message for the entire file."""
+    prefix = config.get('commit_message_prefix', 'Auto-commit: ')
+    file_name = os.path.basename(file_path)
+    
+    # Build summary statistics
+    total_lines = structure['total_lines']
+    total_chunks = len(chunks)
+    
+    # Count different types of content
+    all_types = {}
+    all_names = {'classes': [], 'functions': [], 'sections': []}
+    
+    for chunk in chunks:
+        for segment in chunk.get('segments', []):
+            seg_type = segment['type']
+            all_types[seg_type] = all_types.get(seg_type, 0) + 1
+            
+            if seg_type == 'class' and 'name' in segment:
+                all_names['classes'].append(segment['name'])
+            elif seg_type == 'function' and 'name' in segment:
+                all_names['functions'].append(segment['name'])
+            elif seg_type == 'section' and 'name' in segment:
+                all_names['sections'].append(segment['name'])
+    
+    # Build the summary message
+    message = f"{prefix}Final summary - Completed {file_name} ({total_lines} lines in {total_chunks} chunks)\n\n"
+    
+    message += "📄 File Overview:\n"
+    message += f"- Total lines: {total_lines}\n"
+    message += f"- Chunks created: {total_chunks}\n"
+    message += f"- File type: {structure['file_type']}\n"
+    
+    # Content summary
+    message += "\n📋 Content Summary:\n"
+    
+    if all_types.get('module_docstring'):
+        message += "- Module documentation\n"
+    
+    if all_types.get('imports'):
+        message += f"- {all_types['imports']} import sections\n"
+    
+    if all_names['classes']:
+        message += f"- {len(all_names['classes'])} classes: {', '.join(all_names['classes'][:5])}"
+        if len(all_names['classes']) > 5:
+            message += f" (and {len(all_names['classes']) - 5} more)"
+        message += "\n"
+    
+    if all_names['functions']:
+        message += f"- {len(all_names['functions'])} functions: {', '.join(all_names['functions'][:5])}"
+        if len(all_names['functions']) > 5:
+            message += f" (and {len(all_names['functions']) - 5} more)"
+        message += "\n"
+    
+    if all_names['sections']:
+        message += f"- {len(all_names['sections'])} sections: {', '.join(all_names['sections'][:5])}"
+        if len(all_names['sections']) > 5:
+            message += f" (and {len(all_names['sections']) - 5} more)"
+        message += "\n"
+    
+    if all_types.get('code_block'):
+        message += f"- {all_types['code_block']} code examples\n"
+    
+    if all_types.get('table'):
+        message += f"- {all_types['table']} tables\n"
+    
+    # Add purpose based on file type
+    message += "\n🎯 Purpose: "
+    if structure['file_type'] in ['.md', '.markdown']:
+        message += "Documentation file providing "
+        if 'guide' in file_name.lower() or 'tutorial' in file_name.lower():
+            message += "guidance and tutorials"
+        elif 'readme' in file_name.lower():
+            message += "project overview and instructions"
+        elif 'api' in file_name.lower():
+            message += "API reference documentation"
+        else:
+            message += "comprehensive documentation"
+    elif structure['file_type'] == '.py':
+        if 'test' in file_name.lower():
+            message += "Test suite for validating functionality"
+        elif 'model' in file_name.lower():
+            message += "Data models and business logic"
+        elif 'api' in file_name.lower() or 'view' in file_name.lower():
+            message += "API endpoints and request handlers"
+        else:
+            message += "Python module implementing core functionality"
+    else:
+        message += "Implementation of application logic"
+    
+    message += "\n\n✅ All chunks successfully committed and file creation completed."
+    
+    return message
+
+def should_use_chunked_creation(file_path: str, content: str, config: Dict[str, Any]) -> bool:
     """
     Determine if a file creation should use chunked approach.
     
@@ -578,6 +795,7 @@ def perform_chunked_file_creation(file_path: str, content: str, config: Dict[str
             os.makedirs(file_dir, exist_ok=True)
         
         accumulated_content = ""
+        file_name = os.path.basename(file_path)
         
         for i, chunk in enumerate(chunks):
             print(f"🔧 Processing chunk {i+1}/{len(chunks)}: {chunk['description']}", file=sys.stderr)
@@ -597,10 +815,8 @@ def perform_chunked_file_creation(file_path: str, content: str, config: Dict[str
                 print(f"❌ git add failed: {result.stderr}", file=sys.stderr)
                 return False
             
-            # Generate meaningful commit message
-            file_name = os.path.basename(file_path)
-            commit_msg = (f"{config.get('commit_message_prefix', 'Auto-commit: ')}"
-                         f"chunk {i+1}/{len(chunks)} - {file_name} ({chunk['line_count']} lines) - {chunk['description']}")
+            # Generate detailed commit message for individual chunk
+            commit_msg = _generate_detailed_commit_message(chunk, i, len(chunks), file_name, config)
             
             result = subprocess.run(['git', 'commit', '-m', commit_msg], capture_output=True, text=True)
             if result.returncode != 0:
@@ -609,6 +825,25 @@ def perform_chunked_file_creation(file_path: str, content: str, config: Dict[str
             
             print(f"✅ Committed chunk {i+1}/{len(chunks)}: {chunk['description']}", file=sys.stderr)
         
+        # Create final comprehensive summary commit
+        print("📝 Creating final summary commit...", file=sys.stderr)
+        
+        # Generate comprehensive summary message
+        summary_message = _generate_final_summary_message(chunks, file_path, structure, config)
+        
+        # Stage file again for summary commit
+        result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"❌ git add for summary failed: {result.stderr}", file=sys.stderr)
+            return False
+        
+        # Create summary commit
+        result = subprocess.run(['git', 'commit', '--amend', '-m', summary_message], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"❌ Summary commit failed: {result.stderr}", file=sys.stderr)
+            return False
+        
+        print("✅ Final summary commit created successfully", file=sys.stderr)
         print(f"🎉 Chunked file creation completed successfully for {file_path}", file=sys.stderr)
         return True
         
