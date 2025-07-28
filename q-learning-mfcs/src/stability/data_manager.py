@@ -13,23 +13,15 @@ import sqlite3
 import h5py
 import json
 import gzip
-import pickle
 from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import Enum
 from datetime import datetime, timedelta
 from pathlib import Path
 import logging
 import threading
-from contextlib import contextmanager
-from scipy import stats, signal
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-import warnings
+from scipy import stats
 
-from degradation_detector import DegradationPattern, DegradationType
-from reliability_analyzer import ComponentReliability
 
 
 class DataType(Enum):
