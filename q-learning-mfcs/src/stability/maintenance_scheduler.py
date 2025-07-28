@@ -37,3 +37,11 @@ class MaintenancePriority(Enum):
     CRITICAL = "critical"
     EMERGENCY = "emergency"
 
+class ComponentStatus(Enum):
+    """Component operational status."""
+    HEALTHY = "healthy"
+    DEGRADING = "degrading"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    FAILED = "failed"
+
