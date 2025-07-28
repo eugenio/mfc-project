@@ -31,6 +31,17 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
+# Import AlertLevel from config
+try:
+    from config.real_time_processing import AlertLevel
+except ImportError:
+    # Fallback AlertLevel enum if config not available
+    class AlertLevel(str, Enum):
+        INFO = "info"
+        WARNING = "warning"
+        ERROR = "error"
+        CRITICAL = "critical"
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
