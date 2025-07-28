@@ -315,3 +315,32 @@ except ConvergenceError as e:
     print(f"Simulation failed: {e}")
     model.reset_to_checkpoint()
 ```
+## Module Extension Guidelines
+
+### Adding New Modules
+1. Follow existing naming conventions
+2. Include comprehensive docstrings
+3. Add type hints for all methods
+4. Create corresponding tests
+5. Update module dependency graph
+
+### Module Template
+```python
+"""Module purpose and description."""
+from typing import Dict, List, Optional
+import numpy as np
+
+class NewModule:
+    """Class description."""
+    
+    def __init__(self, config: Optional[Dict] = None):
+        """Initialize with configuration."""
+        self.config = config or {}
+        
+    def process(self, data: np.ndarray) -> np.ndarray:
+        """Process data with clear description."""
+        # Implementation
+        return result
+```
+
+This documentation provides a comprehensive overview of the key modules in the MFC project. Each module is designed with clear interfaces, proper documentation, and follows consistent patterns for ease of use and maintenance.
