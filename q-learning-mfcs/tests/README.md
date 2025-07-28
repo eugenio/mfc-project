@@ -11,6 +11,17 @@ tests/
 ├── test_file_outputs.py        # Tests for file output integration
 ├── test_actual_executions.py   # Tests for actual script execution
 ├── run_tests.py               # Main test runner
+├── run_gui_tests.py           # GUI test runner
+├── gui/                       # GUI-specific tests
+│   ├── __init__.py            # GUI test package initialization
+│   ├── test_gui_simple.py     # HTTP-based GUI tests (no browser)
+│   ├── test_gui_browser.py    # Browser-based GUI tests (Selenium)
+│   ├── test_autorefresh_fix.py # Autorefresh functionality tests
+│   ├── test_data_loading_fix.py # Data loading improvements tests
+│   ├── test_debug_simulation.py # Debug mode functionality tests
+│   ├── test_gui_autorefresh.py # GUI autorefresh stability tests
+│   ├── test_gui_fixes.py      # General GUI bug fixes tests
+│   └── GUI_TEST_SUITE.md      # GUI test documentation
 └── README.md                  # This file
 ```
 
@@ -48,12 +59,40 @@ tests/
   - Checks for absence of hardcoded paths
   - Verifies output directories contain expected file types
 
+### 4. GUI Tests (`gui/` directory)
+- **SimpleGUITester** (`test_gui_simple.py`): HTTP-based tests (no browser required)
+  - Page accessibility and health checks
+  - Static resource loading verification
+  - Memory-based data loading functionality
+  - Race condition fixes verification
+
+- **StreamlitGUITester** (`test_gui_browser.py`): Browser-based tests (requires Chrome/Selenium)
+  - Page load and tab navigation
+  - Auto-refresh toggle functionality
+  - Simulation start/stop controls
+  - Monitor tab stability during autorefresh
+
+- **Specific Fix Tests**: Targeted tests for specific bug fixes
+  - Autorefresh stability (no tab jumping)
+  - Data loading improvements (no file corruption)
+  - Debug mode functionality
+  - Memory-based data sharing
+
 ## Running Tests
 
 ### Run All Tests
 ```bash
 cd tests/
-python run_tests.py
+python run_tests.py          # Core functionality tests
+python run_gui_tests.py      # GUI-specific tests
+```
+
+### Run GUI Tests Only
+```bash
+cd tests/
+python run_gui_tests.py                    # All GUI tests
+python gui/test_gui_simple.py             # Quick HTTP-based tests
+python gui/test_gui_browser.py            # Full browser tests (requires Chrome)
 ```
 
 ### Run Specific Test Categories
