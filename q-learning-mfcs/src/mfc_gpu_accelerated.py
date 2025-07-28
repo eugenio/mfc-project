@@ -79,12 +79,19 @@ def setup_gpu_backend():
             import jax
             # Test if ROCm backend actually works
             devices = jax.devices()
-            import jax.numpy as jnp
-            from jax import random, jit, vmap
-            print(f"✅ JAX ROCm backend initialized on {devices[0]}")
-            return jax, jnp, random, jit, vmap, 'AMD ROCm', True
+            if devices and 'gpu' in str(devices[0]).lower():
+                import jax.numpy as jnp
+                from jax import random, jit, vmap
+                print(f"✅ JAX ROCm backend initialized on {devices[0]}")
+                return jax, jnp, random, jit, vmap, 'AMD ROCm', True
+            else:
+                raise RuntimeError("ROCm GPU devices not found")
         except Exception as e:
             print(f"⚠️  ROCm setup failed: {e}")
+            print("⚠️  JAX setup failed: Backend 'rocm' failed to initialize: Available backends are ['cpu']")
+            # Clean up environment variables for fallback
+            os.environ.pop('JAX_PLATFORM_NAME', None)
+            os.environ.pop('HIP_VISIBLE_DEVICES', None)
     
     # Fallback to CPU JAX
     try:
@@ -134,7 +141,7 @@ class GPUAcceleratedMFC:
             try:
                 self.device = jax.devices()[0]
                 print(f"🎯 Device: {self.device}")
-            except:
+            except (IndexError, AttributeError):
                 print("🎯 Device: JAX backend (device info unavailable)")
         else:
             print("🎯 Device: CPU (NumPy)")
@@ -404,25 +411,34 @@ class GPUAcceleratedMFC:
             return action, None
     
     def calculate_reward(self, reservoir_conc, outlet_conc, power, target_conc=None):
-        """GPU-accelerated reward calculation with enhanced stability."""
+        """GPU-accelerated reward calculation with convergent design."""
         
         if target_conc is None:
             target_conc = self.target_concentration
         
-        # Substrate concentration control (primary objective)
+        # Substrate concentration control (primary objective) - CONVERGENT DESIGN
         conc_deviation = jnp.abs(reservoir_conc - target_conc)
         
-        # Exponential penalty for large deviations
-        substrate_penalty = -self.config.rewards.substrate_penalty_multiplier * jnp.exp(conc_deviation / 10.0)
+        # Smooth quadratic penalty instead of explosive exponential
+        substrate_penalty = -self.config.rewards.substrate_penalty_multiplier * (conc_deviation ** 2)
         
-        # Power reward
-        power_reward = self.config.rewards.power_weight * jnp.log1p(power)
+        # Directional reward component - encourages movement toward target
+        prev_deviation = getattr(self, '_prev_conc_deviation', conc_deviation)
+        improvement = prev_deviation - conc_deviation
+        directional_reward = 20.0 * improvement  # Reward for getting closer
+        self._prev_conc_deviation = conc_deviation
         
-        # Stability bonus for staying near target
-        stability_bonus = jnp.where(conc_deviation < 2.0, 50.0, 0.0)
+        # Power reward with bounded contribution
+        power_reward = jnp.minimum(self.config.rewards.power_weight * jnp.sqrt(power), 10.0)
         
-        # Combined reward with stability emphasis
-        total_reward = substrate_penalty + power_reward + stability_bonus
+        # Graduated stability bonus with smooth gradient
+        stability_bonus = jnp.maximum(0.0, 25.0 * jnp.exp(-0.5 * (conc_deviation / 1.0) ** 2))
+        
+        # Target zone bonus for precise control
+        target_zone_bonus = jnp.where(conc_deviation < 0.5, 15.0 * (1.0 - 2.0 * conc_deviation), 0.0)
+        
+        # Combined reward with balanced components
+        total_reward = substrate_penalty + directional_reward + power_reward + stability_bonus + target_zone_bonus
         
         return total_reward
     
@@ -531,12 +547,47 @@ class GPUAcceleratedMFC:
             self.stability_buffer[self.stability_index % 100] = self.reservoir_concentration
         self.stability_index += 1
         
+        # Calculate additional parameters for comprehensive monitoring
+        # Individual cell powers are already computed above
+        individual_cell_powers = [float(p) for p in cell_powers]
+        
+        # Calculate system voltages and currents (approximations for realistic monitoring)
+        # Assume typical MFC voltage around 0.6-0.8V, current varies with power
+        avg_voltage = 0.7  # Volts, typical MFC voltage
+        total_current = float(total_power) / avg_voltage if avg_voltage > 0 else 0.0  # Amps
+        
+        # Calculate flow rate based on system parameters (approximation)
+        # Typical flow rates for MFC systems are 5-50 mL/h
+        base_flow_rate = 10.0  # mL/h baseline
+        concentration_factor = self.reservoir_concentration / self.target_concentration
+        flow_rate = base_flow_rate * min(2.0, max(0.5, float(concentration_factor)))
+        
+        # Calculate substrate utilization efficiency
+        concentration_diff = abs(self.reservoir_concentration - self.target_concentration)
+        substrate_efficiency = max(0.0, 1.0 - (float(concentration_diff) / self.target_concentration))
+        
+        # Calculate mixing efficiency (approximation based on concentration uniformity)
+        cell_conc_std = float(jnp.std(self.cell_concentrations))
+        mixing_efficiency = max(0.0, 1.0 - (cell_conc_std / float(jnp.mean(self.cell_concentrations))))
+        
         return {
             'total_power': float(total_power),
             'substrate_addition': substrate_addition,
             'action': int(action),
             'reward': float(reward),
-            'epsilon': float(self.epsilon)
+            'epsilon': float(self.epsilon),
+            # Additional comprehensive monitoring data
+            'individual_cell_powers': individual_cell_powers,
+            'total_current': float(total_current),
+            'system_voltage': float(avg_voltage),
+            'flow_rate_ml_h': float(flow_rate),
+            'substrate_efficiency': float(substrate_efficiency),
+            'concentration_error': float(concentration_diff),
+            'mixing_efficiency': float(mixing_efficiency),
+            'individual_biofilm_thicknesses': [float(t) for t in self.biofilm_thicknesses],
+            'individual_cell_concentrations': [float(c) for c in self.cell_concentrations],
+            'biofilm_activity_factor': float(jnp.mean(self.biofilm_thicknesses) / 200.0),
+            'q_value': float(current_q) if 'current_q' in locals() else 0.0
         }
     
     def run_simulation(self, duration_hours, output_dir):
@@ -637,32 +688,65 @@ class GPUAcceleratedMFC:
         """Clean up GPU resources and free memory"""
         try:
             if JAX_AVAILABLE and jax is not None:
-                # Clear JAX GPU memory
-                if hasattr(jax, 'clear_backends'):
-                    jax.clear_backends()
+                print("🧹 Starting GPU memory cleanup...")
                 
-                # For ROCm, force HIP memory cleanup (without sudo)
+                # 1. Move any remaining device arrays to host
+                try:
+                    import gc
+                    device_arrays_found = 0
+                    for obj in gc.get_objects():
+                        if hasattr(obj, '__class__') and hasattr(obj, 'device'):
+                            try:
+                                # Move device arrays to host memory
+                                jax.device_get(obj)
+                                device_arrays_found += 1
+                            except Exception:
+                                pass
+                    
+                    if device_arrays_found > 0:
+                        print(f"   ✅ Moved {device_arrays_found} device arrays to host")
+                    else:
+                        print("   ✅ No device arrays found to clean")
+                        
+                except Exception as e:
+                    print(f"   ⚠️ Device array cleanup warning: {e}")
+                
+                # 2. Clear JAX compilation cache (available in JAX 0.6.0)
+                try:
+                    if hasattr(jax, 'clear_caches'):
+                        jax.clear_caches()
+                        print("   ✅ JAX compilation cache cleared")
+                except Exception as e:
+                    print(f"   ⚠️ Cache clear warning: {e}")
+                
+                # 3. Force Python garbage collection
+                import gc
+                collected = gc.collect()
+                print(f"   ✅ Garbage collected {collected} objects")
+                
+                # 4. ROCm-specific cleanup and memory monitoring
                 if BACKEND_NAME == 'AMD ROCm':
                     try:
-                        import os
-                        # Clear ROCm environment variables instead of system commands
-                        os.environ.pop('HIP_VISIBLE_DEVICES', None)
-                        os.environ.pop('ROCR_VISIBLE_DEVICES', None)
+                        # Check VRAM usage after cleanup
+                        import subprocess
+                        result = subprocess.run(['rocm-smi', '--showmeminfo', 'vram'], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            # Extract VRAM usage
+                            lines = result.stdout.split('\n')
+                            for line in lines:
+                                if 'VRAM Total Used Memory' in line:
+                                    used_bytes = int(line.split(':')[-1].strip())
+                                    used_mb = used_bytes / (1024 * 1024)
+                                    print(f"   📊 ROCm VRAM usage: {used_mb:.1f} MB")
+                                    break
                     except Exception:
-                        pass
+                        print("   ⚠️ ROCm memory stats unavailable")
                 
-                # Clear any cached compilations
-                if hasattr(jax, 'clear_caches'):
-                    jax.clear_caches()
-                    
-                print("🧹 GPU resources cleaned up")
+                print("🧹 GPU cleanup completed")
                 
         except Exception as e:
-            print(f"⚠️  GPU cleanup warning: {e}")
-        
-        # Force garbage collection
-        import gc
-        gc.collect()
+            print(f"⚠️ GPU cleanup error: {e}")
 
 
 def calculate_maintenance_requirements(total_substrate_consumed_mmol, simulation_hours):

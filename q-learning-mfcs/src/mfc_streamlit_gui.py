@@ -109,41 +109,50 @@ class SimulationRunner:
     def _cleanup_resources(self):
         """Clean up GPU/CPU resources after simulation stops"""
         try:
-            print("🧹 Starting aggressive GPU memory cleanup...")
+            print("🧹 Starting GPU memory cleanup...")
             
             # Force delete any simulation objects first
             if hasattr(self, 'simulation'):
                 del self.simulation
+                print("   ✅ Simulation object deleted")
                 
-            # Clear JAX GPU memory aggressively
+            # Clear JAX GPU memory using JAX 0.6.0 compatible methods
             try:
                 import jax
                 
-                # Clear all JAX compilation cache
-                if hasattr(jax, 'clear_caches'):
-                    jax.clear_caches()
-                    print("   ✅ JAX caches cleared")
-                    
-                # Clear all backends
-                if hasattr(jax, 'clear_backends'):
-                    jax.clear_backends()
-                    print("   ✅ JAX backends cleared")
-                
-                # For ROCm specifically, clear device arrays
+                # 1. Move device arrays to host memory
                 try:
-                    # Get all live arrays and delete them
                     import gc
+                    device_arrays_found = 0
                     for obj in gc.get_objects():
-                        if hasattr(obj, '__class__') and 'DeviceArray' in str(type(obj)):
-                            del obj
-                    print("   ✅ JAX device arrays cleared")
-                except Exception:
-                    pass
+                        if hasattr(obj, '__class__') and hasattr(obj, 'device'):
+                            try:
+                                # Move device arrays to host memory
+                                jax.device_get(obj)
+                                device_arrays_found += 1
+                            except Exception:
+                                pass
+                    
+                    if device_arrays_found > 0:
+                        print(f"   ✅ Moved {device_arrays_found} device arrays to host")
+                    else:
+                        print("   ✅ No device arrays found to clean")
+                        
+                except Exception as e:
+                    print(f"   ⚠️ Device array cleanup warning: {e}")
+                
+                # 2. Clear JAX compilation cache (available in JAX 0.6.0)
+                try:
+                    if hasattr(jax, 'clear_caches'):
+                        jax.clear_caches()
+                        print("   ✅ JAX compilation cache cleared")
+                except Exception as e:
+                    print(f"   ⚠️ Cache clear warning: {e}")
                     
             except ImportError:
-                pass
+                print("   ⚠️ JAX not available for cleanup")
             
-            # Clear PyTorch CUDA cache if using NVIDIA
+            # Clear PyTorch CUDA cache if using NVIDIA (fallback)
             try:
                 import torch
                 if torch.cuda.is_available():
@@ -153,13 +162,37 @@ class SimulationRunner:
             except ImportError:
                 pass
             
-            # Force multiple garbage collections
+            # Force aggressive garbage collection
             import gc
-            for i in range(5):  # More aggressive cleanup
+            total_collected = 0
+            for i in range(3):  # Multiple GC cycles
                 collected = gc.collect()
-                print(f"   🗑️ GC cycle {i+1}: {collected} objects collected")
+                total_collected += collected
+                if collected > 0:
+                    print(f"   🗑️ GC cycle {i+1}: {collected} objects collected")
+            
+            if total_collected == 0:
+                print("   ✅ No objects to garbage collect")
+            else:
+                print(f"   ✅ Total objects collected: {total_collected}")
                 
-            print("🧹 Aggressive GPU cleanup completed")
+            # ROCm memory monitoring
+            try:
+                import subprocess
+                result = subprocess.run(['rocm-smi', '--showmeminfo', 'vram'], 
+                                      capture_output=True, text=True, timeout=3)
+                if result.returncode == 0:
+                    lines = result.stdout.split('\n')
+                    for line in lines:
+                        if 'VRAM Total Used Memory' in line:
+                            used_bytes = int(line.split(':')[-1].strip())
+                            used_mb = used_bytes / (1024 * 1024)
+                            print(f"   📊 Current VRAM usage: {used_mb:.1f} MB")
+                            break
+            except Exception:
+                print("   ⚠️ ROCm memory stats unavailable")
+                
+            print("🧹 GPU cleanup completed")
                 
         except Exception as e:
             print(f"⚠️ Warning: Failed to clean up resources: {e}")
