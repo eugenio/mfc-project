@@ -653,6 +653,56 @@ def main():
             else:
                 print(f"❌ Issue #{args.get_issue} not found or could not be retrieved")
         
+        elif args.create_issue:
+            # Interactive issue creation
+            print("Creating new issue interactively...")
+            
+            try:
+                title = input("Issue title: ")
+                if not title.strip():
+                    print("❌ Title cannot be empty")
+                    sys.exit(1)
+                
+                print("\nIssue description (press Ctrl+D or Ctrl+Z when done):")
+                description_lines = []
+                try:
+                    while True:
+                        line = input()
+                        description_lines.append(line)
+                except EOFError:
+                    pass
+                
+                description = '\n'.join(description_lines)
+                if not description.strip():
+                    print("❌ Description cannot be empty")
+                    sys.exit(1)
+                
+                # Get issue type
+                print("\nIssue type:")
+                for i, issue_type in enumerate(IssueType, 1):
+                    print(f"  {i}. {issue_type.value}")
+                
+                try:
+                    type_choice = input("Select type (1-6): ")
+                    type_index = int(type_choice) - 1
+                    if 0 <= type_index < len(IssueType):
+                        selected_type = list(IssueType)[type_index]
+                    else:
+                        print("Invalid choice, using 'enhancement' as default")
+                        selected_type = IssueType.ENHANCEMENT
+                except (ValueError, EOFError):
+                    print("Invalid input, using 'enhancement' as default")
+                    selected_type = IssueType.ENHANCEMENT
+                
+                # Get severity
+                print("\nSeverity:")
+                for i, severity in enumerate(IssueSeverity, 1):
+                    print(f"  {i}. {severity.value}")
+                
+                try:
+                    severity_choice = input("Select severity (1-4): ")
+                    severity_index = int(severity_choice) - 1
+                    if 0 <= severity_index < len(IssueSeverity):
 
         
         else:
