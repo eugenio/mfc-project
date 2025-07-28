@@ -20,3 +20,20 @@ from pathlib import Path
 from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
 from reliability_analyzer import ReliabilityAnalyzer, ComponentReliability, MaintenanceRecommendation
 
+class MaintenanceType(Enum):
+    """Types of maintenance activities."""
+    PREVENTIVE = "preventive"
+    PREDICTIVE = "predictive"
+    CORRECTIVE = "corrective"
+    EMERGENCY = "emergency"
+    ROUTINE = "routine"
+
+
+class MaintenancePriority(Enum):
+    """Priority levels for maintenance tasks."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+    EMERGENCY = "emergency"
+
