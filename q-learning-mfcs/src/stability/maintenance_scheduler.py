@@ -7,18 +7,16 @@ timing and minimize system downtime.
 
 Created: 2025-07-28
 """
-import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass, field
+from typing import Dict, List, Tuple, Optional, Any
+from dataclasses import field
 from enum import Enum
 from datetime import datetime, timedelta
 import json
 import logging
-from pathlib import Path
 
 from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
-from reliability_analyzer import ReliabilityAnalyzer, ComponentReliability, MaintenanceRecommendation
+from reliability_analyzer import ReliabilityAnalyzer
 
 class MaintenanceType(Enum):
     """Types of maintenance activities."""
@@ -526,7 +524,7 @@ class MaintenanceScheduler:
             blackout_periods = constraints.get('blackout_periods', [])
             for blackout_start, blackout_end in blackout_periods:
                 if not (task_end <= blackout_start or task_start >= blackout_end):
-                    return False, f"Task conflicts with blackout period"
+                    return False, "Task conflicts with blackout period"
         
         return True, "No constraints violated"
     
