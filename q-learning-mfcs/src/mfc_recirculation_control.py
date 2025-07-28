@@ -933,6 +933,11 @@ def parse_arguments():
         default=None,
         help='Path to existing Q-learning checkpoint to load and continue training'
     )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug mode - output files to temporary directory for testing'
+    )
     return parser.parse_args()
 
 def run_mfc_simulation(duration_hours, output_dir, config=None, n_cells=5, 
@@ -1012,6 +1017,12 @@ if __name__ == "__main__":
     from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
     config = DEFAULT_QLEARNING_CONFIG
     
+    # Handle debug mode
+    if args.debug:
+        from path_config import enable_debug_mode, get_current_base_path
+        enable_debug_mode()
+        print(f"🐛 DEBUG MODE ENABLED - Output directory: {get_current_base_path()}")
+    
     # Run simulation with specified duration
     results, cells, reservoir, controller, q_controller = simulate_mfc_with_recirculation(
         args.duration, config, args.load_checkpoint)
@@ -1034,7 +1045,11 @@ if __name__ == "__main__":
     
     # Create output directory
     dir_suffix = f"_{args.user_suffix}" if args.user_suffix else ""
-    output_dir = Path(args.output_dir) / f"{args.prefix}_{timestamp}{dir_suffix}"
+    if args.debug:
+        from path_config import get_simulation_data_path
+        output_dir = Path(get_simulation_data_path(f"{args.prefix}_{timestamp}{dir_suffix}"))
+    else:
+        output_dir = Path(args.output_dir) / f"{args.prefix}_{timestamp}{dir_suffix}"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Setup logging to file and console
