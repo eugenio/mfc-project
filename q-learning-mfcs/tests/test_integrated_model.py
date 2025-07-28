@@ -185,7 +185,7 @@ class TestIntegratedModel(unittest.TestCase):
     
     def test_biofilm_metabolic_coupling(self):
         """Test coupling between biofilm and metabolic models."""
-        # Initial biofilm state
+        # Initial biofilm state 
         initial_thickness = [bm.biofilm_thickness for bm in self.model.biofilm_models]
         
         # Run simulation with good growth conditions
