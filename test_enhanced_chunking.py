@@ -185,3 +185,41 @@ def send_notification(user_id: str, message: str, notification_type: str = "info
     except Exception as e:
         logging.error(f"Failed to send notification: {e}")
         return False
+def main():
+    """Main entry point demonstrating the enhanced chunking system."""
+    print("Enhanced File Chunking Test")
+    print("=" * 40)
+    
+    # Initialize components
+    db = DatabaseManager("postgresql://localhost:5432/testdb")
+    cache = CacheManager("redis://localhost:6379")
+    
+    # Create sample user
+    user = UserProfile(
+        user_id=generate_user_id(),
+        username="test_user",
+        email="test@example.com",
+        created_at=datetime.now()
+    )
+    
+    print(f"Created user: {user.username}")
+    print(f"User ID: {user.user_id}")
+    print(f"Email valid: {validate_email(user.email)}")
+    
+    # Test database operations
+    if db.connect():
+        print("Database connected successfully")
+        db.close()
+    
+    # Test caching
+    cache.set("test_key", {"message": "Hello, World!"})
+    cached_value = cache.get("test_key")
+    print(f"Cached value: {cached_value}")
+    
+    # Send welcome notification
+    send_notification(user.user_id, "Welcome to our platform!", "welcome")
+    
+    print("Test completed successfully!")
+
+if __name__ == "__main__":
+    main()
