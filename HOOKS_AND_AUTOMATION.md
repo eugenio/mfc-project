@@ -222,3 +222,65 @@ export GITLAB_PROJECT_ID=12345
 export EVENT_LOG_LEVEL=DEBUG
 export EVENT_LOG_FILE=/path/to/events.log
 ```
+## Custom Hook Development
+
+### Hook Template
+```python
+#!/usr/bin/env python3
+"""Custom hook implementation."""
+import json
+import sys
+import os
+
+def main():
+    """Main hook entry point."""
+    # Read input from stdin
+    input_data = json.loads(sys.stdin.read())
+    
+    # Extract hook context
+    tool_name = input_data.get('tool_name')
+    tool_input = input_data.get('tool_input', {})
+    
+    # Implement hook logic
+    if should_modify(tool_name, tool_input):
+        # Modify operation
+        modified_input = modify_input(tool_input)
+        
+        # Return modified input
+        print(json.dumps({
+            'action': 'modify',
+            'modified_input': modified_input
+        }))
+    elif should_block(tool_name, tool_input):
+        # Block operation
+        print(json.dumps({
+            'action': 'block',
+            'message': 'Operation blocked by hook'
+        }))
+        sys.exit(1)
+    else:
+        # Allow operation
+        sys.exit(0)
+
+if __name__ == '__main__':
+    main()
+```
+
+### Hook Registration
+```json
+{
+  "hooks": {
+    "CustomHook": [
+      {
+        "matcher": "*.py",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python /path/to/custom_hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
