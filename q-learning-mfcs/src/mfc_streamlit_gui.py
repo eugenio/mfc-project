@@ -55,7 +55,7 @@ class SimulationRunner:
         self.thread = None
         self.current_output_dir = None
         
-    def start_simulation(self, config, duration_hours, n_cells=None, electrode_area_m2=None, target_conc=None, gui_refresh_interval=5.0):
+    def start_simulation(self, config, duration_hours, n_cells=None, electrode_area_m2=None, target_conc=None, gui_refresh_interval=5.0, debug_mode=False):
         """Start simulation in background thread
         
         Args:
@@ -164,9 +164,17 @@ class SimulationRunner:
             import pandas as pd
             import json
             
-            # Create output directory
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_dir = Path(f"../data/simulation_data/gui_simulation_{timestamp}")
+            # Handle debug mode
+            if debug_mode:
+                from path_config import enable_debug_mode, get_simulation_data_path
+                enable_debug_mode()
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_dir = Path(get_simulation_data_path(f"gui_simulation_{timestamp}"))
+            else:
+                # Create output directory in normal location
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_dir = Path(f"../data/simulation_data/gui_simulation_{timestamp}")
+            
             output_dir.mkdir(parents=True, exist_ok=True)
             self.current_output_dir = output_dir
             
@@ -554,6 +562,7 @@ def main():
     with st.sidebar.expander("Advanced Settings"):
         gpu_backend = st.selectbox("GPU Backend", ["Auto-detect", "CUDA", "ROCm", "CPU"])
         st.slider("Save Interval (steps)", 1, 100, 10, help="Data saving is now synchronized with GUI refresh rate")
+        debug_mode = st.checkbox("Debug Mode", value=False, help="Output files to temporary directory for testing")
         st.checkbox("Email Notifications", value=False, help="Feature not yet implemented")
     
     # Main content area
@@ -621,10 +630,13 @@ def main():
                     n_cells=n_cells,
                     electrode_area_m2=electrode_area_m2,
                     target_conc=target_conc,
-                    gui_refresh_interval=current_refresh_interval
+                    gui_refresh_interval=current_refresh_interval,
+                    debug_mode=debug_mode
                 ):
                     st.success(f"Started {selected_duration} simulation!")
                     st.info(f"📊 Data saving synchronized with {current_refresh_interval}s refresh rate")
+                    if debug_mode:
+                        st.warning("🐛 DEBUG MODE: Files will be saved to temporary directory")
                     st.rerun()
                 else:
                     st.error("Simulation already running!")
