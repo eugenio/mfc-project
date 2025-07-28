@@ -88,3 +88,32 @@ class DatabaseManager:
         if self.is_connected:
             self.logger.info("Closing database connection")
             self.is_connected = False
+class CacheManager:
+    """Redis-based cache manager with automatic expiration and serialization."""
+    
+    def __init__(self, redis_url: str, default_ttl: int = 3600):
+        """Initialize cache manager with Redis connection."""
+        self.redis_url = redis_url
+        self.default_ttl = default_ttl
+        self.client = None
+    
+    def get(self, key: str) -> Optional[Any]:
+        """Retrieve value from cache with automatic deserialization."""
+        try:
+            raw_value = self.client.get(key)
+            if raw_value:
+                return json.loads(raw_value)
+            return None
+        except Exception as e:
+            logging.error(f"Cache get error: {e}")
+            return None
+    
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+        """Store value in cache with automatic serialization."""
+        try:
+            ttl = ttl or self.default_ttl
+            serialized_value = json.dumps(value, default=str)
+            return self.client.setex(key, ttl, serialized_value)
+        except Exception as e:
+            logging.error(f"Cache set error: {e}")
+            return False
