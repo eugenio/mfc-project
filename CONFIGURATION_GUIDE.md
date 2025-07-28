@@ -250,3 +250,42 @@ try:
 except ConfigurationError as e:
     print(f"Invalid configuration: {e}")
 ```
+## Configuration Schema
+
+### Biological Parameters
+```yaml
+biological:
+  species: str  # geobacter, shewanella, mixed
+  substrate: str  # acetate, lactate, glucose
+  max_growth_rate: float  # 0.1-1.0 h^-1
+  half_saturation_constant: float  # 0.5-10.0 mM
+  yield_coefficient: float  # 0.1-0.8 g/g
+  decay_rate: float  # 0.001-0.1 h^-1
+  max_biofilm_thickness: float  # 0.5-5.0 μm
+```
+
+### Control Parameters
+```yaml
+control:
+  q_learning:
+    learning_rate: float  # 0.001-0.5
+    discount_factor: float  # 0.8-0.99
+    epsilon_initial: float  # 0.05-0.5
+    epsilon_decay: float  # 0.99-0.999
+    epsilon_min: float  # 0.01-0.1
+    
+  pid:
+    kp: float  # 0.1-10.0
+    ki: float  # 0.01-1.0
+    kd: float  # 0.001-0.1
+```
+
+### Visualization Parameters
+```yaml
+visualization:
+  plot_interval: int  # 1-100 steps
+  save_plots: bool
+  plot_format: str  # png, svg, pdf
+  figure_dpi: int  # 72-300
+  theme: str  # default, dark, publication
+```
