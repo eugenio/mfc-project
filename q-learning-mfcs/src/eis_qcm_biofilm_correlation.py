@@ -184,7 +184,6 @@ class CombinedEISQCMSensor:
             # Add measurement noise
             if add_noise:
                 noise_magnitude = 0.02 * abs(Z)  # 2% noise
-                noise_phase = 0.05  # 5% phase noise
                 Z_real = Z.real + np.random.normal(0, noise_magnitude)
                 Z_imag = Z.imag + np.random.normal(0, noise_magnitude)
                 Z = complex(Z_real, Z_imag)
@@ -359,10 +358,10 @@ def create_eis_qcm_correlation_analysis(duration_hours: int = 200):
 def create_comprehensive_visualization(results: Dict):
     """Create comprehensive EIS-QCM correlation visualization"""
     
-    fig = plt.figure(figsize=(16, 12))
+    plt.figure(figsize=(16, 12))
     
     # Panel A: Thickness Comparison
-    ax1 = plt.subplot(3, 3, 1)
+    plt.subplot(3, 3, 1)
     plt.plot(results['time_hours'], results['thickness_true'], 'k-', linewidth=2, label='True Thickness')
     plt.plot(results['time_hours'], results['thickness_qcm'], 'b--', linewidth=2, label='QCM Measured')
     plt.plot(results['time_hours'], results['thickness_eis'], 'r:', linewidth=2, label='EIS Estimated')
@@ -375,7 +374,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel B: EIS-QCM Correlation
-    ax2 = plt.subplot(3, 3, 2)
+    plt.subplot(3, 3, 2)
     plt.scatter(results['thickness_qcm'], results['thickness_eis'], 
                c=results['measurement_confidence'], cmap='viridis', alpha=0.6)
     plt.colorbar(label='Measurement Confidence')
@@ -389,7 +388,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel C: Impedance Evolution
-    ax3 = plt.subplot(3, 3, 3)
+    plt.subplot(3, 3, 3)
     plt.plot(results['time_hours'], results['eis_impedance_1kHz'], 'purple', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Impedance at 1 kHz (Ω)')
@@ -397,7 +396,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel D: Measurement Confidence
-    ax4 = plt.subplot(3, 3, 4)
+    plt.subplot(3, 3, 4)
     plt.plot(results['time_hours'], results['measurement_confidence'], 'orange', linewidth=2)
     plt.axhline(0.7, color='red', linestyle='--', alpha=0.7, label='Confidence Threshold')
     plt.xlabel('Time (hours)')
@@ -407,7 +406,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel E: Impedance Change
-    ax5 = plt.subplot(3, 3, 5)
+    plt.subplot(3, 3, 5)
     plt.plot(results['time_hours'], results['impedance_change_percent'], 'brown', linewidth=2)
     plt.axhline(-22.5, color='red', linestyle=':', alpha=0.7, label='Literature (-22-25%)')
     plt.xlabel('Time (hours)')
@@ -417,7 +416,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel F: Error Analysis
-    ax6 = plt.subplot(3, 3, 6)
+    plt.subplot(3, 3, 6)
     qcm_error = np.array(results['thickness_qcm']) - np.array(results['thickness_true'])
     eis_error = np.array(results['thickness_eis']) - np.array(results['thickness_true'])
     combined_error = np.array(results['thickness_combined']) - np.array(results['thickness_true'])
@@ -432,7 +431,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel G: Method Selection
-    ax7 = plt.subplot(3, 3, 7)
+    plt.subplot(3, 3, 7)
     method_quality = []
     for i in range(len(results['time_hours'])):
         if results['measurement_confidence'][i] > 0.7:
@@ -447,7 +446,7 @@ def create_comprehensive_visualization(results: Dict):
     plt.grid(True, alpha=0.3)
     
     # Panel H: Cross-Validation
-    ax8 = plt.subplot(3, 3, 8)
+    plt.subplot(3, 3, 8)
     plt.hist2d(results['thickness_qcm'], results['thickness_eis'], bins=20, cmap='Blues')
     plt.colorbar(label='Frequency')
     plt.xlabel('QCM Thickness (μm)')
