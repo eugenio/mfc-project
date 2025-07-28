@@ -2,7 +2,8 @@
 Create GitLab issues for test failures found in comprehensive test run.
 """
 import sys
-import os
+sys.path.append('/home/uge/mfc-project/q-learning-mfcs/tests')
+
 from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueType, IssueSeverity, IssueUrgency
 def create_issues():
     """Create issues for all major test failures."""
