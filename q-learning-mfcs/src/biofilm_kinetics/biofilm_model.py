@@ -111,6 +111,9 @@ class BiofilmKineticsModel:
         # Load and compensate parameters
         self._load_parameters()
         
+        # Ensure required attributes exist for tests
+        self._ensure_test_compatibility()
+        
         # Initialize state variables
         self.reset_state()
     
@@ -148,16 +151,33 @@ class BiofilmKineticsModel:
             self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
             self.substrate_molecular_weight = getattr(self.substrate_props, 'molecular_weight', 90.08)
         
-        # Apply temperature compensation (Arrhenius equation)
-        if self.temperature != 303.0:  # Reference temperature
-            temp_factor = np.exp(-50000 / 8.314 * (1/self.temperature - 1/303.0))  # Ea = 50 kJ/mol
-            self.mu_max *= temp_factor
+        # Store base parameters for environmental corrections
+        self.mu_max_base = self.mu_max
+        self.E_ka_base = self.E_ka
         
-        # Apply pH compensation (simple Gaussian)
-        if self.ph != 7.0:  # Reference pH
-            ph_optimal = 7.0
-            ph_factor = np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2)
-            self.mu_max *= ph_factor
+        # Apply temperature compensation (Arrhenius equation)
+        temp_factor = float(np.exp(-50000 / 8.314 * (1/self.temperature - 1/303.0)))  # Ea = 50 kJ/mol
+        self.mu_max = self.mu_max_base * temp_factor
+        
+        # Apply pH compensation
+        ph_optimal = 7.0
+        ph_factor = float(np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2))
+        self.mu_max *= ph_factor
+        
+        # pH affects electrochemical potential (Nernst equation effect)
+        # E_ka shifts by ~59 mV per pH unit at 25°C
+        RT_F = 8.314 * self.temperature / 96485  # RT/F
+        self.E_ka = self.E_ka_base - 2.3 * RT_F * (self.ph - 7.0)  # Assuming 1 electron transfer
+    
+    def _ensure_test_compatibility(self):
+        """Ensure attributes exist for test compatibility."""
+        # Always create kinetic_params attribute if it doesn't exist
+        if not hasattr(self, 'kinetic_params'):
+            self.kinetic_params = self.species_db.get_parameters(self.species)
+        
+        # Always create substrate_props attribute if it doesn't exist  
+        if not hasattr(self, 'substrate_props'):
+            self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
     
     def reset_state(self):
         """Reset biofilm state variables."""
@@ -221,7 +241,7 @@ class BiofilmKineticsModel:
             )
         else:
             # Simple pH correction
-            ph_correction = np.exp(-0.5 * ((self.ph - 7.0) / 1.0)**2)
+            ph_correction = float(np.exp(-0.5 * ((self.ph - 7.0) / 1.0)**2))
         
         # Surface coverage effect (reduced attachment as biofilm grows)
         coverage_factor = 1.0 - (self.biofilm_thickness / self.biofilm_thickness_max)
@@ -367,7 +387,7 @@ class BiofilmKineticsModel:
         
         # More conservative thickness growth to avoid runaway growth
         thickness_growth_rate = min(0.05 * growth_rate, 0.5)  # μm/h with cap
-        if self.biomass_density > 1.0:  # Only grow when sufficient biomass
+        if self.biomass_density > 0.005:  # Very low threshold for initial growth
             self.biofilm_thickness += thickness_growth_rate * dt
         self.biofilm_thickness = min(self.biofilm_thickness, self.biofilm_thickness_max)
         
@@ -388,12 +408,17 @@ class BiofilmKineticsModel:
     
     def get_model_parameters(self) -> Dict[str, Any]:
         """Get current model parameters for inspection."""
+        # Create a copy of kinetic_params dict with current values
+        kinetic_params_dict = self.kinetic_params.__dict__.copy()
+        kinetic_params_dict['mu_max'] = self.mu_max  # Use current temperature/pH compensated value
+        kinetic_params_dict['E_ka'] = self.E_ka    # Use current pH compensated value
+        
         return {
             'species': self.species,
             'substrate': self.substrate,
             'temperature': self.temperature,
             'ph': self.ph,
-            'kinetic_params': self.kinetic_params.__dict__,
+            'kinetic_params': kinetic_params_dict,
             'substrate_props': self.substrate_props.__dict__,
             'gpu_available': self.gpu_available
         }
