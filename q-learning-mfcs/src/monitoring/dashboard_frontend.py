@@ -8,19 +8,16 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.express as px
 import time
-import json
 import requests
-import asyncio
-import websockets
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
 from typing import Dict, List, Any
 import logging
-from pathlib import Path
-import os
-import sys
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 API_BASE_URL = "http://localhost:8000/api"
 WEBSOCKET_URL = "ws://localhost:8000/ws"
