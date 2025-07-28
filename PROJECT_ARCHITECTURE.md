@@ -64,3 +64,34 @@ The MFC (Microbial Fuel Cell) project is a sophisticated research platform that 
   - Automatic file chunking for large commits
   - GitLab integration for issue tracking
   - Event logging and notification system
+## Directory Structure
+
+```
+mfc-project/
+├── .claude/                      # Claude Code automation
+│   ├── hooks/                   # Development hooks
+│   │   ├── enhanced_file_chunking.py  # Smart chunking
+│   │   ├── pre_tool_use.py     # Tool monitoring
+│   │   ├── gitlab_issue_manager.py    # Issue automation
+│   │   └── send_event.py       # Event logging
+│   ├── settings.json           # Hook configuration
+│   └── CLAUDE.md              # User instructions
+│
+├── q-learning-mfcs/            # Core Q-learning system
+│   ├── src/                   # Source code
+│   │   ├── config/           # Configuration system
+│   │   ├── sensing_models/   # Sensor models
+│   │   ├── utils/           # Utilities
+│   │   └── *.py/*.mojo      # Core implementations
+│   ├── data/                # Simulation outputs
+│   ├── tests/              # Test suite
+│   └── README.md           # Detailed documentation
+│
+├── scripts/                 # Utility scripts
+│   ├── detect_gpu.py       # GPU detection
+│   └── install_gpu_deps.py # Dependency installer
+│
+├── pixi.toml               # Dependency management
+├── setup_environment.sh    # Environment setup
+└── README.md              # Project overview
+```
