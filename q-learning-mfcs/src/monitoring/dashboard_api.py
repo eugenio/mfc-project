@@ -14,22 +14,16 @@ Features:
 - Multi-user session management
 - WebSocket support for real-time updates
 """
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
+from pydantic import BaseModel
+from typing import Dict, List, Optional, Any
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
-import threading
 from enum import Enum
-import os
-import sys
-from dataclasses import asdict
-from pathlib import Path
 
 # Import AlertLevel from config
 try:
@@ -45,6 +39,8 @@ except ImportError:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
 
 # FastAPI app
 app = FastAPI(
