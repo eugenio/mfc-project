@@ -3,8 +3,11 @@ Direct GitLab API call to create HTTPS/SSL enhancement issue
 """
 import sys
 import os
-from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueType, IssueSeverity, IssueUrgency
-def create_https_ssl_issue():
+
+# Add tests directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
+
+
     """Create the HTTPS/SSL enhancement issue"""
     
     # Create issue data
