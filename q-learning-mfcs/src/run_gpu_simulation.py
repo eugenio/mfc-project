@@ -213,12 +213,12 @@ def run_accelerated_python_simulation():
         
         # Extract states
         C_AC = states[:, 0]
-        C_CO2 = states[:, 1]
+        states[:, 1]
         C_H = states[:, 2]
         X = states[:, 3]
         C_O2 = states[:, 4]
-        C_OH = states[:, 5]
-        C_M = states[:, 6]
+        states[:, 5]
+        states[:, 6]
         eta_a = states[:, 7]
         eta_c = states[:, 8]
         aging = states[:, 9]
@@ -534,8 +534,8 @@ def generate_comparison_plots(successful_results):
     ax2 = axes[0, 1]
     x_pos = np.arange(len(names))
     width = 0.35
-    bars2a = ax2.bar(x_pos - width/2, avg_powers, width, label='Average Power', color='#FF6B6B', alpha=0.7)
-    bars2b = ax2.bar(x_pos + width/2, max_powers, width, label='Peak Power', color='#4ECDC4', alpha=0.7)
+    ax2.bar(x_pos - width/2, avg_powers, width, label='Average Power', color='#FF6B6B', alpha=0.7)
+    ax2.bar(x_pos + width/2, max_powers, width, label='Peak Power', color='#4ECDC4', alpha=0.7)
     ax2.set_ylabel('Power (W)')
     ax2.set_title('Power Output Comparison')
     ax2.set_xticks(x_pos)
@@ -708,7 +708,7 @@ def main():
         print("\n⚠️  All Mojo simulations failed. Running Python fallback...")
         
         # Run Python fallback simulation
-        results = run_accelerated_python_simulation()
+        run_accelerated_python_simulation()
         
         print("\n=== Python Fallback Complete ===")
         print("This demonstrates the same concepts with NumPy acceleration:")
