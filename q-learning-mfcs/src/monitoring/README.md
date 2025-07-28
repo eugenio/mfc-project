@@ -209,3 +209,36 @@ mypy src/monitoring/ --ignore-missing-imports
 2. Add visualization in `dashboard_frontend.py`
 3. Configure safety thresholds in `safety_monitor.py`
 4. Add WebSocket streaming in `realtime_streamer.py`
+## Troubleshooting
+
+### Common Issues
+
+#### API Server Won't Start
+- Check if port 8000 is available: `lsof -i :8000`
+- Verify dependencies are installed
+- Check logs for specific error messages
+
+#### Dashboard Not Loading
+- Ensure API server is running first
+- Check network connectivity to localhost:8000
+- Verify browser console for JavaScript errors
+
+#### WebSocket Connection Failed
+- Confirm WebSocket server is running on port 8001
+- Check firewall settings
+- Verify client-side WebSocket implementation
+
+#### No Real-time Data
+- Verify MFC model integration is active
+- Check data streaming configuration
+- Review safety monitor status
+
+### Performance Optimization
+
+For production deployments:
+
+1. **Database Integration**: Replace in-memory storage with persistent database
+2. **Authentication**: Implement proper user authentication and authorization
+3. **Load Balancing**: Use multiple API server instances behind a load balancer
+4. **Monitoring**: Add application performance monitoring (APM)
+5. **Caching**: Implement Redis caching for frequently accessed data
