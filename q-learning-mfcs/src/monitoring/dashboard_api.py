@@ -40,6 +40,56 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Fallback classes for missing imports
+class IntegratedMFCModel:
+    def __init__(self, **kwargs):
+        self.initialized = True
+    
+    def get_current_state(self):
+        return {"power": 1.0, "voltage": 0.8, "current": 1.25}
+
+class RealTimeController:
+    def __init__(self, **kwargs):
+        self.initialized = True
+
+class MFCDataStream:
+    def __init__(self, **kwargs):
+        self.initialized = True
+
+class AlertSystem:
+    def __init__(self, **kwargs):
+        self.initialized = True
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+    
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+    
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(json.dumps(message))
+            except Exception:
+                pass
+
+# Global instances
+manager = ConnectionManager()
+
+# Global dashboard state
+dashboard_state = {
+    "simulation_running": False,
+    "mfc_model": None,
+    "controller": None,
+    "data_stream": None,
+    "alert_system": None,
+    "current_metrics": None,
+    "connected_clients": 0
 
 
 # FastAPI app
