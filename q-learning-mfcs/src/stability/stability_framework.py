@@ -18,18 +18,13 @@ Date: 2025-07-28
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Any
+from dataclasses import field
 from enum import Enum
-import logging
 from pathlib import Path
 import json
-import warnings
-import os
-import sys
+import logging
 
-from integrated_mfc_model import IntegratedMFCModel
-from membrane_models.membrane_fouling import FoulingModel, FoulingParameters
 from config.statistical_analysis import StatisticalAnalyzer
 
 class StabilityTimeScale(Enum):
@@ -141,6 +136,9 @@ class StabilityAnalyzer:
         # Initialize component health tracking
         self._initialize_component_health()
         
+        # Logger
+        self.logger = logging.getLogger(__name__)
+        
     def _initialize_component_health(self):
         """Initialize component health tracking."""
         for component in ComponentType:
@@ -167,7 +165,7 @@ class StabilityAnalyzer:
         Returns:
             StabilityMetrics object with analysis results
         """
-        logger.info(f"Starting stability analysis for {time_scale.value} time scale")
+        self.logger.info(f"Starting stability analysis for {time_scale.value} time scale")
         
         # Extract time series data
         time_points = simulation_data.get('time', [])
@@ -233,7 +231,7 @@ class StabilityAnalyzer:
         # Update component health
         self._update_component_health(simulation_data, metrics)
         
-        logger.info("Stability analysis completed")
+        self.logger.info("Stability analysis completed")
         return metrics
     
     def _calculate_drift_rate(self, time_points: List[float], 
@@ -259,7 +257,7 @@ class StabilityAnalyzer:
             
             return 0.0
         except Exception as e:
-            logger.warning(f"Error calculating drift rate: {e}")
+            self.logger.warning(f"Error calculating drift rate: {e}")
             return 0.0
     
     def _detect_failures(self, simulation_data: Dict[str, Any]) -> List[float]:
@@ -386,7 +384,7 @@ class StabilityAnalyzer:
         """Estimate required cleaning frequency."""
         # Based on fouling rate and performance degradation
         membrane_degradation = self._calculate_membrane_degradation(simulation_data)
-        biofilm_growth = self._calculate_biofilm_growth_rate(simulation_data)
+        _ = self._calculate_biofilm_growth_rate(simulation_data)  # Used for side effects
         
         # When degradation reaches 5%, cleaning is needed
         degradation_threshold = 0.05  # 5%
@@ -457,7 +455,7 @@ class StabilityAnalyzer:
             
             return 0.0
         except Exception as e:
-            logger.warning(f"Error detecting seasonal patterns: {e}")
+            self.logger.warning(f"Error detecting seasonal patterns: {e}")
             return 0.0
     
     def _calculate_residual_variance(self, time_points: List[float], 
@@ -474,7 +472,7 @@ class StabilityAnalyzer:
             
             return np.var(residuals)
         except Exception as e:
-            logger.warning(f"Error calculating residual variance: {e}")
+            self.logger.warning(f"Error calculating residual variance: {e}")
             return np.var(values) if values else 0.0
     
     def _update_component_health(self, simulation_data: Dict[str, Any], 
@@ -590,7 +588,7 @@ class StabilityAnalyzer:
             output_file.parent.mkdir(parents=True, exist_ok=True)
             with open(output_file, 'w') as f:
                 f.write(report_text)
-            logger.info(f"Stability report saved to {output_file}")
+            self.logger.info(f"Stability report saved to {output_file}")
         
         return report_text
     
@@ -736,7 +734,7 @@ class StabilityAnalyzer:
         with open(output_file, 'w') as f:
             json.dump(export_data, f, indent=2, default=str)
         
-        logger.info(f"Analysis data exported to {output_file}")
+        self.logger.info(f"Analysis data exported to {output_file}")
 def run_long_term_stability_study(simulation_hours: int = 8760,  # 1 year
                                  output_dir: Optional[Path] = None) -> StabilityAnalyzer:
     """
@@ -752,6 +750,7 @@ def run_long_term_stability_study(simulation_hours: int = 8760,  # 1 year
     output_dir = output_dir or Path("stability_study_results")
     output_dir.mkdir(exist_ok=True)
     
+    logger = logging.getLogger(__name__)
     logger.info(f"Starting {simulation_hours}-hour stability study")
     
     # Initialize stability analyzer
@@ -801,7 +800,7 @@ def run_long_term_stability_study(simulation_hours: int = 8760,  # 1 year
     
     # Generate report
     report_file = output_dir / f"stability_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    report_text = analyzer.generate_stability_report(metrics, report_file)
+    analyzer.generate_stability_report(metrics, report_file)
     
     # Export analysis data
     data_file = output_dir / f"stability_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -825,4 +824,4 @@ if __name__ == "__main__":
     )
     
     print("Long-term stability study completed!")
-    print(f"Results available in: stability_analysis_results/")
+    print("Results available in: stability_analysis_results/")
