@@ -44,3 +44,32 @@ class SystemStatus(str, Enum):
     PAUSED = "paused"
     ERROR = "error"
     MAINTENANCE = "maintenance"
+class SystemMetrics(BaseModel):
+    """Current system metrics"""
+    timestamp: datetime
+    status: SystemStatus
+    uptime_hours: float
+    
+    # Performance metrics
+    total_energy_produced_kwh: float
+    average_power_w: float
+    coulombic_efficiency_pct: float
+    current_density_ma_cm2: float
+    
+    # System health
+    temperature_c: float
+    ph_level: float
+    pressure_bar: float
+    flow_rate_ml_min: float
+    
+    # Individual cell data
+    cell_voltages: List[float]
+    cell_currents: List[float]
+    biofilm_thickness: List[float]
+    substrate_concentrations: List[float]
+    
+    # Control system
+    controller_mode: str
+    learning_progress_pct: float
+    epsilon_value: float
+    
