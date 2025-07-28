@@ -139,3 +139,16 @@ visualization:
 - **Conservative**: Stable long-term operation
 - **Research**: Aggressive optimization
 - **Precision**: High-accuracy laboratory use
+## Performance Characteristics
+
+### Computational Performance
+- **Training Time**: 0.65 seconds (1000 steps)
+- **Simulation Speed**: ~1000 hours in minutes
+- **GPU Speedup**: 10x for matrix operations
+- **Memory Usage**: 50-500 MB depending on configuration
+
+### Control Performance
+- **Power Output**: 0.190 W (optimized) vs 0.081 W (baseline)
+- **Stability**: 97.1% power consistency
+- **Cell Reversal**: 100% prevention rate
+- **Biofilm Health**: Maintained at optimal 3.0 μm
