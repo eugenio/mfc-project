@@ -361,7 +361,7 @@ class TestQCMModel(unittest.TestCase):
         # Generate measurement history
         for i in range(20):
             mass = 50.0 + i * 5.0  # Increasing mass
-            measurement = self.qcm_model.simulate_measurement(mass, 10.0 + i, time_hours=i * 0.1)
+            self.qcm_model.simulate_measurement(mass, 10.0 + i, time_hours=i * 0.1)
         
         # Get stability metrics
         stability = self.qcm_model.get_frequency_stability_metrics(window_hours=1.0)
@@ -537,7 +537,7 @@ class TestSensorFusion(unittest.TestCase):
         
         # Generate multiple measurements with disagreement
         for i in range(10):
-            fused_result = self.sensor_fusion.fuse_measurements(
+            self.sensor_fusion.fuse_measurements(
                 eis_measurement, qcm_measurement, eis_properties, qcm_properties, i
             )
         

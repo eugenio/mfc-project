@@ -133,7 +133,7 @@ class TestGPUAcceleration(unittest.TestCase):
         self.assertEqual(gpu_acc_fallback.backend, 'cpu')
         
         # Test operations still work in CPU mode
-        data = gpu_acc_fallback.array([1.0, 2.0, 3.0])
+        gpu_acc_fallback.array([1.0, 2.0, 3.0])
         result = gpu_acc_fallback.abs(gpu_acc_fallback.array([-1.0, -2.0, 3.0]))
         expected = np.array([1.0, 2.0, 3.0])
         

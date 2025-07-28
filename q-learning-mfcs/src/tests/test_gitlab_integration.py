@@ -6,7 +6,7 @@ Tests the GitLab API integration and automatic issue creation system.
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import sys
 import os
 from pathlib import Path
@@ -42,7 +42,7 @@ class TestGitLabIntegration(unittest.TestCase):
         """Test GitLab connection setup."""
         mock_gitlab_module.Gitlab.return_value = self.mock_gitlab
         
-        manager = GitLabIssueManager()
+        GitLabIssueManager()
         
         mock_gitlab_module.Gitlab.assert_called_once()
         self.mock_gitlab.projects.get.assert_called_once_with('123')

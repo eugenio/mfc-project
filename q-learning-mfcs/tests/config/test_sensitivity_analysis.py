@@ -210,7 +210,7 @@ class TestSensitivityAnalyzer:
             if params.ndim == 1:
                 params = params.reshape(1, -1)
             
-            n_samples = params.shape[0]
+            params.shape[0]
             x1, x2, x3 = params[:, 0], params[:, 1], params[:, 2]
             
             y1 = x1**2 + x2
@@ -463,7 +463,7 @@ class TestSensitivityVisualizer:
             save_path = os.path.join(temp_dir, "parameter_ranking.png")
             
             # Create dummy analyzer for ranking
-            analyzer = SensitivityAnalyzer(None, None, [])
+            SensitivityAnalyzer(None, None, [])
             
             fig = visualizer.plot_parameter_ranking(
                 sample_result, "power", "total_order", top_n=3, save_path=save_path
@@ -579,7 +579,7 @@ class TestErrorHandling:
     def test_empty_parameter_space(self):
         """Test handling of empty parameter space."""
         with pytest.raises(Exception):  # Should raise some form of error
-            param_space = ParameterSpace([])
+            ParameterSpace([])
     
     def test_model_function_errors(self):
         """Test handling of model function errors."""

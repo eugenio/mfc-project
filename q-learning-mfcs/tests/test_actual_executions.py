@@ -291,7 +291,7 @@ class TestFileOutputPatterns(unittest.TestCase):
         
         # Check models directory
         if MODELS_DIR.exists():
-            pkl_files = list(MODELS_DIR.glob('*.pkl'))
+            list(MODELS_DIR.glob('*.pkl'))
             # Note: Models directory might be empty if no simulations have been run
 
 

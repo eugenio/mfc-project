@@ -471,7 +471,7 @@ class TestIntegration(unittest.TestCase):
         
         # Run a few steps to produce shuttles
         for _ in range(5):
-            state = model.step_metabolism(
+            model.step_metabolism(
                 dt=0.1,
                 biomass=20.0,
                 growth_rate=0.15,

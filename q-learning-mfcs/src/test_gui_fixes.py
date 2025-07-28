@@ -5,7 +5,6 @@ Test script to verify GUI fixes work properly
 
 import sys
 import os
-import time
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def test_gpu_cleanup():

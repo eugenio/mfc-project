@@ -324,7 +324,7 @@ class TestBiofilmKineticsModel(unittest.TestCase):
     def test_biofilm_dynamics_step(self):
         """Test complete biofilm dynamics time step."""
         model = self.models['shewanella_lactate']
-        initial_state = model.get_model_parameters()
+        model.get_model_parameters()
         
         # Run one time step
         result = model.step_biofilm_dynamics(

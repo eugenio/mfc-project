@@ -247,7 +247,7 @@ class TestMemoryAndPerformance(unittest.TestCase):
                 
                 start_time = time.time()
                 result = gpu.exp(arr)
-                cpu_result = gpu.to_cpu(result)
+                gpu.to_cpu(result)
                 end_time = time.time()
                 
                 times.append(end_time - start_time)
@@ -303,7 +303,7 @@ class TestErrorRecovery(unittest.TestCase):
             from sensing_models.qcm_model import QCMModel
             
             # Create sensor models
-            eis = EISModel(species='geobacter')
+            EISModel(species='geobacter')
             qcm = QCMModel(crystal_frequency=5e6)
             fusion = SensorFusion(fusion_method=FusionMethod.WEIGHTED_AVERAGE)
             
