@@ -43,3 +43,23 @@ class DataType(Enum):
     ENVIRONMENTAL_DATA = "environmental_data"
     OPERATIONAL_LOGS = "operational_logs"
 
+class StorageFormat(Enum):
+    """Storage formats for different data types."""
+    HDF5 = "hdf5"
+    SQLITE = "sqlite"
+    CSV = "csv"
+    JSON = "json"
+    PARQUET = "parquet"
+
+
+class DataQuery:
+    """Query parameters for data retrieval."""
+    data_types: List[DataType]
+    start_time: datetime
+    end_time: datetime
+    components: Optional[List[str]] = None
+    metrics: Optional[List[str]] = None
+    sampling_rate: Optional[str] = None  # '1H', '1D', etc.
+    filters: Dict[str, Any] = field(default_factory=dict)
+    aggregation: Optional[str] = None  # 'mean', 'max', 'min', 'std'
+
