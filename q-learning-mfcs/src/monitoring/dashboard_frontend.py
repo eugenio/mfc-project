@@ -169,3 +169,20 @@ def create_biofilm_monitoring_chart(metrics: Dict[str, Any]):
                      title_text="Biological System Monitoring")
     
     return fig
+def display_alerts(alerts: List[Dict]):
+    """Display system alerts"""
+    if not alerts:
+        st.success("🟢 No active alerts")
+        return
+    
+    for alert in alerts:
+        level = alert.get('level', 'info').lower()
+        message = alert.get('message', 'Unknown alert')
+        timestamp = alert.get('timestamp', datetime.now().isoformat())
+        
+        if level == 'critical':
+            st.error(f"🔴 **CRITICAL**: {message} ({timestamp})")
+        elif level == 'warning':
+            st.warning(f"🟡 **WARNING**: {message} ({timestamp})")
+        else:
+            st.info(f"🔵 **INFO**: {message} ({timestamp})")
