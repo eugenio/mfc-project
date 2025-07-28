@@ -187,3 +187,81 @@ class TestReliabilityAnalyzer(unittest.TestCase):
         self.assertGreater(optimal_interval, 0)
         self.assertLess(optimal_interval, 10000)  # Reasonable range
 
+class TestDegradationDetector(unittest.TestCase):
+    """Test the degradation pattern detector."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        self.detector = DegradationDetector()
+    
+    def test_time_series_metrics(self):
+        """Test time series metrics calculation."""
+        # Create test time series with trend
+        timestamps = pd.date_range(start='2024-01-01', periods=100, freq='H')
+        values = np.linspace(1, 2, 100) + 0.1 * np.random.randn(100)  # Linear trend + noise
+        
+        metrics = self.detector.calculate_time_series_metrics(values, timestamps.values)
+        
+        self.assertGreater(metrics.trend_slope, 0)  # Positive trend
+        self.assertGreater(metrics.trend_r2, 0)     # Some correlation
+        self.assertGreaterEqual(metrics.anomaly_score, 0)
+        self.assertIsInstance(metrics.change_points, list)
+    
+    def test_degradation_pattern_detection(self):
+        """Test degradation pattern detection."""
+        # Add data with degradation signatures
+        for i in range(50):
+            data = {
+                'timestamp': datetime.now() + timedelta(hours=i),
+                'membrane_resistance': 0.5 + 0.01 * i,  # Increasing resistance (fouling)
+                'power_output': 400 - 2 * i,             # Decreasing power
+                'voltage': 0.8 - 0.001 * i,              # Decreasing voltage
+                'current_density': 500 - i               # Decreasing current
+            }
+            self.detector.add_data_point(data)
+        
+        patterns = self.detector.detect_degradation_patterns()
+        
+        # Should detect membrane fouling pattern
+        fouling_patterns = [
+            p for p in patterns 
+            if p.degradation_type == DegradationType.MEMBRANE_FOULING
+        ]
+        self.assertGreater(len(fouling_patterns), 0)
+        
+        # Check pattern properties
+        if fouling_patterns:
+            pattern = fouling_patterns[0]
+            self.assertGreater(pattern.confidence, 0.3)
+            self.assertIn('membrane', pattern.affected_components)
+    
+    def test_pattern_filtering(self):
+        """Test duplicate pattern filtering."""
+        # Create duplicate patterns
+        pattern1 = DegradationPattern(
+            pattern_id="test1",
+            degradation_type=DegradationType.MEMBRANE_FOULING,
+            severity=DegradationSeverity.MODERATE,
+            confidence=0.8,
+            start_time=datetime.now(),
+            affected_components=['membrane']
+        )
+        
+        pattern2 = DegradationPattern(
+            pattern_id="test2",
+            degradation_type=DegradationType.MEMBRANE_FOULING,
+            severity=DegradationSeverity.LOW,
+            confidence=0.6,
+            start_time=datetime.now(),
+            affected_components=['membrane']
+        )
+        
+        filtered = self.detector._filter_duplicate_patterns([pattern1, pattern2])
+        
+        # Should keep higher confidence pattern
+        self.assertEqual(len(filtered), 1)
+        self.assertEqual(filtered[0].pattern_id, "test1")
+
