@@ -187,3 +187,38 @@ Auto-commit: chunk 6/6 - module.py (10 lines) - main entry point
 3. **Comparison**: Compare against baselines
 4. **Alert**: Create issue if regression detected
 5. **Resolution**: Track fix and update baseline
+## Hook Configuration
+
+### Settings Structure
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run /home/uge/mfc-project/.claude/hooks/pre_tool_use.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Environment Variables
+```bash
+# Hook behavior
+export CLAUDE_HOOK_DEBUG=true
+export CLAUDE_HOOK_TIMEOUT=30
+
+# GitLab integration
+export GITLAB_TOKEN=your-token
+export GITLAB_PROJECT_ID=12345
+
+# Event logging
+export EVENT_LOG_LEVEL=DEBUG
+export EVENT_LOG_FILE=/path/to/events.log
+```
