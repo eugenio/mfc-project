@@ -360,3 +360,50 @@ curl -H "PRIVATE-TOKEN: $GITLAB_TOKEN" https://gitlab.com/api/v4/projects/$GITLA
 # Verify project ID
 echo $GITLAB_PROJECT_ID
 ```
+## Advanced Features
+
+### Conditional Hook Execution
+```python
+def should_execute_hook(context):
+    """Determine if hook should run."""
+    # Skip for small files
+    if context['file_size'] < 10:
+        return False
+    
+    # Skip for specific patterns
+    if context['file_path'].startswith('/tmp/'):
+        return False
+    
+    # Check time-based conditions
+    if is_business_hours():
+        return True
+    
+    return False
+```
+
+### Hook Chaining
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {"command": "hook1.py"},
+          {"command": "hook2.py"},
+          {"command": "hook3.py"}
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Dynamic Hook Configuration
+```python
+def load_dynamic_config():
+    """Load configuration based on context."""
+    if os.getenv('MFC_ENV') == 'production':
+        return load_production_config()
+    else:
+        return load_development_config()
+```
