@@ -416,3 +416,119 @@ class TestRealTimeStreamer:
         
         # Verify mock was called (for error response)
         assert mock_websocket.send.called
+class TestIntegration:
+    """Integration tests for monitoring system components"""
+    
+    @pytest.fixture
+    def monitoring_system(self):
+        """Create integrated monitoring system"""
+        safety_monitor = SafetyMonitor()
+        streamer = RealTimeStreamer(host="localhost", port=8003)
+        
+        return {
+            "safety_monitor": safety_monitor,
+            "streamer": streamer
+        }
+    
+    def test_safety_to_streaming_integration(self, monitoring_system):
+        """Test integration between safety monitoring and streaming"""
+        safety_monitor = monitoring_system["safety_monitor"]
+        streamer = monitoring_system["streamer"]
+        
+        # Start safety monitoring
+        safety_monitor.start_monitoring(interval_seconds=0.1)
+        
+        # Let it generate some events
+        time.sleep(0.5)
+        
+        # Check that events were generated
+        assert len(safety_monitor.safety_events) >= 0
+        
+        # Stop monitoring
+        safety_monitor.stop_monitoring()
+    
+    def test_end_to_end_alert_flow(self, monitoring_system):
+        """Test end-to-end alert flow"""
+        safety_monitor = monitoring_system["safety_monitor"]
+        
+        # Create critical measurements
+        measurements = {
+            "temperature": 60.0,  # Way above threshold
+            "pressure": 4.0       # Way above threshold
+        }
+        
+        # Process measurements
+        events = safety_monitor._check_safety_thresholds(measurements)
+        
+        # Should generate emergency-level events
+        assert len(events) >= 2
+        
+        emergency_events = [e for e in events if e.safety_level == SafetyLevel.EMERGENCY]
+        assert len(emergency_events) >= 2
+    
+    @pytest.mark.asyncio
+    async def test_websocket_broadcast_simulation(self, monitoring_system):
+        """Test WebSocket broadcast simulation"""
+        streamer = monitoring_system["streamer"]
+        
+        # Create mock clients
+        mock_clients = {}
+        for i in range(3):
+            client_id = f"client_{i}"
+            mock_websocket = AsyncMock()
+            
+            client = ClientConnection(
+                client_id=client_id,
+                websocket=mock_websocket,
+                connected_at=datetime.now(),
+                subscriptions={StreamEventType.METRICS_UPDATE, StreamEventType.ALERT},
+                last_ping=datetime.now()
+            )
+            
+            mock_clients[client_id] = client
+            streamer.clients[client_id] = client
+        
+        # Create and broadcast event
+        event = StreamEvent(
+            event_id="test_broadcast",
+            event_type=StreamEventType.METRICS_UPDATE,
+            timestamp=datetime.now(),
+            data={"power": 5.5, "temperature": 25.0},
+            priority=1
+        )
+        
+        await streamer.broadcast_event(event)
+        
+        # Verify all clients received the message
+        for client in mock_clients.values():
+            client.websocket.send.assert_called()
+    
+    def test_performance_under_load(self, monitoring_system):
+        """Test system performance under load"""
+        safety_monitor = monitoring_system["safety_monitor"]
+        
+        # Generate many safety events quickly
+        start_time = time.time()
+        
+        for i in range(100):
+            measurements = {
+                "temperature": 25.0 + np.random.normal(0, 10),
+                "pressure": 1.0 + np.random.normal(0, 1),
+                "ph_level": 7.0 + np.random.normal(0, 2)
+            }
+            
+            events = safety_monitor._check_safety_thresholds(measurements)
+            
+            for event in events:
+                safety_monitor._process_safety_event(event)
+        
+        end_time = time.time()
+        processing_time = end_time - start_time
+        
+        # Should process 100 measurement sets in reasonable time
+        assert processing_time < 10.0  # Less than 10 seconds
+        
+        # Check response times are reasonable
+        if safety_monitor.stats["response_times"]:
+            avg_response_time = np.mean(safety_monitor.stats["response_times"])
+            assert avg_response_time < 100.0  # Less than 100ms average
