@@ -102,3 +102,24 @@ Executes before any tool operation:
 - **auto_issue_on_hook_failure**: Report hook execution failures
 - **auto_mr_on_multiple_commits**: Auto-create merge requests
 - **commit_threshold_for_mr**: Number of commits before MR
+## File Chunking Configuration
+
+### Settings
+```json
+"chunked_file_creation": {
+  "enabled": true,
+  "max_new_file_lines": 50,
+  "max_lines_per_chunk": 25,
+  "min_segments_for_chunking": 3,
+  "commit_message_prefix": "Auto-commit: ",
+  "supported_extensions": [".py", ".js", ".ts", ".jsx", ".tsx", ".mojo", ".🔥", ".md", ".markdown"]
+}
+```
+
+### Parameters
+- **enabled**: Enable/disable chunking system
+- **max_new_file_lines**: Minimum lines to trigger chunking
+- **max_lines_per_chunk**: Maximum lines per chunk
+- **min_segments_for_chunking**: Minimum logical segments required
+- **commit_message_prefix**: Prefix for auto-generated commits
+- **supported_extensions**: File types that support chunking
