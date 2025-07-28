@@ -92,7 +92,7 @@ def monitor_progress():
             with open(progress_file, 'r') as f:
                 final_progress = json.load(f)
             print(f"\nFinal status: {final_progress['progress_percent']:.1f}% complete")
-        except:
+        except Exception:
             pass
 
 if __name__ == "__main__":
