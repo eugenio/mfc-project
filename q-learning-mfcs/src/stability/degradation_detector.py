@@ -60,3 +60,16 @@ class DegradationPattern:
     root_cause_analysis: Dict[str, Any] = field(default_factory=dict)
     mitigation_recommendations: List[str] = field(default_factory=list)
 
+class TimeSeriesMetrics:
+    """Statistical metrics for time series analysis."""
+    mean: float
+    std: float
+    trend_slope: float
+    trend_r2: float
+    autocorrelation: float
+    stationarity_p_value: float
+    change_points: List[int]
+    anomaly_score: float
+    seasonality_strength: float
+    noise_level: float
+
