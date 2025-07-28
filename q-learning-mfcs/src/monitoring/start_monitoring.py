@@ -251,3 +251,9 @@ class MonitoringSystemManager:
         except Exception as e:
             logger.error(f"Error restarting {service_name}: {e}")
             return False
+def signal_handler(signum, frame):
+    """Handle shutdown signals"""
+    logger.info(f"Received signal {signum}, shutting down...")
+    if 'manager' in globals():
+        manager.stop_all_services()
+    sys.exit(0)
