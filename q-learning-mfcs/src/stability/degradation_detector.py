@@ -10,7 +10,7 @@ Created: 2025-07-28
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional, Any
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
 from scipy import stats
@@ -41,6 +41,7 @@ class DegradationSeverity(Enum):
     CRITICAL = "critical"
     FAILURE = "failure"
 
+@dataclass
 class DegradationPattern:
     """Data structure for a detected degradation pattern."""
     pattern_id: str
@@ -56,6 +57,7 @@ class DegradationPattern:
     root_cause_analysis: Dict[str, Any] = field(default_factory=dict)
     mitigation_recommendations: List[str] = field(default_factory=list)
 
+@dataclass
 class TimeSeriesMetrics:
     """Statistical metrics for time series analysis."""
     mean: float

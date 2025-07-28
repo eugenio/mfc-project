@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 import json
@@ -53,6 +53,7 @@ class DegradationMode(Enum):
     CHEMICAL_ATTACK = "chemical_attack"
     BIOLOGICAL_DAMAGE = "biological_damage"
     ELECTRICAL_AGING = "electrical_aging"
+@dataclass
 class StabilityMetrics:
     """Container for stability analysis results."""
     
@@ -82,6 +83,7 @@ class StabilityMetrics:
     trend_slope: float
     seasonal_component: float
     residual_variance: float
+@dataclass
 class ComponentHealth:
     """Health status of individual components."""
     
