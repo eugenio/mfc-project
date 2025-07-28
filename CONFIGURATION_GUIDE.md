@@ -378,3 +378,38 @@ print(config.get_inheritance_chain())
 - `configs/precision_control.yaml`: High accuracy
 - `configs/species/`: Species-specific parameters
 - `configs/substrates/`: Substrate-specific parameters
+## Troubleshooting
+
+### Configuration Not Loading
+```bash
+# Check file exists
+ls -la q-learning-mfcs/src/config/
+
+# Verify YAML syntax
+python -c "import yaml; yaml.load(open('config.yaml'))"
+
+# Check permissions
+chmod 644 config.yaml
+```
+
+### Environment Variables Not Working
+```bash
+# Verify variables are set
+env | grep MFC_
+
+# Check variable substitution
+python -c "import os; print(os.path.expandvars('${MFC_CONFIG_PROFILE}'))"
+```
+
+### Validation Errors
+```python
+# Get detailed validation errors
+from config.validation_schemas import validate_biological_params
+
+try:
+    validate_biological_params(bio_config)
+except ValueError as e:
+    print(f"Validation error: {e}")
+```
+
+This configuration guide provides comprehensive coverage of all configuration aspects in the MFC project. The hierarchical system with validation ensures robust and flexible configuration management.
