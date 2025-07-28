@@ -23,3 +23,25 @@ from sklearn.linear_model import LinearRegression, BayesianRidge
 from sklearn.metrics import mean_squared_error, r2_score
 import logging
 
+class DegradationType(Enum):
+    """Types of degradation patterns that can be detected."""
+    MEMBRANE_FOULING = "membrane_fouling"
+    ELECTRODE_CORROSION = "electrode_corrosion"
+    BIOFILM_AGING = "biofilm_aging"
+    CATALYST_DEACTIVATION = "catalyst_deactivation"
+    STRUCTURAL_FATIGUE = "structural_fatigue"
+    CHEMICAL_POISONING = "chemical_poisoning"
+    THERMAL_DAMAGE = "thermal_damage"
+    MECHANICAL_WEAR = "mechanical_wear"
+    UNKNOWN = "unknown"
+
+
+class DegradationSeverity(Enum):
+    """Severity levels for degradation patterns."""
+    MINIMAL = "minimal"
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+    CRITICAL = "critical"
+    FAILURE = "failure"
+
