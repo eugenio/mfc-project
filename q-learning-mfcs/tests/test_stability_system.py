@@ -95,3 +95,95 @@ class TestStabilityFramework(unittest.TestCase):
         self.assertIn('membrane', degradation)
         self.assertGreater(degradation['membrane']['degradation_rate'], 0)
 
+class TestReliabilityAnalyzer(unittest.TestCase):
+    """Test the reliability analyzer."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        self.analyzer = ReliabilityAnalyzer()
+        
+        # Create test component data
+        self.component_data = {
+            'membrane_01': {
+                'installation_date': datetime.now() - timedelta(days=365),
+                'operational_hours': 8760,
+                'failure_events': 2,
+                'maintenance_events': 12,
+                'current_status': 'operational'
+            },
+            'anode_01': {
+                'installation_date': datetime.now() - timedelta(days=180),
+                'operational_hours': 4320,
+                'failure_events': 0,
+                'maintenance_events': 6,
+                'current_status': 'operational'
+            }
+        }
+    
+    def test_component_reliability_calculation(self):
+        """Test component reliability calculation."""
+        for component_id, data in self.component_data.items():
+            reliability = self.analyzer.calculate_component_reliability(
+                component_id=component_id,
+                operational_hours=data['operational_hours'],
+                failure_events=data['failure_events'],
+                maintenance_events=data['maintenance_events']
+            )
+            
+            self.assertIsInstance(reliability, ComponentReliability)
+            self.assertEqual(reliability.component_id, component_id)
+            self.assertGreaterEqual(reliability.current_reliability, 0)
+            self.assertLessEqual(reliability.current_reliability, 1)
+            self.assertGreater(reliability.mtbf_hours, 0)
+            self.assertGreaterEqual(reliability.failure_rate, 0)
+    
+    def test_weibull_analysis(self):
+        """Test Weibull reliability analysis."""
+        # Create failure time data
+        failure_times = np.array([100, 250, 400, 600, 800, 1000, 1200])
+        
+        result = self.analyzer.perform_weibull_analysis(failure_times)
+        
+        self.assertIn('shape_parameter', result)
+        self.assertIn('scale_parameter', result)
+        self.assertIn('characteristic_life', result)
+        self.assertGreater(result['shape_parameter'], 0)
+        self.assertGreater(result['scale_parameter'], 0)
+    
+    def test_fmea_analysis(self):
+        """Test Failure Mode and Effects Analysis."""
+        # Create test failure modes
+        failure_modes = [
+            FailureMode(
+                component='membrane',
+                failure_mode='fouling',
+                severity=8,
+                occurrence=6,
+                detection=4,
+                causes=['high substrate concentration', 'inadequate cleaning'],
+                effects=['reduced power output', 'increased resistance']
+            )
+        ]
+        
+        self.analyzer.failure_modes = failure_modes
+        fmea_result = self.analyzer.perform_fmea_analysis()
+        
+        self.assertIn('high_risk_modes', fmea_result)
+        self.assertIn('risk_assessment', fmea_result)
+        self.assertIsInstance(fmea_result['risk_assessment'], list)
+    
+    def test_maintenance_optimization(self):
+        """Test maintenance interval optimization."""
+        component_id = 'test_component'
+        operational_data = np.random.exponential(1000, 100)  # Simulated failure times
+        
+        optimal_interval = self.analyzer.optimize_maintenance_interval(
+            component_id, operational_data
+        )
+        
+        self.assertGreater(optimal_interval, 0)
+        self.assertLess(optimal_interval, 10000)  # Reasonable range
+
