@@ -22,3 +22,24 @@ from pathlib import Path
 import logging
 import threading
 from contextlib import contextmanager
+from scipy import stats, signal
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+import warnings
+
+from degradation_detector import DegradationPattern, DegradationType
+from reliability_analyzer import ComponentReliability
+
+
+class DataType(Enum):
+    """Types of data stored in the system."""
+    SENSOR_DATA = "sensor_data"
+    SYSTEM_METRICS = "system_metrics"
+    PERFORMANCE_DATA = "performance_data"
+    DEGRADATION_PATTERNS = "degradation_patterns"
+    MAINTENANCE_RECORDS = "maintenance_records"
+    RELIABILITY_METRICS = "reliability_metrics"
+    ENVIRONMENTAL_DATA = "environmental_data"
+    OPERATIONAL_LOGS = "operational_logs"
+
