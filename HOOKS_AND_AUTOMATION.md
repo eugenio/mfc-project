@@ -323,3 +323,40 @@ echo '{"tool_name": "Write", "tool_input": {"file_path": "test.py", "content": "
 # Run hook tests
 pytest .claude/hooks/tests/
 ```
+## Troubleshooting
+
+### Hook Not Executing
+```bash
+# Check hook registration
+cat .claude/settings.json | jq '.hooks'
+
+# Verify hook script is executable
+chmod +x .claude/hooks/*.py
+
+# Check pixi environment
+pixi run which python
+```
+
+### Hook Blocking Operations
+```bash
+# Enable debug mode
+export CLAUDE_HOOK_DEBUG=true
+
+# Check hook output
+tail -f /tmp/claude_hooks.log
+
+# Bypass hooks temporarily
+export CLAUDE_SKIP_HOOKS=true
+```
+
+### GitLab Integration Issues
+```bash
+# Test GitLab connection
+python .claude/hooks/gitlab_issue_manager.py --test
+
+# Check token permissions
+curl -H "PRIVATE-TOKEN: $GITLAB_TOKEN" https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID
+
+# Verify project ID
+echo $GITLAB_PROJECT_ID
+```
