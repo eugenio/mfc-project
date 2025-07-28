@@ -7,11 +7,10 @@ It integrates with the main GitLab integration to provide seamless issue managem
 """
 
 import re
-import os
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional
 from datetime import datetime
 
-from .gitlab_integration import gitlab_manager, create_bug_issue, create_enhancement_issue
+from .gitlab_integration import create_bug_issue, create_enhancement_issue
 
 class AutoIssueDetector:
     """
