@@ -58,3 +58,32 @@ class DegradationMode(Enum):
     CHEMICAL_ATTACK = "chemical_attack"
     BIOLOGICAL_DAMAGE = "biological_damage"
     ELECTRICAL_AGING = "electrical_aging"
+class StabilityMetrics:
+    """Container for stability analysis results."""
+    
+    # Performance metrics
+    power_stability: float          # Coefficient of variation
+    efficiency_drift: float         # %/day change
+    voltage_degradation: float      # V/day
+    current_fluctuation: float      # Coefficient of variation
+    
+    # Reliability metrics  
+    mtbf_hours: float              # Mean time between failures
+    availability: float            # Fraction of uptime
+    failure_rate: float            # Failures per hour
+    
+    # Degradation metrics
+    membrane_resistance_increase: float    # %/day
+    biofilm_thickness_rate: float         # μm/day
+    electrode_degradation: float          # %/day
+    
+    # Maintenance metrics
+    cleaning_frequency_days: float
+    component_lifetime_days: float
+    maintenance_cost_per_day: float
+    
+    # Statistical measures
+    performance_variance: float
+    trend_slope: float
+    seasonal_component: float
+    residual_variance: float
