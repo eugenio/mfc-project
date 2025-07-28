@@ -703,6 +703,56 @@ def main():
                     severity_choice = input("Select severity (1-4): ")
                     severity_index = int(severity_choice) - 1
                     if 0 <= severity_index < len(IssueSeverity):
+                        selected_severity = list(IssueSeverity)[severity_index]
+                    else:
+                        print("Invalid choice, using 'medium' as default")
+                        selected_severity = IssueSeverity.MEDIUM
+                except (ValueError, EOFError):
+                    print("Invalid input, using 'medium' as default")
+                    selected_severity = IssueSeverity.MEDIUM
+                
+                # Get urgency
+                urgency_map = {
+                    IssueSeverity.CRITICAL: IssueUrgency.URGENT,
+                    IssueSeverity.HIGH: IssueUrgency.HIGH,
+                    IssueSeverity.MEDIUM: IssueUrgency.MEDIUM,
+                    IssueSeverity.LOW: IssueUrgency.LOW
+                }
+                selected_urgency = urgency_map[selected_severity]
+                
+                # Get labels
+                try:
+                    labels_input = input("\nLabels (comma-separated, optional): ")
+                    if labels_input.strip():
+                        labels = [label.strip() for label in labels_input.split(',') if label.strip()]
+                    else:
+                        labels = []
+                except EOFError:
+                    labels = []
+                
+                # Add default labels
+                labels.append("manual")
+                labels.append(selected_type.value)
+                
+                issue_data = IssueData(
+                    title=title,
+                    description=description,
+                    severity=selected_severity,
+                    urgency=selected_urgency,
+                    issue_type=selected_type,
+                    labels=labels
+                )
+                
+                print(f"\n📋 Creating issue with:")
+                print(f"   Title: {title}")
+                print(f"   Type: {selected_type.value}")
+                print(f"   Severity: {selected_severity.value}")
+                print(f"   Urgency: {selected_urgency.value}")
+                print(f"   Labels: {', '.join(labels)}")
+                
+                try:
+                    confirm = input("\nProceed? (y/N): ")
+                    if confirm.lower() != 'y':
 
         
         else:
