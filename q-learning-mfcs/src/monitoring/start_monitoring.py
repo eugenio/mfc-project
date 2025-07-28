@@ -11,8 +11,13 @@ import subprocess
 import sys
 import time
 import signal
+import logging
 from pathlib import Path
 from typing import Dict, Any
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 MONITORING_DIR = Path(__file__).parent
 SRC_DIR = MONITORING_DIR.parent
