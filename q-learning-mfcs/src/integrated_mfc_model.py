@@ -169,6 +169,9 @@ class IntegratedMFCModel:
         self.flow_rate_ml_h = 10.0
         self.total_energy_generated = 0.0
         self.pump_power_consumed = 0.0
+        
+        # Create mfc_stack compatibility interface for tests
+        self.mfc_stack = self._create_mfc_stack_interface()
     
     def _initialize_tracking(self):
         """Initialize tracking variables."""
@@ -183,6 +186,16 @@ class IntegratedMFCModel:
             'coulombic_efficiency': 0.0,
             'substrate_utilization': 0.0
         }
+    
+    def _create_mfc_stack_interface(self):
+        """Create MFC stack compatibility interface for tests."""
+        class MFCStackInterface:
+            def __init__(self, parent):
+                self.parent = parent
+                self.n_cells = parent.n_cells
+                self.reservoir = parent.reservoir
+        
+        return MFCStackInterface(self)
     
     def step_integrated_dynamics(self, dt: float = 1.0) -> IntegratedMFCState:
         """
