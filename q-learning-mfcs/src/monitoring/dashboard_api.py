@@ -95,3 +95,34 @@ class ConfigurationUpdate(BaseModel):
     section: str
     parameters: Dict[str, Any]
     apply_immediately: bool = True
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+        logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: dict):
+        """Broadcast message to all connected clients"""
+        if self.active_connections:
+            message_str = json.dumps(message, default=str)
+            disconnected = []
+            for connection in self.active_connections:
+                try:
+                    await connection.send_text(message_str)
+                except Exception as e:
+                    logger.error(f"Error broadcasting to WebSocket: {e}")
+                    disconnected.append(connection)
+            
+            # Remove disconnected clients
+            for conn in disconnected:
+                self.active_connections.remove(conn)
