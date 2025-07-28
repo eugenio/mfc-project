@@ -95,3 +95,22 @@ mfc-project/
 ├── setup_environment.sh    # Environment setup
 └── README.md              # Project overview
 ```
+## Key Technologies
+
+### Languages & Frameworks
+- **Python 3.12+**: Primary implementation language
+- **Mojo**: High-performance numerical computations
+- **JAX/CuPy/PyTorch**: GPU acceleration backends
+- **Streamlit**: Web-based GUI interface
+
+### Development Tools
+- **Pixi**: Dependency and environment management
+- **Claude Code**: AI-assisted development
+- **GitLab**: Version control and CI/CD
+- **Ruff/MyPy**: Code quality and type checking
+
+### Scientific Libraries
+- **NumPy/SciPy**: Numerical computations
+- **Pandas**: Data analysis
+- **Matplotlib/Plotly**: Visualization
+- **Optuna**: Hyperparameter optimization
