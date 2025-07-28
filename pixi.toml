@@ -76,8 +76,7 @@ jax = ">=0.4.20"
 jaxlib = ">=0.4.20"
 
 [feature.amd.pypi-dependencies]
-# ROCm-specific JAX installation
-jax = {version = ">=0.4.20,<=0.4.31", extras = ["rocm"]}
+jax = { version = "==0.4.31", extras = ["rocm"] }
 jaxlib = ">=0.4.20,<=0.4.31"
 
 [feature.nvidia.pypi-dependencies]
