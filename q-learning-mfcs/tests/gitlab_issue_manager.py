@@ -653,23 +653,7 @@ def main():
             else:
                 print(f"❌ Issue #{args.get_issue} not found or could not be retrieved")
         
-        elif args.create_issue:
-            # Interactive issue creation
-            print("Creating new issue interactively...")
-            title = input("Issue title: ")
-            description = input("Issue description: ")
-            
-            issue_data = IssueData(
-                title=title,
-                description=description,
-                severity=IssueSeverity.MEDIUM,
-                urgency=IssueUrgency.MEDIUM,
-                issue_type=IssueType.BUG,
-                labels=["manual"]
-            )
-            
-            created_issue = issue_manager.create_issue(issue_data)
-            print(f"Created issue: {created_issue['web_url']}")
+
         
         else:
             parser.print_help()
