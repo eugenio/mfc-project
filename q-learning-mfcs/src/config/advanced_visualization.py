@@ -686,7 +686,7 @@ class StatisticalVisualizer(AdvancedVisualizer):
         
         mask = np.triu(np.ones_like(corr_matrix, dtype=bool)) if config.show_correlation_values else None
         
-        heatmap = sns.heatmap(corr_matrix, 
+        sns.heatmap(corr_matrix, 
                              annot=config.show_correlation_values,
                              cmap=config.color_map,
                              center=0,
@@ -837,7 +837,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         methods = [r.method.value for r in results]
         best_scores = [r.best_overall_score for r in results if r.best_overall_score is not None]
         
-        bars = ax2.bar(methods[:len(best_scores)], best_scores, color=colors[:len(best_scores)])
+        ax2.bar(methods[:len(best_scores)], best_scores, color=colors[:len(best_scores)])
         ax2.set_title('Best Objective Values')
         ax2.set_ylabel('Objective Value')
         plt.setp(ax2.get_xticklabels(), rotation=45, ha='right')
@@ -847,7 +847,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         evaluations = [r.total_evaluations for r in results]
         opt_times = [r.get_optimization_time() for r in results]
         
-        scatter = ax3.scatter(evaluations, opt_times, c=colors[:len(results)], 
+        ax3.scatter(evaluations, opt_times, c=colors[:len(results)], 
                             s=config.marker_size, alpha=config.alpha)
         for i, method in enumerate(methods):
             ax3.annotate(method, (evaluations[i], opt_times[i]), 
@@ -866,7 +866,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
             
             if len(param_data) > 0:
                 box_data = [param_data[:, j] for j in range(min(5, n_params))]  # Limit to 5 parameters
-                bp = ax4.boxplot(box_data, labels=[f'P{j+1}' for j in range(len(box_data))])
+                ax4.boxplot(box_data, labels=[f'P{j+1}' for j in range(len(box_data))])
                 ax4.set_title('Parameter Distribution')
                 ax4.set_ylabel('Parameter Value')
         
@@ -929,7 +929,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         comp_times = [r.computation_time for r in results]
         n_samples = [r.n_samples for r in results]
         
-        scatter = ax3.scatter(n_samples, comp_times, c=colors, 
+        ax3.scatter(n_samples, comp_times, c=colors, 
                             s=config.marker_size, alpha=config.alpha)
         for i, method in enumerate(methods):
             ax3.annotate(method, (n_samples[i], comp_times[i]), 
