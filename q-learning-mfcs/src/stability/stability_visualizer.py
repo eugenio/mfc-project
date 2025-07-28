@@ -9,14 +9,11 @@ Created: 2025-07-28
 """
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.offline as pyo
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass
+from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 import json
@@ -24,7 +21,7 @@ import logging
 from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
 from reliability_analyzer import ReliabilityAnalyzer, ComponentReliability
 from maintenance_scheduler import MaintenanceScheduler, MaintenanceTask
-from data_manager import LongTermDataManager, DataQuery, DataType
+from data_manager import LongTermDataManager
 
 class VisualizationConfig:
     """Configuration for visualization settings."""
