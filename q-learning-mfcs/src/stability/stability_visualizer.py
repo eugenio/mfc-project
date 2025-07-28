@@ -21,3 +21,17 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import json
 import logging
+from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
+from reliability_analyzer import ReliabilityAnalyzer, ComponentReliability
+from maintenance_scheduler import MaintenanceScheduler, MaintenanceTask
+from data_manager import LongTermDataManager, DataQuery, DataType
+
+class VisualizationConfig:
+    """Configuration for visualization settings."""
+    figure_size: Tuple[int, int] = (12, 8)
+    dpi: int = 300
+    color_scheme: str = "viridis"
+    show_interactive: bool = True
+    save_static: bool = True
+    output_format: str = "png"
+
