@@ -327,3 +327,92 @@ class TestSafetyMonitor:
         assert summary["total_events"] == 5
         assert summary["critical_events"] >= 0
         assert "avg_response_time_ms" in summary
+class TestRealTimeStreamer:
+    """Test cases for Real-time Streamer"""
+    
+    @pytest.fixture
+    def streamer(self):
+        """Create streamer instance"""
+        return RealTimeStreamer(host="localhost", port=8002)
+    
+    def test_initialization(self, streamer):
+        """Test streamer initialization"""
+        assert streamer.host == "localhost"
+        assert streamer.port == 8002
+        assert len(streamer.clients) == 0
+        assert not streamer.is_running
+    
+    @pytest.mark.asyncio
+    async def test_event_queue(self, streamer):
+        """Test event queue operations"""
+        # Add event to queue
+        await streamer.add_event(
+            StreamEventType.METRICS_UPDATE,
+            {"test": "data"},
+            priority=1
+        )
+        
+        # Check queue has event
+        assert not streamer.event_queue.empty()
+        
+        # Get event from queue
+        event = await streamer.event_queue.get()
+        
+        assert event.event_type == StreamEventType.METRICS_UPDATE
+        assert event.data == {"test": "data"}
+        assert event.priority == 1
+    
+    def test_server_stats(self, streamer):
+        """Test server statistics"""
+        stats = streamer.get_server_stats()
+        
+        assert "active_clients" in stats
+        assert "total_connections" in stats
+        assert "events_sent" in stats
+        assert "bytes_transmitted" in stats
+        assert "uptime_seconds" in stats
+        assert "start_time" in stats
+        assert "is_running" in stats
+        
+        assert stats["active_clients"] == 0
+        assert stats["is_running"] is False
+    
+    @pytest.mark.asyncio
+    async def test_client_message_handling(self, streamer):
+        """Test client message handling"""
+        # Mock websocket and create client
+        mock_websocket = AsyncMock()
+        client_id = "test_client"
+        
+        client = ClientConnection(
+            client_id=client_id,
+            websocket=mock_websocket,
+            connected_at=datetime.now(),
+            subscriptions=set(),
+            last_ping=datetime.now()
+        )
+        
+        streamer.clients[client_id] = client
+        
+        # Test subscription message
+        message = json.dumps({
+            "type": "subscribe",
+            "events": ["metrics_update", "alert"]
+        })
+        
+        await streamer.handle_client_message(client_id, message)
+        
+        # Check subscriptions were added
+        assert StreamEventType.METRICS_UPDATE in client.subscriptions
+        assert StreamEventType.ALERT in client.subscriptions
+        
+        # Test ping message
+        ping_message = json.dumps({"type": "ping"})
+        await streamer.handle_client_message(client_id, ping_message)
+        
+        # Test invalid JSON
+        invalid_message = "invalid json"
+        await streamer.handle_client_message(client_id, invalid_message)
+        
+        # Verify mock was called (for error response)
+        assert mock_websocket.send.called
