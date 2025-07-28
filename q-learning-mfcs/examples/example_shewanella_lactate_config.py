@@ -13,11 +13,11 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from config.biological_config import (
-    SpeciesMetabolicConfig, BacterialSpecies, MetabolicReactionConfig,
+    BacterialSpecies, MetabolicReactionConfig,
     KineticParameters, LiteratureReference, get_shewanella_config
 )
 from config.substrate_config import (
-    ComprehensiveSubstrateConfig, SubstrateType, SubstrateDegradationPathway,
+    SubstrateType, SubstrateDegradationPathway,
     SubstrateKineticsConfig, SubstrateTransportConfig, get_lactate_config
 )
 from config.biological_validation import (
@@ -199,24 +199,24 @@ def analyze_metabolic_pathway():
     print(f"ATP yield: {pathway.atp_yield:.1f} mol/mol")
     print(f"NADH yield: {pathway.nadh_yield:.1f} mol/mol")
     
-    print(f"\nMetabolic intermediates:")
+    print("\nMetabolic intermediates:")
     for intermediate in pathway.intermediates:
         print(f"  - {intermediate}")
     
-    print(f"\nFinal products:")
+    print("\nFinal products:")
     for product in pathway.final_products:
         print(f"  - {product}")
     
-    print(f"\nRegulatory mechanisms:")
+    print("\nRegulatory mechanisms:")
     for metabolite, effect in pathway.regulatory_metabolites.items():
         print(f"  - {metabolite}: {effect}")
     
-    print(f"\nAllosteric effectors:")
+    print("\nAllosteric effectors:")
     for effector, factor in pathway.allosteric_effectors.items():
         factor_text = "activation" if factor > 1.0 else "inhibition"
         print(f"  - {effector}: {factor:.1f}x ({factor_text})")
     
-    print(f"\nOptimal conditions:")
+    print("\nOptimal conditions:")
     optimal = pathway.optimal_conditions
     print(f"  - Temperature: {optimal['temperature'] - 273.15:.1f}°C")
     print(f"  - pH: {optimal['ph']:.1f}")

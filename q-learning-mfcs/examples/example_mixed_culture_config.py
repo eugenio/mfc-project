@@ -14,15 +14,13 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from config.biological_config import (
-    SpeciesMetabolicConfig, BacterialSpecies, BiofilmKineticsConfig,
-    get_geobacter_config, get_shewanella_config, get_default_biofilm_config
+    BacterialSpecies, get_geobacter_config, get_shewanella_config, get_default_biofilm_config
 )
 from config.substrate_config import (
-    ComprehensiveSubstrateConfig, SubstrateType, SubstrateKineticsConfig,
+    SubstrateType, SubstrateKineticsConfig,
     get_acetate_config, get_lactate_config, get_pyruvate_config
 )
-from config.biological_validation import validate_all_biological_configs
-from typing import Dict, List
+from typing import Dict
 
 class MixedCultureConfig:
     """Configuration manager for mixed culture systems."""
