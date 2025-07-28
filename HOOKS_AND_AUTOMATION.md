@@ -284,3 +284,42 @@ if __name__ == '__main__':
   }
 }
 ```
+## Best Practices
+
+### 1. Hook Performance
+- Keep hooks lightweight and fast
+- Use async operations where possible
+- Cache expensive computations
+- Set appropriate timeouts
+
+### 2. Error Handling
+```python
+try:
+    # Hook logic
+    result = process_input(input_data)
+except Exception as e:
+    # Log error but don't block operation
+    log_error(f"Hook error: {e}")
+    sys.exit(0)  # Allow operation to continue
+```
+
+### 3. Logging
+```python
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG if os.getenv('CLAUDE_HOOK_DEBUG') else logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+```
+
+### 4. Testing Hooks
+```bash
+# Test hook manually
+echo '{"tool_name": "Write", "tool_input": {"file_path": "test.py", "content": "..."}}' | python pre_tool_use.py
+
+# Run hook tests
+pytest .claude/hooks/tests/
+```
