@@ -90,7 +90,7 @@ dashboard_state = {
     "alert_system": None,
     "current_metrics": None,
     "connected_clients": 0
-
+}
 
 # FastAPI app
 app = FastAPI(
