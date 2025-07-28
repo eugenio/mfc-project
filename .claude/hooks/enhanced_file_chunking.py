@@ -478,76 +478,7 @@ def create_logical_chunks(structure: Dict[str, Any], content: str, max_lines_per
             "description": _generate_chunk_description(current_chunk_segments)
         })
     
-    return chunks
 
-def _generate_chunk_description(segments: List[Dict[str, Any]]) -> str:
-    """Generate descriptive text for a chunk based on its segments."""
-    if not segments:
-        return "content"
-    
-    types = {}
-    names = []
-    
-    for segment in segments:
-        seg_type = segment["type"]
-        types[seg_type] = types.get(seg_type, 0) + 1
-        
-        if "name" in segment:
-            names.append(segment["name"])
-    
-    parts = []
-    
-    # Markdown-specific descriptions
-    if types.get("title"):
-        parts.append("document title")
-    
-    if types.get("section"):
-        section_names = [name for seg in segments if seg["type"] == "section" for name in [seg.get("name")] if name]
-        if section_names:
-            parts.append(f"section: {', '.join(section_names[:2])}")
-        else:
-            parts.append(f"{types['section']} sections")
-    
-    if types.get("subsection"):
-        subsection_names = [name for seg in segments if seg["type"] == "subsection" for name in [seg.get("name")] if name]
-        if subsection_names:
-            parts.append(f"subsection: {', '.join(subsection_names[:2])}")
-        else:
-            parts.append(f"{types['subsection']} subsections")
-    
-    if types.get("code_block"):
-        parts.append(f"{types['code_block']} code blocks")
-    
-    if types.get("table"):
-        parts.append(f"{types['table']} tables")
-    
-    # Code-specific descriptions
-    if types.get("imports"):
-        parts.append(f"{types['imports']} imports")
-    
-    if types.get("class"):
-        if names:
-            class_names = [name for seg in segments if seg["type"] == "class" for name in [seg.get("name")] if name]
-            parts.append(f"class {', '.join(class_names[:2])}")
-        else:
-            parts.append(f"{types['class']} classes")
-    
-    if types.get("function"):
-        if len(names) <= 2:
-            func_names = [name for seg in segments if seg["type"] == "function" for name in [seg.get("name")] if name]
-            parts.append(f"functions: {', '.join(func_names)}")
-        else:
-            parts.append(f"{types['function']} functions")
-    
-    if types.get("constant"):
-        parts.append(f"{types['constant']} constants")
-    
-    if types.get("module_docstring"):
-        parts.append("module documentation")
-    
-    return " | ".join(parts) if parts else "content"
-
-def should_use_chunked_creation(file_path: str, content: str, config: Dict[str, Any]) -> bool:
     """
     Determine if a file creation should use chunked approach.
     
