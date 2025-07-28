@@ -11,11 +11,11 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from config.biological_config import (
-    SpeciesMetabolicConfig, BacterialSpecies, MetabolicReactionConfig,
+    BacterialSpecies, MetabolicReactionConfig,
     KineticParameters, LiteratureReference, get_geobacter_config
 )
 from config.substrate_config import (
-    ComprehensiveSubstrateConfig, SubstrateType, get_acetate_config
+    get_acetate_config
 )
 from config.biological_validation import (
     validate_species_metabolic_config, validate_comprehensive_substrate_config
@@ -105,7 +105,7 @@ def validate_and_demonstrate_config():
         return False
     
     # Demonstrate configuration usage
-    print(f"\n=== Configuration Summary ===")
+    print("\n=== Configuration Summary ===")
     print(f"Species: {geobacter_config.species.value}")
     print(f"Substrate: {acetate_config.substrate_type.value}")
     print(f"Max growth rate: {geobacter_config.max_growth_rate:.3f} h⁻¹")
@@ -113,7 +113,7 @@ def validate_and_demonstrate_config():
     print(f"Cytochrome content: {geobacter_config.cytochrome_content:.3f} mmol/gDW")
     print(f"Max biofilm thickness: {geobacter_config.max_biofilm_thickness:.1f} μm")
     
-    print(f"\n=== Acetate Properties ===")
+    print("\n=== Acetate Properties ===")
     print(f"Molecular weight: {acetate_config.molecular_weight:.2f} g/mol")
     print(f"Chemical formula: {acetate_config.chemical_formula}")
     print(f"Water solubility: {acetate_config.water_solubility:.1f} g/L")
@@ -122,14 +122,14 @@ def validate_and_demonstrate_config():
     print(f"Max uptake rate: {geobacter_kinetics.max_uptake_rate:.1f} mmol/gDW/h")
     print(f"Half-saturation constant: {geobacter_kinetics.half_saturation_constant:.2f} mmol/L")
     
-    print(f"\n=== Metabolic Reactions ===")
+    print("\n=== Metabolic Reactions ===")
     for reaction in geobacter_config.reactions:
         print(f"- {reaction.name} (ID: {reaction.id})")
         print(f"  Vmax: {reaction.kinetics.vmax:.1f} mmol/gDW/h")
         print(f"  Km: {reaction.kinetics.km:.2f} mmol/L")
         print(f"  ΔG°: {reaction.delta_g0:.1f} kJ/mol")
     
-    print(f"\n=== Literature References ===")
+    print("\n=== Literature References ===")
     for ref in geobacter_config.references:
         print(f"- {ref}")
     

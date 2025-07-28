@@ -23,7 +23,6 @@ Date: 2025-07-25
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import logging
 import warnings
@@ -34,16 +33,13 @@ import sys
 sys.path.append('/home/uge/mfc-project/q-learning-mfcs/src')
 
 from config.config_manager import ConfigurationManager
-from config.biological_config import BiologicalConfig, SpeciesConfig, SubstrateConfig
-from config.control_config import ControlConfig, PIDConfig, FlowControlConfig
 from config.sensitivity_analysis import SensitivityAnalyzer, ParameterSpace, ParameterDefinition, ParameterBounds
 from config.parameter_optimization import BayesianOptimizer, OptimizationObjective, ObjectiveType
 from config.uncertainty_quantification import MonteCarloAnalyzer, UncertainParameter, DistributionType
 from config.experimental_data_integration import ExperimentalDataManager
-from config.advanced_visualization import MultiDimensionalPlotter, PlotConfiguration, PlotType
-from config.model_validation import ModelValidator, StatisticalTest, HypothesisType
+from config.model_validation import ModelValidator
 from config.real_time_processing import MFCDataStream, StreamProcessor, RealTimeAnalyzer
-from config.statistical_analysis import StatisticalAnalyzer, TestResult
+from config.statistical_analysis import StatisticalAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -580,7 +576,7 @@ def demonstrate_real_time_processing():
         )
         
         # Create stream processor
-        processor = StreamProcessor(processing_config)
+        StreamProcessor(processing_config)
         
         # Create real-time analyzer
         analyzer = RealTimeAnalyzer(alert_config)
