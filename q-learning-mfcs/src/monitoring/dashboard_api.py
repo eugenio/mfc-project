@@ -31,12 +31,28 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from config.real_time_processing import (
-from controller_models.real_time_controller import (
-from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState
-from path_config import get_simulation_data_path, get_model_path
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    import uvicorn
+# FastAPI app
+app = FastAPI(
+    title="MFC Real-time Monitoring API",
+    description="REST API for MFC system monitoring and control",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class SystemStatus(str, Enum):
     OFFLINE = "offline"
     INITIALIZING = "initializing"
