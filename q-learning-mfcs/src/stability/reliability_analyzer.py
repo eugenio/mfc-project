@@ -715,3 +715,47 @@ class ReliabilityAnalyzer:
             json.dump(export_data, f, indent=2, default=str)
         
         logger.info(f"Reliability data exported to {output_file}")
+def run_reliability_analysis(output_dir: Optional[Path] = None) -> ReliabilityAnalyzer:
+    """
+    Run comprehensive reliability analysis.
+    
+    Args:
+        output_dir: Directory for output files
+        
+    Returns:
+        ReliabilityAnalyzer with completed analysis
+    """
+    output_dir = output_dir or Path("reliability_analysis_results")
+    output_dir.mkdir(exist_ok=True)
+    
+    logger.info("Starting comprehensive reliability analysis")
+    
+    # Initialize analyzer
+    analyzer = ReliabilityAnalyzer(output_dir)
+    
+    # Generate reliability report
+    report_file = output_dir / f"reliability_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    report_text = analyzer.generate_reliability_report(report_file)
+    
+    # Export data
+    data_file = output_dir / f"reliability_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    analyzer.export_reliability_data(data_file)
+    
+    # Calculate system reliability for different mission durations
+    durations = [720, 2160, 4380, 8760]  # 1 month, 3 months, 6 months, 1 year
+    
+    logger.info("Mission reliability predictions:")
+    for duration in durations:
+        prediction = analyzer.calculate_system_reliability(duration)
+        logger.info(f"  {duration/24:.0f} days: {prediction.mission_reliability*100:.1f}%")
+    
+    logger.info(f"Reliability analysis completed. Results saved to {output_dir}")
+    
+    return analyzer
+
+if __name__ == "__main__":
+    # Run example reliability analysis
+    analyzer = run_reliability_analysis(Path("reliability_analysis_results"))
+    
+    print("Reliability analysis completed!")
+    print(f"Results available in: reliability_analysis_results/")
