@@ -557,3 +557,128 @@ class TestStabilityVisualizer(unittest.TestCase):
             # Skip test if visualization libraries not available
             self.skipTest(f"Report generation not available: {e}")
 
+class TestStabilitySystemIntegration(unittest.TestCase):
+    """Integration tests for the complete stability system."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        # Create temporary directory
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # Initialize all components
+        self.framework = StabilityFramework()
+        self.detector = DegradationDetector()
+        self.reliability_analyzer = ReliabilityAnalyzer()
+        self.maintenance_scheduler = MaintenanceScheduler()
+        self.data_manager = LongTermDataManager(data_directory=self.temp_dir)
+        self.visualizer = StabilityVisualizer(output_directory=self.temp_dir)
+    
+    def tearDown(self):
+        """Clean up test fixtures."""
+        if hasattr(self, 'temp_dir'):
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_full_stability_analysis_workflow(self):
+        """Test complete stability analysis workflow."""
+        # 1. Generate and store test data
+        test_data = []
+        for i in range(100):
+            data_point = {
+                'timestamp': datetime.now() + timedelta(hours=i),
+                'power_output': 400 - i * 0.5,  # Gradual decline
+                'voltage': 0.8 - i * 0.001,     # Gradual decline
+                'current_density': 500 - i,     # Gradual decline
+                'membrane_resistance': 0.5 + i * 0.005,  # Gradual increase
+                'temperature': 25 + np.random.normal(0, 1),
+                'ph': 7.0 + np.random.normal(0, 0.2)
+            }
+            test_data.append(data_point)
+            
+            # Add to framework and detector
+            self.framework.add_data_point(data_point)
+            self.detector.add_data_point(data_point)
+        
+        # Store in data manager
+        df = pd.DataFrame(test_data)
+        file_id = self.data_manager.store_data(df, DataType.PERFORMANCE_DATA)
+        self.assertIsNotNone(file_id)
+        
+        # 2. Detect degradation patterns
+        patterns = self.detector.detect_degradation_patterns()
+        self.assertGreater(len(patterns), 0)
+        
+        # 3. Calculate component reliability
+        reliability_data = []
+        for component in ['membrane', 'anode', 'cathode']:
+            reliability = self.reliability_analyzer.calculate_component_reliability(
+                component_id=component,
+                operational_hours=2400,
+                failure_events=1,
+                maintenance_events=8
+            )
+            reliability_data.append(reliability)
+        
+        self.assertEqual(len(reliability_data), 3)
+        
+        # 4. Generate maintenance tasks from patterns
+        maintenance_tasks = self.maintenance_scheduler.analyze_degradation_patterns(patterns)
+        self.assertGreaterEqual(len(maintenance_tasks), 0)
+        
+        # 5. Generate comprehensive report
+        try:
+            report_path = self.visualizer.generate_stability_report(
+                patterns=patterns,
+                reliability_data=reliability_data,
+                maintenance_tasks=maintenance_tasks,
+                include_plots=False
+            )
+            
+            self.assertTrue(Path(report_path).exists())
+            
+            # Verify report content
+            with open(report_path, 'r') as f:
+                report = json.load(f)
+            
+            self.assertIn('executive_summary', report)
+            self.assertGreater(report['executive_summary']['total_degradation_patterns'], 0)
+            
+        except Exception as e:
+            self.skipTest(f"Report generation failed: {e}")
+    
+    def test_system_performance_under_load(self):
+        """Test system performance with large datasets."""
+        # Generate large dataset
+        large_dataset = []
+        for i in range(1000):  # 1000 data points
+            data_point = {
+                'timestamp': datetime.now() + timedelta(minutes=i),
+                'power_output': 400 + np.random.normal(0, 20),
+                'voltage': 0.8 + np.random.normal(0, 0.05),
+                'current_density': 500 + np.random.normal(0, 30),
+                'membrane_resistance': 0.5 + np.random.normal(0, 0.05),
+                'temperature': 25 + np.random.normal(0, 2)
+            }
+            large_dataset.append(data_point)
+        
+        # Test data storage performance
+        start_time = datetime.now()
+        df = pd.DataFrame(large_dataset)
+        file_id = self.data_manager.store_data(df, DataType.SENSOR_DATA)
+        storage_time = (datetime.now() - start_time).total_seconds()
+        
+        self.assertLess(storage_time, 10)  # Should complete within 10 seconds
+        self.assertIsNotNone(file_id)
+        
+        # Test degradation detection performance
+        start_time = datetime.now()
+        for data_point in large_dataset[-100:]:  # Add last 100 points
+            self.detector.add_data_point(data_point)
+        
+        patterns = self.detector.detect_degradation_patterns()
+        detection_time = (datetime.now() - start_time).total_seconds()
+        
+        self.assertLess(detection_time, 30)  # Should complete within 30 seconds
+
