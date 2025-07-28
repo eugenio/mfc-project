@@ -32,3 +32,17 @@ class FailureMode(Enum):
     WEAR_OUT = "wear_out"             # Age-related failure
     RANDOM = "random"                 # Random failures
     INFANT_MORTALITY = "infant_mortality"  # Early life failures
+class SeverityLevel(Enum):
+    """Failure severity levels."""
+    NEGLIGIBLE = 1
+    MARGINAL = 2
+    CRITICAL = 3
+    CATASTROPHIC = 4
+
+class DetectionLevel(Enum):
+    """Failure detection levels."""
+    VERY_HIGH = 1    # Almost certain detection
+    HIGH = 2         # High detection probability
+    MODERATE = 3     # Moderate detection
+    LOW = 4          # Low detection probability
+    VERY_LOW = 5     # Very unlikely to detect
