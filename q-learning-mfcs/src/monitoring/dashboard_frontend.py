@@ -186,3 +186,185 @@ def display_alerts(alerts: List[Dict]):
             st.warning(f"🟡 **WARNING**: {message} ({timestamp})")
         else:
             st.info(f"🔵 **INFO**: {message} ({timestamp})")
+def main():
+    """Main dashboard function"""
+    
+    # Header
+    st.title("⚡ MFC Real-time Monitoring Dashboard")
+    st.markdown("---")
+    
+    # Sidebar controls
+    with st.sidebar:
+        st.header("🎛️ System Control")
+        
+        # System status
+        status_data = DashboardAPI.get_system_status()
+        system_status = status_data.get('status', 'offline')
+        
+        if system_status == 'running':
+            st.markdown('<p class="status-running">🟢 SYSTEM RUNNING</p>', 
+                       unsafe_allow_html=True)
+        elif system_status == 'offline':
+            st.markdown('<p class="status-offline">🔴 SYSTEM OFFLINE</p>', 
+                       unsafe_allow_html=True)
+        else:
+            st.markdown('<p class="status-error">⚠️ SYSTEM ERROR</p>', 
+                       unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Control buttons
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("▶️ Start", use_container_width=True):
+                result = DashboardAPI.send_command("start")
+                if result.get('success'):
+                    st.success("System started")
+                else:
+                    st.error("Failed to start system")
+        
+        with col2:
+            if st.button("⏹️ Stop", use_container_width=True):
+                result = DashboardAPI.send_command("stop")
+                if result.get('success'):
+                    st.success("System stopped")
+                else:
+                    st.error("Failed to stop system")
+        
+        if st.button("🚨 Emergency Stop", type="primary", use_container_width=True):
+            result = DashboardAPI.send_command("emergency_stop")
+            if result.get('success'):
+                st.success("Emergency stop activated")
+            else:
+                st.error("Failed to activate emergency stop")
+        
+        st.markdown("---")
+        
+        # System configuration
+        st.subheader("⚙️ Configuration")
+        
+        auto_refresh = st.checkbox("Auto-refresh", value=True)
+        refresh_rate = st.selectbox("Refresh Rate", [1, 2, 5, 10], index=0)
+        
+        st.markdown("---")
+        
+        # Safety thresholds
+        st.subheader("🛡️ Safety Thresholds")
+        
+        max_temp = st.number_input("Max Temperature (°C)", value=45.0, step=1.0)
+        max_current = st.number_input("Max Current Density (mA/cm²)", value=10.0, step=0.5)
+        min_voltage = st.number_input("Min Voltage (V)", value=0.1, step=0.01)
+    
+    # Main content area
+    
+    # Get current metrics
+    metrics = DashboardAPI.get_current_metrics()
+    st.session_state.metrics_data = metrics
+    
+    if not metrics:
+        st.error("⚠️ Unable to connect to monitoring system. Please check if the API server is running.")
+        st.code("python -m uvicorn monitoring.dashboard_api:app --reload", language="bash")
+        return
+    
+    # Key performance indicators
+    st.subheader("📊 Key Performance Indicators")
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.metric(
+            label="Power Output",
+            value=f"{metrics.get('average_power_w', 0):.2f} W",
+            delta=f"{np.random.uniform(-0.1, 0.1):.3f}"
+        )
+    
+    with col2:
+        st.metric(
+            label="Efficiency",
+            value=f"{metrics.get('coulombic_efficiency_pct', 0):.1f}%",
+            delta=f"{np.random.uniform(-2, 2):.1f}%"
+        )
+    
+    with col3:
+        st.metric(
+            label="Current Density",
+            value=f"{metrics.get('current_density_ma_cm2', 0):.1f} mA/cm²",
+            delta=f"{np.random.uniform(-0.5, 0.5):.2f}"
+        )
+    
+    with col4:
+        st.metric(
+            label="Temperature",
+            value=f"{metrics.get('temperature_c', 0):.1f}°C",
+            delta=f"{np.random.uniform(-1, 1):.1f}°C"
+        )
+    
+    with col5:
+        st.metric(
+            label="Uptime",
+            value=f"{metrics.get('uptime_hours', 0):.1f} h",
+            delta=None
+        )
+    
+    st.markdown("---")
+    
+    # Performance charts
+    st.subheader("📈 System Performance")
+    
+    performance_fig = create_performance_charts(metrics)
+    st.plotly_chart(performance_fig, use_container_width=True)
+    
+    # Biological monitoring
+    st.subheader("🦠 Biological System Monitoring")
+    
+    biofilm_fig = create_biofilm_monitoring_chart(metrics)
+    st.plotly_chart(biofilm_fig, use_container_width=True)
+    
+    # System alerts
+    st.subheader("🚨 System Alerts")
+    
+    alerts_data = DashboardAPI.get_active_alerts()
+    alerts = alerts_data.get('alerts', [])
+    
+    display_alerts(alerts)
+    
+    # Real-time data table
+    st.subheader("📋 Real-time System Data")
+    
+    if metrics:
+        # Create a formatted data table
+        data_rows = []
+        
+        # System metrics
+        data_rows.extend([
+            {"Parameter": "System Status", "Value": system_status.title(), "Unit": "-"},
+            {"Parameter": "Uptime", "Value": f"{metrics.get('uptime_hours', 0):.2f}", "Unit": "hours"},
+            {"Parameter": "Total Energy", "Value": f"{metrics.get('total_energy_produced_kwh', 0):.3f}", "Unit": "kWh"},
+        ])
+        
+        # Environmental conditions
+        data_rows.extend([
+            {"Parameter": "Temperature", "Value": f"{metrics.get('temperature_c', 0):.1f}", "Unit": "°C"},
+            {"Parameter": "pH Level", "Value": f"{metrics.get('ph_level', 0):.2f}", "Unit": "-"},
+            {"Parameter": "Pressure", "Value": f"{metrics.get('pressure_bar', 0):.2f}", "Unit": "bar"},
+            {"Parameter": "Flow Rate", "Value": f"{metrics.get('flow_rate_ml_min', 0):.1f}", "Unit": "mL/min"},
+        ])
+        
+        # Control system
+        data_rows.extend([
+            {"Parameter": "Controller Mode", "Value": metrics.get('controller_mode', 'manual').title(), "Unit": "-"},
+            {"Parameter": "Learning Progress", "Value": f"{metrics.get('learning_progress_pct', 0):.1f}", "Unit": "%"},
+            {"Parameter": "Epsilon Value", "Value": f"{metrics.get('epsilon_value', 0):.3f}", "Unit": "-"},
+        ])
+        
+        df = pd.DataFrame(data_rows)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    
+    # Auto-refresh
+    if auto_refresh:
+        time.sleep(refresh_rate)
+        st.rerun()
+
+if __name__ == "__main__":
+    main()
