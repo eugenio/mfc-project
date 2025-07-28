@@ -287,7 +287,7 @@ def run_file_import_tests():
                 # Test import
                 spec = importlib.util.spec_from_file_location("test_module", filepath)
                 if spec and spec.loader:
-                    module = importlib.util.module_from_spec(spec)
+                    importlib.util.module_from_spec(spec)
                     # Don't execute, just load the module structure
                     results[filename] = "✅ Import successful"
                 else:

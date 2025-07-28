@@ -5,8 +5,6 @@ Comprehensive tests for controller models
 import pytest
 import numpy as np
 import time
-import threading
-from unittest.mock import Mock, patch
 import tempfile
 import json
 
@@ -20,8 +18,7 @@ from controller_models.model_inference import (
     create_standard_inference_engines
 )
 from controller_models.control_electronics import (
-    ControlElectronics, MCUSpecs, ADCSpecs, DACSpecs, GPIOSpecs,
-    CommunicationInterface, InterfaceType, MCUArchitecture,
+    InterfaceType, MCUArchitecture,
     create_standard_control_electronics
 )
 from controller_models.real_time_controller import (
@@ -29,12 +26,11 @@ from controller_models.real_time_controller import (
     ControlTask, TaskPriority, create_standard_real_time_controllers
 )
 from controller_models.hardware_abstraction import (
-    HardwareAbstractionLayer, MFCControlInterface, SensorDevice, ActuatorDevice,
-    PowerDevice, DeviceInfo, DeviceConfiguration, DeviceType, DeviceStatus,
+    HardwareAbstractionLayer, MFCControlInterface, DeviceStatus,
     create_mfc_hardware_system
 )
 from controller_models.controller_cost_analysis import (
-    ControllerCostAnalyzer, ControllerSystemSpecs, PowerRequirement,
+    ControllerCostAnalyzer, PowerRequirement,
     CostItem, CostCategory, create_standard_controller_configurations
 )
 
@@ -227,12 +223,12 @@ class TestControlElectronics:
         # Set GPIO pin
         success = control_electronics.set_gpio(0, True, "output")
         assert success
-        assert control_electronics.gpio_states[0] == True
+        assert control_electronics.gpio_states[0]
         assert control_electronics.gpio_directions[0] == "output"
         
         # Read GPIO pin
         state = control_electronics.read_gpio(0)
-        assert state == True
+        assert state
         
         # Test invalid pin
         success = control_electronics.set_gpio(999, True)

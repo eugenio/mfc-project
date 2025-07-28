@@ -19,7 +19,7 @@ def test_qtable_performance():
     # Initialize simulation with pre-trained Q-table
     mfc = GPUAcceleratedMFC(DEFAULT_QLEARNING_CONFIG)
     
-    print(f"\n📊 Initial State:")
+    print("\n📊 Initial State:")
     print(f"   Reservoir: {mfc.reservoir_concentration:.2f} mM")
     print(f"   Target: {mfc.target_concentration:.2f} mM")
     print(f"   Epsilon: {mfc.epsilon:.4f}")
@@ -57,7 +57,7 @@ def test_qtable_performance():
     mean_deviation = np.mean([r['deviation'] for r in results])
     max_deviation = np.max([r['deviation'] for r in results])
     
-    print(f"\n📈 PERFORMANCE SUMMARY:")
+    print("\n📈 PERFORMANCE SUMMARY:")
     print(f"   Final concentration: {final_conc:.2f} mM")
     print(f"   Mean deviation: {mean_deviation:.2f} mM")
     print(f"   Max deviation: {max_deviation:.2f} mM")
@@ -67,7 +67,7 @@ def test_qtable_performance():
     actions_used = [r['action'] for r in results]
     unique_actions = len(set(actions_used))
     
-    print(f"\n🎯 Q-LEARNING ANALYSIS:")
+    print("\n🎯 Q-LEARNING ANALYSIS:")
     print(f"   Unique actions used: {unique_actions}/10")
     print(f"   Actions: {actions_used}")
     print(f"   Exploitation level: {'✅ HIGH' if unique_actions <= 3 else '⚠️  RANDOM'}")

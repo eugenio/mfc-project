@@ -4,14 +4,12 @@ Test module to demonstrate enhanced chunking with meaningful commit messages.
 This module serves as a comprehensive test case for the enhanced file chunking system,
 showcasing how the new commit message generation works with various code structures.
 """
-import os
-import sys
 import json
 import logging
-from pathlib import Path
-from typing import List, Dict, Optional, Union, Any
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
+import time
+from typing import List, Dict, Optional, Any
+from datetime import datetime
+from dataclasses import field
 
 DEFAULT_TIMEOUT = 30
 MAX_RETRIES = 3

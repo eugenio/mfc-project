@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Test script for file creation hook functionality."""
 
-import sys
-import json
 import time
 
 def create_test_file(filename: str, lines: int):

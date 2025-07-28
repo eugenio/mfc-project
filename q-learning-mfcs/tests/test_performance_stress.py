@@ -114,7 +114,7 @@ class TestPerformanceBenchmarks(unittest.TestCase):
                 step_times = []
                 for step in range(10):
                     start_time = time.time()
-                    state = model.step_integrated_dynamics(dt=1.0)
+                    model.step_integrated_dynamics(dt=1.0)
                     step_time = time.time() - start_time
                     step_times.append(step_time)
                 
@@ -128,8 +128,8 @@ class TestPerformanceBenchmarks(unittest.TestCase):
             
             # Check scaling behavior
             if len(performance_data) >= 2:
-                times = list(performance_data.values())
-                cells = list(performance_data.keys())
+                list(performance_data.values())
+                list(performance_data.keys())
                 
                 # Time should scale sub-quadratically
                 ratio_32 = performance_data[3] / performance_data[2] if 2 in performance_data and 3 in performance_data else 1.0
@@ -213,7 +213,7 @@ class TestPerformanceBenchmarks(unittest.TestCase):
                 next_state = states[(i + 1) % n_iterations]
                 
                 # Select action
-                selected_action = controller.select_action(state)
+                controller.select_action(state)
                 
                 # Update Q-table
                 controller.update_q_table(state, action, reward, next_state)
@@ -443,9 +443,9 @@ class TestScalabilityTests(unittest.TestCase):
                 
                 for _ in range(20):  # 20 time steps
                     stack.update_stack_dynamics(dt=1.0)
-                    voltages = stack.get_cell_voltages()
-                    currents = stack.get_current_densities()
-                    power = stack.get_total_power()
+                    stack.get_cell_voltages()
+                    stack.get_current_densities()
+                    stack.get_total_power()
                 
                 total_time = time.time() - start_time
                 time_per_step = total_time / 20
@@ -501,7 +501,7 @@ class TestScalabilityTests(unittest.TestCase):
                     start_time = time.time()
                     
                     for _ in range(steps_needed):
-                        state = model.step_integrated_dynamics(dt=1.0)
+                        model.step_integrated_dynamics(dt=1.0)
                     
                     elapsed_time = time.time() - start_time
                     avg_step_time = elapsed_time / steps_needed
@@ -609,7 +609,7 @@ class TestResourceUtilization(unittest.TestCase):
             
             # Run simulation
             for _ in range(10):
-                state = model.step_integrated_dynamics(dt=1.0)
+                model.step_integrated_dynamics(dt=1.0)
                 time.sleep(0.1)  # Brief pause to allow monitoring
             
             monitor_thread.join()

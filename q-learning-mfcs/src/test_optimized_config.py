@@ -118,7 +118,7 @@ def analyze_validation_results(results: Dict[str, Any], target_concentration: fl
     stability_std = np.std(last_quarter_conc)
     stability_mean = np.mean(last_quarter_conc)
     
-    print(f"\nStability (last 25% of simulation):")
+    print("\nStability (last 25% of simulation):")
     print(f"  Mean: {stability_mean:.1f} mM")
     print(f"  Std deviation: {stability_std:.1f} mM")
     print(f"  Coefficient of variation: {stability_std/stability_mean*100:.1f}%")
@@ -131,7 +131,7 @@ def analyze_validation_results(results: Dict[str, Any], target_concentration: fl
     else:
         final_power = mean_power = max_power = 0.0
     
-    print(f"\nPower performance:")
+    print("\nPower performance:")
     print(f"  Final power: {final_power:.1f} W")
     print(f"  Mean power: {mean_power:.1f} W")
     print(f"  Maximum power: {max_power:.1f} W")
@@ -141,7 +141,7 @@ def analyze_validation_results(results: Dict[str, Any], target_concentration: fl
     within_tolerance_2 = np.sum(np.abs(reservoir_conc - target_concentration) <= 2.0)
     total_points = len(reservoir_conc)
     
-    print(f"\nControl effectiveness:")
+    print("\nControl effectiveness:")
     print(f"  Within ±5 mM: {within_tolerance_5/total_points*100:.1f}% of time")
     print(f"  Within ±2 mM: {within_tolerance_2/total_points*100:.1f}% of time")
     

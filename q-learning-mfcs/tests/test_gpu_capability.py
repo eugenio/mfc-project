@@ -599,7 +599,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_np = np.random.rand(size, size).astype(np.float32)
                 
                 start_time = time.time()
-                c_np = np.dot(a_np, b_np)
+                np.dot(a_np, b_np)
                 np_time = time.time() - start_time
                 np_times.append(np_time)
             
@@ -612,7 +612,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_cp = cp.random.rand(size, size, dtype=cp.float32)
                 
                 start_time = time.time()
-                c_cp = cp.dot(a_cp, b_cp)
+                cp.dot(a_cp, b_cp)
                 cp.cuda.Stream.null.synchronize()  # Ensure GPU computation is complete
                 cp_time = time.time() - start_time
                 cp_times.append(cp_time)
@@ -663,7 +663,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b = cp.random.rand(size, dtype=cp.float32)
                 
                 start_time = time.time()
-                c = a + b  # Simple element-wise operation
+                a + b  # Simple element-wise operation
                 cp.cuda.Stream.null.synchronize()
                 elapsed_time = time.time() - start_time
                 times.append(elapsed_time)
@@ -709,7 +709,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_cpu = torch.randn(size, size, dtype=torch.float32)
                 
                 start_time = time.time()
-                c_cpu = torch.mm(a_cpu, b_cpu)
+                torch.mm(a_cpu, b_cpu)
                 cpu_time = time.time() - start_time
                 cpu_times.append(cpu_time)
             
@@ -724,7 +724,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_gpu = torch.randn(size, size, dtype=torch.float32, device=device)
                 
                 start_time = time.time()
-                c_gpu = torch.mm(a_gpu, b_gpu)
+                torch.mm(a_gpu, b_gpu)
                 torch.cuda.synchronize()  # Ensure GPU computation is complete
                 gpu_time = time.time() - start_time
                 gpu_times.append(gpu_time)

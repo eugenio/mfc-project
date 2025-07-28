@@ -626,7 +626,7 @@ def main():
                 if issue_details['milestone']:
                     print(f"🎯 Milestone: {issue_details['milestone']['title']}")
                 
-                print(f"\n📝 Description:")
+                print("\n📝 Description:")
                 print("=" * 80)
                 print(issue_details['description'])
                 print("=" * 80)
@@ -642,14 +642,14 @@ def main():
                                 print("-" * 40)
                     print("-" * 80)
                 
-                print(f"\n📊 Metadata:")
+                print("\n📊 Metadata:")
                 print(f"  - Comments: {issue_details['user_notes_count']}")
                 print(f"  - Upvotes: {issue_details['upvotes']}")
                 print(f"  - Downvotes: {issue_details['downvotes']}")
                 if issue_details['has_tasks']:
                     print(f"  - Task Status: {issue_details['task_status']}")
                 if issue_details['confidential']:
-                    print(f"  - Confidential: Yes")
+                    print("  - Confidential: Yes")
             else:
                 print(f"❌ Issue #{args.get_issue} not found or could not be retrieved")
         
@@ -743,7 +743,7 @@ def main():
                     labels=labels
                 )
                 
-                print(f"\n📋 Creating issue with:")
+                print("\n📋 Creating issue with:")
                 print(f"   Title: {title}")
                 print(f"   Type: {selected_type.value}")
                 print(f"   Severity: {selected_severity.value}")

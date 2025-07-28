@@ -4,15 +4,11 @@ Test suite for MFC Real-time Monitoring System
 Comprehensive tests for dashboard API, safety monitoring, and real-time streaming.
 """
 import pytest
-import asyncio
 import json
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock
 import numpy as np
-import sys
-import os
-from pathlib import Path
 
 try:
     from src.monitoring.dashboard_api import app, SystemStatus, SystemMetrics, AlertMessage
@@ -444,7 +440,7 @@ class TestIntegration:
     def test_safety_to_streaming_integration(self, monitoring_system):
         """Test integration between safety monitoring and streaming"""
         safety_monitor = monitoring_system["safety_monitor"]
-        streamer = monitoring_system["streamer"]
+        monitoring_system["streamer"]
         
         # Start safety monitoring
         safety_monitor.start_monitoring(interval_seconds=0.1)

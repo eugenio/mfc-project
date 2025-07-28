@@ -539,7 +539,7 @@ def main():
             print(f"{i}. {rec}")
     
     # Save results
-    output_file = save_results(suite_result, analysis, args.output)
+    save_results(suite_result, analysis, args.output)
     
     # Create GitLab issues if requested
     if args.create_issues and (suite_result.failed > 0 or suite_result.errors > 0):

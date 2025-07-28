@@ -156,7 +156,7 @@ def interactive_issue_creation():
             # Analyze the input
             analysis = analyze_user_input(description)
             
-            print(f"\n🔍 Analysis:")
+            print("\n🔍 Analysis:")
             print(f"   Type: {analysis['type']} (confidence: {analysis['confidence']:.2f})")
             print(f"   Priority: {analysis['priority']}")
             print(f"   Title: {analysis['suggested_title']}")
