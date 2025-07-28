@@ -20,8 +20,10 @@ from pathlib import Path
 import sys
 import os
 
-from config.real_time_processing import (
-from integrated_mfc_model import IntegratedMFCModel
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class StreamEventType(Enum):
     """Types of streaming events"""
     METRICS_UPDATE = "metrics_update"
