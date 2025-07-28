@@ -12,9 +12,7 @@ import sys
 import json
 import numpy as np
 from typing import Dict, Any, Tuple
-from dataclasses import asdict
 import tempfile
-import shutil
 
 import ray
 from ray import tune
@@ -409,5 +407,5 @@ if __name__ == "__main__":
         target_concentration=args.target
     )
     
-    print(f"\nTo test optimized configuration, run:")
+    print("\nTo test optimized configuration, run:")
     print(f"python test_optimized_config.py {results_path}")

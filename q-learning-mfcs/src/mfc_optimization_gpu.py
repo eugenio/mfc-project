@@ -434,10 +434,10 @@ class MFCOptimizationSimulation:
         time_hours = np.arange(self.num_steps) * self.dt / 3600
         
         # Create main dashboard figure
-        fig = plt.figure(figsize=(20, 16))
+        plt.figure(figsize=(20, 16))
         
         # Plot 1: Stack Performance Over Time
-        ax1 = plt.subplot(3, 3, 1)
+        plt.subplot(3, 3, 1)
         plt.plot(time_hours, self.stack_powers, 'b-', linewidth=1.5, label='Stack Power')
         plt.xlabel('Time (hours)')
         plt.ylabel('Power (W)')
@@ -446,7 +446,7 @@ class MFCOptimizationSimulation:
         plt.legend()
         
         # Plot 2: Time-Dependent Flow Rate
-        ax2 = plt.subplot(3, 3, 2)
+        plt.subplot(3, 3, 2)
         plt.plot(time_hours, self.flow_rates * 3.6e9, 'g-', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Flow Rate (mL/h)')
@@ -460,7 +460,7 @@ class MFCOptimizationSimulation:
         plt.legend(fontsize=8)
         
         # Plot 3: Substrate Utilization
-        ax3 = plt.subplot(3, 3, 3)
+        plt.subplot(3, 3, 3)
         plt.plot(time_hours, self.substrate_utilizations, 'r-', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Utilization (%)')
@@ -468,7 +468,7 @@ class MFCOptimizationSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 4: Biofilm Thickness Evolution
-        ax4 = plt.subplot(3, 3, 4)
+        plt.subplot(3, 3, 4)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.biofilm_thickness[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -481,7 +481,7 @@ class MFCOptimizationSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 5: Cell Voltage Distribution
-        ax5 = plt.subplot(3, 3, 5)
+        plt.subplot(3, 3, 5)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.cell_voltages[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -492,7 +492,7 @@ class MFCOptimizationSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 6: Acetate Concentration Profile
-        ax6 = plt.subplot(3, 3, 6)
+        plt.subplot(3, 3, 6)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.acetate_concentrations[:, i], 
                     linewidth=1.5, label=f'Cell {i+1} outlet')
@@ -503,7 +503,7 @@ class MFCOptimizationSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 7: Objective Function Evolution
-        ax7 = plt.subplot(3, 3, 7)
+        plt.subplot(3, 3, 7)
         plt.plot(time_hours, self.objective_values, 'purple', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Objective Value')
@@ -517,9 +517,9 @@ class MFCOptimizationSimulation:
         final_biofilms = self.biofilm_thickness[-1, :]
         
         ax8_twin = ax8.twinx()
-        bars1 = ax8.bar(cell_numbers - 0.2, final_powers, 0.4, 
+        ax8.bar(cell_numbers - 0.2, final_powers, 0.4, 
                        label='Power (W)', color='blue', alpha=0.7)
-        bars2 = ax8_twin.bar(cell_numbers + 0.2, final_biofilms, 0.4,
+        ax8_twin.bar(cell_numbers + 0.2, final_biofilms, 0.4,
                            label='Biofilm Thickness', color='red', alpha=0.7)
         
         ax8.set_xlabel('Cell Number')
@@ -581,7 +581,7 @@ class MFCOptimizationSimulation:
         fig, axes = plt.subplots(2, 2, figsize=(15, 12))
         
         # Time vs Flow Rate and Power
-        time_seconds = np.arange(self.num_steps) * self.dt
+        np.arange(self.num_steps) * self.dt
         ax_twin = axes[0, 0].twinx()
         line1 = axes[0, 0].plot(time_hours, self.flow_rates * 3.6e9, 'g-', 
                                linewidth=1, label='Flow Rate')

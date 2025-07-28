@@ -149,7 +149,6 @@ class MFCFlowOptimizer:
     def optimize_flow_rate(self) -> dict:
         """Find optimal flow rate"""
         # Initial guess based on typical values
-        Q_initial = 2.25e-5  # Current operating point
         
         # Bounds for flow rate (m³/s)
         Q_min = 1e-6   # Very slow flow
