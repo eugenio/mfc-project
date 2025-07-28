@@ -9,7 +9,7 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, Dict, Any
 from pathlib import Path
 import json
 import gzip
@@ -153,7 +153,7 @@ def plot_time_series(ax: plt.Axes, df: pd.DataFrame, time_col: str, y_cols: List
         labels = y_cols
     
     for i, (col, label) in enumerate(zip(y_cols, labels)):
-        plot_kwargs = {'label': label}
+        plot_kwargs: Dict[str, Any] = {'label': label}
         
         if colors and i < len(colors):
             plot_kwargs['color'] = colors[i]
@@ -536,7 +536,7 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     ax.fill_between(df['time_days'], 20, 30, alpha=0.1, color='yellow', label='±5 mM tolerance')
     
     # Annotate control failure
-    final_conc = performance.get('final_reservoir_concentration', df['reservoir_concentration'].iloc[-1])
+    final_conc = float(performance.get('final_reservoir_concentration', df['reservoir_concentration'].iloc[-1]))
     ax.annotate(f'CONTROL FAILURE\nFinal: {final_conc:.1f} mM\n(4x target)', 
                 xy=(duration_days*0.8, final_conc), 
                 xytext=(duration_days*0.5, final_conc*0.7),
@@ -551,7 +551,7 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     ax = axes1[1]
     plot_time_series(ax, df, 'time_days', ['total_power'], 
                     colors=['purple'], linewidths=[2])
-    mean_power = performance.get('mean_power', df['total_power'].mean()) * 1000  # Convert to mW
+    mean_power = float(performance.get('mean_power', df['total_power'].mean())) * 1000  # Convert to mW
     ax.annotate(f'POWER FAILURE\nMean: {mean_power:.3f} mW', 
                 xy=(duration_days*0.5, df['total_power'].mean()), 
                 xytext=(duration_days*0.3, df['total_power'].max()*0.5),
@@ -596,8 +596,8 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     ax.axis('off')
     
     # Performance metrics from metadata
-    control_eff_2mm = performance.get('control_effectiveness_2mM', 0) * 100
-    control_eff_5mm = performance.get('control_effectiveness_5mM', 0) * 100
+    control_eff_2mm = float(performance.get('control_effectiveness_2mM', 0)) * 100
+    control_eff_5mm = float(performance.get('control_effectiveness_5mM', 0)) * 100
     runtime_hours = sim_info.get('total_runtime_hours', 0)
     backend = sim_info.get('acceleration_backend', 'Unknown')
     
