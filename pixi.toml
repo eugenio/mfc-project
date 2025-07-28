@@ -11,6 +11,12 @@ post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use
 detect-gpu = "python scripts/detect_gpu.py"
 install-gpu-deps = "python scripts/install_gpu_deps.py"
 
+# Linting tasks
+lint-code = "ruff check . && mypy . && bandit -r . -f json -o bandit-report.json || (cat bandit-report.json && exit 1)"
+lint-yaml = "yamllint -d relaxed ."
+lint-markdown = "mdformat --check ."
+secrets-detect = "detect-secrets scan --all-files --disable-plugin AbsolutePathDetectorPlugin --disable-plugin Base64HighEntropyString --disable-plugin HexHighEntropyString"
+
 [feature.amd.activation]
 env = { LLVM_PATH = "/opt/rocm/llvm" }
 
