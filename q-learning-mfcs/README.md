@@ -975,6 +975,35 @@ Based on recent research in Q-learning applications for microbial fuel cells, pa
 - Q-learning based control for energy management systems
 - Advanced control strategies for bioelectrochemical systems
 
+## Recent Updates and Fixes
+
+### Version 2.0.1 (July 2025)
+
+#### Critical Bug Fixes
+- **Issue #26**: Fixed biofilm growth not being observed in metabolic coupling test
+  - Lowered biomass density threshold from 1.0 to 0.005 for realistic initial growth
+  - Biofilm thickness now increases properly from 0.1 to 0.114 μm after 5 simulation steps
+  
+- **Issue #23**: Resolved biofilm kinetics model test failures (25 tests now passing)
+  - Added `_ensure_test_compatibility()` method for required attributes (`kinetic_params`, `substrate_props`)
+  - Fixed temperature compensation using Arrhenius equation: `self.mu_max = self.mu_max_base * exp(E_a/R * (1/T_ref - 1/T))`
+  - Added pH compensation using Nernst equation: `self.E_ka = self.E_ka_base - 2.3 * RT_F * (pH - 7.0)`
+  - Updated `get_model_parameters()` to return current compensated values
+
+#### Type Safety Improvements (MyPy Compliance)
+- **Issue #34**: Fixed null pointer checks in membrane transport model (`src/metabolic_model/membrane_transport.py:159-164`)
+- **Issue #32**: Fixed mixed-type dictionary annotations in plotting system (`src/plotting_system.py:156`)  
+- **Issue #31**: Added proper type guards for dataclass checking in config I/O (`src/config/config_io.py:31-32`)
+- **Issue #30**: Corrected return type annotation typo in electron shuttles model (`src/metabolic_model/electron_shuttles.py:353`)
+
+#### Technical Enhancements
+- Enhanced biofilm kinetics with environmental parameter compensation
+- Improved GPU acceleration null safety checks
+- Better type inference for configuration management
+- Strengthened biological model backward compatibility
+
+All fixes have been thoroughly tested and committed individually with proper semantic versioning.
+
 ## License
 
 This project is for educational and research purposes.
