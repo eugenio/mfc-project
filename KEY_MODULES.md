@@ -279,3 +279,39 @@ class GPUAccelerator:
 │                                                      │
 └─────────────────────────────────────────────────────┘
 ```
+## Best Practices for Module Usage
+
+### 1. Configuration Loading
+Always load configuration before initializing models:
+```python
+config = ConfigurationManager()
+config.load_profile('research')
+model = SensorIntegratedMFCModel(config=config)
+```
+
+### 2. GPU Acceleration
+Check GPU availability and handle fallback:
+```python
+gpu = GPUAccelerator()
+if gpu.backend == 'numpy':
+    print("Warning: Running on CPU")
+```
+
+### 3. Sensor Integration
+Always check sensor confidence:
+```python
+biofilm_state = model.measure_biofilm_state()
+confidence = model.get_sensor_confidence()
+if confidence < 0.8:
+    print("Warning: Low sensor confidence")
+```
+
+### 4. Error Handling
+Use proper exception handling:
+```python
+try:
+    result = model.step_dynamics()
+except ConvergenceError as e:
+    print(f"Simulation failed: {e}")
+    model.reset_to_checkpoint()
+```
