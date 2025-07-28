@@ -385,10 +385,10 @@ class BiofilmQCMController:
 def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) -> None:
     """Create comprehensive visualization of physics-accurate biofilm model"""
     
-    fig = plt.figure(figsize=(16, 12))
+    plt.figure(figsize=(16, 12))
     
     # Panel A: Biofilm Thickness Evolution
-    ax1 = plt.subplot(3, 3, 1)
+    plt.subplot(3, 3, 1)
     plt.plot(biofilm_results['time_hours'], biofilm_results['thickness_um'], 'b-', linewidth=2, label='True Thickness')
     plt.plot(qcm_measurements['time_hours'], qcm_measurements['thickness_qcm_um'], 'r--', linewidth=2, label='QCM Measured')
     plt.axhline(20, color='g', linestyle=':', label='Optimal (20 μm)')
@@ -400,7 +400,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel B: Current Density vs Thickness
-    ax2 = plt.subplot(3, 3, 2)
+    plt.subplot(3, 3, 2)
     current_mA_cm2 = np.array(biofilm_results['current_density_A_m2']) * 1000 / 10000  # Convert to mA/cm²
     plt.plot(biofilm_results['thickness_um'], current_mA_cm2, 'purple', linewidth=2)
     plt.axvline(20, color='g', linestyle=':', label='Optimal')
@@ -411,7 +411,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.legend()
     
     # Panel C: QCM Frequency Response
-    ax3 = plt.subplot(3, 3, 3)
+    plt.subplot(3, 3, 3)
     plt.plot(qcm_measurements['time_hours'], qcm_measurements['frequency_shift_Hz'], 'red', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Frequency Shift (Hz)')
@@ -419,7 +419,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel D: Electrochemical Activity
-    ax4 = plt.subplot(3, 3, 4)
+    plt.subplot(3, 3, 4)
     plt.plot(biofilm_results['time_hours'], biofilm_results['electrochemical_activity'], 'green', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Relative Activity')
@@ -427,7 +427,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel E: Diffusion Efficiency
-    ax5 = plt.subplot(3, 3, 5)
+    plt.subplot(3, 3, 5)
     plt.plot(biofilm_results['time_hours'], biofilm_results['diffusion_efficiency'], 'brown', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Diffusion Efficiency')
@@ -435,7 +435,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel F: Inactive Cell Fraction
-    ax6 = plt.subplot(3, 3, 6)
+    plt.subplot(3, 3, 6)
     plt.plot(biofilm_results['time_hours'], biofilm_results['inactive_fraction'], 'orange', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Inactive Fraction')
@@ -443,7 +443,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel G: QCM Quality Metrics
-    ax7 = plt.subplot(3, 3, 7)
+    plt.subplot(3, 3, 7)
     plt.plot(qcm_measurements['time_hours'], qcm_measurements['q_factor'], 'cyan', linewidth=2, label='Q Factor')
     plt.xlabel('Time (hours)')
     plt.ylabel('Q Factor')
@@ -451,7 +451,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel H: Mass Comparison
-    ax8 = plt.subplot(3, 3, 8)
+    plt.subplot(3, 3, 8)
     true_mass = np.array(biofilm_results['mass_per_area_kg_m2']) * 1000  # g/m²
     measured_mass = np.array(qcm_measurements['mass_calculated_kg_m2']) * 1000  # g/m²
     plt.plot(biofilm_results['time_hours'], true_mass, 'b-', linewidth=2, label='True Mass')
@@ -463,7 +463,7 @@ def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) 
     plt.grid(True, alpha=0.3)
     
     # Panel I: Biomass Density
-    ax9 = plt.subplot(3, 3, 9)
+    plt.subplot(3, 3, 9)
     plt.plot(biofilm_results['time_hours'], biofilm_results['biomass_density_kg_m3'], 'magenta', linewidth=2)
     plt.xlabel('Time (hours)')
     plt.ylabel('Biomass Density (kg/m³)')
@@ -488,7 +488,7 @@ def run_physics_simulation(duration_hours: int = 200, substrate_conc: float = 1.
     
     biofilm_model = PhysicsAccurateBiofilmModel(biofilm_params)
     qcm_sensor = QCMSensorModel(qcm_params)
-    controller = BiofilmQCMController(biofilm_params)
+    BiofilmQCMController(biofilm_params)
     
     # Time vector
     time_hours = np.linspace(0, duration_hours, duration_hours * 10)  # 0.1 hour resolution

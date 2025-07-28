@@ -327,9 +327,9 @@ class BiofilmKineticsModel:
         # Use GPU arrays if available
         if self.gpu_available:
             # Convert to GPU arrays for computation
-            thickness_gpu = self.gpu_acc.array([self.biofilm_thickness])
-            biomass_gpu = self.gpu_acc.array([self.biomass_density])
-            substrate_gpu = self.gpu_acc.array([self.substrate_concentration])
+            self.gpu_acc.array([self.biofilm_thickness])
+            self.gpu_acc.array([self.biomass_density])
+            self.gpu_acc.array([self.substrate_concentration])
         
         # Calculate growth rate
         growth_rate = self.calculate_nernst_monod_growth_rate(
@@ -360,7 +360,7 @@ class BiofilmKineticsModel:
         
         # Update biofilm thickness
         # Thickness growth proportional to biomass growth and attachment
-        attachment_rate = self.calculate_stochastic_attachment(
+        self.calculate_stochastic_attachment(
             cell_density=1e12,  # cells/m³ typical planktonic density
             surface_area=1.0    # m² reference area
         )
