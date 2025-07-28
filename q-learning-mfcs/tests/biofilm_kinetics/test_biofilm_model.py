@@ -226,7 +226,7 @@ class TestBiofilmKineticsModel(unittest.TestCase):
         )
         
         self.assertGreaterEqual(growth_rate, 0)
-        self.assertLessEqual(growth_rate, model.kinetic_params.mu_max)
+        self.assertLessEqual(growth_rate, model.mu_max)
         
         # Test substrate limitation
         low_substrate_rate = model.calculate_nernst_monod_growth_rate(
