@@ -4,18 +4,16 @@ GitLab Issue Analysis Script for MFC Q-Learning Project.
 Retrieves, analyzes, and prioritizes GitLab issues.
 """
 
-import os
 import sys
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 # Add the tests directory to the path to access gitlab_issue_manager
 sys.path.insert(0, str(Path(__file__).parent / 'tests'))
 
 try:
-    import gitlab
     from gitlab_issue_manager import GitLabIssueManager, IssueSeverity, IssueUrgency, IssueType
     GITLAB_AVAILABLE = True
 except ImportError as e:
