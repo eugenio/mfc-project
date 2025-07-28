@@ -117,3 +117,54 @@ The safety system monitors critical parameters and responds automatically:
 - **Pressure Emergency**: Immediate flow shutdown for overpressure
 - **System Failure**: Multi-parameter failure detection
 - **Biological Contamination**: pH and biofilm monitoring
+## API Reference
+
+### Core Endpoints
+
+#### System Status
+```http
+GET /api/system/status
+```
+Returns current system operational status.
+
+#### Current Metrics
+```http
+GET /api/metrics/current
+```
+Returns real-time system measurements.
+
+#### Control Commands
+```http
+POST /api/control/command
+Content-Type: application/json
+
+{
+  "command": "start|stop|pause|resume|emergency_stop",
+  "parameters": {}
+}
+```
+
+#### Active Alerts
+```http
+GET /api/alerts/active
+```
+Returns current active safety alerts.
+
+### WebSocket Streaming
+
+Connect to `ws://localhost:8001/ws` for real-time updates:
+
+```javascript
+const ws = new WebSocket('ws://localhost:8001/ws');
+
+// Subscribe to metrics updates
+ws.send(JSON.stringify({
+    type: 'subscribe',
+    events: ['metrics_update', 'alert', 'status_change']
+}));
+
+ws.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    console.log('Real-time update:', data);
+};
+```
