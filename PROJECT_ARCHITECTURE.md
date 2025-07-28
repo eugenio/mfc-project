@@ -152,3 +152,41 @@ visualization:
 - **Stability**: 97.1% power consistency
 - **Cell Reversal**: 100% prevention rate
 - **Biofilm Health**: Maintained at optimal 3.0 μm
+## Development Workflow
+
+### 1. Environment Setup
+```bash
+# Install pixi
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Setup environment
+./setup_environment.sh
+
+# Activate environment
+pixi shell
+```
+
+### 2. Running Simulations
+```bash
+# Basic simulation
+python q-learning-mfcs/src/mfc_recirculation_control.py
+
+# Custom duration
+python q-learning-mfcs/src/mfc_recirculation_control.py --hours 1000
+
+# Different configuration
+python q-learning-mfcs/src/mfc_unified_qlearning_control.py --profile research
+```
+
+### 3. Development Tools
+```bash
+# Run tests
+python q-learning-mfcs/tests/run_tests.py
+
+# Code quality
+ruff check .
+mypy .
+
+# Git operations (with chunking)
+git add large_file.py  # Automatically chunked if >50 lines
+```
