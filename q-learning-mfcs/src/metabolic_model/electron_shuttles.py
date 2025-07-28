@@ -7,7 +7,7 @@ for extracellular electron transfer.
 """
 
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -242,7 +242,7 @@ class ElectronShuttleModel:
                    (shuttle.binding_constant * 1e-3 + concentration))
             
             # Account for driving force
-            rate *= (1 - np.exp(-driving_force / 0.025))  # 25 mV at room temp
+            rate *= float(1 - np.exp(-driving_force / 0.025))  # 25 mV at room temp
             
             # Electrons per shuttle molecule
             electron_rate = rate * shuttle.electrons_transferred
@@ -350,7 +350,7 @@ class ElectronShuttleModel:
         
         return current_density
     
-    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> Dict[str, any]:
+    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> Dict[str, Any]:
         """Get properties of specific shuttle."""
         shuttle = self.shuttles[shuttle_type]
         
@@ -415,7 +415,7 @@ class ElectronShuttleModel:
                 driving_force = electrode_potential - shuttle.redox_potential
                 
                 if driving_force > 0:
-                    factor = (1 - np.exp(-driving_force / 0.025))
+                    factor = float(1 - np.exp(-driving_force / 0.025))
                     if factor > 0:
                         # Solve for concentration
                         # rate = k_et * C / (Km + C) * factor * n_electrons
