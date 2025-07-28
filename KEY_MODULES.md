@@ -230,3 +230,24 @@ class GPUAccelerator:
 - Substrate kinetics
 - Electrochemical constants
 - Reference citations
+## Testing Modules
+
+### 16. `tests/test_gpu_acceleration.py`
+**Purpose**: GPU functionality testing  
+**Location**: `q-learning-mfcs/tests/test_gpu_acceleration.py`
+
+**Tests**:
+- Backend detection
+- Mathematical operations
+- Memory management
+- Performance benchmarks
+
+### 17. `tests/test_sensor_fusion.py`
+**Purpose**: Sensor fusion validation  
+**Location**: `q-learning-mfcs/tests/test_sensor_fusion.py`
+
+**Validates**:
+- Fusion accuracy
+- Uncertainty propagation
+- Edge cases
+- Performance
