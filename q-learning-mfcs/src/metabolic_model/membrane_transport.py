@@ -7,7 +7,7 @@ and experimental data.
 """
 
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from dataclasses import dataclass
 import sys
 import os
@@ -147,8 +147,8 @@ class MembraneTransport:
             Oxygen flux (mol/m²/s)
         """
         # Temperature correction for permeability
-        temp_factor = np.exp(self.properties.permeability_temp_coeff * 
-                           (temperature - self.T_ref) / self.T_ref)
+        temp_factor = float(np.exp(self.properties.permeability_temp_coeff * 
+                           (temperature - self.T_ref) / self.T_ref))
         
         permeability = self.properties.oxygen_permeability * temp_factor
         
@@ -156,7 +156,7 @@ class MembraneTransport:
         thickness_m = self.properties.thickness * 1e-6
         
         # Concentration gradient (driving force)
-        if self.gpu_available:
+        if self.gpu_available and self.gpu_acc is not None:
             anode_gpu = self.gpu_acc.array([anode_o2_conc])
             cathode_gpu = self.gpu_acc.array([cathode_o2_conc])
             
@@ -316,7 +316,7 @@ class MembraneTransport:
             "potential_drop": r"\Delta V = j \cdot A \cdot R_{mem}"
         }
     
-    def get_membrane_properties(self) -> Dict[str, float]:
+    def get_membrane_properties(self) -> Dict[str, Any]:
         """Get current membrane properties for inspection."""
         return {
             "grade": self.membrane_grade,
