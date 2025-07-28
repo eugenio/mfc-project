@@ -198,3 +198,35 @@ class GPUAccelerator:
 - Threshold checking
 - Dangerous operation prevention
 - Event logging
+## Utilities
+
+### 13. `utils/data_export.py`
+**Purpose**: Data export utilities  
+**Location**: `q-learning-mfcs/src/utils/data_export.py`
+
+**Export Formats**:
+- CSV for time series data
+- JSON for configuration and metadata
+- HDF5 for large datasets
+- LaTeX tables for reports
+
+### 14. `utils/visualization.py`
+**Purpose**: Advanced plotting utilities  
+**Location**: `q-learning-mfcs/src/utils/visualization.py`
+
+**Capabilities**:
+- Real-time plotting
+- Multi-panel dashboards
+- 3D visualizations
+- Statistical plots
+- Performance metrics
+
+### 15. `utils/literature_params.py`
+**Purpose**: Literature-validated parameter database  
+**Location**: `q-learning-mfcs/src/utils/literature_params.py`
+
+**Contents**:
+- Species-specific parameters
+- Substrate kinetics
+- Electrochemical constants
+- Reference citations
