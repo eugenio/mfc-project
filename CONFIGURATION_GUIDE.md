@@ -317,3 +317,49 @@ config.load_profile('custom')
 if not config.validate_configuration():
     raise ValueError("Invalid configuration")
 ```
+## Common Configuration Tasks
+
+### Creating Custom Profile
+```python
+# Create custom configuration
+custom_config = {
+    'name': 'my_custom_profile',
+    'biological': {
+        'species': 'geobacter',
+        'max_growth_rate': 0.4
+    },
+    'control': {
+        'q_learning': {
+            'learning_rate': 0.08
+        }
+    }
+}
+
+# Save to file
+import yaml
+with open('configs/my_custom.yaml', 'w') as f:
+    yaml.dump(custom_config, f)
+```
+
+### Switching Profiles at Runtime
+```python
+# Start with conservative
+model = MFCModel(config_profile='conservative')
+
+# Switch to research after stabilization
+if model.is_stable():
+    config.load_profile('research')
+    model.update_configuration(config)
+```
+
+### Debugging Configuration Issues
+```python
+# Enable debug logging
+config.set_log_level('DEBUG')
+
+# Print effective configuration
+print(config.get_effective_configuration())
+
+# Check inheritance chain
+print(config.get_inheritance_chain())
+```
