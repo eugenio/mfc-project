@@ -93,3 +93,27 @@ Once running, access the system through:
                                                 │   Integration   │
                                                 └─────────────────┘
 ```
+## Safety Monitoring
+
+The safety system monitors critical parameters and responds automatically:
+
+### Default Safety Thresholds
+- **Temperature**: Max 45°C (reduces power if exceeded)
+- **Pressure**: Max 2.5 bar (stops flow if exceeded)
+- **pH Level**: Range 5.5-8.5 (notifies personnel)
+- **Voltage**: Min 0.05V, Max 1.2V (reduces power)
+- **Current Density**: Max 15 mA/cm² (reduces power)
+- **Flow Rate**: Range 10-500 mL/min (notifies personnel)
+
+### Emergency Actions
+- **REDUCE_POWER**: Automatically reduces system power output
+- **STOP_FLOW**: Stops fluid circulation
+- **EMERGENCY_SHUTDOWN**: Complete system shutdown
+- **ISOLATE_SYSTEM**: Isolates affected components
+- **NOTIFY_PERSONNEL**: Sends alerts to operators
+
+### Safety Protocols
+- **Thermal Runaway Protection**: Temperature + current monitoring
+- **Pressure Emergency**: Immediate flow shutdown for overpressure
+- **System Failure**: Multi-parameter failure detection
+- **Biological Contamination**: pH and biofilm monitoring
