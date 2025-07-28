@@ -68,3 +68,35 @@ class SensorIntegratedMFCModel:
     def get_sensor_confidence(self) -> float:
         """Get sensor fusion confidence level"""
 ```
+## Sensor Models
+
+### 4. `sensing_models/eis_model.py`
+**Purpose**: Electrochemical Impedance Spectroscopy modeling  
+**Location**: `q-learning-mfcs/src/sensing_models/eis_model.py`
+
+**Capabilities**:
+- Biofilm thickness measurement (0.1-10 μm range)
+- Conductivity analysis
+- Species-specific calibration
+- Realistic noise modeling
+
+### 5. `sensing_models/qcm_model.py`
+**Purpose**: Quartz Crystal Microbalance modeling  
+**Location**: `q-learning-mfcs/src/sensing_models/qcm_model.py`
+
+**Features**:
+- Mass detection (ng/cm² resolution)
+- Viscoelastic property analysis
+- Temperature compensation
+- Sauerbrey equation implementation
+
+### 6. `sensing_models/sensor_fusion.py`
+**Purpose**: Multi-sensor data fusion  
+**Location**: `q-learning-mfcs/src/sensing_models/sensor_fusion.py`
+
+**Fusion Methods**:
+- Kalman filter (default)
+- Weighted average
+- Maximum likelihood
+- Bayesian inference
+- Machine learning fusion
