@@ -208,3 +208,45 @@ compute:
   gpu_device: ${CUDA_VISIBLE_DEVICES:-0}
   use_gpu: ${MFC_USE_GPU:-true}
 ```
+## Configuration Manager API
+
+### Loading Configurations
+```python
+from config.config_manager import ConfigurationManager
+
+# Initialize manager
+config = ConfigurationManager()
+
+# Load specific profile
+config.load_profile('research')
+
+# Load from file
+config.load_profile_from_file('custom', 'path/to/config.yaml')
+
+# Get configuration section
+bio_params = config.get_configuration('biological')
+```
+
+### Runtime Overrides
+```python
+# Override specific values
+config.set_override('biological.max_growth_rate', 0.5)
+
+# Bulk overrides
+overrides = {
+    'biological': {
+        'max_growth_rate': 0.5,
+        'decay_rate': 0.008
+    }
+}
+config.apply_overrides(overrides)
+```
+
+### Validation
+```python
+# Validate configuration
+try:
+    config.validate_configuration()
+except ConfigurationError as e:
+    print(f"Invalid configuration: {e}")
+```
