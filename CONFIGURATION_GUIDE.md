@@ -123,3 +123,60 @@ Executes before any tool operation:
 - **min_segments_for_chunking**: Minimum logical segments required
 - **commit_message_prefix**: Prefix for auto-generated commits
 - **supported_extensions**: File types that support chunking
+## Q-Learning Configuration
+
+### Profile System
+**Location**: `q-learning-mfcs/src/config/`
+
+#### Conservative Profile
+```yaml
+# conservative_control.yaml
+name: "Conservative Control Profile"
+description: "Stable, conservative parameters for long-term operation"
+
+biological:
+  species: "geobacter"
+  substrate: "acetate"
+  max_growth_rate: 0.35  # h^-1 (conservative)
+  half_saturation_constant: 3.0  # mM (higher for stability)
+  yield_coefficient: 0.45  # g_biomass/g_substrate
+  decay_rate: 0.015  # h^-1
+  max_biofilm_thickness: 2.5  # μm (limited)
+
+control:
+  q_learning:
+    learning_rate: 0.05  # Conservative learning
+    discount_factor: 0.99  # Long-term focus
+    epsilon_initial: 0.1  # Limited exploration
+    epsilon_decay: 0.999
+    epsilon_min: 0.01
+    
+  flow_control:
+    min_flow_rate: 0.3  # mL/h
+    max_flow_rate: 0.8  # mL/h
+    flow_step_size: 0.1
+```
+
+#### Research Profile
+```yaml
+# research_optimization.yaml
+name: "Research Optimization Profile"
+description: "Aggressive parameters for maximum performance"
+
+biological:
+  species: "geobacter"
+  substrate: "acetate"
+  max_growth_rate: 0.46  # h^-1 (literature maximum)
+  half_saturation_constant: 2.5  # mM (optimized)
+  yield_coefficient: 0.5  # g_biomass/g_substrate
+  decay_rate: 0.01  # h^-1
+  max_biofilm_thickness: 3.0  # μm (optimal)
+
+control:
+  q_learning:
+    learning_rate: 0.1  # Faster learning
+    discount_factor: 0.95  # Balanced
+    epsilon_initial: 0.3  # More exploration
+    epsilon_decay: 0.995
+    epsilon_min: 0.05
+```
