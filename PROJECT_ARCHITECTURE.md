@@ -269,3 +269,25 @@ bio_params = config.get('biological')
 - Multi-species optimization
 - Long-term stability studies
 - Economic optimization
+## Troubleshooting
+
+### Common Issues
+1. **GPU Not Detected**: Check CUDA/ROCm installation
+2. **Import Errors**: Verify PYTHONPATH and pixi environment
+3. **Hook Failures**: Check .claude/settings.json configuration
+4. **Performance Issues**: Verify GPU acceleration is active
+
+### Debug Commands
+```bash
+# Check GPU status
+python scripts/detect_gpu.py
+
+# Verify environment
+pixi info
+
+# Test hooks
+cd .claude/hooks && python pre_tool_use.py
+
+# Check logs
+tail -f logs/session_*.log
+```
