@@ -21,13 +21,25 @@ from pathlib import Path
 import json
 import sys
 import os
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+# Import stability analysis components
+try:
     from stability.stability_framework import StabilityFramework, StabilityMetrics
     from stability.reliability_analyzer import ReliabilityAnalyzer, ComponentReliability, FailureMode
     from stability.degradation_detector import (
+        DegradationDetector, DegradationPattern, DegradationType, DegradationSeverity
+    )
     from stability.maintenance_scheduler import (
+        MaintenanceScheduler, MaintenanceTask, MaintenanceType, MaintenancePriority
+    )
     from stability.data_manager import LongTermDataManager, DataType, DataQuery
     from stability.stability_visualizer import StabilityVisualizer
     STABILITY_IMPORTS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Stability analysis imports not available: {e}")
     STABILITY_IMPORTS_AVAILABLE = False
 class TestStabilityFramework(unittest.TestCase):
     """Test the core stability framework."""
@@ -374,7 +386,7 @@ class TestLongTermDataManager(unittest.TestCase):
     def test_data_querying(self):
         """Test data querying functionality."""
         # First store some data
-        file_id = self.data_manager.store_data(
+        self.data_manager.store_data(
             data=self.test_data,
             data_type=DataType.SENSOR_DATA
         )
@@ -677,7 +689,7 @@ class TestStabilitySystemIntegration(unittest.TestCase):
         for data_point in large_dataset[-100:]:  # Add last 100 points
             self.detector.add_data_point(data_point)
         
-        patterns = self.detector.detect_degradation_patterns()
+        _ = self.detector.detect_degradation_patterns()  # Test detection functionality
         detection_time = (datetime.now() - start_time).total_seconds()
         
         self.assertLess(detection_time, 30)  # Should complete within 30 seconds
