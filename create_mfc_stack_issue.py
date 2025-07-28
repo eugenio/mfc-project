@@ -49,3 +49,50 @@ The IntegratedMFCModel should have an `mfc_stack` attribute that provides access
 
 ## Failing Test Example
 ```python
+def test_biofilm_metabolic_coupling(self):
+    # This line fails:
+    self.model.mfc_stack.reservoir.substrate_concentration = 25.0
+```
+
+## Error Location
+File: `q-learning-mfcs/tests/test_integrated_model.py:192`
+Class: `TestIntegratedModel`
+Method: `test_biofilm_metabolic_coupling`
+
+## Issue Metadata
+- **Type**: bug
+- **Severity**: critical
+- **Urgency**: high
+- **Component**: integration_model
+- **Test Case**: tests/test_integrated_model.py::TestIntegratedModel::test_biofilm_metabolic_coupling
+- **Created**: 2025-07-28
+
+---
+*This issue was created by Claude Code Assistant following test failure analysis.*""",
+        severity=IssueSeverity.CRITICAL,
+        urgency=IssueUrgency.HIGH,
+        issue_type=IssueType.BUG,
+        component="integration_model",
+        test_case="tests/test_integrated_model.py::TestIntegratedModel::test_biofilm_metabolic_coupling",
+        error_message="AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'",
+        stack_trace="""q-learning-mfcs/tests/test_integrated_model.py:192: AttributeError
+    self.model.mfc_stack.reservoir.substrate_concentration = 25.0
+    ^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'"""
+    )
+    
+    # Create the issue
+    try:
+        result = issue_manager.create_issue(issue_data)
+        print(f"🎯 Successfully created issue: {result['web_url']}")
+        return result
+    except Exception as e:
+        print(f"❌ Error creating issue: {e}")
+        return None
+
+if __name__ == "__main__":
+    result = create_mfc_stack_issue()
+    if result:
+        print(f"✅ Issue created successfully with IID: {result['iid']}")
+    else:
+        print("❌ Failed to create issue")
