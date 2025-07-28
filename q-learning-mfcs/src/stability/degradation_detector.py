@@ -45,3 +45,18 @@ class DegradationSeverity(Enum):
     CRITICAL = "critical"
     FAILURE = "failure"
 
+class DegradationPattern:
+    """Data structure for a detected degradation pattern."""
+    pattern_id: str
+    degradation_type: DegradationType
+    severity: DegradationSeverity
+    confidence: float  # 0-1
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    affected_components: List[str] = field(default_factory=list)
+    metrics: Dict[str, float] = field(default_factory=dict)
+    trend_rate: float = 0.0  # Rate of degradation per hour
+    predicted_failure_time: Optional[datetime] = None
+    root_cause_analysis: Dict[str, Any] = field(default_factory=dict)
+    mitigation_recommendations: List[str] = field(default_factory=list)
+
