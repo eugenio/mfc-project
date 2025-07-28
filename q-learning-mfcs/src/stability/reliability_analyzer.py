@@ -14,7 +14,7 @@ Date: 2025-07-28
 import numpy as np
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 import json
@@ -44,6 +44,7 @@ class DetectionLevel(Enum):
     MODERATE = 3     # Moderate detection
     LOW = 4          # Low detection probability
     VERY_LOW = 5     # Very unlikely to detect
+@dataclass
 class ComponentReliability:
     """Reliability data for a component."""
     component_id: str
@@ -57,6 +58,7 @@ class ComponentReliability:
     operating_hours: float = 0.0        # Total operating time
     failure_count: int = 0              # Number of observed failures
     last_failure: Optional[datetime] = None
+@dataclass
 class FailureModeEffect:
     """FMEA entry for a failure mode."""
     component: str
@@ -71,6 +73,7 @@ class FailureModeEffect:
     rpn: int = 0                       # Risk Priority Number
     recommended_actions: List[str] = field(default_factory=list)
     current_controls: List[str] = field(default_factory=list)
+@dataclass
 class ReliabilityPrediction:
     """Reliability prediction results."""
     system_mtbf_hours: float
