@@ -265,3 +265,73 @@ class TestDegradationDetector(unittest.TestCase):
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0].pattern_id, "test1")
 
+class TestMaintenanceScheduler(unittest.TestCase):
+    """Test the maintenance scheduler."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        self.scheduler = MaintenanceScheduler()
+    
+    def test_task_creation(self):
+        """Test maintenance task creation."""
+        task = MaintenanceTask(
+            task_id="test_001",
+            component="membrane",
+            maintenance_type=MaintenanceType.PREVENTIVE,
+            priority=MaintenancePriority.MEDIUM,
+            scheduled_date=datetime.now() + timedelta(days=7),
+            estimated_duration_hours=4.0,
+            description="Test maintenance task",
+            cost_estimate=100.0
+        )
+        
+        self.assertEqual(task.task_id, "test_001")
+        self.assertEqual(task.component, "membrane")
+        self.assertEqual(task.maintenance_type, MaintenanceType.PREVENTIVE)
+    
+    def test_schedule_optimization(self):
+        """Test maintenance schedule optimization."""
+        # Create test tasks
+        tasks = []
+        for i in range(5):
+            task = MaintenanceTask(
+                task_id=f"task_{i}",
+                component=f"component_{i}",
+                maintenance_type=MaintenanceType.PREVENTIVE,
+                priority=MaintenancePriority.MEDIUM,
+                scheduled_date=datetime.now() + timedelta(days=i),
+                estimated_duration_hours=2.0,
+                description=f"Test task {i}",
+                cost_estimate=50.0,
+                required_resources=['technician']
+            )
+            tasks.append(task)
+        
+        result = self.scheduler.optimize_schedule(tasks)
+        
+        self.assertGreaterEqual(result.optimization_score, 0)
+        self.assertLessEqual(result.optimization_score, 1)
+        self.assertLessEqual(len(result.scheduled_tasks), len(tasks))
+    
+    def test_emergency_maintenance(self):
+        """Test emergency maintenance creation."""
+        from stability.maintenance_scheduler import ComponentStatus
+        
+        self.scheduler.update_component_status('membrane', ComponentStatus.FAILED)
+        
+        # Should create emergency task
+        emergency_tasks = [
+            task for task in self.scheduler.scheduled_tasks
+            if task.maintenance_type == MaintenanceType.EMERGENCY
+        ]
+        
+        self.assertGreater(len(emergency_tasks), 0)
+        
+        if emergency_tasks:
+            task = emergency_tasks[0]
+            self.assertEqual(task.priority, MaintenancePriority.EMERGENCY)
+            self.assertEqual(task.component, 'membrane')
+
