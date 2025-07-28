@@ -114,3 +114,28 @@ mfc-project/
 - **Pandas**: Data analysis
 - **Matplotlib/Plotly**: Visualization
 - **Optuna**: Hyperparameter optimization
+## Configuration System
+
+### Hierarchical Configuration
+```yaml
+# Example: research_optimization.yaml
+biological:
+  species: geobacter
+  max_growth_rate: 0.46
+  half_saturation: 2.5
+  
+control:
+  q_learning:
+    learning_rate: 0.1
+    discount_factor: 0.95
+    epsilon: 0.1
+    
+visualization:
+  plot_interval: 10
+  save_format: png
+```
+
+### Profile System
+- **Conservative**: Stable long-term operation
+- **Research**: Aggressive optimization
+- **Precision**: High-accuracy laboratory use
