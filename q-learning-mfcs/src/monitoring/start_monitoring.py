@@ -7,16 +7,12 @@ Starts all monitoring system components:
 - Safety monitoring system
 - Frontend dashboard
 """
-import asyncio
 import subprocess
 import sys
-import os
 import time
 import signal
-import logging
 from pathlib import Path
-from typing import List, Dict, Any
-import multiprocessing as mp
+from typing import Dict, Any
 
 MONITORING_DIR = Path(__file__).parent
 SRC_DIR = MONITORING_DIR.parent
