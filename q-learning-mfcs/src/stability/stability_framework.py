@@ -38,3 +38,23 @@ class StabilityTimeScale(Enum):
     MEDIUM_TERM = "medium_term"    # Days to weeks
     LONG_TERM = "long_term"        # Weeks to months
     ULTRA_LONG = "ultra_long"      # Months to years
+class ComponentType(Enum):
+    """MFC system components."""
+    MEMBRANE = "membrane"
+    ANODE = "anode"
+    CATHODE = "cathode"
+    BIOFILM = "biofilm"
+    ELECTRONICS = "electronics"
+    PUMPS = "pumps"
+    SENSORS = "sensors"
+    OVERALL = "overall"
+
+class DegradationMode(Enum):
+    """Types of component degradation."""
+    FOULING = "fouling"
+    CORROSION = "corrosion"
+    MECHANICAL_WEAR = "mechanical_wear"
+    THERMAL_STRESS = "thermal_stress"
+    CHEMICAL_ATTACK = "chemical_attack"
+    BIOLOGICAL_DAMAGE = "biological_damage"
+    ELECTRICAL_AGING = "electrical_aging"
