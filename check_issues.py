@@ -12,7 +12,7 @@ if gitlab_manager.project:
     
     # Also check for recent issues without automated label
     all_recent = gitlab_manager.project.issues.list(state='opened', per_page=5, order_by='created_at', sort='desc')
-    print(f'\nMost recent 5 open issues:')
+    print('\nMost recent 5 open issues:')
     for issue in all_recent:
         print(f'#{issue.iid}: {issue.title} (labels: {issue.labels})')
 else:
