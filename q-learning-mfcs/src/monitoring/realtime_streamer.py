@@ -39,3 +39,12 @@ class StreamEvent:
     data: Dict[str, Any]
     priority: int = 1  # 1=highest, 10=lowest
     client_filter: Optional[List[str]] = None  # Specific clients
+class ClientConnection:
+    """Client connection information"""
+    client_id: str
+    websocket: websockets.WebSocketServerProtocol
+    connected_at: datetime
+    subscriptions: Set[StreamEventType]
+    last_ping: datetime
+    is_authenticated: bool = False
+    user_role: str = "observer"  # observer, operator, admin
