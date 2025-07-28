@@ -11,9 +11,8 @@ Usage:
 """
 
 import os
-import json
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 
 try:
     import gitlab
