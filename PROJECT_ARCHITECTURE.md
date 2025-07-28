@@ -209,3 +209,31 @@ git add large_file.py  # Automatically chunked if >50 lines
 - Sends events to logging system
 - Enables workflow analysis
 - Supports debugging
+## Integration Points
+
+### GitLab Integration
+- Automatic issue creation for:
+  - Test failures
+  - Build failures
+  - Performance regressions
+  - Documentation gaps
+  - Hook failures
+
+### GPU Backend Selection
+```python
+# Automatic detection
+from gpu_acceleration import GPUAccelerator
+gpu = GPUAccelerator()  # Auto-selects CUDA/ROCm/CPU
+
+# Manual selection
+gpu = GPUAccelerator(backend='cuda')
+```
+
+### Configuration Loading
+```python
+from config.config_manager import ConfigurationManager
+
+config = ConfigurationManager()
+config.load_profile('research')
+bio_params = config.get('biological')
+```
