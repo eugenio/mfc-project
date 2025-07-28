@@ -335,3 +335,92 @@ class TestMaintenanceScheduler(unittest.TestCase):
             self.assertEqual(task.priority, MaintenancePriority.EMERGENCY)
             self.assertEqual(task.component, 'membrane')
 
+class TestLongTermDataManager(unittest.TestCase):
+    """Test the long-term data manager."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        # Create temporary directory for testing
+        self.temp_dir = tempfile.mkdtemp()
+        self.data_manager = LongTermDataManager(data_directory=self.temp_dir)
+        
+        # Create test data
+        self.test_data = pd.DataFrame({
+            'timestamp': pd.date_range(start='2024-01-01', periods=100, freq='H'),
+            'power_output': np.random.normal(400, 50, 100),
+            'voltage': np.random.normal(0.8, 0.1, 100),
+            'current_density': np.random.normal(500, 50, 100),
+            'temperature': np.random.normal(25, 2, 100)
+        })
+    
+    def tearDown(self):
+        """Clean up test fixtures."""
+        if hasattr(self, 'temp_dir'):
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_data_storage(self):
+        """Test data storage functionality."""
+        file_id = self.data_manager.store_data(
+            data=self.test_data,
+            data_type=DataType.SENSOR_DATA
+        )
+        
+        self.assertIsInstance(file_id, str)
+        self.assertGreater(len(file_id), 0)
+    
+    def test_data_querying(self):
+        """Test data querying functionality."""
+        # First store some data
+        file_id = self.data_manager.store_data(
+            data=self.test_data,
+            data_type=DataType.SENSOR_DATA
+        )
+        
+        # Query the data back
+        query = DataQuery(
+            data_types=[DataType.SENSOR_DATA],
+            start_time=datetime(2024, 1, 1),
+            end_time=datetime(2024, 1, 5),
+            metrics=['power_output', 'voltage']
+        )
+        
+        result = self.data_manager.query_data(query)
+        
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertIn('power_output', result.columns)
+        self.assertIn('voltage', result.columns)
+    
+    def test_trend_analysis(self):
+        """Test trend analysis functionality."""
+        # Store test data
+        self.data_manager.store_data(
+            data=self.test_data,
+            data_type=DataType.PERFORMANCE_DATA
+        )
+        
+        # Analyze trends
+        result = self.data_manager.analyze_trends(
+            metrics=['power_output', 'voltage'],
+            time_window_days=30
+        )
+        
+        self.assertEqual(result.analysis_type, "trend_analysis")
+        self.assertIn('results', result.results)
+    
+    def test_data_summary(self):
+        """Test data summary functionality."""
+        # Store test data
+        self.data_manager.store_data(
+            data=self.test_data,
+            data_type=DataType.SENSOR_DATA
+        )
+        
+        summaries = self.data_manager.get_data_summary([DataType.SENSOR_DATA])
+        
+        self.assertGreater(len(summaries), 0)
+        self.assertEqual(summaries[0].data_type, DataType.SENSOR_DATA)
+        self.assertGreater(summaries[0].record_count, 0)
+
