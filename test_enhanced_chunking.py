@@ -127,3 +127,26 @@ def generate_user_id() -> str:
     """Generate unique user ID using timestamp and random components."""
     import uuid
     return f"user_{int(datetime.now().timestamp())}_{uuid.uuid4().hex[:8]}"
+def hash_password(password: str, salt: Optional[str] = None) -> str:
+    """Hash password using secure algorithm with optional salt."""
+    import hashlib
+    import secrets
+    
+    if not salt:
+        salt = secrets.token_hex(16)
+    
+    # Combine password and salt
+    salted_password = f"{password}{salt}"
+    
+    # Generate hash
+    hash_object = hashlib.sha256(salted_password.encode())
+    return f"{salt}:{hash_object.hexdigest()}"
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """Verify password against stored hash."""
+    try:
+        salt, stored_hash = hashed_password.split(':', 1)
+        computed_hash = hash_password(password, salt).split(':', 1)[1]
+        return computed_hash == stored_hash
+    except ValueError:
+        return False
