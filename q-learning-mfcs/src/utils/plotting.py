@@ -5,7 +5,6 @@ Supports arbitrary data length with Latin character subplot labels
 """
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from typing import List, Tuple, Optional, Any
 import string
 
