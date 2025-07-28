@@ -11,9 +11,13 @@ from unittest.mock import AsyncMock
 import numpy as np
 
 try:
-    from src.monitoring.dashboard_api import app, SystemStatus, SystemMetrics, AlertMessage
-    from src.monitoring.safety_monitor import SafetyMonitor, SafetyLevel, EmergencyResponse
-    from src.monitoring.realtime_streamer import RealtimeStreamer
+    from src.monitoring.dashboard_api import app
+    from src.monitoring.safety_monitor import (
+        SafetyMonitor, SafetyLevel, SafetyEvent, SafetyThreshold, EmergencyAction
+    )
+    from src.monitoring.realtime_streamer import (
+        RealTimeStreamer, StreamEventType, StreamEvent, ClientConnection
+    )
     MONITORING_IMPORTS_AVAILABLE = True
 except ImportError:
     MONITORING_IMPORTS_AVAILABLE = False
