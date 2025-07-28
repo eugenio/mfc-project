@@ -117,3 +117,13 @@ class CacheManager:
         except Exception as e:
             logging.error(f"Cache set error: {e}")
             return False
+def validate_email(email: str) -> bool:
+    """Validate email address format using regex pattern."""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+def generate_user_id() -> str:
+    """Generate unique user ID using timestamp and random components."""
+    import uuid
+    return f"user_{int(datetime.now().timestamp())}_{uuid.uuid4().hex[:8]}"
