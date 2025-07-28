@@ -180,3 +180,31 @@ control:
     epsilon_decay: 0.995
     epsilon_min: 0.05
 ```
+## Environment Variables
+
+### Supported Variables
+```bash
+# GitLab credentials
+export GITLAB_TOKEN="your-token-here"
+export GITLAB_PROJECT_ID="12345"
+
+# GPU selection
+export CUDA_VISIBLE_DEVICES="0"
+export ROCM_VISIBLE_DEVICES="0"
+
+# Configuration overrides
+export MFC_CONFIG_PROFILE="research"
+export MFC_USE_GPU="true"
+export MFC_LOG_LEVEL="DEBUG"
+```
+
+### Variable Substitution in YAML
+```yaml
+gitlab:
+  token: ${GITLAB_TOKEN}
+  project_id: ${GITLAB_PROJECT_ID}
+  
+compute:
+  gpu_device: ${CUDA_VISIBLE_DEVICES:-0}
+  use_gpu: ${MFC_USE_GPU:-true}
+```
