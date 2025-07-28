@@ -382,7 +382,7 @@ class SafetyMonitor:
                 event.safety_level in [SafetyLevel.CRITICAL, SafetyLevel.EMERGENCY]):
                 
                 # Execute emergency action
-                action_result = self._execute_emergency_action(
+                self._execute_emergency_action(
                     threshold.emergency_action, event)
                 event.action_taken = threshold.emergency_action
                 
