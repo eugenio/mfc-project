@@ -129,3 +129,29 @@ bio_params = config.get('biological')
 - Control parameters (PID gains, Q-learning)
 - Visualization settings
 - Hardware configurations
+## GPU Acceleration
+
+### 9. `gpu_acceleration.py`
+**Purpose**: Universal GPU acceleration interface  
+**Location**: `q-learning-mfcs/src/gpu_acceleration.py`
+
+**Supported Backends**:
+- NVIDIA CUDA (via CuPy)
+- AMD ROCm (via PyTorch/JAX)
+- CPU fallback (NumPy)
+
+**Key Methods**:
+```python
+class GPUAccelerator:
+    def __init__(self, backend='auto'):
+        """Auto-detect best available backend"""
+        
+    def array(self, data):
+        """Create GPU array"""
+        
+    def exp(self, x):
+        """Exponential function"""
+        
+    def matmul(self, a, b):
+        """Matrix multiplication"""
+```
