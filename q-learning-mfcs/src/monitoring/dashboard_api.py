@@ -188,3 +188,56 @@ async def data_collection_task():
             logger.error(f"Error in data collection task: {e}")
         
         await asyncio.sleep(1.0)  # Update every second
+def collect_current_metrics() -> Dict[str, Any]:
+    """Collect current system metrics"""
+    try:
+        model = dashboard_state["mfc_model"]
+        controller = dashboard_state["controller"]
+        
+        if not model or not hasattr(model, 'get_current_state'):
+            return {}
+            
+        # Get current MFC state
+        state = model.get_current_state()
+        
+        # Get controller measurements
+        controller_metrics = controller.get_current_measurement() if controller else None
+        
+        metrics = {
+            "timestamp": datetime.now().isoformat(),
+            "status": SystemStatus.RUNNING if dashboard_state["simulation_running"] else SystemStatus.OFFLINE,
+            "uptime_hours": getattr(model, 'simulation_time', 0.0),
+            
+            # Performance
+            "total_energy_produced_kwh": getattr(state, 'total_energy', 0.0) / 3600.0,  # Convert J to kWh
+            "average_power_w": getattr(state, 'average_power', 0.0),
+            "coulombic_efficiency_pct": getattr(state, 'coulombic_efficiency', 0.0) * 100,
+            "current_density_ma_cm2": np.mean(getattr(state, 'current_densities', [0.0])) * 1000,
+            
+            # Environmental
+            "temperature_c": 25.0 + np.random.normal(0, 1),  # Simulated sensor reading
+            "ph_level": 7.0 + np.random.normal(0, 0.2),
+            "pressure_bar": 1.0 + np.random.normal(0, 0.05),
+            "flow_rate_ml_min": getattr(state, 'flow_rate', 100.0),
+            
+            # Cell data
+            "cell_voltages": getattr(state, 'cell_voltages', []),
+            "cell_currents": getattr(state, 'current_densities', []),
+            "biofilm_thickness": getattr(state, 'biofilm_thickness', []),
+            "substrate_concentrations": getattr(state, 'substrate_concentration', []),
+            
+            # Control system
+            "controller_mode": controller_metrics.mode.value if controller_metrics else "manual",
+            "learning_progress_pct": getattr(state, 'learning_progress', 0.0) * 100,
+            "epsilon_value": getattr(state, 'epsilon', 0.1),
+            
+            # System resources
+            "cpu_utilization_pct": controller_metrics.cpu_utilization_pct if controller_metrics else 0.0,
+            "memory_usage_mb": controller_metrics.memory_usage_mb if controller_metrics else 0.0
+        }
+        
+        return metrics
+        
+    except Exception as e:
+        logger.error(f"Error collecting metrics: {e}")
+        return {}
