@@ -114,3 +114,41 @@ ISSUE_TEMPLATES = {
         'title': 'Performance Regression: {metric}',
         'labels': ['performance', 'automated', 'regression'],
         'template': '''
+## Performance Regression Detected
+**Metric**: {metric}
+**Previous**: {previous_value}
+**Current**: {current_value}
+**Degradation**: {percentage}%
+        '''
+    }
+}
+```
+
+### 4. Event Logging (`send_event.py`)
+
+**Purpose**: Centralized event logging and analytics
+
+**Event Types**:
+- PreToolUse
+- PostToolUse
+- UserPromptSubmit
+- Notification
+- Stop
+- SubagentStop
+- PreCompact
+
+**Event Structure**:
+```json
+{
+    "timestamp": "2024-01-27T10:30:00Z",
+    "event_type": "PreToolUse",
+    "source_app": "mfc-project",
+    "tool_name": "Write",
+    "details": {
+        "file_path": "/path/to/file.py",
+        "lines_added": 150,
+        "chunked": true,
+        "chunks_created": 6
+    }
+}
+```
