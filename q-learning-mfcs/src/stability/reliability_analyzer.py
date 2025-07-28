@@ -46,3 +46,16 @@ class DetectionLevel(Enum):
     MODERATE = 3     # Moderate detection
     LOW = 4          # Low detection probability
     VERY_LOW = 5     # Very unlikely to detect
+class ComponentReliability:
+    """Reliability data for a component."""
+    component_id: str
+    mtbf_hours: float                    # Mean time between failures
+    failure_rate: float                  # Failures per hour (λ)
+    availability: float                  # Fraction of uptime
+    maintainability: float               # Mean time to repair (hours)
+    confidence_interval: Tuple[float, float]  # 95% CI for MTBF
+    weibull_shape: float = 1.0          # Weibull shape parameter (β)
+    weibull_scale: float = 1000.0       # Weibull scale parameter (η)
+    operating_hours: float = 0.0        # Total operating time
+    failure_count: int = 0              # Number of observed failures
+    last_failure: Optional[datetime] = None
