@@ -166,3 +166,22 @@ def calculate_age(birth_date: datetime) -> int:
     """Calculate age in years from birth date."""
     today = datetime.now()
     return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+def send_notification(user_id: str, message: str, notification_type: str = "info") -> bool:
+    """Send notification to user through configured channels."""
+    notification_data = {
+        "user_id": user_id,
+        "message": message,
+        "type": notification_type,
+        "timestamp": datetime.now().isoformat(),
+        "delivered": False
+    }
+    
+    # Simulate notification sending
+    try:
+        # notification_service.send(notification_data)
+        notification_data["delivered"] = True
+        logging.info(f"Notification sent to {user_id}: {message}")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send notification: {e}")
+        return False
