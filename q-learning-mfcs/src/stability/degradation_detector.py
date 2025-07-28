@@ -9,18 +9,14 @@ Created: 2025-07-28
 """
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Any
+from dataclasses import field
 from enum import Enum
 from datetime import datetime, timedelta
-import warnings
-from scipy import stats, signal
+from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
-from sklearn.linear_model import LinearRegression, BayesianRidge
-from sklearn.metrics import mean_squared_error, r2_score
 import logging
 
 class DegradationType(Enum):
@@ -254,7 +250,7 @@ class DegradationDetector:
             values_reshaped = values.reshape(-1, 1)
             anomaly_scores = self.anomaly_detector.fit(values_reshaped).decision_function(values_reshaped)
             anomaly_score = np.mean(np.abs(anomaly_scores))
-        except:
+        except Exception:
             anomaly_score = 0.0
         
         # Seasonality strength (simplified)
