@@ -317,14 +317,71 @@ class IntegratedMFCModel:
         action = self.flow_controller.choose_action(state_code)
         self.flow_rate_ml_h = 5.0 + action * 5.0  # 5-50 ml/h range
         
-        # 6. Update reservoir with recirculation
+        # 6. Calculate reward for Q-learning
+        reward = self._calculate_integrated_reward(
+            {'power': sum(v * i for v, i in zip(cell_voltages, enhanced_currents)),
+             'energy': self.total_energy_generated,
+             'cell_voltages': cell_voltages},
+            biofilm_states,
+            metabolic_states,
+            enhanced_currents
+        )
+        
+        # Update Q-table if we have previous state
+        if hasattr(self.flow_controller, 'previous_state') and self.flow_controller.previous_state is not None:
+            # Get current state for Q-learning using discretize_enhanced_state
+            avg_biofilm = np.mean([bs['biofilm_thickness'] for bs in biofilm_states])
+            biofilm_deviation = abs(avg_biofilm - 1.0)  # Assume optimal thickness is 1.0
+            substrate_utilization = 1.0 - outlet_conc / inlet_conc if inlet_conc > 0 else 0.0
+            min_cell_conc = min(current_concentrations) if current_concentrations else 0.0
+            
+            current_state = self.flow_controller.discretize_enhanced_state(
+                power=sum(v * i for v, i in zip(cell_voltages, enhanced_currents)),
+                biofilm_deviation=biofilm_deviation,
+                substrate_utilization=substrate_utilization,
+                reservoir_conc=self.reservoir.substrate_concentration,
+                min_cell_conc=min_cell_conc,
+                outlet_error=outlet_conc - 12.0,  # Target outlet concentration
+                time_hours=self.time
+            )
+            
+            self.flow_controller.update_q_value(
+                self.flow_controller.previous_state,
+                self.flow_controller.previous_action,
+                reward,
+                current_state
+            )
+            
+            # Store current state and action for next iteration
+            self.flow_controller.previous_state = current_state
+            self.flow_controller.previous_action = action
+        else:
+            # Initialize for first iteration
+            avg_biofilm = np.mean([bs['biofilm_thickness'] for bs in biofilm_states])
+            biofilm_deviation = abs(avg_biofilm - 1.0)
+            substrate_utilization = 1.0 - outlet_conc / inlet_conc if inlet_conc > 0 else 0.0
+            min_cell_conc = min(current_concentrations) if current_concentrations else 0.0
+            
+            current_state = self.flow_controller.discretize_enhanced_state(
+                power=sum(v * i for v, i in zip(cell_voltages, enhanced_currents)),
+                biofilm_deviation=biofilm_deviation,
+                substrate_utilization=substrate_utilization,
+                reservoir_conc=self.reservoir.substrate_concentration,
+                min_cell_conc=min_cell_conc,
+                outlet_error=outlet_conc - 12.0,
+                time_hours=self.time
+            )
+            self.flow_controller.previous_state = current_state
+            self.flow_controller.previous_action = action
+        
+        # 7. Update reservoir with recirculation
         self.reservoir.circulate_anolyte(
             flow_rate_ml_h=self.flow_rate_ml_h,
             stack_outlet_conc=outlet_conc,
             dt_hours=dt
         )
         
-        # 7. Substrate addition control
+        # 8. Substrate addition control
         cell_concentrations = [cell.substrate_concentration for cell in self.mfc_cells]
         substrate_addition, halt_addition = self.substrate_controller.calculate_substrate_addition(
             outlet_conc=outlet_conc,
