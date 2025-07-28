@@ -13,7 +13,7 @@ import sys
 import time
 import json
 import signal
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import numpy as np
 
@@ -120,10 +120,10 @@ def run_1year_simulation():
     print("="*80)
     print("🔬 MFC 1-YEAR CONTINUOUS OPERATION SIMULATION")
     print("="*80)
-    print(f"⏱️  Duration: 8,784 hours (365 days)")
-    print(f"🎯 Target: 25.0 mM substrate concentration")
-    print(f"🧠 Q-learning: Bayesian-optimized parameters")
-    print(f"🚀 Acceleration: GPU-enabled")
+    print("⏱️  Duration: 8,784 hours (365 days)")
+    print("🎯 Target: 25.0 mM substrate concentration")
+    print("🧠 Q-learning: Bayesian-optimized parameters")
+    print("🚀 Acceleration: GPU-enabled")
     print("="*80)
     
     # Setup GPU acceleration
@@ -242,26 +242,26 @@ def run_1year_simulation():
     print("📊 1-YEAR SIMULATION RESULTS")
     print("="*80)
     
-    print(f"🎯 PERFORMANCE METRICS:")
+    print("🎯 PERFORMANCE METRICS:")
     print(f"   Final reservoir concentration: {final_reservoir:.2f} mM")
     print(f"   Mean reservoir concentration: {mean_reservoir:.2f} ± {std_reservoir:.2f} mM")
     print(f"   Final outlet concentration: {final_outlet:.2f} mM")
     print(f"   Final power output: {final_power:.2f} W")
     print(f"   Mean power output: {mean_power:.2f} W")
     
-    print(f"\n📦 SUBSTRATE CONSUMPTION:")
+    print("\n📦 SUBSTRATE CONSUMPTION:")
     print(f"   Total consumed: {total_substrate_added:.2f} mmol")
     print(f"   Daily consumption rate: {total_substrate_added/365:.2f} mmol/day")
     print(f"   Stock volume consumed: {maintenance_data['substrate_requirements']['stock_volume_consumed_L']:.3f} L")
     
-    print(f"\n🔧 MAINTENANCE REQUIREMENTS:")
+    print("\n🔧 MAINTENANCE REQUIREMENTS:")
     print(f"   Substrate refill: {maintenance_data['maintenance_schedule']['substrate_refill_frequency']}")
     print(f"   Buffer refill: {maintenance_data['maintenance_schedule']['buffer_refill_frequency']}")
     print(f"   Recommended checks: {maintenance_data['maintenance_schedule']['recommended_check_frequency']}")
     print(f"   Substrate bottles/year: {maintenance_data['substrate_requirements']['stock_bottles_per_year']:.0f}")
     print(f"   Buffer bottles/year: {maintenance_data['buffer_requirements']['stock_bottles_per_year']:.0f}")
     
-    print(f"\n📁 RESULTS SAVED TO:")
+    print("\n📁 RESULTS SAVED TO:")
     print(f"   Summary: {results_file}")
     print(f"   Raw data: {data_file}")
     
@@ -300,5 +300,5 @@ if __name__ == "__main__":
     if results:
         print(f"\n🎉 Success! Check {output_dir} for detailed results.")
     else:
-        print(f"\n❌ Simulation failed or was interrupted.")
+        print("\n❌ Simulation failed or was interrupted.")
         sys.exit(1)

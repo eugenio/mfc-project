@@ -659,7 +659,7 @@ class MFCQLearningSimulationParallel:
         ax1.legend(lines, labels, loc='upper left')
         
         # Plot 2: Q-Learning Flow Rate Control
-        ax2 = plt.subplot(3, 3, 2)
+        plt.subplot(3, 3, 2)
         plt.plot(time_hours, self.flow_rates * 1000, 'g-', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Flow Rate (mL/h)')
@@ -667,7 +667,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 3: Substrate Utilization
-        ax3 = plt.subplot(3, 3, 3)
+        plt.subplot(3, 3, 3)
         plt.plot(time_hours, self.substrate_utilizations, 'purple', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Utilization (%)')
@@ -675,7 +675,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 4: Biofilm Thickness Evolution
-        ax4 = plt.subplot(3, 3, 4)
+        plt.subplot(3, 3, 4)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.biofilm_thickness[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -688,7 +688,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 5: Q-Learning Actions
-        ax5 = plt.subplot(3, 3, 5)
+        plt.subplot(3, 3, 5)
         action_indices = self.q_actions[self.q_actions != 0]  # Remove zeros
         action_times = time_hours[self.q_actions != 0]
         if len(action_indices) > 0:
@@ -699,7 +699,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 6: Cell Voltages
-        ax6 = plt.subplot(3, 3, 6)
+        plt.subplot(3, 3, 6)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.cell_voltages[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -710,7 +710,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 7: Multi-Objective Progress
-        ax7 = plt.subplot(3, 3, 7)
+        plt.subplot(3, 3, 7)
         plt.plot(time_hours, self.objective_values, 'orange', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Objective Value')
@@ -718,7 +718,7 @@ class MFCQLearningSimulationParallel:
         plt.grid(True, alpha=0.3)
         
         # Plot 8: Q-Learning Exploration
-        ax8 = plt.subplot(3, 3, 8)
+        plt.subplot(3, 3, 8)
         # Plot epsilon decay over time (approximate)
         epsilon_values = []
         current_epsilon = 0.3

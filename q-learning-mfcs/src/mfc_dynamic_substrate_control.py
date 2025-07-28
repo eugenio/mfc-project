@@ -778,7 +778,7 @@ class MFCDynamicSubstrateSimulation:
         ax1.legend(lines, labels, loc='upper left')
         
         # Plot 2: Dynamic Substrate Concentrations
-        ax2 = plt.subplot(3, 4, 2)
+        plt.subplot(3, 4, 2)
         plt.plot(time_hours, self.inlet_concentrations, 'g-', linewidth=2, label='Inlet (PID Controlled)')
         plt.plot(time_hours, self.outlet_concentrations, 'orange', linewidth=1.5, label='Outlet (Average)')
         plt.axhline(y=self.substrate_controller.target_outlet_conc, color='red', 
@@ -790,7 +790,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 3: Flow Rate Control
-        ax3 = plt.subplot(3, 4, 3)
+        plt.subplot(3, 4, 3)
         plt.plot(time_hours, self.flow_rates * 1000, 'purple', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Flow Rate (mL/h)')
@@ -798,7 +798,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 4: Control Error
-        ax4 = plt.subplot(3, 4, 4)
+        plt.subplot(3, 4, 4)
         plt.plot(time_hours, self.control_errors, 'red', linewidth=1.5)
         plt.axhline(y=0, color='black', linestyle='-', alpha=0.5)
         plt.xlabel('Time (hours)')
@@ -807,7 +807,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 5: Biofilm Thickness Evolution
-        ax5 = plt.subplot(3, 4, 5)
+        plt.subplot(3, 4, 5)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.biofilm_thickness[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -820,7 +820,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 6: Substrate Utilization
-        ax6 = plt.subplot(3, 4, 6)
+        plt.subplot(3, 4, 6)
         plt.plot(time_hours, self.substrate_utilizations, 'brown', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Utilization (%)')
@@ -828,7 +828,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 7: Multi-Objective Progress
-        ax7 = plt.subplot(3, 4, 7)
+        plt.subplot(3, 4, 7)
         plt.plot(time_hours, self.objective_values, 'teal', linewidth=1.5)
         plt.xlabel('Time (hours)')
         plt.ylabel('Objective Value')
@@ -836,7 +836,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 8: Cell Voltages
-        ax8 = plt.subplot(3, 4, 8)
+        plt.subplot(3, 4, 8)
         for i in range(self.num_cells):
             plt.plot(time_hours, self.cell_voltages[:, i], 
                     linewidth=1.5, label=f'Cell {i+1}')
@@ -847,7 +847,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 9: Q-Learning Actions
-        ax9 = plt.subplot(3, 4, 9)
+        plt.subplot(3, 4, 9)
         action_indices = self.q_actions[self.q_actions != 0]  # Remove zeros
         action_times = time_hours[self.q_actions != 0]
         if len(action_indices) > 0:
@@ -858,7 +858,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 10: Concentration Control Performance
-        ax10 = plt.subplot(3, 4, 10)
+        plt.subplot(3, 4, 10)
         # Show inlet vs outlet correlation
         valid_mask = self.outlet_concentrations > 0
         if np.any(valid_mask):
@@ -871,7 +871,7 @@ class MFCDynamicSubstrateSimulation:
         plt.grid(True, alpha=0.3)
         
         # Plot 11: Q-Learning Exploration
-        ax11 = plt.subplot(3, 4, 11)
+        plt.subplot(3, 4, 11)
         # Plot epsilon decay over time (approximate)
         epsilon_values = []
         current_epsilon = 0.3
@@ -893,7 +893,7 @@ class MFCDynamicSubstrateSimulation:
         # Calculate summary metrics
         total_energy = np.trapezoid(self.stack_powers, dx=self.dt/3600)
         avg_power = np.mean(self.stack_powers)
-        final_utilization = self.substrate_utilizations[-1]
+        self.substrate_utilizations[-1]
         final_flow_rate = self.flow_rates[-1] * 1000
         final_inlet_conc = self.inlet_concentrations[-1]
         final_outlet_conc = self.outlet_concentrations[-1]

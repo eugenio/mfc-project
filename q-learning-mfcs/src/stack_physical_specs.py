@@ -39,7 +39,6 @@ def calculate_stack_dimensions():
     
     # Stack dimensions
     stack_length = n_cells * d_cell  # Total stack length (m)
-    stack_cross_section = A_m  # Cross-sectional area (m²)
     stack_volume = n_cells * V_total_per_cell  # Total stack volume (m³)
     
     # Physical characteristics
@@ -468,7 +467,7 @@ def main():
     """Main function to calculate and display stack characteristics"""
     
     # Calculate and display dimensions
-    specs = calculate_stack_dimensions()
+    calculate_stack_dimensions()
     
     # Create technical diagrams
     create_stack_diagram()

@@ -55,7 +55,7 @@ def test_simulation_steps():
         print("🎯 Simulation step test completed successfully!")
         
         # Test timing for different durations
-        print(f"\n⏱️  Testing timing for 1 hour simulation...")
+        print("\n⏱️  Testing timing for 1 hour simulation...")
         n_steps = int(1.0 / dt_hours)  # 1 hour
         print(f"Expected steps: {n_steps}")
         

@@ -411,7 +411,7 @@ class EISModel:
     def _calculate_impedance_spectrum_gpu(self, frequencies_gpu):
         """Calculate impedance spectrum using GPU acceleration."""
         # GPU implementation for parallel frequency calculation
-        omega_gpu = self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
+        self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
         
         # Capacitive impedances (simplified for GPU)
         # This is a simplified version - full complex arithmetic requires more GPU ops
