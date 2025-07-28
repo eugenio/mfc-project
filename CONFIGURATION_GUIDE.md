@@ -289,3 +289,31 @@ visualization:
   figure_dpi: int  # 72-300
   theme: str  # default, dark, publication
 ```
+## Best Practices
+
+### 1. Profile Selection
+- Use **conservative** for production systems
+- Use **research** for performance optimization
+- Use **precision** for laboratory validation
+
+### 2. Configuration Hierarchy
+```
+1. Default values (hardcoded)
+2. Profile configuration (YAML)
+3. Environment variables
+4. Runtime overrides
+```
+
+### 3. Version Control
+- Commit configuration files
+- Document parameter changes
+- Use meaningful profile names
+
+### 4. Validation
+Always validate after loading:
+```python
+config = ConfigurationManager()
+config.load_profile('custom')
+if not config.validate_configuration():
+    raise ValueError("Invalid configuration")
+```
