@@ -190,3 +190,22 @@ mypy .
 # Git operations (with chunking)
 git add large_file.py  # Automatically chunked if >50 lines
 ```
+## Hook System Architecture
+
+### Pre-Tool Use Hook
+- Monitors file operations
+- Implements intelligent chunking for large files
+- Prevents dangerous operations
+- Creates GitLab issues for failures
+
+### File Chunking System
+- **Triggers**: Files >50 lines with 3+ logical segments
+- **Languages**: Python, JavaScript, TypeScript, Mojo, Markdown
+- **Strategy**: Logical boundaries (imports, classes, functions, sections)
+- **Benefits**: Better code review, atomic commits, clear history
+
+### Event Logging
+- Tracks all tool usage
+- Sends events to logging system
+- Enables workflow analysis
+- Supports debugging
