@@ -241,3 +241,67 @@ def collect_current_metrics() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error collecting metrics: {e}")
         return {}
+def check_safety_conditions(metrics: Dict[str, Any]) -> List[AlertMessage]:
+    """Check safety conditions and generate alerts"""
+    alerts = []
+    thresholds = dashboard_state["safety_thresholds"]
+    
+    try:
+        # Temperature check
+        if metrics.get("temperature_c", 0) > thresholds["max_temperature"]:
+            alerts.append(AlertMessage(
+                id=f"temp_alert_{datetime.now().timestamp()}",
+                level=AlertLevel.CRITICAL,
+                timestamp=datetime.now(),
+                message=f"Temperature {metrics['temperature_c']:.1f}°C exceeds maximum {thresholds['max_temperature']}°C",
+                category="temperature",
+                auto_action="reduce_power"
+            ))
+        
+        # Current density check
+        if metrics.get("current_density_ma_cm2", 0) > thresholds["max_current_density"]:
+            alerts.append(AlertMessage(
+                id=f"current_alert_{datetime.now().timestamp()}",
+                level=AlertLevel.WARNING,
+                timestamp=datetime.now(),
+                message=f"Current density {metrics['current_density_ma_cm2']:.1f} mA/cm² is high",
+                category="electrical"
+            ))
+        
+        # Voltage check (low voltage warning)
+        cell_voltages = metrics.get("cell_voltages", [])
+        if cell_voltages and min(cell_voltages) < thresholds["min_voltage"]:
+            alerts.append(AlertMessage(
+                id=f"voltage_alert_{datetime.now().timestamp()}",
+                level=AlertLevel.WARNING,
+                timestamp=datetime.now(),
+                message=f"Cell voltage {min(cell_voltages):.2f}V below minimum {thresholds['min_voltage']}V",
+                category="electrical"
+            ))
+        
+        # pH check
+        ph = metrics.get("ph_level", 7.0)
+        if abs(ph - 7.0) > thresholds["max_ph_deviation"]:
+            alerts.append(AlertMessage(
+                id=f"ph_alert_{datetime.now().timestamp()}",
+                level=AlertLevel.WARNING,
+                timestamp=datetime.now(),
+                message=f"pH {ph:.1f} deviates significantly from neutral",
+                category="chemical"
+            ))
+        
+    except Exception as e:
+        logger.error(f"Error checking safety conditions: {e}")
+    
+    return alerts
+
+async def broadcast_alerts(alerts: List[AlertMessage]):
+    """Broadcast alerts to all connected clients"""
+    for alert in alerts:
+        await manager.broadcast({
+            "type": "alert",
+            "data": alert.dict(),
+            "timestamp": datetime.now().isoformat()
+        })
+
+# API Routes
