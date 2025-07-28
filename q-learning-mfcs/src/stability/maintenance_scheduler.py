@@ -45,3 +45,23 @@ class ComponentStatus(Enum):
     CRITICAL = "critical"
     FAILED = "failed"
 
+class MaintenanceTask:
+    """Data structure for a maintenance task."""
+    task_id: str
+    component: str
+    maintenance_type: MaintenanceType
+    priority: MaintenancePriority
+    scheduled_date: datetime
+    estimated_duration_hours: float
+    description: str
+    required_resources: List[str] = field(default_factory=list)
+    prerequisites: List[str] = field(default_factory=list)
+    cost_estimate: float = 0.0
+    downtime_impact: float = 0.0  # Hours of system downtime
+    safety_requirements: List[str] = field(default_factory=list)
+    completion_criteria: List[str] = field(default_factory=list)
+    related_patterns: List[str] = field(default_factory=list)  # Pattern IDs
+    created_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    notes: str = ""
+    
