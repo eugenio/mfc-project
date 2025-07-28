@@ -363,3 +363,18 @@ print(config.get_effective_configuration())
 # Check inheritance chain
 print(config.get_inheritance_chain())
 ```
+## Configuration Files Reference
+
+### Hook Scripts
+- `.claude/hooks/pre_tool_use.py`: Pre-execution monitoring
+- `.claude/hooks/post_tool_use.py`: Post-execution logging
+- `.claude/hooks/enhanced_file_chunking.py`: File chunking logic
+- `.claude/hooks/gitlab_issue_manager.py`: Issue automation
+- `.claude/hooks/send_event.py`: Event logging
+
+### Q-Learning Configs
+- `configs/conservative_control.yaml`: Stable operation
+- `configs/research_optimization.yaml`: Performance focus
+- `configs/precision_control.yaml`: High accuracy
+- `configs/species/`: Species-specific parameters
+- `configs/substrates/`: Substrate-specific parameters
