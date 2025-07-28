@@ -153,7 +153,7 @@ def main():
     gpu_type = report['gpu_info']['type']
     recommended_env = report['recommended_environment']
     
-    print(f"\n📋 Installation Plan:")
+    print("\n📋 Installation Plan:")
     print(f"   GPU Type: {gpu_type}")
     print(f"   Environment: {recommended_env}")
     print(f"   Devices: {len(report['gpu_info']['devices'])}")
@@ -172,15 +172,15 @@ def main():
     
     if verification_success:
         print("\n🎉 GPU-specific dependencies successfully installed and verified!")
-        print(f"\n🚀 To use the optimized environment, run:")
+        print("\n🚀 To use the optimized environment, run:")
         print(f"   pixi shell {recommended_env}")
         
         if gpu_type == 'amd':
-            print(f"\n💡 For ROCm acceleration, ensure ROCm drivers are installed:")
-            print(f"   See: https://rocm.docs.amd.com/projects/install-on-linux/")
+            print("\n💡 For ROCm acceleration, ensure ROCm drivers are installed:")
+            print("   See: https://rocm.docs.amd.com/projects/install-on-linux/")
         elif gpu_type == 'nvidia':
-            print(f"\n💡 For CUDA acceleration, ensure NVIDIA drivers are installed:")
-            print(f"   Check with: nvidia-smi")
+            print("\n💡 For CUDA acceleration, ensure NVIDIA drivers are installed:")
+            print("   Check with: nvidia-smi")
             
         return True
     else:

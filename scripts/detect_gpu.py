@@ -9,7 +9,6 @@ ML framework dependencies should be installed (ROCm for AMD, CUDA for NVIDIA, CP
 import subprocess
 import sys
 import json
-import os
 from pathlib import Path
 
 
@@ -204,7 +203,7 @@ def main():
     # Generate recommendations
     if gpu_info['type'] == 'nvidia':
         if driver_status['nvidia']:
-            report['recommendations'].append(f"✅ Use 'pixi shell nvidia' for CUDA acceleration")
+            report['recommendations'].append("✅ Use 'pixi shell nvidia' for CUDA acceleration")
             report['recommendations'].append("✅ NVIDIA drivers detected and working")
         else:
             report['recommendations'].append("⚠️ Install NVIDIA drivers for GPU acceleration")
@@ -212,7 +211,7 @@ def main():
     
     elif gpu_info['type'] == 'amd':
         if driver_status['amd_rocm']:
-            report['recommendations'].append(f"✅ Use 'pixi shell amd' for ROCm acceleration")
+            report['recommendations'].append("✅ Use 'pixi shell amd' for ROCm acceleration")
             report['recommendations'].append("✅ ROCm drivers detected and working")
         else:
             report['recommendations'].append("⚠️ Install ROCm drivers for GPU acceleration")
@@ -220,7 +219,7 @@ def main():
             report['recommendations'].append("💡 Fallback to 'pixi shell default' for CPU-only")
     
     else:
-        report['recommendations'].append(f"💻 Use 'pixi shell default' for CPU-only ML workloads")
+        report['recommendations'].append("💻 Use 'pixi shell default' for CPU-only ML workloads")
         if gpu_info['type'] == 'intel':
             report['recommendations'].append("💡 Consider Intel Extension for PyTorch for integrated GPU acceleration")
     
