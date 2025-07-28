@@ -28,8 +28,8 @@ def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
     Returns:
         Dictionary representation
     """
-    if is_dataclass(obj):
-        result = {}
+    if is_dataclass(obj) and not isinstance(obj, type):
+        result: Dict[str, Any] = {}
         for field_name, field_value in asdict(obj).items():
             if isinstance(field_value, dict):
                 # Handle nested dictionaries
