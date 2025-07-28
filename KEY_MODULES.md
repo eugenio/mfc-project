@@ -155,3 +155,46 @@ class GPUAccelerator:
     def matmul(self, a, b):
         """Matrix multiplication"""
 ```
+## Automation Hooks
+
+### 10. `enhanced_file_chunking.py`
+**Purpose**: Intelligent file chunking for version control  
+**Location**: `.claude/hooks/enhanced_file_chunking.py`
+
+**Features**:
+- Language-aware parsing (Python, JS, TS, Mojo, Markdown)
+- Logical boundary detection
+- Automatic commit generation
+- Size-aware chunking
+
+**Supported Patterns**:
+- Python: imports, classes, functions
+- JavaScript/TypeScript: imports, classes, functions
+- Markdown: headers, sections, code blocks
+- Mojo: structs, functions
+
+### 11. `gitlab_issue_manager.py`
+**Purpose**: Automated GitLab issue management  
+**Location**: `.claude/hooks/gitlab_issue_manager.py`
+
+**Capabilities**:
+- Automatic issue creation
+- Issue updates and closure
+- Label management
+- Milestone tracking
+
+**Trigger Events**:
+- Test failures
+- Build failures
+- Performance regressions
+- Documentation gaps
+
+### 12. `pre_tool_use.py`
+**Purpose**: Pre-execution hook for tool monitoring  
+**Location**: `.claude/hooks/pre_tool_use.py`
+
+**Functions**:
+- File operation monitoring
+- Threshold checking
+- Dangerous operation prevention
+- Event logging
