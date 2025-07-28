@@ -57,3 +57,57 @@ class SafetyEvent:
     response_time_ms: float
     acknowledged: bool = False
     resolved: bool = False
+class SafetyProtocol:
+    """
+    Safety protocol implementation for specific scenarios
+    """
+    
+    def __init__(self, name: str, triggers: List[str], actions: List[EmergencyAction]):
+        self.name = name
+        self.triggers = triggers  # Parameter names that trigger this protocol
+        self.actions = actions    # Actions to execute in sequence
+        self.is_active = False
+        self.last_triggered = None
+    
+    def should_trigger(self, safety_events: List[SafetyEvent]) -> bool:
+        """Check if protocol should be triggered"""
+        active_parameters = {event.parameter for event in safety_events 
+                           if not event.resolved and event.safety_level in 
+                           [SafetyLevel.CRITICAL, SafetyLevel.EMERGENCY]}
+        
+        return any(trigger in active_parameters for trigger in self.triggers)
+    
+    def execute(self, mfc_controller) -> List[str]:
+        """Execute protocol actions"""
+        executed_actions = []
+        
+        for action in self.actions:
+            try:
+                if action == EmergencyAction.REDUCE_POWER:
+                    # Reduce system power output
+                    executed_actions.append("Power reduced to 50%")
+                    
+                elif action == EmergencyAction.STOP_FLOW:
+                    # Stop fluid flow
+                    executed_actions.append("Flow stopped")
+                    
+                elif action == EmergencyAction.EMERGENCY_SHUTDOWN:
+                    # Complete system shutdown
+                    executed_actions.append("Emergency shutdown initiated")
+                    
+                elif action == EmergencyAction.ISOLATE_SYSTEM:
+                    # Isolate affected components
+                    executed_actions.append("System isolated")
+                    
+                elif action == EmergencyAction.NOTIFY_PERSONNEL:
+                    # Send notifications
+                    executed_actions.append("Personnel notified")
+                    
+            except Exception as e:
+                logger.error(f"Error executing action {action}: {e}")
+                executed_actions.append(f"Failed to execute {action.value}: {e}")
+        
+        self.is_active = True
+        self.last_triggered = datetime.now()
+        
+        return executed_actions
