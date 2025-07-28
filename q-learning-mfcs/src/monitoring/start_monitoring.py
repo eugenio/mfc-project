@@ -257,3 +257,71 @@ def signal_handler(signum, frame):
     if 'manager' in globals():
         manager.stop_all_services()
     sys.exit(0)
+def main():
+    """Main function"""
+    global manager
+    
+    # Set up signal handling
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    # Create manager
+    manager = MonitoringSystemManager()
+    
+    # Parse command line arguments
+    if len(sys.argv) > 1:
+        command = sys.argv[1].lower()
+        
+        if command == "start":
+            success = manager.start_all_services()
+            if success:
+                # Keep running until interrupted
+                try:
+                    while manager.is_running:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    pass
+                finally:
+                    manager.stop_all_services()
+            else:
+                sys.exit(1)
+        
+        elif command == "stop":
+            manager.stop_all_services()
+        
+        elif command == "status":
+            status = manager.get_status()
+            print(f"System running: {status['is_running']}")
+            for service, state in status['services'].items():
+                print(f"  {service}: {state}")
+        
+        elif command == "restart":
+            if len(sys.argv) > 2:
+                service_name = sys.argv[2]
+                manager.restart_service(service_name)
+            else:
+                manager.stop_all_services()
+                time.sleep(2)
+                manager.start_all_services()
+        
+        else:
+            print(f"Unknown command: {command}")
+            print("Usage: python start_monitoring.py [start|stop|status|restart [service_name]]")
+            sys.exit(1)
+    
+    else:
+        # Default: start all services
+        success = manager.start_all_services()
+        if success:
+            try:
+                while manager.is_running:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                pass
+            finally:
+                manager.stop_all_services()
+        else:
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main()
