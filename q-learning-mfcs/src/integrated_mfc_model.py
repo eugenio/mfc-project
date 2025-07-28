@@ -197,6 +197,19 @@ class IntegratedMFCModel:
         
         return MFCStackInterface(self)
     
+    @property
+    def agent(self):
+        """Access to Q-learning agent for compatibility with tests."""
+        # Create a wrapper object that provides the expected interface
+        class AgentWrapper:
+            def __init__(self, flow_controller, n_cells):
+                self.flow_controller = flow_controller
+                self.n_cells = n_cells
+                self.q_table = flow_controller.q_table
+                self.epsilon = flow_controller.epsilon
+                
+        return AgentWrapper(self.flow_controller, self.n_cells)
+    
     def step_integrated_dynamics(self, dt: float = 1.0) -> IntegratedMFCState:
         """
         Step the integrated model forward by dt hours.
