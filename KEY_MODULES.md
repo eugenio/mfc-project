@@ -251,3 +251,31 @@ class GPUAccelerator:
 - Uncertainty propagation
 - Edge cases
 - Performance
+## Module Dependencies
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Module Dependency Graph             │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│   mfc_recirculation_control                          │
+│            │                                         │
+│            ├──► sensor_integrated_mfc_model          │
+│            │            │                            │
+│            │            ├──► eis_model               │
+│            │            ├──► qcm_model               │
+│            │            └──► sensor_fusion           │
+│            │                                         │
+│            ├──► gpu_acceleration                     │
+│            │                                         │
+│            ├──► config_manager                       │
+│            │         │                              │
+│            │         └──► validation_schemas         │
+│            │                                         │
+│            └──► utils/                              │
+│                  ├──► data_export                   │
+│                  ├──► visualization                 │
+│                  └──► literature_params             │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
