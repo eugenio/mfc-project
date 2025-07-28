@@ -65,3 +65,21 @@ class MaintenanceTask:
     completed_at: Optional[datetime] = None
     notes: str = ""
     
+class MaintenanceWindow:
+    """Available maintenance window."""
+    start_time: datetime
+    end_time: datetime
+    max_downtime_hours: float
+    available_resources: List[str]
+    restrictions: List[str] = field(default_factory=list)
+
+
+class OptimizationResult:
+    """Result of maintenance schedule optimization."""
+    total_cost: float
+    total_downtime: float
+    scheduled_tasks: List[MaintenanceTask]
+    unscheduled_tasks: List[MaintenanceTask]
+    optimization_score: float
+    constraints_violated: List[str]
+
