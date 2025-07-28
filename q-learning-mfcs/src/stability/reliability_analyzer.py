@@ -12,17 +12,15 @@ Author: MFC Development Team
 Date: 2025-07-28
 """
 import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Callable
-from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import field
 from enum import Enum
-import logging
 from pathlib import Path
 import json
+import logging
 import scipy.stats as stats
 from scipy.optimize import minimize
-import warnings
 
 class FailureMode(Enum):
     """Types of failure modes."""
@@ -120,6 +118,9 @@ class ReliabilityAnalyzer:
         
         # Initialize default component models
         self._initialize_component_models()
+        
+        # Logger
+        self.logger = logging.getLogger(__name__)
     
     def _initialize_component_models(self):
         """Initialize default reliability models for MFC components."""
@@ -280,7 +281,7 @@ class ReliabilityAnalyzer:
         Returns:
             ReliabilityPrediction with system reliability metrics
         """
-        logger.info(f"Calculating system reliability for {mission_duration_hours} hour mission")
+        self.logger.info(f"Calculating system reliability for {mission_duration_hours} hour mission")
         
         # Calculate system failure rate (sum of component failure rates for series system)
         system_failure_rate = sum(comp.failure_rate for comp in self.component_reliability.values())
@@ -323,9 +324,9 @@ class ReliabilityAnalyzer:
             confidence_bounds=confidence_bounds
         )
         
-        logger.info(f"System MTBF: {system_mtbf:.1f} hours")
-        logger.info(f"Mission reliability: {mission_reliability*100:.1f}%")
-        logger.info(f"System availability: {system_availability*100:.1f}%")
+        self.logger.info(f"System MTBF: {system_mtbf:.1f} hours")
+        self.logger.info(f"Mission reliability: {mission_reliability*100:.1f}%")
+        self.logger.info(f"System availability: {system_availability*100:.1f}%")
         
         return prediction
     
@@ -342,7 +343,7 @@ class ReliabilityAnalyzer:
             Dictionary with Weibull parameters and reliability metrics
         """
         if len(failure_times) < 3:
-            logger.warning(f"Insufficient failure data for {component_id} Weibull analysis")
+            self.logger.warning(f"Insufficient failure data for {component_id} Weibull analysis")
             return {"shape": 1.0, "scale": 1000.0, "reliability_1000h": 0.9}
         
         # Fit Weibull distribution
@@ -378,15 +379,15 @@ class ReliabilityAnalyzer:
                 "b50_life": scale * (-np.log(0.5))**(1/shape)   # 50% failure life (median)
             }
             
-            logger.info(f"Weibull analysis for {component_id}:")
-            logger.info(f"  Shape parameter (β): {shape:.2f}")
-            logger.info(f"  Scale parameter (η): {scale:.1f} hours")
-            logger.info(f"  MTBF: {mtbf:.1f} hours")
+            self.logger.info(f"Weibull analysis for {component_id}:")
+            self.logger.info(f"  Shape parameter (β): {shape:.2f}")
+            self.logger.info(f"  Scale parameter (η): {scale:.1f} hours")
+            self.logger.info(f"  MTBF: {mtbf:.1f} hours")
             
             return results
             
         except Exception as e:
-            logger.error(f"Error in Weibull analysis for {component_id}: {e}")
+            self.logger.error(f"Error in Weibull analysis for {component_id}: {e}")
             return {"shape": 1.0, "scale": 1000.0, "mtbf_hours": 1000.0}
     
     def analyze_failure_modes(self) -> List[FailureModeEffect]:
@@ -399,13 +400,13 @@ class ReliabilityAnalyzer:
         # Sort FMEA entries by RPN (highest risk first)
         sorted_fmea = sorted(self.fmea_entries, key=lambda x: x.rpn, reverse=True)
         
-        logger.info("Failure Mode Analysis Results:")
-        logger.info("Top 5 highest risk failure modes:")
+        self.logger.info("Failure Mode Analysis Results:")
+        self.logger.info("Top 5 highest risk failure modes:")
         
         for i, entry in enumerate(sorted_fmea[:5], 1):
-            logger.info(f"{i}. {entry.component}/{entry.failure_mode} - RPN: {entry.rpn}")
-            logger.info(f"   Cause: {entry.failure_cause}")
-            logger.info(f"   Effect: {entry.system_effect}")
+            self.logger.info(f"{i}. {entry.component}/{entry.failure_mode} - RPN: {entry.rpn}")
+            self.logger.info(f"   Cause: {entry.failure_cause}")
+            self.logger.info(f"   Effect: {entry.system_effect}")
         
         return sorted_fmea
     
@@ -422,7 +423,7 @@ class ReliabilityAnalyzer:
             Dictionary with lifetime predictions
         """
         if component_id not in self.component_reliability:
-            logger.error(f"Component {component_id} not found in reliability database")
+            self.logger.error(f"Component {component_id} not found in reliability database")
             return {}
         
         comp = self.component_reliability[component_id]
@@ -452,10 +453,10 @@ class ReliabilityAnalyzer:
             **lifetime_percentiles
         }
         
-        logger.info(f"Lifetime prediction for {component_id}:")
-        logger.info(f"  Mean lifetime: {comp.mtbf_hours:.1f} hours")
-        logger.info(f"  Median lifetime: {lifetime_percentiles['B50_life']:.1f} hours")
-        logger.info(f"  {confidence_level*100:.0f}% confidence: "
+        self.logger.info(f"Lifetime prediction for {component_id}:")
+        self.logger.info(f"  Mean lifetime: {comp.mtbf_hours:.1f} hours")
+        self.logger.info(f"  Median lifetime: {lifetime_percentiles['B50_life']:.1f} hours")
+        self.logger.info(f"  {confidence_level*100:.0f}% confidence: "
                    f"{lower_bound:.1f} - {upper_bound:.1f} hours")
         
         return results
@@ -514,12 +515,12 @@ class ReliabilityAnalyzer:
                     optimal_intervals[comp_id] = comp.mtbf_hours * 0.5
                     
             except Exception as e:
-                logger.warning(f"Optimization failed for {comp_id}: {e}")
+                self.logger.warning(f"Optimization failed for {comp_id}: {e}")
                 optimal_intervals[comp_id] = comp.mtbf_hours * 0.5
         
-        logger.info("Optimal maintenance intervals:")
+        self.logger.info("Optimal maintenance intervals:")
         for comp_id, interval in optimal_intervals.items():
-            logger.info(f"  {comp_id}: {interval:.1f} hours ({interval/24:.1f} days)")
+            self.logger.info(f"  {comp_id}: {interval:.1f} hours ({interval/24:.1f} days)")
         
         return optimal_intervals
     
@@ -556,7 +557,7 @@ class ReliabilityAnalyzer:
     def update_reliability_data(self, component_id: str, failure_time: float):
         """Update component reliability data with new failure information."""
         if component_id not in self.component_reliability:
-            logger.error(f"Component {component_id} not found")
+            self.logger.error(f"Component {component_id} not found")
             return
         
         comp = self.component_reliability[component_id]
@@ -579,9 +580,9 @@ class ReliabilityAnalyzer:
             "cumulative_failures": comp.failure_count
         })
         
-        logger.info(f"Updated reliability data for {component_id}")
-        logger.info(f"  New MTBF: {comp.mtbf_hours:.1f} hours")
-        logger.info(f"  Total failures: {comp.failure_count}")
+        self.logger.info(f"Updated reliability data for {component_id}")
+        self.logger.info(f"  New MTBF: {comp.mtbf_hours:.1f} hours")
+        self.logger.info(f"  Total failures: {comp.failure_count}")
     
     def generate_reliability_report(self, output_file: Optional[Path] = None) -> str:
         """Generate comprehensive reliability analysis report."""
@@ -655,7 +656,7 @@ class ReliabilityAnalyzer:
             for comp in prediction.critical_components:
                 contribution = prediction.component_contributions[comp]
                 report_lines.append(f"- **{comp}**: {contribution*100:.1f}% contribution to system failure rate")
-                report_lines.append(f"  - Consider redundancy or improved reliability")
+                report_lines.append("  - Consider redundancy or improved reliability")
         
         report_text = "\n".join(report_lines)
         
@@ -664,7 +665,7 @@ class ReliabilityAnalyzer:
             output_file.parent.mkdir(parents=True, exist_ok=True)
             with open(output_file, 'w') as f:
                 f.write(report_text)
-            logger.info(f"Reliability report saved to {output_file}")
+            self.logger.info(f"Reliability report saved to {output_file}")
         
         return report_text
     
@@ -714,7 +715,7 @@ class ReliabilityAnalyzer:
         with open(output_file, 'w') as f:
             json.dump(export_data, f, indent=2, default=str)
         
-        logger.info(f"Reliability data exported to {output_file}")
+        self.logger.info(f"Reliability data exported to {output_file}")
 def run_reliability_analysis(output_dir: Optional[Path] = None) -> ReliabilityAnalyzer:
     """
     Run comprehensive reliability analysis.
@@ -728,6 +729,7 @@ def run_reliability_analysis(output_dir: Optional[Path] = None) -> ReliabilityAn
     output_dir = output_dir or Path("reliability_analysis_results")
     output_dir.mkdir(exist_ok=True)
     
+    logger = logging.getLogger(__name__)
     logger.info("Starting comprehensive reliability analysis")
     
     # Initialize analyzer
@@ -735,7 +737,7 @@ def run_reliability_analysis(output_dir: Optional[Path] = None) -> ReliabilityAn
     
     # Generate reliability report
     report_file = output_dir / f"reliability_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    report_text = analyzer.generate_reliability_report(report_file)
+    analyzer.generate_reliability_report(report_file)
     
     # Export data
     data_file = output_dir / f"reliability_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -758,4 +760,4 @@ if __name__ == "__main__":
     analyzer = run_reliability_analysis(Path("reliability_analysis_results"))
     
     print("Reliability analysis completed!")
-    print(f"Results available in: reliability_analysis_results/")
+    print("Results available in: reliability_analysis_results/")
