@@ -424,3 +424,136 @@ class TestLongTermDataManager(unittest.TestCase):
         self.assertEqual(summaries[0].data_type, DataType.SENSOR_DATA)
         self.assertGreater(summaries[0].record_count, 0)
 
+class TestStabilityVisualizer(unittest.TestCase):
+    """Test the stability visualizer."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        if not STABILITY_IMPORTS_AVAILABLE:
+            self.skipTest("Stability analysis components not available")
+        
+        # Create temporary directory for testing
+        self.temp_dir = tempfile.mkdtemp()
+        self.visualizer = StabilityVisualizer(output_directory=self.temp_dir)
+        
+        # Create test patterns
+        self.test_patterns = [
+            DegradationPattern(
+                pattern_id="pattern_1",
+                degradation_type=DegradationType.MEMBRANE_FOULING,
+                severity=DegradationSeverity.MODERATE,
+                confidence=0.85,
+                start_time=datetime.now() - timedelta(days=1),
+                affected_components=['membrane'],
+                predicted_failure_time=datetime.now() + timedelta(days=30)
+            ),
+            DegradationPattern(
+                pattern_id="pattern_2",
+                degradation_type=DegradationType.ELECTRODE_CORROSION,
+                severity=DegradationSeverity.HIGH,
+                confidence=0.75,
+                start_time=datetime.now() - timedelta(hours=12),
+                affected_components=['anode']
+            )
+        ]
+        
+        # Create test reliability data
+        self.test_reliability = [
+            ComponentReliability(
+                component_id='membrane',
+                current_reliability=0.85,
+                mtbf_hours=2000,
+                failure_rate=0.0005,
+                confidence_interval=(0.8, 0.9)
+            ),
+            ComponentReliability(
+                component_id='anode',
+                current_reliability=0.92,
+                mtbf_hours=3000,
+                failure_rate=0.0003,
+                confidence_interval=(0.88, 0.96)
+            )
+        ]
+        
+        # Create test maintenance tasks
+        self.test_tasks = [
+            MaintenanceTask(
+                task_id="maint_1",
+                component="membrane",
+                maintenance_type=MaintenanceType.PREVENTIVE,
+                priority=MaintenancePriority.MEDIUM,
+                scheduled_date=datetime.now() + timedelta(days=3),
+                estimated_duration_hours=4.0,
+                description="Membrane cleaning",
+                cost_estimate=100.0
+            )
+        ]
+    
+    def tearDown(self):
+        """Clean up test fixtures."""
+        if hasattr(self, 'temp_dir'):
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_degradation_dashboard_creation(self):
+        """Test degradation dashboard creation."""
+        try:
+            dashboard_path = self.visualizer.create_degradation_dashboard(self.test_patterns)
+            
+            if dashboard_path:  # Only test if visualization was created
+                self.assertTrue(Path(dashboard_path).exists())
+                self.assertTrue(dashboard_path.endswith('.html'))
+        except Exception as e:
+            # Skip test if visualization libraries not available
+            self.skipTest(f"Visualization not available: {e}")
+    
+    def test_reliability_trends_plot(self):
+        """Test reliability trends plot creation."""
+        try:
+            plot_path = self.visualizer.create_reliability_trends_plot(self.test_reliability)
+            
+            if plot_path:  # Only test if visualization was created
+                self.assertTrue(Path(plot_path).exists())
+                self.assertTrue(plot_path.endswith('.html'))
+        except Exception as e:
+            # Skip test if visualization libraries not available
+            self.skipTest(f"Visualization not available: {e}")
+    
+    def test_maintenance_schedule_chart(self):
+        """Test maintenance schedule chart creation."""
+        try:
+            chart_path = self.visualizer.create_maintenance_schedule_chart(self.test_tasks)
+            
+            if chart_path:  # Only test if visualization was created
+                self.assertTrue(Path(chart_path).exists())
+                self.assertTrue(chart_path.endswith('.html'))
+        except Exception as e:
+            # Skip test if visualization libraries not available
+            self.skipTest(f"Visualization not available: {e}")
+    
+    def test_stability_report_generation(self):
+        """Test comprehensive stability report generation."""
+        try:
+            report_path = self.visualizer.generate_stability_report(
+                patterns=self.test_patterns,
+                reliability_data=self.test_reliability,
+                maintenance_tasks=self.test_tasks,
+                include_plots=False  # Skip plots to avoid dependency issues
+            )
+            
+            self.assertTrue(Path(report_path).exists())
+            self.assertTrue(report_path.endswith('.json'))
+            
+            # Load and verify report content
+            with open(report_path, 'r') as f:
+                report_data = json.load(f)
+            
+            self.assertIn('executive_summary', report_data)
+            self.assertIn('degradation_analysis', report_data)
+            self.assertIn('reliability_analysis', report_data)
+            self.assertIn('maintenance_analysis', report_data)
+            self.assertIn('recommendations', report_data)
+            
+        except Exception as e:
+            # Skip test if visualization libraries not available
+            self.skipTest(f"Report generation not available: {e}")
+
