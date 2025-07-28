@@ -104,3 +104,13 @@ ISSUE_TEMPLATES = {
         'title': 'Test Failure: {test_name}',
         'labels': ['bug', 'automated', 'test-failure'],
         'template': '''
+## Test Failure Report
+**Test**: {test_name}
+**Error**: {error_message}
+**File**: {file_path}:{line_number}
+        '''
+    },
+    'performance_regression': {
+        'title': 'Performance Regression: {metric}',
+        'labels': ['performance', 'automated', 'regression'],
+        'template': '''
