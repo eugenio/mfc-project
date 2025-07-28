@@ -168,3 +168,22 @@ ws.onmessage = function(event) {
     console.log('Real-time update:', data);
 };
 ```
+## Configuration
+
+### Safety Thresholds
+Update safety thresholds via API:
+
+```http
+POST /api/config/update
+Content-Type: application/json
+
+{
+  "section": "safety_thresholds",
+  "parameters": {
+    "temperature": {"max_value": 50.0, "warning_buffer": 5.0}
+  }
+}
+```
+
+### Dashboard Settings
+Customize dashboard appearance and refresh rates in the web interface sidebar.
