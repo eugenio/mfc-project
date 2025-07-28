@@ -83,15 +83,15 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         print("🚀 Creating GitLab issue for mypy type checking errors...")
         created_issue = issue_manager.create_issue(issue_data)
         
-        print(f"\n✅ Successfully created GitLab issue:")
+        print("\n✅ Successfully created GitLab issue:")
         print(f"   📝 Title: {created_issue['title']}")
         print(f"   🔗 URL: {created_issue['web_url']}")
         print(f"   🆔 Issue ID: #{created_issue['iid']}")
         print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
         print(f"   📊 State: {created_issue['state']}")
         
-        print(f"\n📋 MyPy type checking issue now tracked in GitLab")
-        print(f"🎯 175 type errors identified across 6 stability analysis files")
+        print("\n📋 MyPy type checking issue now tracked in GitLab")
+        print("🎯 175 type errors identified across 6 stability analysis files")
         
         return created_issue
         
@@ -201,7 +201,7 @@ This enhancement is essential for production deployment of the monitoring system
         print("🚀 Creating GitLab enhancement issue for HTTPS/SSL monitoring system...")
         created_issue = issue_manager.create_issue(issue_data)
         
-        print(f"\n✅ Successfully created GitLab issue:")
+        print("\n✅ Successfully created GitLab issue:")
         print(f"   📝 Title: {created_issue['title']}")
         print(f"   🔗 URL: {created_issue['web_url']}")
         print(f"   🆔 Issue ID: #{created_issue['iid']}")
@@ -209,7 +209,7 @@ This enhancement is essential for production deployment of the monitoring system
         print(f"   📊 State: {created_issue['state']}")
         
         print(f"\n📋 Todo item now tracked in GitLab issue #{created_issue['iid']}")
-        print(f"🎯 The HTTPS/SSL enhancement can be implemented when ready for production deployment")
+        print("🎯 The HTTPS/SSL enhancement can be implemented when ready for production deployment")
         
         return created_issue
         
@@ -228,13 +228,13 @@ if __name__ == "__main__":
     result = create_mypy_issue()
     
     if result:
-        print(f"\n🎯 Next Steps:")
+        print("\n🎯 Next Steps:")
         print("1. GitLab issue created and ready for implementation")
         print("2. Type checking errors can be systematically addressed")
         print("3. Progress can be tracked through GitLab")
         print("4. Code quality improvement is now documented")
     else:
-        print(f"\n⚠️  Issue creation failed, but the requirement is documented")
+        print("\n⚠️  Issue creation failed, but the requirement is documented")
         print("1. The mypy type checking errors still need to be addressed")
         print("2. Implementation details have been prepared")
         print("3. Manual issue creation may be required")
