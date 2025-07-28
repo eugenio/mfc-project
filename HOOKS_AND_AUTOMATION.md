@@ -152,3 +152,38 @@ ISSUE_TEMPLATES = {
     }
 }
 ```
+## Automation Workflows
+
+### Large File Creation Workflow
+
+1. **Detection**: File creation >50 lines triggers chunking
+2. **Analysis**: Parse file structure to identify logical segments
+3. **Chunking**: Create logical chunks respecting boundaries
+4. **Commits**: Generate individual commits with descriptive messages
+5. **Blocking**: Block original Write operation
+
+**Example Commit Sequence**:
+```bash
+Auto-commit: chunk 1/6 - module.py (15 lines) - 4 imports | module docstring
+Auto-commit: chunk 2/6 - module.py (25 lines) - class DataProcessor
+Auto-commit: chunk 3/6 - module.py (20 lines) - class FileHandler
+Auto-commit: chunk 4/6 - module.py (30 lines) - functions: process_data, validate_input
+Auto-commit: chunk 5/6 - module.py (25 lines) - functions: export_results, cleanup
+Auto-commit: chunk 6/6 - module.py (10 lines) - main entry point
+```
+
+### Test Failure Automation
+
+1. **Detection**: Test runner reports failure
+2. **Analysis**: Parse error message and stack trace
+3. **Issue Creation**: Create GitLab issue with details
+4. **Notification**: Send event and notify user
+5. **Tracking**: Monitor issue until resolved
+
+### Performance Monitoring
+
+1. **Baseline**: Establish performance baselines
+2. **Monitoring**: Track metrics during execution
+3. **Comparison**: Compare against baselines
+4. **Alert**: Create issue if regression detected
+5. **Resolution**: Track fix and update baseline
