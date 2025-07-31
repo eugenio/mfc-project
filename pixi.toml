@@ -62,6 +62,10 @@ pre-commit = ">=2.0.0"
 bandit = "*"
 safety = "*"
 types-pyyaml = ">=6.0.12.20250516,<7"
+types-psutil = "*"
+types-requests = "*"
+types-jsonschema = "*"
+types-seaborn = "*"
 yamllint = ">=1.37.1,<2"
 
 # Build and documentation tools
@@ -102,6 +106,8 @@ pymupdf = "*"
 # Core runtime dependencies (pypi)
 [pypi-dependencies]
 requests = ">=2.31.0"
+python-crontab = ">=3.3.0, <4"
+types-python-crontab = ">=3.3.0.20250715, <4"
 
 # API and web server components
 [feature.api.pypi-dependencies]
