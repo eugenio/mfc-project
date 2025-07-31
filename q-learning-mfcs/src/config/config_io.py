@@ -18,6 +18,27 @@ from .parameter_validation import validate_qlearning_config, validate_sensor_con
 logger = logging.getLogger(__name__)
 
 
+def convert_values_for_serialization(obj: Any) -> Any:
+    """
+    Convert values recursively for serialization compatibility.
+    
+    Args:
+        obj: Object to convert
+        
+    Returns:
+        Converted object
+    """
+    if isinstance(obj, tuple):
+        return list(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_values_for_serialization(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_values_for_serialization(item) for item in obj]
+    elif isinstance(obj, FusionMethod):
+        return obj.value
+    return obj
+
+
 def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
     """
     Convert dataclass to dictionary recursively.
@@ -29,21 +50,43 @@ def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
         Dictionary representation
     """
     if is_dataclass(obj):
-        result = {}
-        for field_name, field_value in asdict(obj).items():
-            if isinstance(field_value, dict):
-                # Handle nested dictionaries
-                result[field_name] = field_value
-            elif hasattr(field_value, '__dataclass_fields__'):
-                # Handle nested dataclasses
-                result[field_name] = dataclass_to_dict(field_value)
-            elif isinstance(field_value, FusionMethod):
-                # Handle enum values
-                result[field_name] = field_value.value
-            else:
-                result[field_name] = field_value
-        return result
+        result = asdict(obj)
+        # Recursively convert all values for serialization
+        return convert_values_for_serialization(result)
     return obj
+
+
+def convert_lists_to_tuples_for_dataclass(data: Dict[str, Any], dataclass_type: type) -> Dict[str, Any]:
+    """
+    Convert lists back to tuples for fields that expect tuples.
+    
+    Args:
+        data: Dictionary with configuration data
+        dataclass_type: Target dataclass type
+        
+    Returns:
+        Dictionary with tuples restored
+    """
+    # Fields that should be tuples
+    tuple_fields = {
+        'QLearningConfig': [],
+        'StateSpaceConfig': [
+            'power_range', 'biofilm_range', 'substrate_range', 
+            'reservoir_substrate_range', 'cell_substrate_range', 'outlet_substrate_range',
+            'outlet_error_range', 'flow_rate_range'
+        ],
+        'EISConfig': ['frequency_range'],
+        'QCMConfig': ['mass_range', 'frequency_shift_range', 'dissipation_range'],
+        'SensorFusionConfig': []
+    }
+    
+    class_name = dataclass_type.__name__
+    if class_name in tuple_fields:
+        for field in tuple_fields[class_name]:
+            if field in data and isinstance(data[field], list):
+                data[field] = tuple(data[field])
+    
+    return data
 
 
 def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
@@ -57,22 +100,37 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
     Returns:
         Dataclass instance
     """
+    # Convert lists back to tuples where needed
+    data = convert_lists_to_tuples_for_dataclass(data, dataclass_type)
+    
+    # Filter out fields that have init=False
+    if hasattr(dataclass_type, '__dataclass_fields__'):
+        init_fields = {
+            name: field for name, field in dataclass_type.__dataclass_fields__.items()
+            if field.init
+        }
+        data = {key: value for key, value in data.items() if key in init_fields}
+    
     # Handle nested dataclasses
     if dataclass_type == QLearningConfig:
-        if 'rewards' in data and isinstance(data['rewards'], dict):
-            data['rewards'] = QLearningRewardWeights(**data['rewards'])
+        if 'reward_weights' in data and isinstance(data['reward_weights'], dict):
+            data['reward_weights'] = QLearningRewardWeights(**data['reward_weights'])
         if 'state_space' in data and isinstance(data['state_space'], dict):
-            data['state_space'] = StateSpaceConfig(**data['state_space'])
+            state_data = convert_lists_to_tuples_for_dataclass(data['state_space'], StateSpaceConfig)
+            data['state_space'] = StateSpaceConfig(**state_data)
     elif dataclass_type == SensorConfig:
+        # Handle FusionMethod enum at the SensorConfig level
+        if 'fusion_method' in data and isinstance(data['fusion_method'], str):
+            data['fusion_method'] = FusionMethod(data['fusion_method'])
         if 'eis' in data and isinstance(data['eis'], dict):
-            data['eis'] = EISConfig(**data['eis'])
+            eis_data = convert_lists_to_tuples_for_dataclass(data['eis'], EISConfig)
+            data['eis'] = EISConfig(**eis_data)
         if 'qcm' in data and isinstance(data['qcm'], dict):
-            data['qcm'] = QCMConfig(**data['qcm'])
+            qcm_data = convert_lists_to_tuples_for_dataclass(data['qcm'], QCMConfig)
+            data['qcm'] = QCMConfig(**qcm_data)
         if 'fusion' in data and isinstance(data['fusion'], dict):
-            # Handle FusionMethod enum
-            if 'method' in data['fusion'] and isinstance(data['fusion']['method'], str):
-                data['fusion']['method'] = FusionMethod(data['fusion']['method'])
-            data['fusion'] = SensorFusionConfig(**data['fusion'])
+            fusion_data = convert_lists_to_tuples_for_dataclass(data['fusion'], SensorFusionConfig)
+            data['fusion'] = SensorFusionConfig(**fusion_data)
     
     return dataclass_type(**data)
 

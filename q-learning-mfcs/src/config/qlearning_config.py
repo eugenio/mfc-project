@@ -246,9 +246,6 @@ class QLearningConfig:
     sensor_agreement_weight: float = 0.2  # Sensor agreement weight
     stability_weight: float = 0.1  # System stability weight
     
-    # Reward weights configuration
-    rewards: QLearningRewardWeights = field(default_factory=QLearningRewardWeights)
-    
     # State space configuration
     state_space: 'StateSpaceConfig' = field(default_factory=lambda: StateSpaceConfig())
 
