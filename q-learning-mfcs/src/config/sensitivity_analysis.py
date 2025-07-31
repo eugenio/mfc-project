@@ -240,8 +240,8 @@ class ParameterSpace:
 class SensitivityAnalyzer:
     """Main sensitivity analysis framework."""
     
-    def __init__(self, parameter_space: ParameterSpace,
-                 model_function: Callable[[np.ndarray], Dict[str, np.ndarray]],
+    def __init__(self, parameter_space: Optional[ParameterSpace],
+                 model_function: Optional[Callable[[np.ndarray], Dict[str, np.ndarray]]],
                  output_names: List[str]):
         """
         Initialize sensitivity analyzer.
@@ -468,7 +468,7 @@ class SensitivityAnalyzer:
         trajectories = self._generate_morris_trajectories(n_samples, n_levels, grid_jump)
         
         # Evaluate model for all trajectories
-        all_outputs = {}
+        all_outputs: Dict[str, List[float]] = {}
         for output_name in self.output_names:
             all_outputs[output_name] = []
         
