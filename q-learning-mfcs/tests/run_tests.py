@@ -5,7 +5,6 @@ Test runner for the MFC Q-Learning project path output tests.
 
 import unittest
 import sys
-import os
 from pathlib import Path
 
 # Add the tests directory and src directory to the path
@@ -26,22 +25,22 @@ def create_test_suite():
     """Create a comprehensive test suite."""
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    
+
     # Add path configuration tests
     suite.addTest(loader.loadTestsFromTestCase(TestPathConfig))
-    
+
     # Add file output integration tests
     suite.addTest(loader.loadTestsFromTestCase(TestFileOutputIntegration))
     suite.addTest(loader.loadTestsFromTestCase(TestSpecificFileImports))
-    
+
     # Add actual execution tests
     suite.addTest(loader.loadTestsFromTestCase(TestActualFileExecutions))
     suite.addTest(loader.loadTestsFromTestCase(TestFileOutputPatterns))
-    
+
     # Add GPU capability tests
     suite.addTest(loader.loadTestsFromTestCase(TestGPUCapability))
     suite.addTest(loader.loadTestsFromTestCase(TestGPUAcceleration))
-    
+
     return suite
 
 
@@ -52,29 +51,29 @@ def run_tests(verbosity=2):
     print(f"Running tests from: {Path(__file__).parent}")
     print(f"Source directory: {src_dir}")
     print("=" * 60)
-    
+
     # Create and run test suite
     suite = create_test_suite()
     runner = unittest.TextTestRunner(verbosity=verbosity, buffer=True)
     result = runner.run(suite)
-    
+
     # Print summary
     print("\n" + "=" * 60)
     print("📊 TEST SUMMARY")
     print("=" * 60)
-    
+
     total_tests = result.testsRun
     failures = len(result.failures)
     errors = len(result.errors)
     skipped = len(result.skipped) if hasattr(result, 'skipped') else 0
     successful = total_tests - failures - errors - skipped
-    
+
     print(f"Tests run: {total_tests}")
     print(f"Successful: {successful}")
-    print(f"Failures: {failures}")  
+    print(f"Failures: {failures}")
     print(f"Errors: {errors}")
     print(f"Skipped: {skipped}")
-    
+
     if failures == 0 and errors == 0:
         print("🎉 ALL TESTS PASSED!")
         return True
@@ -84,12 +83,12 @@ def run_tests(verbosity=2):
             print("\nFailures:")
             for test, traceback in result.failures:
                 print(f"  - {test}: {traceback.split('AssertionError:')[-1].strip()}")
-        
+
         if result.errors:
             print("\nErrors:")
             for test, traceback in result.errors:
                 print(f"  - {test}: {traceback.split('Exception:')[-1].strip()}")
-        
+
         return False
 
 
@@ -104,33 +103,33 @@ def run_specific_test_class(test_class_name, verbosity=2):
         'gpu_capability': TestGPUCapability,
         'gpu_acceleration': TestGPUAcceleration
     }
-    
+
     if test_class_name not in test_classes:
         print(f"Unknown test class: {test_class_name}")
         print(f"Available: {', '.join(test_classes.keys())}")
         return False
-    
+
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromTestCase(test_classes[test_class_name])
     runner = unittest.TextTestRunner(verbosity=verbosity)
     result = runner.run(suite)
-    
+
     return len(result.failures) == 0 and len(result.errors) == 0
 
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='Run MFC Q-Learning path output tests')
-    parser.add_argument('--test-class', '-c', 
+    parser.add_argument('--test-class', '-c',
                        help='Run specific test class (path_config, file_outputs, imports, executions, patterns, gpu_capability, gpu_acceleration)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output')
-    parser.add_argument('--quiet', '-q', action='store_true', 
+    parser.add_argument('--quiet', '-q', action='store_true',
                        help='Quiet output')
-    
+
     args = parser.parse_args()
-    
+
     # Set verbosity
     if args.quiet:
         verbosity = 0
@@ -138,11 +137,11 @@ if __name__ == '__main__':
         verbosity = 2
     else:
         verbosity = 1
-    
+
     # Run tests
     if args.test_class:
         success = run_specific_test_class(args.test_class, verbosity)
     else:
         success = run_tests(verbosity)
-    
+
     sys.exit(0 if success else 1)
