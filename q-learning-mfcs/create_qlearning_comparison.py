@@ -19,9 +19,9 @@ fig.suptitle('Q-Learning vs PID Substrate Control Comparison', fontsize=16, font
 
 # Substrate concentration comparison
 ax1 = axes[0, 0]
-ax1.plot(pid_data['time_hours'], pid_data['substrate_concentrations'], 
+ax1.plot(pid_data['time_hours'], pid_data['substrate_concentrations'],
          label='PID Controller', color='red', linewidth=2, alpha=0.8)
-ax1.plot(qlearning_data['time_hours'], qlearning_data['reservoir_concentration'], 
+ax1.plot(qlearning_data['time_hours'], qlearning_data['reservoir_concentration'],
          label='Q-Learning Controller', color='blue', linewidth=2, alpha=0.8)
 ax1.axhline(y=20, color='green', linestyle='--', alpha=0.7, label='Target (20 mM)')
 ax1.axhline(y=25, color='orange', linestyle='--', alpha=0.7, label='Max Threshold (25 mM)')
@@ -33,9 +33,9 @@ ax1.grid(True, alpha=0.3)
 
 # Power output comparison
 ax2 = axes[0, 1]
-ax2.plot(pid_data['time_hours'], pid_data['stack_power'] * 1000, 
+ax2.plot(pid_data['time_hours'], pid_data['stack_power'] * 1000,
          label='PID Controller', color='red', linewidth=2, alpha=0.8)
-ax2.plot(qlearning_data['time_hours'], qlearning_data['total_power'] * 1000, 
+ax2.plot(qlearning_data['time_hours'], qlearning_data['total_power'] * 1000,
          label='Q-Learning Controller', color='blue', linewidth=2, alpha=0.8)
 ax2.set_xlabel('Time (hours)')
 ax2.set_ylabel('Power Output (mW)')
@@ -49,9 +49,9 @@ ax3 = axes[1, 0]
 pid_additions = np.diff(pid_data['substrate_concentrations'], prepend=pid_data['substrate_concentrations'].iloc[0])
 pid_additions = np.maximum(pid_additions, 0)  # Only positive additions
 
-ax3.plot(pid_data['time_hours'], pid_additions, 
+ax3.plot(pid_data['time_hours'], pid_additions,
          label='PID Controller (estimated)', color='red', linewidth=2, alpha=0.8)
-ax3.plot(qlearning_data['time_hours'], qlearning_data['substrate_addition_rate'], 
+ax3.plot(qlearning_data['time_hours'], qlearning_data['substrate_addition_rate'],
          label='Q-Learning Controller', color='blue', linewidth=2, alpha=0.8)
 ax3.set_xlabel('Time (hours)')
 ax3.set_ylabel('Substrate Addition Rate (mM/h)')
