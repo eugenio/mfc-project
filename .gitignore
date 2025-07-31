@@ -151,3 +151,10 @@ export/
 .claude/*
 .claude/settings.json
 
+protein-models-4-mfc/25d5625117867c5a58670e1bb0c9bc0d7e07e5196e830eab1adfa2e3fe5c01c6
+protein-models-4-mfc/25d5625117867c5a58670e1bb0c9bc0d7e07e5196e830eab1adfa2e3fe5c01c6.aria2
+.conda/packages/noarch/.cache/cache.db
+protein-models-4-mfc/alphafold_params_2022-12-06.tar
+protein-models-4-mfc/downstream_datasets.zip
+protein-models-4-mfc/downstream_datasets.zip.aria2
+protein-models-4-mfc/proteindt_model.bin
