@@ -237,7 +237,7 @@ class StreamBuffer:
             max_size: Maximum number of data points to store
         """
         self.max_size = max_size
-        self.buffer: deque[Dict[str, Any]] = deque(maxlen=max_size)
+        self.buffer: deque[DataPoint] = deque(maxlen=max_size)
         self.lock = threading.Lock()
         self.total_points = 0
     
@@ -499,7 +499,7 @@ class StreamProcessor:
                 return data_points
             
             # Group by sensor
-            sensor_data = {}
+            sensor_data: Dict[str, List[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -539,7 +539,7 @@ class StreamProcessor:
         
         def outlier_processor(data_points: List[DataPoint]) -> List[DataPoint]:
             # Group by sensor
-            sensor_data = {}
+            sensor_data: Dict[str, List[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -600,7 +600,7 @@ class StreamProcessor:
         
         def trend_processor(data_points: List[DataPoint]) -> List[DataPoint]:
             # Group by sensor
-            sensor_data = {}
+            sensor_data: Dict[str, List[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -655,7 +655,7 @@ class StreamProcessor:
                 return data_points
             
             # Group by sensor
-            sensor_data = {}
+            sensor_data: Dict[str, List[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -726,7 +726,7 @@ class RealTimeAnalyzer:
         """
         self.config = analysis_config
         self.alert_thresholds = analysis_config.get('alert_thresholds', {})
-        self.alert_callbacks = []
+        self.alert_callbacks: List[Callable[[Alert], None]] = []
         self.logger = logging.getLogger(__name__)
     
     def add_alert_callback(self, callback: Callable[[Alert], None]):
@@ -754,7 +754,7 @@ class RealTimeAnalyzer:
             return {'status': 'no_data', 'timestamp': end_time.isoformat()}
         
         # Group by sensor
-        sensor_data = {}
+        sensor_data: Dict[str, List[DataPoint]] = {}
         for dp in recent_data:
             if dp.sensor_id not in sensor_data:
                 sensor_data[dp.sensor_id] = []
@@ -909,8 +909,8 @@ class AlertSystem:
             config: Alert system configuration
         """
         self.config = config
-        self.alert_queue = Queue()
-        self.alert_history = deque(maxlen=config.get('max_history', 1000))
+        self.alert_queue: Queue[Alert] = Queue()
+        self.alert_history: deque[Alert] = deque(maxlen=config.get('max_history', 1000))
         self.is_active = False
         self.thread = None
         self.logger = logging.getLogger(__name__)
