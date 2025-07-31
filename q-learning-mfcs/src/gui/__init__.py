@@ -21,7 +21,7 @@ Created: 2025-07-31
 
 from .enhanced_components import (
     ScientificParameterInput,
-    InteractiveVisualization, 
+    InteractiveVisualization,
     ExportManager,
     initialize_enhanced_ui,
     render_enhanced_sidebar,
@@ -46,15 +46,15 @@ __all__ = [
     # Enhanced components
     "ScientificParameterInput",
     "InteractiveVisualization",
-    "ExportManager", 
+    "ExportManager",
     "initialize_enhanced_ui",
     "render_enhanced_sidebar",
     "ComponentTheme",
     "UIThemeConfig",
-    
+
     # Q-learning visualization
     "QLearningVisualizer",
-    "QLearningVisualizationConfig", 
+    "QLearningVisualizationConfig",
     "QLearningVisualizationType",
     "create_demo_qlearning_data",
     "load_qtable_from_file"
