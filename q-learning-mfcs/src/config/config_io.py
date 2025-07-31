@@ -49,7 +49,7 @@ def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
     Returns:
         Dictionary representation
     """
-    if is_dataclass(obj):
+    if is_dataclass(obj) and not isinstance(obj, type):
         result = asdict(obj)
         # Recursively convert all values for serialization
         return convert_values_for_serialization(result)

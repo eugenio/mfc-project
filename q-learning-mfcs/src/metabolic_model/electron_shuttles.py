@@ -7,7 +7,7 @@ for extracellular electron transfer.
 """
 
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -350,7 +350,7 @@ class ElectronShuttleModel:
         
         return current_density
     
-    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> Dict[str, any]:
+    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> Dict[str, Any]:
         """Get properties of specific shuttle."""
         shuttle = self.shuttles[shuttle_type]
         
