@@ -5,6 +5,7 @@ Streamlit GUI for MFC Simulation Control and Monitoring
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import time
@@ -371,18 +372,796 @@ def create_real_time_plots(df):
     # Biofilm thickness (average)
     if 'biofilm_thicknesses' in df.columns:
         # Calculate average biofilm thickness safely
-        try:
-            biofilm_avg = df['biofilm_thicknesses'].apply(lambda x: 
-                sum(eval(x)) / len(eval(x)) if isinstance(x, str) and x.strip() else 0)
-            fig.add_trace(
-                go.Scatter(x=df['time_hours'], y=biofilm_avg,
-                          name='Avg Thickness', line=dict(color='brown', width=2)),
-                row=2, col=2
-            )
-        except Exception:
-            pass  # Skip if biofilm data is malformed
+        def parse_biofilm_data(x):
+            """Safely parse biofilm thickness data from various formats"""
+            try:
+                if isinstance(x, (list, tuple)):
+                    # Already a list/tuple
+                    return sum(x) / len(x) if len(x) > 0 else 1.0
+                elif isinstance(x, str) and x.strip():
+                    # String representation - parse safely
+                    x_clean = x.strip('[]() ').replace(' ', '')
+                    if ',' in x_clean:
+                        values = [float(val.strip()) for val in x_clean.split(',') if val.strip()]
+                        return sum(values) / len(values) if len(values) > 0 else 1.0
+                    else:
+                        # Single value
+                        return float(x_clean) if x_clean else 1.0
+                elif isinstance(x, (int, float)):
+                    # Single numeric value
+                    return float(x)
+                else:
+                    return 1.0  # Default fallback
+            except (ValueError, TypeError, ZeroDivisionError):
+                return 1.0  # Default fallback
+        
+        biofilm_avg = df['biofilm_thicknesses'].apply(parse_biofilm_data)
+        
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=biofilm_avg,
+                      name='Avg Thickness', line=dict(color='brown', width=2)),
+            row=2, col=2
+        )
     
-    # Update layout
+    # Plot 5: Flow Rate & Efficiency (dual y-axis)
+    if 'flow_rate_ml_h' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['flow_rate_ml_h'],
+                      name='Flow Rate (mL/h)', line=dict(color='cyan', width=2)),
+            row=2, col=2
+        )
+    if 'substrate_efficiency' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['substrate_efficiency'],
+                      name='Efficiency', line=dict(color='green', width=2)),
+            row=2, col=2, secondary_y=True
+        )
+    
+    # Plot 6: System Performance (voltage only, since conc error moved to plot 1)
+    if 'system_voltage' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['system_voltage'],
+                      name='Voltage (V)', line=dict(color='blue', width=2)),
+            row=2, col=3
+        )
+    
+    # Plot 7: Individual Cell Powers
+    if 'individual_cell_powers' in df.columns:
+        # Plot first few cells to avoid clutter
+        for i in range(min(3, len(df['individual_cell_powers'].iloc[0]) if len(df) > 0 else 0)):
+            cell_powers = [powers[i] if len(powers) > i else 0 for powers in df['individual_cell_powers']]
+            fig.add_trace(
+                go.Scatter(x=df['time_hours'], y=cell_powers,
+                          name=f'Cell {i+1}', line=dict(width=1.5)),
+                row=3, col=1
+            )
+    
+    # Plot 8: Mixing & Control (dual y-axis)
+    if 'mixing_efficiency' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['mixing_efficiency'],
+                      name='Mixing Eff', line=dict(color='purple', width=2)),
+            row=3, col=2
+        )
+    if 'biofilm_activity_factor' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['biofilm_activity_factor'],
+                      name='Biofilm Activity', line=dict(color='orange', width=2)),
+            row=3, col=2, secondary_y=True
+        )
+    
+    # Plot 9: Q-Values & Rewards (dual y-axis)
+    if 'q_value' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['q_value'],
+                      name='Q-Value', line=dict(color='blue', width=2)),
+            row=3, col=3
+        )
+    if 'reward' in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df['time_hours'], y=df['reward'],
+                      name='Reward', line=dict(color='green', width=2)),
+            row=3, col=3, secondary_y=True
+        )
+    
+    # Plot 10: Cumulative Energy
+    if 'total_power' in df.columns and 'time_hours' in df.columns:
+        # Calculate cumulative energy from power data
+        time_hours = df['time_hours'].values
+        power_watts = df['total_power'].values
+        
+        # Calculate time differences in hours for integration
+        dt_hours = np.diff(time_hours, prepend=0)  # Time step for each point
+        
+        # Energy = Power × Time (Wh = W × h)
+        energy_increments = power_watts * dt_hours  # Wh per timestep
+        cumulative_energy_wh = np.cumsum(energy_increments)  # Cumulative energy in Wh
+        
+        # Convert to more appropriate units
+        if cumulative_energy_wh[-1] > 1000:
+            # Use kWh for large values
+            cumulative_energy_display = cumulative_energy_wh / 1000
+            energy_unit = 'kWh'
+        else:
+            # Use Wh for smaller values
+            cumulative_energy_display = cumulative_energy_wh
+            energy_unit = 'Wh'
+        
+        fig.add_trace(
+            go.Scatter(x=time_hours, y=cumulative_energy_display,
+                      name=f'Cumulative Energy ({energy_unit})', 
+                      line=dict(color='darkgreen', width=3),
+                      fill='tonexty' if len(fig.data) == 0 else 'tozeroy',
+                      fillcolor='rgba(0,128,0,0.1)'),
+            row=4, col=1
+        )
+        
+        # Add energy efficiency indicator (energy per unit time)
+        if len(time_hours) > 1:
+            total_time = time_hours[-1] - time_hours[0]
+            if total_time > 0:
+                avg_power = np.mean(power_watts)
+                energy_efficiency = cumulative_energy_display[-1] / total_time if total_time > 0 else 0
+                
+                # Add annotation for total energy and average power
+                fig.add_annotation(
+                    x=time_hours[-1] * 0.7, y=cumulative_energy_display[-1] * 0.8,
+                    text=f"Total: {cumulative_energy_display[-1]:.2f} {energy_unit}<br>"
+                         f"Avg Power: {avg_power:.3f} W<br>"
+                         f"Rate: {energy_efficiency:.3f} {energy_unit}/h",
+                    showarrow=True, arrowhead=2, arrowcolor='darkgreen',
+                    bgcolor='rgba(255,255,255,0.8)', bordercolor='darkgreen',
+                    row=4, col=1
+                )
+    
+    # Update layout for expanded 4x3 grid
+    fig.update_layout(
+        height=1200,  # Increased height for 4 rows
+        showlegend=True,
+        title_text="Comprehensive MFC Simulation Monitoring Dashboard"
+    )
+    
+    # Update axes labels for all plots
+    # Row 1
+    fig.update_yaxes(title_text="Concentration (mM)", row=1, col=1)
+    fig.update_yaxes(title_text="Error (mM)", secondary_y=True, row=1, col=1)
+    fig.update_yaxes(title_text="Power (W)", row=1, col=2)
+    fig.update_yaxes(title_text="Current (A)", secondary_y=True, row=1, col=2)
+    fig.update_yaxes(title_text="Action ID", row=1, col=3)
+    
+    # Row 2  
+    fig.update_yaxes(title_text="Thickness (μm)", row=2, col=1)
+    fig.update_yaxes(title_text="Flow Rate (mL/h)", row=2, col=2)
+    fig.update_yaxes(title_text="Efficiency", secondary_y=True, row=2, col=2)
+    fig.update_yaxes(title_text="Voltage (V)", row=2, col=3)
+    
+    # Row 3
+    fig.update_yaxes(title_text="Power (W)", row=3, col=1)
+    fig.update_yaxes(title_text="Mixing Efficiency", row=3, col=2)
+    fig.update_yaxes(title_text="Activity Factor", secondary_y=True, row=3, col=2)
+    fig.update_yaxes(title_text="Q-Value", row=3, col=3)
+    fig.update_yaxes(title_text="Reward", secondary_y=True, row=3, col=3)
+    
+    # Row 4 (Cumulative Energy)
+    if 'total_power' in df.columns:
+        energy_unit = 'kWh' if df['total_power'].sum() * len(df) / 1000 > 1 else 'Wh'
+        fig.update_yaxes(title_text=f"Energy ({energy_unit})", row=4, col=1)
+    
+    # Add time labels to bottom row
+    fig.update_xaxes(title_text="Time (hours)", row=4, col=1)
+    fig.update_xaxes(title_text="Time (hours)", row=4, col=2)
+    fig.update_xaxes(title_text="Time (hours)", row=4, col=3)
+    
+    return fig
+
+def create_biofilm_analysis_plots(df):
+    """Create comprehensive biofilm parameter visualization"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        columns = df.keys()
+        data_dict = df
+    else:
+        columns = df.columns
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    # Check if we have biofilm data
+    biofilm_cols = [col for col in columns if 'biofilm' in col.lower() or 'biomass' in col.lower() or 'attachment' in col.lower()]
+    if not biofilm_cols:
+        return None
+    
+    fig = make_subplots(
+        rows=2, cols=3,
+        subplot_titles=(
+            'Biofilm Thickness per Cell', 'Biomass Density Distribution', 'Attachment Fraction',
+            'Growth vs Detachment Rates', 'Biofilm Conductivity', 'Species Composition'
+        ),
+        specs=[
+            [{"secondary_y": False}, {"secondary_y": False}, {"secondary_y": False}],
+            [{"secondary_y": True}, {"secondary_y": False}, {"secondary_y": False}]
+        ]
+    )
+    
+    # Plot 1: Per-cell biofilm thickness
+    if 'biofilm_thicknesses' in data_dict or 'biofilm_thickness_per_cell' in data_dict:
+        time_data = data_dict.get('time_hours', data_dict.get('time', list(range(len(data_dict.get('biofilm_thicknesses', []))))))
+        
+        # Handle different data formats
+        if 'biofilm_thicknesses' in data_dict:
+            biofilm_data = data_dict['biofilm_thicknesses']
+            if biofilm_data and isinstance(biofilm_data[0], list):
+                # Data is list of lists (per timepoint, per cell)
+                n_cells = len(biofilm_data[0])
+                for i in range(min(n_cells, 5)):  # Max 5 cells for readability
+                    cell_values = [timepoint[i] if i < len(timepoint) else 0 for timepoint in biofilm_data]
+                    fig.add_trace(
+                        go.Scatter(x=time_data, y=cell_values,
+                                  name=f'Cell {i+1}', line=dict(width=2)),
+                        row=1, col=1
+                    )
+        elif 'biofilm_thickness_per_cell' in data_dict:
+            # Handle individual cell columns
+            for i in range(5):
+                col_name = f'biofilm_thickness_cell_{i}'
+                if col_name in data_dict:
+                    fig.add_trace(
+                        go.Scatter(x=time_data, y=data_dict[col_name],
+                                  name=f'Cell {i+1}', line=dict(width=2)),
+                        row=1, col=1
+                    )
+    
+    # Plot 2: Biomass density heatmap
+    if 'biomass_density' in data_dict or 'biomass_density_per_cell' in data_dict:
+        time_data = data_dict.get('time_hours', data_dict.get('time', list(range(len(data_dict.get('biomass_density', []))))))
+        
+        try:
+            biomass_data = data_dict.get('biomass_density', data_dict.get('biomass_density_per_cell', []))
+            if biomass_data and isinstance(biomass_data[0], list):
+                # Transpose for heatmap: rows = cells, cols = time
+                transposed_data = list(map(list, zip(*biomass_data)))
+                
+                fig.add_trace(
+                    go.Heatmap(
+                        z=transposed_data,
+                        x=time_data,
+                        y=[f'Cell {i+1}' for i in range(len(transposed_data))],
+                        colorscale='Viridis',
+                        name='Biomass Density'
+                    ),
+                    row=1, col=2
+                )
+        except Exception:
+            # Add placeholder if data processing fails
+            fig.add_trace(
+                go.Scatter(x=[0], y=[0], mode='markers', 
+                          name='No biomass data', marker=dict(size=0)),
+                row=1, col=2
+            )
+    
+    # Plot 3: Attachment fraction (or use average biofilm thickness if attachment not available)
+    if 'attachment_fraction' in data_dict:
+        time_data = data_dict.get('time_hours', data_dict.get('time', list(range(len(data_dict['attachment_fraction'])))))
+        avg_attachment = data_dict['attachment_fraction']
+    elif 'biofilm_thicknesses' in data_dict:
+        time_data = data_dict.get('time_hours', data_dict.get('time', list(range(len(data_dict['biofilm_thicknesses'])))))
+        # Calculate average biofilm thickness as proxy for attachment
+        biofilm_data = data_dict['biofilm_thicknesses']
+        if biofilm_data and isinstance(biofilm_data[0], list):
+            avg_attachment = [sum(timepoint)/len(timepoint) if timepoint else 0 for timepoint in biofilm_data]
+        else:
+            avg_attachment = biofilm_data if isinstance(biofilm_data, list) else [0]
+    else:
+        time_data = [0]
+        avg_attachment = [0]
+    
+    # Add the attachment trace
+    fig.add_trace(
+        go.Scatter(x=time_data, y=avg_attachment,
+                  name='Avg Attachment/Thickness', 
+                  line=dict(color='green', width=2)),
+        row=1, col=3
+    )
+    
+    # Add remaining plots with available data
+    fig.update_layout(
+        title="Biofilm Analysis - Per Cell Parameters",
+        showlegend=True,
+        height=600
+    )
+    fig.update_xaxes(title_text="Time (hours)")
+    fig.update_yaxes(title_text="Thickness (μm)", row=1, col=1)
+    fig.update_yaxes(title_text="Density (g/L)", row=1, col=2)
+    fig.update_yaxes(title_text="Attachment", row=1, col=3)
+    
+    return fig
+
+def create_metabolic_analysis_plots(df):
+    """Create metabolic pathway visualization"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        columns = df.keys()
+        data_dict = df
+    else:
+        columns = df.columns
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    metabolic_cols = [col for col in columns if any(term in col.lower() for term in ['nadh', 'atp', 'electron', 'metabolic'])]
+    if not metabolic_cols:
+        return None
+    
+    fig = make_subplots(
+        rows=2, cols=3,
+        subplot_titles=(
+            'NADH/NAD+ Ratios', 'ATP Levels', 'Electron Flux',
+            'Substrate Uptake Rates', 'Metabolic Activity', 'Oxygen Crossover'
+        ),
+        specs=[[{"secondary_y": False} for _ in range(3)] for _ in range(2)]
+    )
+    
+    time_data = data_dict.get('time_hours', data_dict.get('time', [0]))
+    
+    # Plot NADH ratios if available
+    if 'nadh_ratios' in data_dict or 'nadh_ratio' in data_dict:
+        nadh_data = data_dict.get('nadh_ratios', data_dict.get('nadh_ratio', []))
+        if nadh_data and isinstance(nadh_data[0], list):
+            for i in range(min(len(nadh_data[0]), 5)):
+                cell_values = [timepoint[i] if i < len(timepoint) else 0.3 for timepoint in nadh_data]
+                fig.add_trace(
+                    go.Scatter(x=time_data, y=cell_values,
+                              name=f'Cell {i+1} NADH', line=dict(width=2)),
+                    row=1, col=1
+                )
+        else:
+            # Single value or average
+            fig.add_trace(
+                go.Scatter(x=time_data, y=nadh_data if isinstance(nadh_data, list) else [0.3] * len(time_data),
+                          name='Avg NADH Ratio', line=dict(width=2)),
+                row=1, col=1
+            )
+    
+    # Plot ATP levels
+    if 'atp_levels' in data_dict or 'atp_level' in data_dict:
+        atp_data = data_dict.get('atp_levels', data_dict.get('atp_level', []))
+        if atp_data and isinstance(atp_data[0], list):
+            # Average across cells
+            avg_atp = [sum(timepoint)/len(timepoint) if timepoint else 2.0 for timepoint in atp_data]
+        else:
+            avg_atp = atp_data if isinstance(atp_data, list) else [2.0] * len(time_data)
+        
+        fig.add_trace(
+            go.Scatter(x=time_data, y=avg_atp,
+                      name='Avg ATP', line=dict(color='red', width=2)),
+            row=1, col=2
+        )
+    
+    # Plot electron flux
+    if 'electron_flux' in data_dict:
+        electron_data = data_dict['electron_flux']
+        if electron_data and isinstance(electron_data[0], list):
+            # Average across cells
+            avg_flux = [sum(timepoint)/len(timepoint) if timepoint else 0.1 for timepoint in electron_data]
+        else:
+            avg_flux = electron_data if isinstance(electron_data, list) else [0.1] * len(time_data)
+            
+        fig.add_trace(
+            go.Scatter(x=time_data, y=avg_flux,
+                      name='Avg e- Flux', line=dict(color='blue', width=2)),
+            row=1, col=3
+        )
+    elif 'total_current' in data_dict:
+        fig.add_trace(
+            go.Scatter(x=time_data, y=data_dict['total_current'],
+                      name='Total Current (A)', line=dict(color='blue', width=2)),
+            row=1, col=3
+        )
+    
+    fig.update_layout(
+        title="Metabolic Analysis - Per Cell Parameters",
+        showlegend=True,
+        height=600
+    )
+    fig.update_xaxes(title_text="Time (hours)")
+    fig.update_yaxes(title_text="NADH Ratio", row=1, col=1)
+    fig.update_yaxes(title_text="ATP (mM)", row=1, col=2)
+    fig.update_yaxes(title_text="Electron Flux", row=1, col=3)
+    
+    return fig
+
+def create_sensing_analysis_plots(df):
+    """Create EIS and QCM sensing visualization"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        columns = df.keys()
+        data_dict = df
+    else:
+        columns = df.columns
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    sensing_cols = [col for col in columns if any(term in col.lower() for term in ['eis', 'qcm', 'impedance', 'frequency'])]
+    if not sensing_cols:
+        return None
+    
+    fig = make_subplots(
+        rows=2, cols=3,
+        subplot_titles=(
+            'EIS Impedance Magnitude', 'EIS Phase Response', 'QCM Frequency Shift',
+            'Charge Transfer Resistance', 'QCM Mass Loading', 'Sensor Calibration'
+        ),
+        specs=[[{"secondary_y": False} for _ in range(3)] for _ in range(2)]
+    )
+    
+    # Get time data
+    time_data = data_dict.get('time_hours', data_dict.get('time', [0]))
+    if not time_data:
+        time_data = [0]
+    
+    # EIS Impedance magnitude
+    if 'eis_impedance_magnitude' in data_dict:
+        impedance_data = data_dict.get('eis_impedance_magnitude', [1000] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=impedance_data if impedance_data else [1000] * len(time_data),
+                      name='|Z| @ 1kHz', line=dict(color='purple', width=2)),
+            row=1, col=1
+        )
+    
+    # EIS Phase
+    if 'eis_impedance_phase' in data_dict:
+        phase_data = data_dict.get('eis_impedance_phase', [-45] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=phase_data if phase_data else [-45] * len(time_data),
+                      name='Phase @ 1kHz', line=dict(color='orange', width=2)),
+            row=1, col=2
+        )
+    
+    # QCM frequency shift
+    if 'qcm_frequency_shift' in data_dict:
+        freq_data = data_dict.get('qcm_frequency_shift', [-500] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=freq_data if freq_data else [-500] * len(time_data),
+                      name='Δf (Hz)', line=dict(color='green', width=2)),
+            row=1, col=3
+        )
+    
+    # Charge transfer resistance (additional subplot)
+    if 'charge_transfer_resistance' in data_dict:
+        rct_data = data_dict.get('charge_transfer_resistance', [100] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=rct_data if rct_data else [100] * len(time_data),
+                      name='Rct (Ω)', line=dict(color='red', width=2)),
+            row=2, col=1
+        )
+    
+    # QCM mass loading
+    if 'qcm_mass_loading' in data_dict:
+        mass_data = data_dict.get('qcm_mass_loading', [0.1] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=mass_data if mass_data else [0.1] * len(time_data),
+                      name='Mass Loading (μg/cm²)', line=dict(color='brown', width=2)),
+            row=2, col=2
+        )
+    
+    fig.update_layout(
+        title="Sensing Analysis",
+        height=600,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_spatial_distribution_plots(df, n_cells=5):
+    """Create spatial distribution visualization for per-cell parameters"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        columns = df.keys()
+        data_dict = df
+    else:
+        columns = df.columns
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    # Check for per-cell data
+    cell_data_cols = [col for col in columns if 'per_cell' in col or 'cell_' in col or 'voltages' in col or 'densities' in col]
+    if not cell_data_cols:
+        return None
+    
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=(
+            'Cell Voltages Distribution', 'Current Density Distribution',
+            'Temperature Distribution', 'Biofilm Thickness Distribution'
+        ),
+        specs=[[{"type": "bar"}, {"type": "bar"}],
+               [{"type": "scatter"}, {"type": "scatter"}]]
+    )
+    
+    # Get latest data point for spatial visualization
+    def get_latest_value(data_list):
+        if isinstance(data_list, list) and data_list:
+            if isinstance(data_list[-1], list):
+                return data_list[-1]  # Per-cell data at latest timepoint
+            else:
+                return data_list[-1]  # Single value at latest timepoint
+        return None
+    
+    # Cell voltages
+    if 'cell_voltages' in data_dict:
+        cell_voltages_data = get_latest_value(data_dict['cell_voltages'])
+        if cell_voltages_data:
+            if isinstance(cell_voltages_data, list):
+                cell_voltages = cell_voltages_data[:n_cells] if len(cell_voltages_data) >= n_cells else cell_voltages_data + [0.7] * (n_cells - len(cell_voltages_data))
+            else:
+                cell_voltages = [cell_voltages_data] * n_cells
+        else:
+            cell_voltages = [0.7] * n_cells
+        
+        fig.add_trace(
+            go.Bar(x=[f'Cell {i+1}' for i in range(n_cells)], y=cell_voltages,
+                   name='Cell Voltage (V)', marker_color='blue'),
+            row=1, col=1
+        )
+    
+    # Current density
+    if 'current_densities' in data_dict or 'current_density_per_cell' in data_dict:
+        current_key = 'current_densities' if 'current_densities' in data_dict else 'current_density_per_cell'
+        current_densities_data = get_latest_value(data_dict[current_key])
+        if current_densities_data:
+            if isinstance(current_densities_data, list):
+                current_densities = current_densities_data[:n_cells] if len(current_densities_data) >= n_cells else current_densities_data + [1.0] * (n_cells - len(current_densities_data))
+            else:
+                current_densities = [current_densities_data] * n_cells
+        else:
+            current_densities = [1.0] * n_cells
+            
+        fig.add_trace(
+            go.Bar(x=[f'Cell {i+1}' for i in range(n_cells)], y=current_densities,
+                   name='Current Density (A/m²)', marker_color='red'),
+            row=1, col=2
+        )
+    
+    # Temperature distribution
+    if 'temperature_per_cell' in data_dict:
+        temp_data = get_latest_value(data_dict['temperature_per_cell'])
+        if temp_data:
+            if isinstance(temp_data, list):
+                temperatures = temp_data[:n_cells] if len(temp_data) >= n_cells else temp_data + [25.0] * (n_cells - len(temp_data))
+            else:
+                temperatures = [temp_data] * n_cells
+        else:
+            temperatures = [25.0] * n_cells
+            
+        fig.add_trace(
+            go.Scatter(x=[f'Cell {i+1}' for i in range(n_cells)], y=temperatures,
+                      mode='markers+lines', name='Temperature (°C)', 
+                      line=dict(color='orange', width=2), marker=dict(size=8)),
+            row=2, col=1
+        )
+    
+    # Biofilm thickness distribution
+    if 'biofilm_thicknesses' in data_dict or 'biofilm_thickness_per_cell' in data_dict:
+        biofilm_key = 'biofilm_thicknesses' if 'biofilm_thicknesses' in data_dict else 'biofilm_thickness_per_cell'
+        biofilm_data = get_latest_value(data_dict[biofilm_key])
+        if biofilm_data:
+            if isinstance(biofilm_data, list):
+                biofilm_thickness = biofilm_data[:n_cells] if len(biofilm_data) >= n_cells else biofilm_data + [10.0] * (n_cells - len(biofilm_data))
+            else:
+                biofilm_thickness = [biofilm_data] * n_cells
+        else:
+            biofilm_thickness = [10.0] * n_cells
+            
+        fig.add_trace(
+            go.Scatter(x=[f'Cell {i+1}' for i in range(n_cells)], y=biofilm_thickness,
+                      mode='markers+lines', name='Biofilm Thickness (μm)',
+                      line=dict(color='green', width=2), marker=dict(size=8)),
+            row=2, col=2
+        )
+    
+    fig.update_layout(
+        title="Spatial Distribution Analysis",
+        height=600,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_performance_analysis_plots(df):
+    """Create comprehensive performance analysis visualization"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        data_dict = df
+    else:
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    fig = make_subplots(
+        rows=2, cols=3,
+        subplot_titles=(
+            'Energy Efficiency Over Time', 'Coulombic Efficiency', 'Power Density',
+            'Cumulative Energy Production', 'Control Performance', 'Economic Metrics'
+        ),
+        specs=[[{"secondary_y": True} for _ in range(3)] for _ in range(2)]
+    )
+    
+    # Get time data
+    time_data = data_dict.get('time_hours', data_dict.get('time', [0]))
+    if not time_data:
+        time_data = [0]
+    
+    # Energy efficiency
+    if 'energy_efficiency' in data_dict:
+        energy_eff_data = data_dict.get('energy_efficiency', [75] * len(time_data))
+        fig.add_trace(
+            go.Scatter(x=time_data, y=energy_eff_data if energy_eff_data else [75] * len(time_data),
+                      name='Energy Efficiency (%)', line=dict(color='green', width=2)),
+            row=1, col=1
+        )
+    
+    # Coulombic efficiency
+    if 'coulombic_efficiency' in data_dict or 'coulombic_efficiency_per_cell' in data_dict:
+        ce_key = 'coulombic_efficiency' if 'coulombic_efficiency' in data_dict else 'coulombic_efficiency_per_cell'
+        ce_data = data_dict.get(ce_key, [85] * len(time_data))
+        # If per-cell data, take average
+        if isinstance(ce_data, list) and ce_data and isinstance(ce_data[0], list):
+            ce_data = [sum(timepoint)/len(timepoint) if timepoint else 85 for timepoint in ce_data]
+        fig.add_trace(
+            go.Scatter(x=time_data, y=ce_data if ce_data else [85] * len(time_data),
+                      name='Coulombic Efficiency (%)', line=dict(color='blue', width=2)),
+            row=1, col=2
+        )
+    
+    # Power density
+    if 'total_power' in data_dict or 'power_density_per_cell' in data_dict:
+        power_key = 'total_power' if 'total_power' in data_dict else 'power_density_per_cell'
+        power_data = data_dict.get(power_key, [2.0] * len(time_data))
+        # If per-cell data, sum or average as appropriate
+        if isinstance(power_data, list) and power_data and isinstance(power_data[0], list):
+            if power_key == 'total_power':
+                power_data = [sum(timepoint) if timepoint else 2.0 for timepoint in power_data]
+            else:
+                power_data = [sum(timepoint)/len(timepoint) if timepoint else 2.0 for timepoint in power_data]
+        fig.add_trace(
+            go.Scatter(x=time_data, y=power_data if power_data else [2.0] * len(time_data),
+                      name='Power Density (W/m²)', line=dict(color='red', width=2)),
+            row=1, col=3
+        )
+    
+    # Cumulative energy
+    if 'total_energy_produced' in data_dict or 'energy_produced' in data_dict:
+        energy_key = 'total_energy_produced' if 'total_energy_produced' in data_dict else 'energy_produced'
+        energy_data = data_dict.get(energy_key, list(range(len(time_data))))
+        if energy_data:
+            # Calculate cumulative sum
+            cumulative_energy = []
+            cumsum = 0
+            for val in energy_data:
+                if isinstance(val, (int, float)):
+                    cumsum += val
+                elif isinstance(val, list) and val:
+                    cumsum += sum(val)
+                cumulative_energy.append(cumsum)
+        else:
+            cumulative_energy = list(range(len(time_data)))
+        
+        fig.add_trace(
+            go.Scatter(x=time_data, y=cumulative_energy,
+                      name='Cumulative Energy (Wh)', line=dict(color='purple', width=2)),
+            row=2, col=1
+        )
+    
+    # Control performance (error from setpoint)
+    if 'control_error' in data_dict:
+        control_error = data_dict.get('control_error', [0] * len(time_data))
+    elif 'outlet_concentration' in data_dict:
+        outlet_conc = data_dict.get('outlet_concentration', [25] * len(time_data))
+        control_error = [abs(25 - x) if isinstance(x, (int, float)) else 0 for x in outlet_conc]
+    else:
+        control_error = [0] * len(time_data)
+    
+    fig.add_trace(
+        go.Scatter(x=time_data, y=control_error,
+                  name='Control Error (mM)', line=dict(color='orange', width=2)),
+        row=2, col=2
+    )
+    
+    # Economic metrics (placeholder)
+    if 'operating_cost' in data_dict or 'revenue' in data_dict:
+        cost_data = data_dict.get('operating_cost', [1.0] * len(time_data))
+        revenue_data = data_dict.get('revenue', [2.0] * len(time_data))
+        profit = [(r - c) if isinstance(r, (int, float)) and isinstance(c, (int, float)) else 1.0 
+                 for r, c in zip(revenue_data, cost_data)]
+        fig.add_trace(
+            go.Scatter(x=time_data, y=profit,
+                      name='Profit ($/h)', line=dict(color='gold', width=2)),
+            row=2, col=3
+        )
+    
+    fig.update_layout(
+        title="Performance Analysis",
+        height=600,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_parameter_correlation_matrix(df):
+    """Create correlation matrix for key parameters"""
+    
+    # Handle both dict and DataFrame inputs
+    if isinstance(df, dict):
+        columns = df.keys()
+        data_dict = df
+    else:
+        columns = df.columns
+        data_dict = df.to_dict('list') if hasattr(df, 'to_dict') else df
+    
+    # Select numeric parameters for correlation analysis
+    key_params = []
+    numeric_data = {}
+    
+    for col in columns:
+        if col.startswith('time') or col.startswith('step'):
+            continue
+        
+        data = data_dict.get(col, [])
+        if not data:
+            continue
+        
+        # Handle different data types
+        if isinstance(data, list):
+            # For per-cell data, take mean at each timepoint
+            if data and isinstance(data[0], list):
+                try:
+                    numeric_values = [sum(timepoint)/len(timepoint) if timepoint else 0 for timepoint in data]
+                except (TypeError, ZeroDivisionError):
+                    continue
+            else:
+                # Check if it's numeric data
+                try:
+                    numeric_values = [float(x) if isinstance(x, (int, float)) else 0 for x in data]
+                except (ValueError, TypeError):
+                    continue
+        else:
+            continue
+        
+        # Only include if we have valid numeric data
+        if numeric_values and len(numeric_values) > 1:
+            key_params.append(col)
+            numeric_data[col] = numeric_values
+    
+    if len(key_params) < 2:
+        return None
+    
+    # Ensure all arrays have the same length
+    min_length = min(len(numeric_data[param]) for param in key_params)
+    for param in key_params:
+        numeric_data[param] = numeric_data[param][:min_length]
+    
+    # Calculate correlation matrix
+    import pandas as pd
+    temp_df = pd.DataFrame(numeric_data)
+    
+    try:
+        corr_matrix = temp_df.corr()
+    except Exception:
+        # Fallback: return None if correlation calculation fails
+        return None
+    
+    # Handle case where correlation matrix might have NaN values
+    corr_matrix = corr_matrix.fillna(0)
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=corr_matrix.values,
+        x=corr_matrix.columns,
+        y=corr_matrix.columns,
+        colorscale='RdBu',
+        zmid=0,
+        text=corr_matrix.round(2).values,
+        texttemplate="%{text}",
+        textfont={"size": 10},
+        hovertemplate='<b>%{y}</b> vs <b>%{x}</b><br>Correlation: %{z:.3f}<extra></extra>'
+    ))
+    
     fig.update_layout(
         height=600,
         showlegend=True,
