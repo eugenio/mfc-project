@@ -8,7 +8,7 @@ import sys
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 from datetime import datetime
 import argparse
 import json
@@ -20,6 +20,7 @@ from email.mime.multipart import MIMEMultipart
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
+# ruff: noqa: E402
 from ssl_config import (
     SSLConfig, CertificateManager, load_ssl_config, 
     initialize_ssl_infrastructure
@@ -133,9 +134,9 @@ This is an automated message from the MFC Monitoring System.
         except Exception as e:
             logger.error(f"Failed to send notification: {e}")
     
-    def monitor_certificate(self) -> Dict:
+    def monitor_certificate(self) -> Dict[str, Any]:
         """Monitor certificate status and return comprehensive report"""
-        report = {
+        report: Dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "domain": self.config.domain,
             "certificate_exists": False,
@@ -189,7 +190,7 @@ This is an automated message from the MFC Monitoring System.
                 cron = CronTab(user=True)
                 
                 for job in cron:
-                    if "mfc-cert-renewal" in job.command:
+                    if job.command and "mfc-cert-renewal" in job.command:
                         return True
                 
                 return False
