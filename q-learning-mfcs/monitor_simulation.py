@@ -7,7 +7,7 @@ import os
 import json
 import time
 import glob
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 def find_latest_simulation():
     """Find the latest simulation directory."""
@@ -92,7 +92,7 @@ def monitor_progress():
             with open(progress_file, 'r') as f:
                 final_progress = json.load(f)
             print(f"\nFinal status: {final_progress['progress_percent']:.1f}% complete")
-        except:
+        except (FileNotFoundError, json.JSONDecodeError, KeyError):
             pass
 
 if __name__ == "__main__":

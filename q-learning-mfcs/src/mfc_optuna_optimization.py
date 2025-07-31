@@ -196,7 +196,8 @@ class MFCOptunaOptimizer:
         sim.inlet_concentrations[0] = 20.0
         
         # Override reward calculation method with optimized parameters
-        original_calculate_reward = sim.unified_controller.calculate_unified_reward
+        # Store original method (currently unused but may be needed for restoration)
+        # original_calculate_reward = sim.unified_controller.calculate_unified_reward
         
         def optimized_reward_function(power, biofilm_deviation, substrate_utilization,
                                     outlet_conc, prev_power, prev_biofilm_dev, 
@@ -1003,7 +1004,7 @@ def main():
         print("="*80)
         
         best_configs = optimizer.get_top_configurations(study, n_configs=14)
-        validation_results = optimizer.run_extended_validation(best_configs)
+        optimizer.run_extended_validation(best_configs)  # Results printed internally
         
         print("Extended validation completed!")
         print("Use the best validated parameters to create an optimized MFC controller.")
