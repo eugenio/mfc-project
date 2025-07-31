@@ -163,8 +163,8 @@ class TestQCMConfig:
         assert config.frequency_shift_range == (0.0, 500.0)
         assert config.dissipation_range == (0.0, 0.01)
         
-        # Test electrode configuration
-        assert config.electrode_area == 0.196
+        # Test electrode configuration (5mm diameter electrode, 0.196 cm² = 0.196e-4 m²)
+        assert config.electrode_area == 0.196e-4
         
     def test_custom_initialization(self):
         """Test custom initialization with specific values."""

@@ -42,7 +42,7 @@ class TestConfigSaveLoad:
             assert loaded_config.learning_rate == config.learning_rate
             assert loaded_config.discount_factor == config.discount_factor
             assert loaded_config.epsilon == config.epsilon
-            assert loaded_config.rewards.power_weight == config.rewards.power_weight
+            assert loaded_config.reward_weights.power_weight == config.reward_weights.power_weight
             
         finally:
             filepath.unlink()
@@ -90,9 +90,9 @@ class TestConfigSaveLoad:
             loaded_config = load_config(filepath, SensorConfig)
             
             # Verify
-            assert loaded_config.eis.start_frequency == config.eis.start_frequency
-            assert loaded_config.qcm.fundamental_frequency == config.qcm.fundamental_frequency
-            assert loaded_config.fusion.method == config.fusion.method
+            assert loaded_config.eis.frequency_range == config.eis.frequency_range
+            assert loaded_config.qcm.sensitivity_5mhz == config.qcm.sensitivity_5mhz
+            assert loaded_config.fusion_method == config.fusion_method
             
         finally:
             filepath.unlink()
@@ -100,7 +100,7 @@ class TestConfigSaveLoad:
     def test_fusion_method_enum_preservation(self):
         """Test that FusionMethod enum is preserved through save/load."""
         config = SensorConfig()
-        config.fusion.method = FusionMethod.WEIGHTED_AVERAGE
+        config.fusion_method = FusionMethod.WEIGHTED_AVERAGE
         
         with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as f:
             filepath = Path(f.name)
@@ -109,8 +109,8 @@ class TestConfigSaveLoad:
             save_config(config, filepath)
             loaded_config = load_config(filepath, SensorConfig)
             
-            assert loaded_config.fusion.method == FusionMethod.WEIGHTED_AVERAGE
-            assert isinstance(loaded_config.fusion.method, FusionMethod)
+            assert loaded_config.fusion_method == FusionMethod.WEIGHTED_AVERAGE
+            assert isinstance(loaded_config.fusion_method, FusionMethod)
             
         finally:
             filepath.unlink()
@@ -166,7 +166,7 @@ class TestConfigMerge:
         """Test merging nested reward weights."""
         base_config = QLearningConfig()
         override = {
-            'rewards': {
+            'reward_weights': {
                 'power_weight': 20.0,
                 'biofilm_weight': 60.0
             }
@@ -174,25 +174,25 @@ class TestConfigMerge:
         
         merged = merge_configs(base_config, override)
         
-        assert merged.rewards.power_weight == 20.0
-        assert merged.rewards.biofilm_weight == 60.0
+        assert merged.reward_weights.power_weight == 20.0
+        assert merged.reward_weights.biofilm_weight == 60.0
         # Other reward weights should remain unchanged
-        assert merged.rewards.consumption_weight == base_config.rewards.consumption_weight
+        assert merged.reward_weights.consumption_weight == base_config.reward_weights.consumption_weight
     
     def test_merge_sensor_config(self):
         """Test merging sensor configurations."""
         base_config = SensorConfig()
         override = {
             'eis': {'noise_level': 0.001},
-            'qcm': {'frequency_resolution': 0.001},
-            'fusion': {'method': 'weighted_average'}
+            'qcm': {'frequency_noise': 0.001},
+            'fusion_method': 'weighted_average'
         }
         
         merged = merge_configs(base_config, override)
         
         assert merged.eis.noise_level == 0.001
-        assert merged.qcm.frequency_resolution == 0.001
-        assert merged.fusion.method == FusionMethod.WEIGHTED_AVERAGE
+        assert merged.qcm.frequency_noise == 0.001
+        assert merged.fusion_method == FusionMethod.WEIGHTED_AVERAGE
     
     def test_merge_invalid_raises_error(self):
         """Test that merging with invalid values raises error."""
@@ -221,8 +221,8 @@ class TestDataclassConversion:
         result = dataclass_to_dict(config)
         
         assert isinstance(result, dict)
-        assert isinstance(result['rewards'], dict)
-        assert result['rewards']['power_weight'] == config.rewards.power_weight
+        assert isinstance(result['reward_weights'], dict)
+        assert result['reward_weights']['power_weight'] == config.reward_weights.power_weight
     
     def test_dict_to_dataclass_qlearning(self):
         """Test dictionary to Q-learning config conversion."""
@@ -230,7 +230,7 @@ class TestDataclassConversion:
             'learning_rate': 0.3,
             'discount_factor': 0.8,
             'epsilon': 0.5,
-            'rewards': {
+            'reward_weights': {
                 'power_weight': 25.0,
                 'biofilm_weight': 75.0
             }
@@ -240,23 +240,19 @@ class TestDataclassConversion:
         
         assert config.learning_rate == 0.3
         assert config.discount_factor == 0.8
-        assert config.rewards.power_weight == 25.0
-        assert isinstance(config.rewards, QLearningRewardWeights)
+        assert config.reward_weights.power_weight == 25.0
+        assert isinstance(config.reward_weights, QLearningRewardWeights)
     
     def test_dict_to_dataclass_sensor(self):
         """Test dictionary to sensor config conversion."""
         data = {
             'eis': {'noise_level': 0.005},
-            'qcm': {'overtone_number': 7},
-            'fusion': {
-                'method': 'kalman_filter',
-                'eis_reliability': 0.99
-            }
+            'qcm': {'sensitivity_5mhz': 20.0},
+            'fusion_method': 'kalman_filter'
         }
         
         config = dict_to_dataclass(data, SensorConfig)
         
         assert config.eis.noise_level == 0.005
-        assert config.qcm.overtone_number == 7
-        assert config.fusion.method == FusionMethod.KALMAN_FILTER
-        assert config.fusion.eis_reliability == 0.99
+        assert config.qcm.sensitivity_5mhz == 20.0
+        assert config.fusion_method == FusionMethod.KALMAN_FILTER
