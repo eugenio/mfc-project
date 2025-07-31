@@ -148,6 +148,9 @@ cudnn = ">=8.0"
 # Minimal runtime environment for production
 runtime = []
 
+# Test runtime environment - minimal testing without hooks
+test-runtime = ["dev"]
+
 # Development environment with testing and linting tools
 dev = ["dev", "tools", "project"]
 
