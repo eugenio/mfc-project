@@ -24,28 +24,28 @@ def send_completion_email(results_file, recipient_email=None):
         results_file: Path to simulation results JSON file
         recipient_email: Email address to send notification to
     """
-    
+
     # Email configuration - you'll need to set these
     SMTP_SERVER = "smtp.gmail.com"  # Change for your email provider
     SMTP_PORT = 587
     SENDER_EMAIL = os.getenv("NOTIFICATION_EMAIL", "your-email@gmail.com")
     SENDER_PASSWORD = os.getenv("EMAIL_PASSWORD", "your-app-password")
-    
+
     if not recipient_email:
         recipient_email = os.getenv("RECIPIENT_EMAIL", "your-email@gmail.com")
-    
+
     try:
         # Load simulation results
         with open(results_file, 'r') as f:
             results = json.load(f)
-        
+
         # Create email content
         subject = "🎉 MFC 1-Year Simulation Complete!"
-        
+
         # Extract key metrics
         perf = results.get("performance_summary", {})
         maint = results.get("maintenance_requirements", {})
-        
+
         body = f"""
 MFC 1-Year Continuous Operation Simulation Complete!
 
@@ -78,28 +78,28 @@ Results saved to: {results_file}
 Best regards,
 MFC Simulation System
         """
-        
+
         # Create email message
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = recipient_email
         msg['Subject'] = subject
-        
+
         # Add body to email
         msg.attach(MIMEText(body, 'plain'))
-        
+
         # Attach results file
         with open(results_file, "rb") as attachment:
             part = MIMEBase('application', 'octet-stream')
             part.set_payload(attachment.read())
-        
+
         encoders.encode_base64(part)
         part.add_header(
             'Content-Disposition',
             f'attachment; filename= {os.path.basename(results_file)}'
         )
         msg.attach(part)
-        
+
         # Send email
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
@@ -107,9 +107,9 @@ MFC Simulation System
         text = msg.as_string()
         server.sendmail(SENDER_EMAIL, recipient_email, text)
         server.quit()
-        
+
         print(f"✅ Email notification sent successfully to {recipient_email}")
-        
+
     except Exception as e:
         print(f"❌ Failed to send email notification: {e}")
         print("💡 Make sure to set EMAIL environment variables:")
@@ -128,30 +128,30 @@ def setup_email_monitoring(pid_file, log_file):
     """
     import time
     import psutil
-    
+
     print("📧 Email monitoring setup...")
     print("💡 To configure email notifications:")
     print("   export NOTIFICATION_EMAIL='your-sender-email@gmail.com'")
-    print("   export EMAIL_PASSWORD='your-app-password'")  
+    print("   export EMAIL_PASSWORD='your-app-password'")
     print("   export RECIPIENT_EMAIL='your-recipient-email@gmail.com'")
     print()
-    
+
     try:
         with open(pid_file, 'r') as f:
             pid = int(f.read().strip())
-        
+
         print(f"🔍 Monitoring process {pid}...")
-        
+
         # Monitor process
         while True:
             if not psutil.pid_exists(pid):
                 print("🎉 Simulation process completed!")
-                
+
                 # Look for results file
                 import glob
                 results_pattern = "/home/uge/mfc-project/q-learning-mfcs/data/simulation_data/1year_optimized_*/1year_simulation_results_*.json"
                 results_files = glob.glob(results_pattern)
-                
+
                 if results_files:
                     latest_results = max(results_files, key=os.path.getctime)
                     print(f"📊 Found results file: {latest_results}")
@@ -159,11 +159,11 @@ def setup_email_monitoring(pid_file, log_file):
                 else:
                     print("⚠️  No results file found. Sending basic notification.")
                     # Could send basic completion email here
-                
+
                 break
-            
+
             time.sleep(300)  # Check every 5 minutes
-            
+
     except Exception as e:
         print(f"❌ Email monitoring failed: {e}")
 
