@@ -27,8 +27,19 @@ test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration 
 # CI-friendly test (with XML output)
 test-ci = "cd q-learning-mfcs/tests && python -m pytest . --junitxml=test-results.xml --cov=../src --cov-report=xml"
 
+# Linting and type checking
+ruff-check = "ruff check ."
+ruff-fix = "ruff check . --fix"
+ruff-check-mfc = "ruff check q-learning-mfcs/"
+ruff-fix-mfc = "ruff check q-learning-mfcs/ --fix"
+mypy-check = "mypy ."
+mypy-check-mfc = "mypy q-learning-mfcs/src/"
+black-format = "black ."
+black-format-mfc = "black q-learning-mfcs/"
+
 # Comprehensive validation (tests + linting)
-validate-all = "pixi run ruff check . && pixi run mypy . && pixi run test-all"
+validate-all = "pixi run ruff-check && pixi run mypy-check && pixi run test-all"
+validate-mfc = "pixi run ruff-check-mfc && pixi run mypy-check-mfc && pixi run test-all"
 
 # HTTPS/SSL Management Tasks
 ssl-init = "cd q-learning-mfcs/src/monitoring && python ssl_config.py --init"

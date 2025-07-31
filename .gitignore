@@ -162,3 +162,8 @@ protein-models-4-mfc/proteindt_model.bin
 .conda/packages/index.html
 .conda/packages/linux-64/index.html
 .conda/packages/linux-64/.cache/cache.db
+q-learning-mfcs/ssl_certificates/certs/mfc-monitoring.crt
+q-learning-mfcs/ssl_certificates/private/mfc-monitoring.key
+q-learning-mfcs/examples/exports
+q-learning-mfcs/examples/simulation_outputs
+q-learning-mfcs/simulation_outputs
