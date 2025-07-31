@@ -332,12 +332,17 @@ def load_recent_simulations():
 def create_real_time_plots(df):
     """Create real-time monitoring plots"""
     
-    # Create subplots
+    # Create subplots - 4x3 grid to accommodate all plots
     fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=('Substrate Concentration', 'Power Output', 'Q-Learning Actions', 'Biofilm Growth'),
-        specs=[[{"secondary_y": False}, {"secondary_y": False}],
-               [{"secondary_y": False}, {"secondary_y": False}]]
+        rows=4, cols=3,
+        subplot_titles=('Substrate Concentration', 'Power Output', 'System Voltage', 
+                       'Q-Learning Actions', 'Biofilm Growth', 'Flow Control',
+                       'Individual Cell Powers', 'Mixing & Control', 'Q-Values & Rewards',
+                       'Cumulative Energy', '', ''),
+        specs=[[{"secondary_y": False}, {"secondary_y": False}, {"secondary_y": False}],
+               [{"secondary_y": False}, {"secondary_y": False}, {"secondary_y": True}],
+               [{"secondary_y": False}, {"secondary_y": True}, {"secondary_y": True}],
+               [{"secondary_y": False}, {"secondary_y": False}, {"secondary_y": False}]]
     )
     
     # Substrate concentration plot
