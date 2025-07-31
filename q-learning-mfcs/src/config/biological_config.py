@@ -33,7 +33,7 @@ class LiteratureReference:
     doi: Optional[str] = None
     pmid: Optional[str] = None
     pages: Optional[str] = None
-    
+
     def __str__(self) -> str:
         return f"{self.authors} ({self.year}). {self.title}. {self.journal}."
 
@@ -41,20 +41,20 @@ class LiteratureReference:
 @dataclass
 class KineticParameters:
     """Kinetic parameters for enzymatic reactions with literature references."""
-    
+
     # Michaelis-Menten parameters
     vmax: float  # Maximum reaction rate (mmol/gDW/h)
     km: float    # Michaelis constant (mmol/L)
     ki: Optional[float] = None  # Inhibition constant (mmol/L)
-    
+
     # Temperature dependence
     ea: float = 50.0  # Activation energy (kJ/mol)
     temperature_ref: float = 303.0  # Reference temperature (K)
-    
+
     # pH dependence
     ph_optimal: float = 7.0  # Optimal pH
     ph_tolerance: float = 1.0  # pH tolerance range
-    
+
     # Literature reference
     reference: Optional[LiteratureReference] = None
 
@@ -62,28 +62,28 @@ class KineticParameters:
 @dataclass
 class MetabolicReactionConfig:
     """Configuration for a single metabolic reaction."""
-    
+
     id: str  # Reaction identifier
     name: str  # Reaction name
     equation: str  # Balanced chemical equation
-    
+
     # Stoichiometry
     stoichiometry: Dict[str, float]  # {metabolite: coefficient}
-    
+
     # Enzyme information
     enzyme_name: str
-    
+
     # Kinetic parameters
     kinetics: KineticParameters
-    
+
     # Thermodynamics
     delta_g0: float  # Standard Gibbs free energy (kJ/mol)
-    
+
     # Optional fields with defaults
     ec_number: Optional[str] = None
     kegg_id: Optional[str] = None
     reversible: bool = True
-    
+
     # Flux constraints
     flux_lower_bound: float = -1000.0  # mmol/gDW/h
     flux_upper_bound: float = 1000.0   # mmol/gDW/h
@@ -92,34 +92,34 @@ class MetabolicReactionConfig:
 @dataclass
 class SpeciesMetabolicConfig:
     """Species-specific metabolic configuration."""
-    
+
     species: BacterialSpecies
-    
+
     # Central metabolism reactions
     reactions: List[MetabolicReactionConfig] = field(default_factory=list)
-    
+
     # Key metabolite concentrations (mmol/L)
     metabolite_concentrations: Dict[str, float] = field(default_factory=dict)
-    
+
     # Electron transport parameters
     electron_transport_efficiency: float = 0.85  # Efficiency of electron transport to electrode
     cytochrome_content: float = 0.1  # mmol cytochrome c per gDW
-    
+
     # Growth parameters
     max_growth_rate: float = 0.3  # 1/h - maximum specific growth rate
     maintenance_coefficient: float = 0.05  # 1/h - maintenance energy coefficient
     yield_coefficient: float = 0.1  # gDW/mmol substrate
-    
+
     # Biofilm formation parameters
     attachment_rate: float = 0.1  # 1/h - cell attachment rate
     detachment_rate: float = 0.01  # 1/h - cell detachment rate
     max_biofilm_thickness: float = 100.0  # μm - maximum sustainable thickness
-    
+
     # Environmental tolerances
     temperature_range: Tuple[float, float] = (273.0, 333.0)  # K
     ph_range: Tuple[float, float] = (5.0, 9.0)
     salinity_tolerance: float = 0.5  # M NaCl
-    
+
     # Literature references
     references: List[LiteratureReference] = field(default_factory=list)
 
@@ -127,28 +127,28 @@ class SpeciesMetabolicConfig:
 @dataclass
 class SubstrateProperties:
     """Properties of organic substrates."""
-    
+
     substrate: SubstrateType
-    
+
     # Chemical properties
     molecular_weight: float  # g/mol
     formula: str  # Chemical formula
-    
+
     # Thermodynamic properties
     delta_g_formation: float  # kJ/mol - standard Gibbs free energy of formation
     delta_h_formation: float  # kJ/mol - standard enthalpy of formation
-    
+
     # Solubility and transport
     solubility: float  # g/L - water solubility at 25°C
     diffusion_coefficient: float  # cm²/s - diffusion coefficient in water
-    
+
     # Biodegradation properties
     electron_equivalents: float  # electrons per molecule
     theoretical_cod: float  # mg COD/mg substrate
-    
+
     # Uptake kinetics (species-specific)
     uptake_kinetics: Dict[BacterialSpecies, KineticParameters] = field(default_factory=dict)
-    
+
     # Literature reference
     reference: Optional[LiteratureReference] = None
 
@@ -156,12 +156,12 @@ class SubstrateProperties:
 @dataclass
 class BiofilmKineticsConfig:
     """Configuration for biofilm formation and growth kinetics."""
-    
+
     # Physical properties
     biofilm_density: float = 1050.0  # kg/m³ - typical biofilm density
     porosity: float = 0.8  # Void fraction in biofilm
     tortuosity: float = 1.5  # Diffusion tortuosity factor
-    
+
     # Growth kinetics
     monod_kinetics: Dict[str, float] = field(default_factory=lambda: {
         'max_growth_rate': 0.3,  # 1/h
@@ -169,7 +169,7 @@ class BiofilmKineticsConfig:
         'yield_coefficient': 0.1,  # gDW/mmol
         'decay_rate': 0.001  # 1/h
     })
-    
+
     # Nernst-Monod parameters for electroactive biofilms
     nernst_monod: Dict[str, float] = field(default_factory=lambda: {
         'standard_potential': -0.3,  # V vs SHE
@@ -177,7 +177,7 @@ class BiofilmKineticsConfig:
         'biofilm_conductivity': 0.005,  # S/m
         'double_layer_capacitance': 1e-6  # F/cm²
     })
-    
+
     # Mass transfer coefficients
     mass_transfer: Dict[str, float] = field(default_factory=lambda: {
         'boundary_layer_thickness': 0.1,  # mm
@@ -185,7 +185,7 @@ class BiofilmKineticsConfig:
         'oxygen_diffusivity': 2.0e-9,  # m²/s
         'product_diffusivity': 0.8e-9  # m²/s
     })
-    
+
     # Biofilm structure parameters
     structure: Dict[str, float] = field(default_factory=lambda: {
         'critical_thickness': 50.0,  # μm - critical thickness for layering
@@ -193,7 +193,7 @@ class BiofilmKineticsConfig:
         'compaction_factor': 0.9,  # Compaction with age
         'roughness_factor': 1.2  # Surface roughness multiplier
     })
-    
+
     # Literature references
     references: List[LiteratureReference] = field(default_factory=list)
 
@@ -201,12 +201,12 @@ class BiofilmKineticsConfig:
 @dataclass
 class ElectrochemicalConfig:
     """Configuration for electrochemical parameters."""
-    
+
     # Fundamental constants
     faraday_constant: float = 96485.0  # C/mol
     gas_constant: float = 8.314  # J/mol/K
     avogadro_number: float = 6.022e23  # 1/mol
-    
+
     # Standard electrode potentials (V vs SHE)
     standard_potentials: Dict[str, float] = field(default_factory=lambda: {
         'acetate_co2': -0.28,  # Acetate/CO2 couple
@@ -215,7 +215,7 @@ class ElectrochemicalConfig:
         'cytochrome_c': 0.22,  # Cytochrome c (ox/red)
         'fumarate_succinate': 0.03  # Fumarate/succinate couple
     })
-    
+
     # Electrode materials
     electrode_properties: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
         'carbon_cloth': {
@@ -231,7 +231,7 @@ class ElectrochemicalConfig:
             'roughness_factor': 1.0
         }
     })
-    
+
     # Membrane properties
     membrane_properties: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
         'nafion_117': {
@@ -247,7 +247,7 @@ class ElectrochemicalConfig:
             'water_uptake': 10.0  # H2O/SO3H
         }
     })
-    
+
     # Literature references
     references: List[LiteratureReference] = field(default_factory=list)
 
@@ -302,7 +302,7 @@ LITERATURE_REFERENCES = {
 # Default configurations for common species
 def get_geobacter_config() -> SpeciesMetabolicConfig:
     """Get default configuration for Geobacter sulfurreducens."""
-    
+
     # Acetyl-CoA synthetase kinetics
     acetyl_coa_synthetase_kinetics = KineticParameters(
         vmax=15.0,  # mmol/gDW/h
@@ -311,7 +311,7 @@ def get_geobacter_config() -> SpeciesMetabolicConfig:
         ph_optimal=7.0,
         reference=LITERATURE_REFERENCES['lovley_2003']
     )
-    
+
     # Define acetyl-CoA synthetase reaction
     acetyl_coa_synthetase = MetabolicReactionConfig(
         id="GSU_R001",
@@ -330,7 +330,7 @@ def get_geobacter_config() -> SpeciesMetabolicConfig:
         flux_lower_bound=0.0,
         flux_upper_bound=20.0
     )
-    
+
     metabolite_concentrations = {
         "acetate": 10.0,  # mmol/L
         "lactate": 0.0,
@@ -347,13 +347,13 @@ def get_geobacter_config() -> SpeciesMetabolicConfig:
         "o2": 0.001,  # Low oxygen (anaerobic)
         "h_plus": 1e-4  # pH 7.0 in mol/L
     }
-    
+
     references = [
         LITERATURE_REFERENCES['lovley_2003'],
         LITERATURE_REFERENCES['bond_2002'],
         LITERATURE_REFERENCES['reguera_2005']
     ]
-    
+
     return SpeciesMetabolicConfig(
         species=BacterialSpecies.GEOBACTER_SULFURREDUCENS,
         reactions=[acetyl_coa_synthetase],  # Add more reactions as needed
@@ -375,7 +375,7 @@ def get_geobacter_config() -> SpeciesMetabolicConfig:
 
 def get_shewanella_config() -> SpeciesMetabolicConfig:
     """Get default configuration for Shewanella oneidensis MR-1."""
-    
+
     # Lactate dehydrogenase kinetics
     lactate_dehydrogenase_kinetics = KineticParameters(
         vmax=25.0,  # mmol/gDW/h
@@ -384,7 +384,7 @@ def get_shewanella_config() -> SpeciesMetabolicConfig:
         ph_optimal=7.2,
         reference=LITERATURE_REFERENCES['marsili_2008']
     )
-    
+
     # Define lactate dehydrogenase reaction
     lactate_dehydrogenase = MetabolicReactionConfig(
         id="MR1_R001",
@@ -403,7 +403,7 @@ def get_shewanella_config() -> SpeciesMetabolicConfig:
         flux_lower_bound=-50.0,
         flux_upper_bound=50.0
     )
-    
+
     metabolite_concentrations = {
         "acetate": 0.0,
         "lactate": 10.0,  # mmol/L
@@ -420,12 +420,12 @@ def get_shewanella_config() -> SpeciesMetabolicConfig:
         "o2": 0.002,  # Slightly more oxygen tolerant
         "h_plus": 1e-4  # pH 7.0 in mol/L
     }
-    
+
     references = [
         LITERATURE_REFERENCES['marsili_2008'],
         LITERATURE_REFERENCES['torres_2010']
     ]
-    
+
     return SpeciesMetabolicConfig(
         species=BacterialSpecies.SHEWANELLA_ONEIDENSIS,
         reactions=[lactate_dehydrogenase],  # Add more reactions as needed
@@ -447,7 +447,7 @@ def get_shewanella_config() -> SpeciesMetabolicConfig:
 
 def get_default_substrate_properties() -> Dict[SubstrateType, SubstrateProperties]:
     """Get default substrate properties for common substrates."""
-    
+
     acetate_uptake = {
         BacterialSpecies.GEOBACTER_SULFURREDUCENS: KineticParameters(
             vmax=20.0, km=0.5, ea=45.0,
@@ -458,7 +458,7 @@ def get_default_substrate_properties() -> Dict[SubstrateType, SubstratePropertie
             reference=LITERATURE_REFERENCES['marsili_2008']
         )
     }
-    
+
     lactate_uptake = {
         BacterialSpecies.GEOBACTER_SULFURREDUCENS: KineticParameters(
             vmax=5.0, km=2.0, ea=52.0,  # Limited lactate utilization
@@ -469,7 +469,7 @@ def get_default_substrate_properties() -> Dict[SubstrateType, SubstratePropertie
             reference=LITERATURE_REFERENCES['marsili_2008']
         )
     }
-    
+
     return {
         SubstrateType.ACETATE: SubstrateProperties(
             substrate=SubstrateType.ACETATE,
@@ -483,7 +483,7 @@ def get_default_substrate_properties() -> Dict[SubstrateType, SubstratePropertie
             theoretical_cod=1.07,  # mg COD/mg acetate
             uptake_kinetics=acetate_uptake
         ),
-        
+
         SubstrateType.LACTATE: SubstrateProperties(
             substrate=SubstrateType.LACTATE,
             molecular_weight=90.08,  # g/mol
@@ -501,12 +501,12 @@ def get_default_substrate_properties() -> Dict[SubstrateType, SubstratePropertie
 
 def get_default_biofilm_config() -> BiofilmKineticsConfig:
     """Get default biofilm kinetics configuration."""
-    
+
     references = [
         LITERATURE_REFERENCES['marcus_2007'],
         LITERATURE_REFERENCES['torres_2010']
     ]
-    
+
     return BiofilmKineticsConfig(
         biofilm_density=1050.0,  # kg/m³
         porosity=0.8,
@@ -517,10 +517,10 @@ def get_default_biofilm_config() -> BiofilmKineticsConfig:
 
 def get_default_electrochemical_config() -> ElectrochemicalConfig:
     """Get default electrochemical configuration."""
-    
+
     references = [
         LITERATURE_REFERENCES['bond_2002'],
         LITERATURE_REFERENCES['torres_2010']
     ]
-    
+
     return ElectrochemicalConfig(references=references)
