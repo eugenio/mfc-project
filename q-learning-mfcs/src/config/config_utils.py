@@ -30,8 +30,12 @@ import os
 import yaml
 import json
 import re
+import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any, Union, Type
+from typing import Dict, List, Tuple, Optional, Any, Union, Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 from dataclasses import dataclass, field, fields, is_dataclass
 import logging
 from datetime import datetime
@@ -352,7 +356,7 @@ def validate_config_schema(config: Dict[str, Any],
     return result
 
 
-def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
+def dataclass_to_dict(obj: Any) -> Any:
     """
     Convert dataclass instance to dictionary recursively.
     
@@ -421,7 +425,7 @@ def merge_config_files(*file_paths: Union[str, Path],
     Returns:
         Merged configuration dictionary
     """
-    merged_config = {}
+    merged_config: Dict[str, Any] = {}
     
     for file_path in file_paths:
         file_path = Path(file_path)
@@ -727,7 +731,7 @@ def validate_config_types(config: Dict[str, Any]) -> List[str]:
     errors = []
     
     # Define expected types for common configuration paths
-    type_checks = {
+    type_checks: Dict[str, Union[Type, Tuple[Type, ...]]] = {
         "control.flow_control.min_flow_rate": (int, float),
         "control.flow_control.max_flow_rate": (int, float),
         "control.advanced_control.learning_rate": (int, float),
