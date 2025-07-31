@@ -71,7 +71,7 @@ def convert_lists_to_tuples_for_dataclass(data: Dict[str, Any], dataclass_type: 
     tuple_fields = {
         'QLearningConfig': [],
         'StateSpaceConfig': [
-            'power_range', 'biofilm_range', 'substrate_range', 
+            'power_range', 'biofilm_range', 'substrate_range',
             'reservoir_substrate_range', 'cell_substrate_range', 'outlet_substrate_range',
             'outlet_error_range', 'flow_rate_range'
         ],
@@ -79,13 +79,13 @@ def convert_lists_to_tuples_for_dataclass(data: Dict[str, Any], dataclass_type: 
         'QCMConfig': ['mass_range', 'frequency_shift_range', 'dissipation_range'],
         'SensorFusionConfig': []
     }
-    
+
     class_name = dataclass_type.__name__
     if class_name in tuple_fields:
         for field in tuple_fields[class_name]:
             if field in data and isinstance(data[field], list):
                 data[field] = tuple(data[field])
-    
+
     return data
 
 
@@ -102,7 +102,7 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
     """
     # Convert lists back to tuples where needed
     data = convert_lists_to_tuples_for_dataclass(data, dataclass_type)
-    
+
     # Filter out fields that have init=False
     if hasattr(dataclass_type, '__dataclass_fields__'):
         init_fields = {
@@ -110,7 +110,7 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
             if field.init
         }
         data = {key: value for key, value in data.items() if key in init_fields}
-    
+
     # Handle nested dataclasses
     if dataclass_type == QLearningConfig:
         if 'reward_weights' in data and isinstance(data['reward_weights'], dict):
@@ -131,11 +131,11 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
         if 'fusion' in data and isinstance(data['fusion'], dict):
             fusion_data = convert_lists_to_tuples_for_dataclass(data['fusion'], SensorFusionConfig)
             data['fusion'] = SensorFusionConfig(**fusion_data)
-    
+
     return dataclass_type(**data)
 
 
-def save_config(config: Union[QLearningConfig, SensorConfig], 
+def save_config(config: Union[QLearningConfig, SensorConfig],
                 filepath: Union[str, Path],
                 format: str = 'yaml') -> None:
     """
@@ -157,14 +157,14 @@ def save_config(config: Union[QLearningConfig, SensorConfig],
         validate_sensor_config(config)
     else:
         raise ValueError(f"Unsupported configuration type: {type(config)}")
-    
+
     # Convert to dictionary
     config_dict = dataclass_to_dict(config)
-    
+
     # Ensure path exists
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Save based on format
     if format.lower() == 'yaml':
         with open(filepath, 'w') as f:
@@ -174,11 +174,11 @@ def save_config(config: Union[QLearningConfig, SensorConfig],
             json.dump(config_dict, f, indent=2)
     else:
         raise ValueError(f"Unsupported format: {format}. Use 'yaml' or 'json'")
-    
+
     logger.info(f"Configuration saved to {filepath}")
 
 
-def load_config(filepath: Union[str, Path], 
+def load_config(filepath: Union[str, Path],
                 config_type: type) -> Union[QLearningConfig, SensorConfig]:
     """
     Load configuration from file.
@@ -196,10 +196,10 @@ def load_config(filepath: Union[str, Path],
         ConfigValidationError: If configuration is invalid
     """
     filepath = Path(filepath)
-    
+
     if not filepath.exists():
         raise FileNotFoundError(f"Configuration file not found: {filepath}")
-    
+
     # Load based on file extension
     if filepath.suffix.lower() in ['.yaml', '.yml']:
         with open(filepath, 'r') as f:
@@ -209,16 +209,16 @@ def load_config(filepath: Union[str, Path],
             config_dict = json.load(f)
     else:
         raise ValueError(f"Unsupported file format: {filepath.suffix}")
-    
+
     # Convert to dataclass
     config = dict_to_dataclass(config_dict, config_type)
-    
+
     # Validate configuration
     if isinstance(config, QLearningConfig):
         validate_qlearning_config(config)
     elif isinstance(config, SensorConfig):
         validate_sensor_config(config)
-    
+
     logger.info(f"Configuration loaded from {filepath}")
     return config
 
@@ -237,7 +237,7 @@ def merge_configs(base_config: Union[QLearningConfig, SensorConfig],
     """
     # Convert base config to dict
     config_dict = dataclass_to_dict(base_config)
-    
+
     # Deep merge override values
     def deep_merge(base: dict, override: dict) -> dict:
         result = base.copy()
@@ -247,17 +247,17 @@ def merge_configs(base_config: Union[QLearningConfig, SensorConfig],
             else:
                 result[key] = value
         return result
-    
+
     merged_dict = deep_merge(config_dict, override_dict)
-    
+
     # Convert back to dataclass
     config_type = type(base_config)
     merged_config = dict_to_dataclass(merged_dict, config_type)
-    
+
     # Validate merged configuration
     if isinstance(merged_config, QLearningConfig):
         validate_qlearning_config(merged_config)
     elif isinstance(merged_config, SensorConfig):
         validate_sensor_config(merged_config)
-    
+
     return merged_config
