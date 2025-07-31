@@ -44,7 +44,7 @@ from collections import deque
 
 # Async and threading support
 try:
-    import asyncio
+    import asyncio  # noqa: F401
     HAS_ASYNCIO = True
 except ImportError:
     HAS_ASYNCIO = False
@@ -61,8 +61,8 @@ except ImportError:
 
 # Time series analysis
 try:
-    from statsmodels.tsa.seasonal import seasonal_decompose
-    from statsmodels.tsa.holtwinters import ExponentialSmoothing
+    from statsmodels.tsa.seasonal import seasonal_decompose  # noqa: F401
+    from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: F401
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
@@ -71,7 +71,7 @@ except ImportError:
 # Anomaly detection
 try:
     from sklearn.ensemble import IsolationForest
-    from sklearn.preprocessing import StandardScaler
+    from sklearn.preprocessing import StandardScaler  # noqa: F401
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
@@ -237,7 +237,7 @@ class StreamBuffer:
             max_size: Maximum number of data points to store
         """
         self.max_size = max_size
-        self.buffer = deque(maxlen=max_size)
+        self.buffer: deque[Dict[str, Any]] = deque(maxlen=max_size)
         self.lock = threading.Lock()
         self.total_points = 0
     
@@ -294,8 +294,8 @@ class DataStream(ABC):
         self.buffer = StreamBuffer(buffer_size)
         self.is_active = False
         self.logger = logging.getLogger(__name__)
-        self.callbacks = []
-        self.stats = {}
+        self.callbacks: List[Callable[[DataPoint], None]] = []
+        self.stats: Dict[str, Any] = {}
     
     @abstractmethod
     def start(self):
@@ -447,7 +447,7 @@ class StreamProcessor:
             processing_config: Configuration for processing pipeline
         """
         self.config = processing_config
-        self.processors = []
+        self.processors: List[Any] = []
         self.logger = logging.getLogger(__name__)
         
         # Initialize processing pipeline
