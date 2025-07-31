@@ -41,6 +41,10 @@ black-format-mfc = "black q-learning-mfcs/"
 validate-all = "pixi run ruff-check && pixi run mypy-check && pixi run test-all"
 validate-mfc = "pixi run ruff-check-mfc && pixi run mypy-check-mfc && pixi run test-all"
 
+# GUI Tasks
+gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
+gui-enhanced = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
+
 # HTTPS/SSL Management Tasks
 ssl-init = "cd q-learning-mfcs/src/monitoring && python ssl_config.py --init"
 ssl-test = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py --test-ssl"
