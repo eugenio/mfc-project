@@ -31,11 +31,11 @@ class TestQLearningRewardWeights:
         """Test default initialization of reward weights."""
         weights = QLearningRewardWeights()
         
-        # Test default values
-        assert weights.power_weight == 10.0
+        # Test Bayesian optimized default values
+        assert weights.power_weight == 18.450199366779497
         assert weights.consumption_weight == 5.0
-        assert weights.efficiency_weight == 20.0
-        assert weights.biofilm_weight == 50.0
+        assert weights.efficiency_weight == 10.45562341841683
+        assert weights.biofilm_weight == 76.25366956196135
         assert weights.efficiency_threshold == 0.5
         assert weights.biofilm_penalty < 0  # Should be negative penalty
         assert weights.combined_penalty < 0  # Should be negative penalty
@@ -93,13 +93,13 @@ class TestQLearningConfig:
         assert config.learning_rate == 0.1
         assert config.discount_factor == 0.95
         assert config.epsilon == 0.3
-        assert config.epsilon_decay == 0.995
-        assert config.epsilon_min == 0.1
+        assert config.epsilon_decay == 0.9995
+        assert config.epsilon_min == 0.01
         
-        # Test enhanced parameters
-        assert config.enhanced_learning_rate == 0.0987
-        assert config.enhanced_discount_factor == 0.9517
-        assert config.enhanced_epsilon == 0.3702
+        # Test enhanced parameters (Bayesian optimized)
+        assert config.enhanced_learning_rate == 0.010698320638589937
+        assert config.enhanced_discount_factor == 0.9609992557261428
+        assert config.enhanced_epsilon == 0.40064536992631566
         
         # Test state space parameters
         assert config.power_bins == 10
@@ -127,13 +127,13 @@ class TestQLearningConfig:
         assert config.power_bins == 8
         assert config.sensor_weight == 0.5
         # Other values should be defaults
-        assert config.epsilon_decay == 0.995
+        assert config.epsilon_decay == 0.9995
         
     def test_reward_weights_initialization(self):
         """Test that reward weights are properly initialized."""
         config = QLearningConfig()
         assert isinstance(config.reward_weights, QLearningRewardWeights)
-        assert config.reward_weights.power_weight == 10.0
+        assert config.reward_weights.power_weight == 18.450199366779497
         
     def test_action_space_lists(self):
         """Test action space list initialization."""
