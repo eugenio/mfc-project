@@ -144,9 +144,9 @@ def run_1year_simulation():
     print(f"   Discount factor: {config.enhanced_discount_factor:.4f}")
     print(f"   Initial epsilon: {config.enhanced_epsilon:.4f}")
     print(f"   Epsilon decay: {config.advanced_epsilon_decay:.6f}")
-    print(f"   Power weight: {config.rewards.power_weight:.2f}")
-    print(f"   Substrate reward multiplier: {config.rewards.substrate_reward_multiplier:.2f}")
-    print(f"   Biofilm weight: {config.rewards.biofilm_weight:.2f}")
+    print(f"   Power weight: {config.reward_weights.power_weight:.2f}")
+    print(f"   Substrate reward multiplier: {config.reward_weights.substrate_reward_multiplier:.2f}")
+    print(f"   Biofilm weight: {config.reward_weights.biofilm_weight:.2f}")
     
     # Start simulation
     start_time = time.time()
@@ -220,9 +220,9 @@ def run_1year_simulation():
             "discount_factor": config.enhanced_discount_factor,
             "epsilon_initial": config.enhanced_epsilon,
             "epsilon_decay": config.advanced_epsilon_decay,
-            "power_weight": config.rewards.power_weight,
-            "substrate_reward_multiplier": config.rewards.substrate_reward_multiplier,
-            "biofilm_weight": config.rewards.biofilm_weight
+            "power_weight": config.reward_weights.power_weight,
+            "substrate_reward_multiplier": config.reward_weights.substrate_reward_multiplier,
+            "biofilm_weight": config.reward_weights.biofilm_weight
         }
     }
     
