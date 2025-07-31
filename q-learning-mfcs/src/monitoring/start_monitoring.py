@@ -167,6 +167,8 @@ class MonitoringService:
 class MonitoringOrchestrator:
     """Orchestrates all monitoring services with HTTPS support"""
     
+    ssl_config: Optional[SSLConfig]
+    
     def __init__(self, ssl_config: Optional[SSLConfig] = None):
         self.ssl_config = ssl_config or load_ssl_config()
         self.services: List[MonitoringService] = []

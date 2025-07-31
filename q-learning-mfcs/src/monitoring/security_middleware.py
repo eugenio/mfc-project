@@ -12,20 +12,19 @@ import secrets
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Any
 import json
 import base64
-
-from fastapi import Request, Response, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from ssl_config import SSLConfig, SecurityHeaders, load_ssl_config
+from ssl_config import SSLConfig, SecurityHeaders, load_ssl_config  # noqa: E402
+from fastapi import Request, Response, HTTPException, Depends  # noqa: E402
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials  # noqa: E402
+from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
+from starlette.responses import RedirectResponse  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -119,7 +118,7 @@ class SessionManager:
         self.config = config
         self.active_sessions: Dict[str, Dict] = {}
     
-    def create_session(self, user_id: str, user_data: Dict = None) -> str:
+    def create_session(self, user_id: str, user_data: Optional[Dict[str, Any]] = None) -> str:
         """Create a new session"""
         session_id = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(minutes=self.config.session_timeout_minutes)
