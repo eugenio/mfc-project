@@ -130,7 +130,13 @@ class ParameterSpace:
         
         Args:
             parameters: List of parameter definitions
+            
+        Raises:
+            ValueError: If parameters list is empty
         """
+        if not parameters:
+            raise ValueError("Parameter space cannot be empty")
+            
         self.parameters = parameters
         self.parameter_names = [p.name for p in parameters]
         self.n_parameters = len(parameters)
