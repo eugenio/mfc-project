@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import copy
 
 from .qlearning_config import (
-    QLearningConfig, 
+    QLearningConfig,
     DEFAULT_QLEARNING_CONFIG
 )
 from .literature_database import LITERATURE_DB
@@ -24,7 +24,7 @@ from .literature_database import LITERATURE_DB
 @dataclass
 class ParameterMappingRule:
     """Rule for mapping literature parameters to configuration parameters."""
-    
+
     literature_name: str  # Name in literature database
     config_attribute: str  # Attribute path in configuration (e.g., 'learning_rate' or 'reward_weights.power_weight')
     conversion_factor: float = 1.0  # Conversion factor if units differ
@@ -34,15 +34,15 @@ class ParameterMappingRule:
 
 class ParameterBridge:
     """Bridge between literature database and Q-learning configuration."""
-    
+
     def __init__(self):
         """Initialize parameter bridge with mapping rules."""
         self.literature_db = LITERATURE_DB
         self.mapping_rules = self._define_mapping_rules()
-        
+
     def _define_mapping_rules(self) -> Dict[str, ParameterMappingRule]:
         """Define mapping rules between literature parameters and config attributes."""
-        
+
         rules = {
             # Q-Learning Parameters
             'learning_rate': ParameterMappingRule(
@@ -60,14 +60,14 @@ class ParameterBridge:
                 config_attribute='epsilon',
                 notes='Maps to epsilon in epsilon-greedy exploration'
             ),
-            
+
             # Electrochemical Parameters
             'electrode_area': ParameterMappingRule(
                 literature_name='electrode_area',
                 config_attribute='anode_area_per_cell',
                 notes='Maps to anode area per cell'
             ),
-            
+
             # Biological Parameters
             'max_current_density': ParameterMappingRule(
                 literature_name='max_current_density',
@@ -101,7 +101,7 @@ class ParameterBridge:
                 config_attribute='biofilm_physics.biofilm_density',
                 notes='Wet density of bacterial biofilm'
             ),
-            
+
             # Substrate Parameters
             'substrate_concentration': ParameterMappingRule(
                 literature_name='substrate_concentration',
@@ -114,9 +114,9 @@ class ParameterBridge:
                 notes='Target flow rate for stability'
             )
         }
-        
+
         return rules
-    
+
     def validate_parameter_with_literature(self, config_key: str, value: float) -> Dict[str, Any]:
         """
         Validate a configuration parameter against literature ranges.
@@ -134,28 +134,28 @@ class ParameterBridge:
                 'message': f'Parameter {config_key} not mapped to literature database',
                 'recommendations': []
             }
-        
+
         rule = self.mapping_rules[config_key]
-        
+
         # Convert value if needed
         literature_value = value / rule.conversion_factor
-        
+
         # Validate against literature database
         validation = self.literature_db.validate_parameter_value(
-            rule.literature_name, 
+            rule.literature_name,
             literature_value
         )
-        
+
         # Add conversion information to validation result
         if rule.conversion_factor != 1.0:
             validation['converted_value'] = literature_value
             validation['conversion_factor'] = rule.conversion_factor
             validation['original_value'] = value
-        
+
         validation['mapping_rule'] = rule
-        
+
         return validation
-    
+
     def create_literature_validated_config(self, parameter_values: Dict[str, float]) -> Tuple[QLearningConfig, Dict[str, Any]]:
         """
         Create a Q-learning configuration from literature-validated parameters.
@@ -169,61 +169,61 @@ class ParameterBridge:
         # Start with default configuration
         config = copy.deepcopy(DEFAULT_QLEARNING_CONFIG)
         validation_results = {}
-        
+
         # Apply parameter values with validation
         for lit_param_name, value in parameter_values.items():
             # Find mapping rule for this literature parameter
             mapping_rule = None
-            
+
             for key, rule in self.mapping_rules.items():
                 if rule.literature_name == lit_param_name:
                     mapping_rule = rule
                     break
-            
+
             if not mapping_rule:
                 validation_results[lit_param_name] = {
                     'status': 'unmapped',
                     'message': f'No mapping rule found for literature parameter {lit_param_name}'
                 }
                 continue
-            
+
             # Validate parameter
             if mapping_rule.validation_required:
                 validation = self.literature_db.validate_parameter_value(lit_param_name, value)
                 validation_results[lit_param_name] = validation
-                
+
                 # Only apply valid parameters
                 if validation['status'] not in ['valid', 'caution']:
                     continue
-            
+
             # Apply parameter to configuration
             config_value = value * mapping_rule.conversion_factor
             self._set_nested_attribute(config, mapping_rule.config_attribute, config_value)
-        
+
         return config, validation_results
-    
+
     def _set_nested_attribute(self, obj: Any, attr_path: str, value: Any):
         """Set nested attribute using dot notation."""
         attrs = attr_path.split('.')
         current_obj = obj
-        
+
         # Navigate to the parent object
         for attr in attrs[:-1]:
             current_obj = getattr(current_obj, attr)
-        
+
         # Set the final attribute
         setattr(current_obj, attrs[-1], value)
-    
+
     def _get_nested_attribute(self, obj: Any, attr_path: str) -> Any:
         """Get nested attribute using dot notation."""
         attrs = attr_path.split('.')
         current_obj = obj
-        
+
         for attr in attrs:
             current_obj = getattr(current_obj, attr)
-        
+
         return current_obj
-    
+
     def extract_literature_parameters_from_config(self, config: QLearningConfig) -> Dict[str, float]:
         """
         Extract literature parameter values from an existing configuration.
@@ -235,7 +235,7 @@ class ParameterBridge:
             Dictionary of literature parameter values
         """
         literature_params = {}
-        
+
         for config_key, rule in self.mapping_rules.items():
             try:
                 config_value = self._get_nested_attribute(config, rule.config_attribute)
@@ -244,9 +244,9 @@ class ParameterBridge:
             except AttributeError:
                 # Attribute doesn't exist in this configuration
                 continue
-        
+
         return literature_params
-    
+
     def get_parameter_mapping_info(self) -> Dict[str, Dict[str, Any]]:
         """
         Get information about parameter mappings for documentation.
@@ -255,10 +255,10 @@ class ParameterBridge:
             Dictionary with mapping information
         """
         mapping_info = {}
-        
+
         for config_key, rule in self.mapping_rules.items():
             lit_param = self.literature_db.get_parameter(rule.literature_name)
-            
+
             mapping_info[config_key] = {
                 'literature_parameter': {
                     'name': lit_param.name if lit_param else rule.literature_name,
@@ -270,9 +270,9 @@ class ParameterBridge:
                 'conversion_factor': rule.conversion_factor,
                 'notes': rule.notes
             }
-        
+
         return mapping_info
-    
+
     def validate_entire_config(self, config: QLearningConfig) -> Dict[str, Any]:
         """
         Validate an entire configuration against literature parameters.
@@ -295,15 +295,15 @@ class ParameterBridge:
                 'unmapped_parameters': 0
             }
         }
-        
+
         for lit_param_name, value in literature_params.items():
             validation = self.literature_db.validate_parameter_value(lit_param_name, value)
             validation_report['parameter_results'][lit_param_name] = validation
-            
+
             # Update summary
             validation_report['summary']['total_parameters'] += 1
             status = validation['status']
-            
+
             if status == 'valid':
                 validation_report['summary']['valid_parameters'] += 1
             elif status == 'caution':
@@ -313,15 +313,15 @@ class ParameterBridge:
                 validation_report['overall_status'] = 'invalid'
             else:
                 validation_report['summary']['unmapped_parameters'] += 1
-        
+
         # Set overall status
         if validation_report['summary']['invalid_parameters'] > 0:
             validation_report['overall_status'] = 'invalid'
         elif validation_report['summary']['caution_parameters'] > 0:
             validation_report['overall_status'] = 'caution'
-        
+
         return validation_report
-    
+
     def suggest_parameter_improvements(self, config: QLearningConfig) -> List[Dict[str, Any]]:
         """
         Suggest improvements to configuration parameters based on literature.
@@ -334,7 +334,7 @@ class ParameterBridge:
         """
         suggestions = []
         validation_report = self.validate_entire_config(config)
-        
+
         for param_name, validation in validation_report['parameter_results'].items():
             if validation['status'] in ['caution', 'invalid']:
                 lit_param = self.literature_db.get_parameter(param_name)
@@ -349,7 +349,7 @@ class ParameterBridge:
                         'literature_references': [ref.format_citation('apa') for ref in lit_param.references]
                     }
                     suggestions.append(suggestion)
-        
+
         return suggestions
 
 
