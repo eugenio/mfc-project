@@ -32,7 +32,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import enhanced components
 from gui.enhanced_components import (
-    initialize_enhanced_ui, 
+    initialize_enhanced_ui,
     render_enhanced_sidebar
 )
 from gui.qlearning_viz import (
@@ -116,51 +116,51 @@ st.markdown("""
 
 class EnhancedMFCApp:
     """Main enhanced MFC application class."""
-    
+
     def __init__(self):
         """Initialize the enhanced MFC application."""
         self.initialize_session_state()
         self.setup_components()
-    
+
     def initialize_session_state(self):
         """Initialize Streamlit session state variables."""
         if 'simulation_runner' not in st.session_state:
             st.session_state.simulation_runner = SimulationRunner()
-        
+
         if 'current_q_table' not in st.session_state:
             st.session_state.current_q_table = None
-        
+
         if 'training_history' not in st.session_state:
             st.session_state.training_history = None
-        
+
         if 'selected_parameters' not in st.session_state:
             st.session_state.selected_parameters = {}
-        
+
         if 'visualization_figures' not in st.session_state:
             st.session_state.visualization_figures = {}
-    
+
     def setup_components(self):
         """Setup enhanced UI components."""
         # Get sidebar configuration
         sidebar_config = render_enhanced_sidebar()
-        
+
         # Initialize enhanced UI with selected theme
         self.theme_config, self.components = initialize_enhanced_ui(
             sidebar_config['theme']
         )
-        
+
         # Initialize Q-learning visualizer
         self.qlearning_viz = QLearningVisualizer()
-        
+
         # Initialize parameter input component
         self.parameter_input = ParameterInputComponent()
-        
+
         # Initialize Q-table visualization component
         self.qtable_visualization = QTableVisualization()
-        
+
         # Store configuration in session state
         st.session_state.ui_config = sidebar_config
-    
+
     def _check_gpu_availability(self) -> bool:
         """Check if GPU acceleration is available."""
         try:
@@ -180,7 +180,7 @@ class EnhancedMFCApp:
         except Exception:
             # Any other error in GPU detection
             return False
-    
+
     def render_main_header(self):
         """Render the main application header."""
         st.markdown("""
@@ -190,13 +190,13 @@ class EnhancedMFCApp:
             <p><em>Designed for Scientific Community Engagement</em></p>
         </div>
         """, unsafe_allow_html=True)
-    
+
     def render_research_overview(self):
         """Render research overview and key metrics."""
         st.markdown("## 📊 Research Overview")
-        
+
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             st.markdown("""
             <div class="scientific-metrics">
@@ -205,7 +205,7 @@ class EnhancedMFCApp:
                 <small>Literature benchmark: 95%</small>
             </div>
             """, unsafe_allow_html=True)
-        
+
         with col2:
             st.markdown("""
             <div class="scientific-metrics">
@@ -214,7 +214,7 @@ class EnhancedMFCApp:
                 <small>Optimal biofilm range</small>
             </div>
             """, unsafe_allow_html=True)
-        
+
         with col3:
             st.markdown("""
             <div class="scientific-metrics">
@@ -223,7 +223,7 @@ class EnhancedMFCApp:
                 <small>vs CPU simulation</small>
             </div>
             """, unsafe_allow_html=True)
-        
+
         with col4:
             st.markdown("""
             <div class="scientific-metrics">
@@ -232,27 +232,27 @@ class EnhancedMFCApp:
                 <small>±2mM tolerance</small>
             </div>
             """, unsafe_allow_html=True)
-    
+
     def render_scientific_parameter_interface(self):
         """Render scientific parameter input interface with literature validation."""
         return self.parameter_input.render_parameter_input_form()
-    
+
     def render_parameter_validation_summary(self, parameters: Dict[str, Any]):
         """Render parameter validation summary."""
         st.markdown("### ✅ Parameter Validation Summary")
-        
+
         validation_results = []
-        
+
         # Check critical parameters
         if parameters.get('anode_potential', 0) < -0.6:
             validation_results.append("⚠️ Very negative anode potential may reduce power output")
-        
+
         if parameters.get('temperature', 25) > 35:
             validation_results.append("⚠️ High temperature may affect biofilm stability")
-        
+
         if parameters.get('learning_rate', 0.1) > 0.5:
             validation_results.append("⚠️ High learning rate may cause unstable convergence")
-        
+
         if not validation_results:
             st.markdown(
                 '<div class="alert-success">✅ All parameters within recommended ranges</div>',
@@ -264,56 +264,56 @@ class EnhancedMFCApp:
                     f'<div class="alert-warning">{result}</div>',
                     unsafe_allow_html=True
                 )
-    
+
     def render_simulation_control(self):
         """Render enhanced simulation control interface."""
         st.markdown("## 🚀 Enhanced Simulation Control")
-        
+
         col1, col2 = st.columns([2, 1])
-        
+
         with col1:
             st.markdown("### Simulation Configuration")
-            
+
             # Duration selection with scientific context
             duration_options = {
                 "1 Hour (Quick Test)": 1,
-                "4 Hours (Short Study)": 4, 
+                "4 Hours (Short Study)": 4,
                 "24 Hours (Daily Cycle)": 24,
                 "168 Hours (Weekly Study)": 168,
                 "720 Hours (Monthly Study)": 720,
                 "8760 Hours (Annual Study)": 8760
             }
-            
+
             selected_duration = st.selectbox(
                 "Simulation Duration",
                 options=list(duration_options.keys()),
                 help="Select duration based on your research objectives"
             )
-            
+
             duration_hours = duration_options[selected_duration]
-            
+
             # Advanced options
             with st.expander("🔧 Advanced Simulation Options"):
                 col_a, col_b = st.columns(2)
-                
+
                 with col_a:
                     _ = st.checkbox(
                         "Use Pre-trained Q-table",
                         value=True,
                         help="Use existing trained Q-learning policy"
                     )
-                    
+
                     # GPU acceleration with detection
                     gpu_available = self._check_gpu_availability()
                     gpu_status_text = "✅ GPU Available" if gpu_available else "⚠️ CPU Fallback"
-                    
+
                     _ = st.checkbox(
-                        f"Enable GPU Acceleration ({gpu_status_text})", 
+                        f"Enable GPU Acceleration ({gpu_status_text})",
                         value=gpu_available,
                         help="Use GPU for faster simulation (8400× speedup)" if gpu_available else "GPU not available, using CPU fallback",
                         disabled=not gpu_available
                     )
-                
+
                 with col_b:
                     save_interval = st.number_input(
                         "Data Save Interval (minutes)",
@@ -322,20 +322,20 @@ class EnhancedMFCApp:
                         value=10,
                         help="How often to save simulation data"
                     )
-                    
+
                     _ = st.selectbox(
                         "Export Format",
                         options=["CSV", "HDF5", "JSON"],
                         help="Data export format for analysis"
                     )
-                    
+
                     # Add missing save settings checkbox
                     save_settings = st.checkbox(
                         "💾 Save Settings",
                         value=False,
                         help="Save current simulation configuration for reuse"
                     )
-                    
+
                     if save_settings:
                         settings_name = st.text_input(
                             "Settings Name",
@@ -345,31 +345,31 @@ class EnhancedMFCApp:
                         if st.button("💾 Save Configuration"):
                             # Save current settings
                             st.success(f"✅ Settings saved as '{settings_name}'")
-                    
+
                     # Add debug mode checkbox
                     debug_mode = st.checkbox(
                         "🐛 Debug Mode",
                         value=False,
                         help="Enable debug console for detailed logging"
                     )
-        
+
         with col2:
             st.markdown("### Simulation Status")
-            
+
             # Current status
             if st.session_state.simulation_runner.is_running:
                 st.markdown("🟢 **Status**: Running")
-                
+
                 # Progress placeholder (would need integration with actual simulation)
                 _ = st.progress(0)
                 _ = st.empty()
-                
+
                 if st.button("⏹️ Stop Simulation", type="secondary"):
                     st.session_state.simulation_runner.stop_simulation()
                     st.rerun()
             else:
                 st.markdown("🔴 **Status**: Stopped")
-                
+
                 if st.button("▶️ Start Enhanced Simulation", type="primary"):
                     # Start simulation with enhanced parameters
                     success = st.session_state.simulation_runner.start_simulation(
@@ -377,23 +377,23 @@ class EnhancedMFCApp:
                         duration_hours=duration_hours,
                         gui_refresh_interval=save_interval * 60
                     )
-                    
+
                     if success:
                         st.success("Simulation started successfully!")
                         st.rerun()
                     else:
                         st.error("Failed to start simulation")
-            
+
             # Resource usage (placeholder for actual metrics)
             st.markdown("### 📊 Resource Usage")
             st.metric("GPU Utilization", "87%", "12%")
             st.metric("Memory Usage", "4.2 GB", "0.8 GB")
             st.metric("CPU Usage", "23%", "-5%")
-        
+
         # Debug console section
         if 'debug_mode' in locals() and debug_mode:
             st.markdown("### 🐛 Debug Console")
-            
+
             # Initialize debug messages in session state
             if 'debug_messages' not in st.session_state:
                 st.session_state.debug_messages = [
@@ -401,7 +401,7 @@ class EnhancedMFCApp:
                     f"[{datetime.now().strftime('%H:%M:%S')}] INFO: Q-learning components loaded",
                     f"[{datetime.now().strftime('%H:%M:%S')}] INFO: Parameter validation system active"
                 ]
-            
+
             # Debug messages text area
             debug_text = "\n".join(st.session_state.debug_messages[-50:])  # Show last 50 messages
             st.text_area(
@@ -411,19 +411,19 @@ class EnhancedMFCApp:
                 help="Real-time debug messages and system status",
                 disabled=True
             )
-            
+
             # Add control buttons
             col_debug1, col_debug2, col_debug3 = st.columns(3)
-            
+
             with col_debug1:
                 if st.button("🔄 Refresh Console"):
                     st.rerun()
-            
+
             with col_debug2:
                 if st.button("🧹 Clear Console"):
                     st.session_state.debug_messages = []
                     st.rerun()
-            
+
             with col_debug3:
                 if st.button("📥 Download Log"):
                     log_content = "\n".join(st.session_state.debug_messages)
@@ -433,18 +433,18 @@ class EnhancedMFCApp:
                         file_name=f"mfc_debug_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                         mime="text/plain"
                     )
-    
+
     def render_qlearning_analysis(self):
         """Render enhanced Q-learning analysis interface with interactive Q-table analysis."""
         st.markdown("## 🧠 Enhanced Q-Learning Analysis")
-        
+
         # Add tabs for different analysis views
         analysis_tabs = st.tabs([
-            "🔥 Interactive Q-Table Analysis", 
+            "🔥 Interactive Q-Table Analysis",
             "📊 Legacy Dashboard",
             "🎯 Performance Comparison"
         ])
-        
+
         with analysis_tabs[0]:
             # Use the new interactive Q-table visualization component
             st.markdown("### 🔬 Advanced Q-Table Analysis")
@@ -452,24 +452,24 @@ class EnhancedMFCApp:
             Comprehensive analysis of Q-learning behavior with convergence indicators, 
             policy quality metrics, and interactive visualizations for research publication.
             """)
-            
+
             # Render the interactive Q-table analysis interface
             analysis_results = self.qtable_visualization.render_qtable_analysis_interface()
-            
+
             # Store analysis results for export
             if analysis_results and analysis_results.get('analysis_cache'):
                 st.session_state.qtable_analysis_results = analysis_results
-        
+
         with analysis_tabs[1]:
             # Keep the legacy dashboard for backward compatibility
             st.markdown("### 📊 Legacy Q-Learning Dashboard")
-            
+
             # Load or create Q-learning data
             col1, col2 = st.columns([3, 1])
-            
+
             with col2:
                 st.markdown("### 📁 Data Management")
-                
+
                 # Q-table loading
                 uploaded_file = st.file_uploader(
                     "Upload Q-table",
@@ -477,7 +477,7 @@ class EnhancedMFCApp:
                     help="Upload a saved Q-table for analysis",
                     key="legacy_uploader"
                 )
-                
+
                 if uploaded_file is not None:
                     # Process uploaded Q-table
                     try:
@@ -487,14 +487,14 @@ class EnhancedMFCApp:
                             st.success("Q-table loaded successfully!")
                     except Exception as e:
                         st.error(f"Failed to load Q-table: {e}")
-                
+
                 # Demo data option
                 if st.button("📊 Load Demo Data", key="legacy_demo"):
                     q_table, training_history, policy = create_demo_qlearning_data()
                     st.session_state.current_q_table = q_table
                     st.session_state.training_history = training_history
                     st.success("Demo data loaded!")
-            
+
             with col1:
                 # Q-learning visualization dashboard
                 if st.session_state.current_q_table is not None:
@@ -504,18 +504,18 @@ class EnhancedMFCApp:
                         current_policy=np.argmax(st.session_state.current_q_table, axis=1),
                         title="MFC Q-Learning Analysis"
                     )
-                    
+
                     # Store figures for export
                     st.session_state.visualization_figures.update(figures)
                 else:
                     st.info("No Q-learning data available. Upload a Q-table or load demo data to begin analysis.")
-        
+
         with analysis_tabs[2]:
             # Performance comparison between different analysis approaches
             st.markdown("### 🎯 Analysis Performance Comparison")
-            
+
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.markdown("#### 🔥 Interactive Analysis")
                 st.markdown("""
@@ -529,7 +529,7 @@ class EnhancedMFCApp:
                 
                 **Best for:** Research publications, detailed analysis, parameter optimization
                 """)
-            
+
             with col2:
                 st.markdown("#### 📊 Legacy Dashboard")
                 st.markdown("""
@@ -541,26 +541,26 @@ class EnhancedMFCApp:
                 
                 **Best for:** Quick checks, basic monitoring, legacy compatibility
                 """)
-            
+
             if hasattr(st.session_state, 'qtable_analysis_results'):
                 results = st.session_state.qtable_analysis_results
                 if results.get('analysis_cache'):
                     st.success(f"✅ Interactive analysis active with {len(results['analysis_cache'])} Q-tables analyzed")
-                    
+
                     # Show performance metrics if available
                     cache_info = results.get('analysis_cache', {})
                     total_analyses = len(cache_info)
-                    
+
                     if total_analyses > 0:
                         st.metric("Analyzed Q-Tables", total_analyses)
                         st.metric("Cached Results", len(results.get('comparison_results', {})))
             else:
                 st.info("Use the Interactive Q-Table Analysis tab to unlock enhanced analysis features")
-    
+
     def render_real_time_monitoring(self):
         """Render real-time monitoring dashboard."""
         st.markdown("## 📡 Real-Time Monitoring")
-        
+
         # Mock data stream function
         def mock_data_stream():
             return {
@@ -570,61 +570,61 @@ class EnhancedMFCApp:
                 'voltage': np.random.normal(0.6, 0.05),
                 'biofilm_thickness': np.random.normal(50, 5)
             }
-        
+
         # Render real-time monitoring component
         self.components['visualization'].render_real_time_monitor(
             data_stream=mock_data_stream,
             refresh_interval=5,
             max_points=100
         )
-        
+
         # Additional monitoring controls
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("### 🎯 Performance Targets")
             st.metric("Substrate Target", "25 mM", "±2 mM tolerance")
             st.metric("Power Target", "0.5 W/m²", "±0.1 W/m²")
             st.metric("Control Accuracy", "54%", "+8% improvement")
-        
+
         with col2:
-            st.markdown("### ⚠️ Alert Thresholds") 
+            st.markdown("### ⚠️ Alert Thresholds")
             st.slider("Substrate Alert (mM)", 20, 30, (23, 27))
             st.slider("Power Alert (W/m²)", 0.1, 1.0, (0.4, 0.6))
-            
+
             if st.button("📧 Configure Alerts"):
                 st.info("Alert configuration saved")
-    
+
     def render_data_export_center(self):
         """Render comprehensive data export center."""
         st.markdown("## 📤 Data Export & Collaboration")
-        
+
         # Prepare data for export
         export_data = {}
-        
+
         # Add simulation data if available
         if hasattr(st.session_state, 'simulation_data'):
             export_data['simulation_results'] = st.session_state.simulation_data
-        
+
         # Add Q-learning data if available
         if st.session_state.current_q_table is not None:
             export_data['q_table'] = pd.DataFrame(st.session_state.current_q_table)
-        
+
         # Add training history if available
         if st.session_state.training_history is not None:
             export_data['training_history'] = pd.DataFrame(st.session_state.training_history)
-        
+
         # Render export panel
         self.components['export_manager'].render_export_panel(
             data=export_data,
             figures=st.session_state.visualization_figures
         )
-        
+
         # Research collaboration features
         st.markdown("### 🤝 Research Collaboration")
-        
+
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("**Share Research Data:**")
             if st.button("🔗 Generate Shareable Link"):
@@ -632,10 +632,10 @@ class EnhancedMFCApp:
                 link = f"https://mfc-research.example.com/shared/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 st.code(link)
                 st.success("Shareable link generated!")
-            
+
             if st.button("📧 Email Results"):
                 st.info("Results have been emailed to your research team")
-        
+
         with col2:
             st.markdown("**Research Citations:**")
             st.text_area(
@@ -643,11 +643,11 @@ class EnhancedMFCApp:
                 value=f"MFC Research Platform. ({datetime.now().year}). Enhanced Q-Learning Optimization Results. DOI: 10.5555/example.{datetime.now().strftime('%Y%m%d')}",
                 height=100
             )
-    
+
     def render_research_insights(self):
         """Render research insights and recommendations."""
         st.markdown("## 💡 Research Insights & Recommendations")
-        
+
         # Scientific insights based on current data
         insights = [
             {
@@ -669,44 +669,44 @@ class EnhancedMFCApp:
                 "literature": "NVIDIA CUDA Programming Guide (2023)"
             }
         ]
-        
+
         for i, insight in enumerate(insights):
             with st.expander(f"🔬 {insight['title']}", expanded=(i == 0)):
                 st.markdown(f"**Finding:** {insight['content']}")
                 st.markdown(f"**Recommendation:** {insight['recommendation']}")
                 st.markdown(f"**Literature Reference:** {insight['literature']}")
-    
+
     def run(self):
         """Run the enhanced MFC application."""
         # Render main interface
         self.render_main_header()
         self.render_research_overview()
-        
+
         # Main application tabs
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
             "⚙️ Parameters",
-            "🚀 Simulation", 
+            "🚀 Simulation",
             "🧠 Q-Learning",
             "📡 Monitoring",
             "📤 Export",
             "💡 Insights"
         ])
-        
+
         with tab1:
             self.render_scientific_parameter_interface()
-        
+
         with tab2:
             self.render_simulation_control()
-        
+
         with tab3:
             self.render_qlearning_analysis()
-        
+
         with tab4:
             self.render_real_time_monitoring()
-        
+
         with tab5:
             self.render_data_export_center()
-        
+
         with tab6:
             self.render_research_insights()
 
