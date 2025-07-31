@@ -27,7 +27,7 @@ class ParameterCategory(Enum):
 @dataclass
 class LiteratureReference:
     """Container for literature reference information."""
-    
+
     authors: str
     title: str
     journal: str
@@ -35,7 +35,7 @@ class LiteratureReference:
     volume: str
     pages: str
     doi: Optional[str] = None
-    
+
     def format_citation(self, style: str = "apa") -> str:
         """Format citation in specified style."""
         if style.lower() == "apa":
@@ -56,7 +56,7 @@ class LiteratureReference:
 @dataclass
 class ParameterInfo:
     """Information about a validated MFC parameter."""
-    
+
     name: str
     symbol: str
     description: str
@@ -68,15 +68,15 @@ class ParameterInfo:
     category: ParameterCategory
     references: List[LiteratureReference]
     notes: Optional[str] = None
-    
+
     def is_within_recommended_range(self, value: float) -> bool:
         """Check if value is within recommended range."""
         return self.recommended_range[0] <= value <= self.recommended_range[1]
-    
+
     def is_valid_value(self, value: float) -> bool:
         """Check if value is within absolute valid range."""
         return self.min_value <= value <= self.max_value
-    
+
     def get_validation_status(self, value: float) -> str:
         """Get validation status for a parameter value."""
         if not self.is_valid_value(value):
@@ -89,14 +89,14 @@ class ParameterInfo:
 
 class LiteratureDatabase:
     """Database of literature-validated MFC parameters."""
-    
+
     def __init__(self):
         """Initialize literature database with parameter information."""
         self.parameters = self._initialize_parameter_database()
-    
+
     def _initialize_parameter_database(self) -> Dict[str, ParameterInfo]:
         """Initialize the parameter database with literature values."""
-        
+
         # Literature references
         logan_2006 = LiteratureReference(
             authors="Logan, B.E., Hamelers, B., Rozendal, R., Schröder, U., Keller, J., Freguia, S., Aelterman, P., Verstraete, W., Rabaey, K.",
@@ -107,7 +107,7 @@ class LiteratureDatabase:
             pages="5181-5192",
             doi="10.1021/es0605016"
         )
-        
+
         kim_2007 = LiteratureReference(
             authors="Kim, H.J., Park, H.S., Hyun, M.S., Chang, I.S., Kim, M., Kim, B.H.",
             title="A mediator-less microbial fuel cell using a metal reducing bacterium, Shewanella putrefaciens",
@@ -117,7 +117,7 @@ class LiteratureDatabase:
             pages="145-152",
             doi="10.1016/S0141-0229(01)00478-1"
         )
-        
+
         bond_2002 = LiteratureReference(
             authors="Bond, D.R., Lovley, D.R.",
             title="Electricity production by Geobacter sulfurreducens attached to electrodes",
@@ -127,7 +127,7 @@ class LiteratureDatabase:
             pages="1548-1555",
             doi="10.1128/AEM.69.3.1548-1555.2003"
         )
-        
+
         torres_2010 = LiteratureReference(
             authors="Torres, C.I., Marcus, A.K., Lee, H.S., Parameswaran, P., Krajmalnik-Brown, R., Rittmann, B.E.",
             title="A kinetic perspective on extracellular electron transfer by anode-respiring bacteria",
@@ -137,7 +137,7 @@ class LiteratureDatabase:
             pages="3-17",
             doi="10.1111/j.1574-6976.2009.00191.x"
         )
-        
+
         sutton_2018 = LiteratureReference(
             authors="Sutton, R.S., Barto, A.G.",
             title="Reinforcement Learning: An Introduction",
@@ -146,9 +146,9 @@ class LiteratureDatabase:
             volume="2nd Edition",
             pages="1-526"
         )
-        
+
         parameters = {}
-        
+
         # Electrochemical Parameters
         parameters["anode_potential"] = ParameterInfo(
             name="Anode Potential",
@@ -163,7 +163,7 @@ class LiteratureDatabase:
             references=[logan_2006, bond_2002],
             notes="Standard hydrogen electrode reference"
         )
-        
+
         parameters["cathode_potential"] = ParameterInfo(
             name="Cathode Potential",
             symbol="E_cat",
@@ -177,7 +177,7 @@ class LiteratureDatabase:
             references=[logan_2006],
             notes="Oxygen reduction reaction potential"
         )
-        
+
         parameters["internal_resistance"] = ParameterInfo(
             name="Internal Resistance",
             symbol="R_int",
@@ -191,7 +191,7 @@ class LiteratureDatabase:
             references=[logan_2006, kim_2007],
             notes="Includes ohmic, activation, and concentration losses"
         )
-        
+
         parameters["electrode_area"] = ParameterInfo(
             name="Electrode Area",
             symbol="A_e",
@@ -205,7 +205,7 @@ class LiteratureDatabase:
             references=[logan_2006, bond_2002],
             notes="Geometric surface area, not accounting for roughness"
         )
-        
+
         # Biological Parameters
         parameters["max_current_density"] = ParameterInfo(
             name="Maximum Current Density",
@@ -220,7 +220,7 @@ class LiteratureDatabase:
             references=[bond_2002, torres_2010],
             notes="Species-dependent: G. sulfurreducens ~0.39, S. oneidensis ~0.034"
         )
-        
+
         parameters["biofilm_conductivity"] = ParameterInfo(
             name="Biofilm Conductivity",
             symbol="σ_bf",
@@ -234,7 +234,7 @@ class LiteratureDatabase:
             references=[torres_2010, bond_2002],
             notes="Varies with biofilm density and species composition"
         )
-        
+
         parameters["growth_rate"] = ParameterInfo(
             name="Maximum Specific Growth Rate",
             symbol="μ_max",
@@ -248,7 +248,7 @@ class LiteratureDatabase:
             references=[torres_2010, logan_2006],
             notes="Temperature and substrate dependent"
         )
-        
+
         parameters["half_saturation"] = ParameterInfo(
             name="Half-Saturation Constant",
             symbol="K_s",
@@ -262,7 +262,7 @@ class LiteratureDatabase:
             references=[torres_2010, logan_2006],
             notes="Substrate-specific: acetate ~0.5 mM, lactate ~1.0 mM"
         )
-        
+
         # Substrate Parameters
         parameters["substrate_concentration"] = ParameterInfo(
             name="Substrate Concentration",
@@ -277,7 +277,7 @@ class LiteratureDatabase:
             references=[logan_2006, torres_2010],
             notes="Avoid inhibitory concentrations >100 mM"
         )
-        
+
         parameters["flow_rate"] = ParameterInfo(
             name="Flow Rate",
             symbol="Q",
@@ -291,7 +291,7 @@ class LiteratureDatabase:
             references=[logan_2006],
             notes="Affects residence time and mass transfer"
         )
-        
+
         # Q-Learning Parameters
         parameters["learning_rate"] = ParameterInfo(
             name="Learning Rate",
@@ -306,7 +306,7 @@ class LiteratureDatabase:
             references=[sutton_2018],
             notes="Balance between stability and adaptation speed"
         )
-        
+
         parameters["discount_factor"] = ParameterInfo(
             name="Discount Factor",
             symbol="γ",
@@ -320,7 +320,7 @@ class LiteratureDatabase:
             references=[sutton_2018],
             notes="Higher values emphasize long-term rewards"
         )
-        
+
         parameters["exploration_rate"] = ParameterInfo(
             name="Exploration Rate",
             symbol="ε",
@@ -334,7 +334,7 @@ class LiteratureDatabase:
             references=[sutton_2018],
             notes="Should decay over time during training"
         )
-        
+
         # Biofilm Parameters
         parameters["biofilm_thickness"] = ParameterInfo(
             name="Biofilm Thickness",
@@ -349,7 +349,7 @@ class LiteratureDatabase:
             references=[bond_2002, torres_2010],
             notes="Optimal thickness balances conductivity and mass transfer"
         )
-        
+
         parameters["biofilm_density"] = ParameterInfo(
             name="Biofilm Density",
             symbol="ρ_bf",
@@ -363,17 +363,17 @@ class LiteratureDatabase:
             references=[logan_2006, torres_2010],
             notes="Typical range for hydrated bacterial biofilms"
         )
-        
+
         return parameters
-    
+
     def get_parameter(self, name: str) -> Optional[ParameterInfo]:
         """Get parameter information by name."""
         return self.parameters.get(name)
-    
+
     def get_parameters_by_category(self, category: ParameterCategory) -> List[ParameterInfo]:
         """Get all parameters in a specific category."""
         return [param for param in self.parameters.values() if param.category == category]
-    
+
     def validate_parameter_value(self, name: str, value: float) -> Dict[str, Any]:
         """
         Validate a parameter value against literature recommendations.
@@ -392,9 +392,9 @@ class LiteratureDatabase:
                 "message": f"Parameter '{name}' not found in database",
                 "recommendations": []
             }
-        
+
         status = param.get_validation_status(value)
-        
+
         validation_result: Dict[str, Any] = {
             "status": status,
             "parameter": param,
@@ -402,7 +402,7 @@ class LiteratureDatabase:
             "unit": param.unit,
             "recommendations": []
         }
-        
+
         if status == "invalid":
             validation_result["message"] = f"Value {value} {param.unit} is outside valid range ({param.min_value}-{param.max_value} {param.unit})"
             recommendations = validation_result["recommendations"]
@@ -415,33 +415,33 @@ class LiteratureDatabase:
                 recommendations.append(f"Consider using values between {param.recommended_range[0]} and {param.recommended_range[1]} {param.unit}")
         else:
             validation_result["message"] = f"Value {value} {param.unit} is within recommended range"
-        
+
         return validation_result
-    
+
     def get_all_categories(self) -> List[ParameterCategory]:
         """Get all available parameter categories."""
         return list(ParameterCategory)
-    
+
     def search_parameters(self, query: str) -> List[ParameterInfo]:
         """Search parameters by name, symbol, or description."""
         query_lower = query.lower()
         results = []
-        
+
         for param in self.parameters.values():
-            if (query_lower in param.name.lower() or 
-                query_lower in param.symbol.lower() or 
+            if (query_lower in param.name.lower() or
+                query_lower in param.symbol.lower() or
                 query_lower in param.description.lower()):
                 results.append(param)
-        
+
         return results
-    
+
     def get_citation_list(self, format_style: str = "apa") -> List[str]:
         """Get formatted citation list for all references."""
         all_refs = set()
         for param in self.parameters.values():
             for ref in param.references:
                 all_refs.add(ref.format_citation(format_style))
-        
+
         return sorted(list(all_refs))
 
 
