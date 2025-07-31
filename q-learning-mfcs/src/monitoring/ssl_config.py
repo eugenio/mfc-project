@@ -320,6 +320,12 @@ class SSLContextManager:
 def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
     """Load SSL configuration from file or environment variables"""
     
+    # Check for development config first
+    dev_config_file = Path(__file__).parent / "ssl_config_dev.json"
+    if dev_config_file.exists() and config_file is None:
+        config_file = str(dev_config_file)
+        logger.info("Using development SSL configuration")
+    
     # Default config file location
     if config_file is None:
         config_file = os.getenv('MFC_SSL_CONFIG', '/etc/mfc/ssl-config.json')
