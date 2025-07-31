@@ -14,11 +14,11 @@ from typing import Dict, Any, Optional, Tuple, List
 from dataclasses import dataclass
 import copy
 
-from config.qlearning_config import (
+from .qlearning_config import (
     QLearningConfig, 
     DEFAULT_QLEARNING_CONFIG
 )
-from config.literature_database import LITERATURE_DB
+from .literature_database import LITERATURE_DB
 
 
 @dataclass

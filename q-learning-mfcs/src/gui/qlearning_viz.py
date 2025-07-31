@@ -244,7 +244,6 @@ class QLearningVisualizer:
         # Calculate insights
         best_actions = np.argmax(q_table, axis=1)
         action_counts = np.bincount(best_actions, minlength=q_table.shape[1])
-        q_value_std = np.std(q_table, axis=1)
         
         col1, col2 = st.columns(2)
         
@@ -430,13 +429,10 @@ class QLearningVisualizer:
                     
                     if cv < 0.1:
                         status = "✅ Stable"
-                        color = "green"
                     elif cv < 0.3:
                         status = "⚠️ Moderate"
-                        color = "orange"
                     else:
                         status = "❌ Unstable"
-                        color = "red"
                     
                     st.markdown(f"• **{metric_name}**: {status} (CV: {cv:.3f})")
     
@@ -849,16 +845,16 @@ def create_demo_qlearning_data() -> Tuple[np.ndarray, Dict[str, List[float]], np
     
     # Create demo training history
     n_episodes = 1000
-    training_history = {
+    training_data = {
         'reward': np.cumsum(np.random.randn(n_episodes) * 0.1) + np.linspace(0, 10, n_episodes),
         'epsilon': np.maximum(0.01, 1.0 - np.linspace(0, 0.99, n_episodes)),
         'loss': np.maximum(0, 5.0 * np.exp(-np.linspace(0, 5, n_episodes)) + np.random.randn(n_episodes) * 0.1)
     }
     
-    # Convert to lists
-    training_history = {k: v.tolist() for k, v in training_history.items()}
+    # Convert to lists with explicit float conversion
+    training_history: Dict[str, List[float]] = {k: [float(x) for x in v.tolist()] for k, v in training_data.items()}
     
-    # Create policy
-    policy = np.argmax(q_table, axis=1)
+    # Create policy with explicit type
+    policy = np.argmax(q_table, axis=1).astype(np.int64)
     
     return q_table, training_history, policy

@@ -23,11 +23,10 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from typing import Dict, Optional, Tuple, Any, Callable
+from typing import Dict, Optional, Tuple, Any, Callable, Union
 from dataclasses import dataclass
 from enum import Enum
 import json
-import time
 from datetime import datetime
 import io
 
@@ -168,7 +167,7 @@ class ScientificParameterInput:
         param_name: str, 
         config: Dict[str, Any],
         key: str
-    ) -> Any:
+    ) -> Union[float, int, bool, str]:
         """Render a single parameter input with validation.
         
         Args:
@@ -196,6 +195,7 @@ class ScientificParameterInput:
             st.markdown(f"*{description}*")
         
         # Input widget based on parameter type
+        value: Union[float, int, bool, str]
         if param_type == 'float':
             value = st.number_input(
                 label="",
@@ -233,15 +233,29 @@ class ScientificParameterInput:
                 label_visibility="collapsed"
             )
         else:
-            value = st.text_input(
+            text_value = st.text_input(
                 label="",
                 value=str(default_value),
                 key=key,
                 label_visibility="collapsed"
             )
+            # Convert based on expected parameter type
+            param_type = config.get('type', 'float')
+            if param_type == 'float':
+                try:
+                    value = float(text_value)
+                except ValueError:
+                    value = float(default_value)
+            elif param_type == 'int':
+                try:
+                    value = int(text_value)
+                except ValueError:
+                    value = int(default_value)
+            else:
+                value = text_value
         
-        # Validation and literature reference
-        if min_val is not None and max_val is not None:
+        # Validation and literature reference (only for numeric values)
+        if min_val is not None and max_val is not None and isinstance(value, (float, int)):
             self._display_validation_status(value, min_val, max_val, param_name)
         
         if literature_ref:
@@ -417,19 +431,26 @@ class InteractiveVisualization:
         
         # Real-time plot
         if is_monitoring:
-            # Auto-refresh placeholder
-            placeholder = st.empty()
+            # Note: Real-time streaming requires proper implementation
+            # For now, show manual refresh functionality
+            st.info("🔴 Live monitoring active - Use refresh button to update data")
             
-            while is_monitoring:
-                self._update_realtime_data(data_stream, max_points)
-                
-                # Create real-time figure
-                fig = self._create_realtime_figure()
-                
-                with placeholder.container():
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                time.sleep(refresh_interval)
+            # Update data on monitoring enable
+            self._update_realtime_data(data_stream, max_points)
+            
+            # Create real-time figure
+            fig = self._create_realtime_figure()
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Auto-refresh using st.rerun() approach (avoids infinite loop)
+            placeholder = st.empty()
+            with placeholder.container():
+                if st.button("🔄 Auto-refresh (5s)", key="auto_refresh"):
+                    import time
+                    with st.spinner("Refreshing data..."):
+                        time.sleep(1)  # Brief pause for UX
+                        self._update_realtime_data(data_stream, max_points)
+                        st.rerun()
         else:
             # Static display
             if st.session_state.realtime_data['timestamps']:
