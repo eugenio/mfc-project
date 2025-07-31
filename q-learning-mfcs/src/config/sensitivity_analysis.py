@@ -341,7 +341,11 @@ class SensitivityAnalyzer:
         Returns:
             Sensitivity analysis results
         """
-        result = SensitivityResult()
+        result = SensitivityResult(
+            method=SensitivityMethod.ONE_AT_A_TIME,
+            parameter_names=self.parameter_space.parameter_names,
+            output_names=self.output_names
+        )
         
         # Baseline evaluation at nominal values
         baseline_outputs = self._evaluate_model(
@@ -400,7 +404,11 @@ class SensitivityAnalyzer:
         Returns:
             Sensitivity analysis results
         """
-        result = SensitivityResult()
+        result = SensitivityResult(
+            method=SensitivityMethod.GRADIENT_BASED,
+            parameter_names=self.parameter_space.parameter_names,
+            output_names=self.output_names
+        )
         
         # Calculate gradients using finite differences
         gradients = {}
@@ -450,7 +458,11 @@ class SensitivityAnalyzer:
         Returns:
             Sensitivity analysis results
         """
-        result = SensitivityResult()
+        result = SensitivityResult(
+            method=SensitivityMethod.MORRIS,
+            parameter_names=self.parameter_space.parameter_names,
+            output_names=self.output_names
+        )
         
         # Generate Morris trajectories
         trajectories = self._generate_morris_trajectories(n_samples, n_levels, grid_jump)
@@ -544,7 +556,11 @@ class SensitivityAnalyzer:
         Returns:
             Sensitivity analysis results
         """
-        result = SensitivityResult()
+        result = SensitivityResult(
+            method=SensitivityMethod.SOBOL,
+            parameter_names=self.parameter_space.parameter_names,
+            output_names=self.output_names
+        )
         
         # Generate sample matrices for Sobol analysis
         # We need: A, B, and C_i matrices (Saltelli et al., 2008)

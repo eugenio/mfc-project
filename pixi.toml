@@ -10,74 +10,158 @@ pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.p
 post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
 parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
 
+# Test execution tasks
+test = "cd q-learning-mfcs/tests && python run_tests.py"
+test-gui = "cd q-learning-mfcs/tests && python -m pytest gui/ -v"
+test-selenium = "cd q-learning-mfcs/tests && python -m pytest selenium/ -v"
+test-monitoring = "cd q-learning-mfcs/tests && python -m pytest test_monitoring_system.py -v"
+test-config = "cd q-learning-mfcs/tests && python -m pytest config/ -v"
+test-all = "pixi run test && pixi run test-gui && pixi run test-monitoring"
+
+# Test with coverage
+test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
+
+# Fast test (unit tests only, skip slow tests)
+test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration and not selenium and not browser' -x"
+
+# CI-friendly test (with XML output)
+test-ci = "cd q-learning-mfcs/tests && python -m pytest . --junitxml=test-results.xml --cov=../src --cov-report=xml"
+
+# Comprehensive validation (tests + linting)
+validate-all = "pixi run ruff check . && pixi run mypy . && pixi run test-all"
+
+# HTTPS/SSL Management Tasks
+ssl-init = "cd q-learning-mfcs/src/monitoring && python ssl_config.py --init"
+ssl-test = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py --test-ssl"
+cert-monitor = "cd q-learning-mfcs/src/monitoring && python cert_manager.py --monitor"
+cert-renew = "cd q-learning-mfcs/src/monitoring && python cert_manager.py --renew-if-needed"
+test-https = "cd q-learning-mfcs/src/monitoring && python test_https_implementation.py"
+start-monitoring = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py"
+start-monitoring-http = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py --no-ssl"
+
+# Core runtime dependencies - minimal set for production
 [dependencies]
-scipy = ">=1.16.0,<2"
-matplotlib = ">=3.10.3,<4"
 python = ">=3.12.11,<3.14"
 numpy = ">=2.3.1,<3"
-modular = "25.4.*"
-magic = ">=8.3.486,<9"
-tectonic = ">=0.15.0,<0.16"
-optuna = ">=4.4.0,<5"
-git-lfs = ">=3.7.0,<4"
-seaborn = ">=0.13.2,<0.14"
-gh = ">=2.76.0,<3"
-mdformat = ">=0.7.22,<0.8"
-pandoc = ">=3.7.0.2,<4"
+scipy = ">=1.16.0,<2"
+pandas = ">=2.3.1,<3"
+matplotlib = ">=3.10.3,<4"
+pyyaml = ">=6.0.2,<7"
+
+# Development tools - testing, linting, formatting
+[feature.dev.dependencies]
 pytest = ">=8.4.1,<9"
+pytest-cov = ">=4.0.0"
 ruff = ">=0.12.4,<0.13"
 mypy = ">=1.17.0,<2"
-pandas = ">=2.3.1,<3"
-nox = ">=2025.5.1,<2026"
-pyyaml = ">=6.0.2,<7"
-types-pyyaml = ">=6.0.12.20250516,<7"
-yamllint = ">=1.37.1,<2"
-jax = ">=0.4.36,<0.7"
-streamlit = ">=1.47.1,<2"
-plotly = ">=6.2.0,<7"
-
-[feature.dev.dependencies]
-pytest = ">=7.0.0"
-pytest-cov = ">=4.0.0"
-ruff = ">=0.1.0"
-mypy = ">=1.0.0"
 black = ">=22.0.0"
 pre-commit = ">=2.0.0"
 bandit = "*"
 safety = "*"
-twine = "*"
-pip = "*"
+types-pyyaml = ">=6.0.12.20250516,<7"
+yamllint = ">=1.37.1,<2"
+
+# Build and documentation tools
+[feature.docs-build.dependencies]
+tectonic = ">=0.15.0,<0.16"
+pandoc = ">=3.7.0.2,<4"
+mdformat = ">=0.7.22,<0.8"
+
+# Version control and project management
+[feature.tools.dependencies]
+git-lfs = ">=3.7.0,<4"
+gh = ">=2.76.0,<3"
+nox = ">=2025.5.1,<2026"
+
+# GUI and visualization
+[feature.gui.dependencies]
+streamlit = ">=1.47.1,<2"
+plotly = ">=6.2.0,<7"
+seaborn = ">=0.13.2,<0.14"
+
+# Machine learning and optimization
+[feature.ml.dependencies]
+optuna = ">=4.4.0,<5"
+jax = ">=0.4.36,<0.7"
+
+# Mojo/Modular runtime
+[feature.modular.dependencies]
+modular = "25.4.*"
+magic = ">=8.3.486,<9"
 
 [feature.dev.pypi-dependencies]
 build = "*"
 pip-audit = "*"
 pytest-benchmark = "*"
-detect-secrets = "*"
+detect-secrets = ">=1.5.0, <2"
 mdformat = "*"
 pymupdf = "*"
 
+# Core runtime dependencies (pypi)
 [pypi-dependencies]
-detect-secrets = ">=1.5.0, <2"
+requests = ">=2.31.0"
+
+# API and web server components
+[feature.api.pypi-dependencies]
+fastapi = ">=0.104.0, <1.0"
+uvicorn = {version = ">=0.24.0", extras = ["standard"]}
+websockets = ">=12.0"
+cryptography = ">=41.0.0"
+pyjwt = ">=2.8.0"
+python-multipart = ">=0.0.6"
+starlette = ">=0.27.0"
+
+# Project management and CI/CD
+[feature.project.pypi-dependencies]
 python-gitlab = ">=4.0.0"
+
+# Advanced ML and optimization
+[feature.advanced-ml.pypi-dependencies]
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
+
+# GPU acceleration (optional features)
+[feature.amd-gpu.pypi-dependencies]
 jax = { version = "*", extras = ["rocm"] }
 jaxlib = "*"
 
-[feature.nvidia.pypi-dependencies]
-# NVIDIA CUDA support packages
+[feature.nvidia-gpu.pypi-dependencies]
 jax = {version = ">=0.4.0", extras = ["cuda12"]}
 jaxlib = {version = ">=0.4.0", extras = ["cuda12"]}
 cupy-cuda12x = ">=12.0.0"
 torch = {version = ">=2.0.0", extras = ["cu121"]}
 nvidia-ml-py3 = ">=7.352.0"
 
-[feature.nvidia.dependencies]
-# NVIDIA CUDA runtime libraries
+[feature.nvidia-gpu.dependencies]
 cuda-toolkit = ">=12.0"
 cudnn = ">=8.0"
 
+# Environment configurations optimized for different use cases
 [environments]
-dev = ["dev"]
-nvidia = ["nvidia"]
-amd = []
+# Minimal runtime environment for production
+runtime = []
+
+# Development environment with testing and linting tools
+dev = ["dev", "tools", "project"]
+
+# Full development environment with docs and build tools
+full-dev = ["dev", "tools", "project", "docs-build"]
+
+# GUI development environment
+gui-dev = ["dev", "gui", "tools"]
+
+# Machine learning research environment
+ml-research = ["dev", "ml", "advanced-ml", "gui"]
+
+# API server environment
+api-server = ["api", "project"]
+
+# Modular/Mojo development environment
+mojo-dev = ["dev", "modular", "tools"]
+
+# GPU environments (optional, only when needed)
+amd-gpu = ["amd-gpu", "ml"]
+nvidia-gpu = ["nvidia-gpu", "ml"]
+
+# Complete environment (should be avoided in production)
+complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular"]
