@@ -28,7 +28,7 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from ssl_config import (
-    SSLConfig, SSLContextManager, SecurityHeaders, 
+    SSLConfig, SSLContextManager, SecurityHeaders,
     load_ssl_config, initialize_ssl_infrastructure
 )
 
@@ -44,22 +44,22 @@ ssl_context_manager: Optional[SSLContextManager] = None
 async def lifespan(app: FastAPI):
     """Application lifespan manager for SSL initialization"""
     global ssl_config, ssl_context_manager
-    
+
     logger.info("Initializing MFC Dashboard API with SSL support...")
-    
+
     # Load SSL configuration
     ssl_config = load_ssl_config()
     ssl_context_manager = SSLContextManager(ssl_config)
-    
+
     # Initialize SSL infrastructure if needed
     success, ssl_config = initialize_ssl_infrastructure(ssl_config)
     if not success:
         logger.error("Failed to initialize SSL infrastructure")
         # Continue with HTTP for development
-    
+
     logger.info(f"Dashboard API starting on port {ssl_config.https_port_api}")
     yield
-    
+
     logger.info("Shutting down MFC Dashboard API...")
 
 # Initialize FastAPI app with SSL context manager
@@ -161,11 +161,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     """Simple bearer token authentication"""
     if credentials is None:
         return None  # Allow unauthenticated access for now
-    
+
     # In production, verify the token against a database or JWT
     if credentials.credentials == os.getenv("MFC_API_TOKEN", "development-token"):
         return {"username": "api_user"}
-    
+
     raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
 # API Routes
@@ -223,17 +223,17 @@ async def start_simulation(config: SimulationConfig, user=Depends(get_current_us
         # Validate configuration
         if config.duration_hours > 8760:  # 1 year max
             raise HTTPException(status_code=400, detail="Duration exceeds maximum allowed (1 year)")
-        
+
         # In actual implementation, this would start the simulation process
         logger.info(f"Starting simulation: {config.duration_hours}h, {config.n_cells} cells")
-        
+
         return {
             "status": "started",
             "message": "Simulation started successfully",
             "config": config.dict(),
             "timestamp": datetime.now().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to start simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -244,13 +244,13 @@ async def stop_simulation(user=Depends(get_current_user)):
     try:
         # In actual implementation, this would stop the simulation process
         logger.info("Stopping simulation")
-        
+
         return {
             "status": "stopped",
             "message": "Simulation stopped successfully",
             "timestamp": datetime.now().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to stop simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -261,21 +261,21 @@ async def get_latest_data(limit: int = 100):
     try:
         # Find latest simulation data
         data_dir = Path("../../../data/simulation_data")
-        
+
         if not data_dir.exists():
             return []
-        
+
         # Find most recent data file
         data_files = list(data_dir.glob("**/gui_simulation_data_*.csv.gz"))
         if not data_files:
             return []
-        
+
         latest_file = max(data_files, key=lambda f: f.stat().st_mtime)
-        
+
         # Load and return data
         with gzip.open(latest_file, 'rt') as f:
             df = pd.read_csv(f)
-        
+
         # Convert to API format
         data_points = []
         for _, row in df.tail(limit).iterrows():
@@ -287,7 +287,7 @@ async def get_latest_data(limit: int = 100):
                     biofilm_thicknesses = [float(row['biofilm_thicknesses'])]
             except Exception:
                 biofilm_thicknesses = [10.0]  # Default value
-            
+
             data_point = SimulationData(
                 timestamp=datetime.now(),  # Would use actual timestamp from data
                 time_hours=float(row['time_hours']),
@@ -301,9 +301,9 @@ async def get_latest_data(limit: int = 100):
                 reward=float(row['reward'])
             )
             data_points.append(data_point)
-        
+
         return data_points
-        
+
     except Exception as e:
         logger.error(f"Failed to get latest data: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve simulation data")
@@ -313,27 +313,27 @@ async def export_data(format: str, simulation_id: Optional[str] = None):
     """Export simulation data in various formats"""
     if format not in ["csv", "json", "excel", "hdf5"]:
         raise HTTPException(status_code=400, detail="Unsupported export format")
-    
+
     try:
         # Find and load data
         data_dir = Path("../../../data/simulation_data")
-        
+
         if simulation_id:
             data_files = list(data_dir.glob(f"**/*{simulation_id}*.csv.gz"))
         else:
             data_files = list(data_dir.glob("**/gui_simulation_data_*.csv.gz"))
-        
+
         if not data_files:
             raise HTTPException(status_code=404, detail="No simulation data found")
-        
+
         latest_file = max(data_files, key=lambda f: f.stat().st_mtime)
-        
+
         with gzip.open(latest_file, 'rt') as f:
             df = pd.read_csv(f)
-        
+
         # Export in requested format
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
+
         if format == "csv":
             export_path = f"/tmp/mfc_data_{timestamp}.csv"
             df.to_csv(export_path, index=False)
@@ -346,13 +346,13 @@ async def export_data(format: str, simulation_id: Optional[str] = None):
         elif format == "hdf5":
             export_path = f"/tmp/mfc_data_{timestamp}.h5"
             df.to_hdf(export_path, key="simulation_data", mode="w")
-        
+
         return FileResponse(
             export_path,
             filename=f"mfc_simulation_data_{timestamp}.{format}",
             media_type="application/octet-stream"
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to export data: {e}")
         raise HTTPException(status_code=500, detail="Failed to export data")
@@ -364,17 +364,17 @@ async def get_performance_metrics():
         # Load latest results
         data_dir = Path("../../../data/simulation_data")
         results_files = list(data_dir.glob("**/gui_simulation_results_*.json"))
-        
+
         if not results_files:
             raise HTTPException(status_code=404, detail="No performance metrics available")
-        
+
         latest_file = max(results_files, key=lambda f: f.stat().st_mtime)
-        
+
         with open(latest_file, 'r') as f:
             results = json.load(f)
-        
+
         metrics = results.get('performance_metrics', {})
-        
+
         return PerformanceMetrics(
             final_reservoir_concentration=metrics.get('final_reservoir_concentration', 0.0),
             control_effectiveness_2mM=metrics.get('control_effectiveness_2mM', 0.0),
@@ -383,7 +383,7 @@ async def get_performance_metrics():
             energy_efficiency=metrics.get('energy_efficiency', None),
             stability_score=metrics.get('stability_score', None)
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to get performance metrics: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve performance metrics")
@@ -408,7 +408,7 @@ async def get_alert_config():
             email_notify=True
         )
     ]
-    
+
     return {"alerts": default_alerts}
 
 @app.post("/alerts/config")
@@ -417,13 +417,13 @@ async def update_alert_config(alerts: List[AlertConfig], user=Depends(get_curren
     try:
         # In actual implementation, save to database or file
         logger.info(f"Updated alert configuration: {len(alerts)} alerts configured")
-        
+
         return {
             "status": "updated",
             "message": f"Alert configuration updated with {len(alerts)} alerts",
             "timestamp": datetime.now().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to update alert config: {e}")
         raise HTTPException(status_code=500, detail="Failed to update alert configuration")
@@ -458,24 +458,24 @@ def run_dashboard_api(
     debug: bool = False
 ):
     """Run the FastAPI dashboard with SSL support"""
-    
+
     # Load SSL configuration
     config = ssl_config_override or load_ssl_config()
-    
+
     # Use configured port or default
     if port is None:
         port = config.https_port_api
-    
+
     # SSL context for uvicorn
     ssl_context = None
     if config and Path(config.cert_file).exists() and Path(config.key_file).exists():
         ssl_manager = SSLContextManager(config)
         ssl_params = ssl_manager.get_uvicorn_ssl_config()
-        
+
         logger.info(f"Starting HTTPS server on {host}:{port}")
         logger.info(f"Certificate: {config.cert_file}")
         logger.info(f"Key: {config.key_file}")
-        
+
         # Run with SSL
         uvicorn.run(
             "dashboard_api:app",
@@ -488,7 +488,7 @@ def run_dashboard_api(
     else:
         logger.warning("SSL certificates not found, running HTTP server")
         logger.warning("For production, please setup SSL certificates")
-        
+
         # Run without SSL (development only)
         uvicorn.run(
             "dashboard_api:app",
@@ -500,15 +500,15 @@ def run_dashboard_api(
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="MFC Dashboard API Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, help="Port to bind to (default from SSL config)")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--init-ssl", action="store_true", help="Initialize SSL certificates")
-    
+
     args = parser.parse_args()
-    
+
     if args.init_ssl:
         logger.info("Initializing SSL infrastructure...")
         success, config = initialize_ssl_infrastructure()
@@ -517,7 +517,7 @@ if __name__ == "__main__":
         else:
             logger.error("❌ SSL initialization failed")
             sys.exit(1)
-    
+
     run_dashboard_api(
         host=args.host,
         port=args.port,
