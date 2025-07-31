@@ -158,3 +158,7 @@ protein-models-4-mfc/alphafold_params_2022-12-06.tar
 protein-models-4-mfc/downstream_datasets.zip
 protein-models-4-mfc/downstream_datasets.zip.aria2
 protein-models-4-mfc/proteindt_model.bin
+.conda/packages/noarch/index.html
+.conda/packages/index.html
+.conda/packages/linux-64/index.html
+.conda/packages/linux-64/.cache/cache.db
