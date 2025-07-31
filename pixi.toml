@@ -8,6 +8,7 @@ version = "0.1.0"
 [tasks]
 pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
 post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
+parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
 
 [dependencies]
 scipy = ">=1.16.0,<2"
