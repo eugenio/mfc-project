@@ -20,11 +20,11 @@ fig.suptitle('Q-Learning Substrate Control: Problem Analysis and Solution', font
 
 # 1. Substrate concentration comparison
 ax1 = axes[0, 0]
-ax1.plot(pid_data['time_hours'], pid_data['substrate_concentrations'], 
+ax1.plot(pid_data['time_hours'], pid_data['substrate_concentrations'],
          label='PID Controller', color='red', linewidth=2, alpha=0.8)
-ax1.plot(qlearning_old['time_hours'], qlearning_old['reservoir_concentration'], 
+ax1.plot(qlearning_old['time_hours'], qlearning_old['reservoir_concentration'],
          label='Q-Learning (Original)', color='orange', linewidth=2, alpha=0.8)
-ax1.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'], 
+ax1.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'],
          label='Q-Learning (Improved)', color='blue', linewidth=2, alpha=0.8)
 ax1.axhline(y=20, color='green', linestyle='--', alpha=0.7, label='Target (20 mM)')
 ax1.axhline(y=25, color='red', linestyle='--', alpha=0.7, label='Max Threshold (25 mM)')
@@ -37,11 +37,11 @@ ax1.set_ylim(15, 85)
 
 # 2. Power output comparison
 ax2 = axes[0, 1]
-ax2.plot(pid_data['time_hours'], pid_data['stack_power'] * 1000, 
+ax2.plot(pid_data['time_hours'], pid_data['stack_power'] * 1000,
          label='PID Controller', color='red', linewidth=2, alpha=0.8)
-ax2.plot(qlearning_old['time_hours'], qlearning_old['total_power'] * 1000, 
+ax2.plot(qlearning_old['time_hours'], qlearning_old['total_power'] * 1000,
          label='Q-Learning (Original)', color='orange', linewidth=2, alpha=0.8)
-ax2.plot(qlearning_improved['time_hours'], qlearning_improved['total_power'] * 1000, 
+ax2.plot(qlearning_improved['time_hours'], qlearning_improved['total_power'] * 1000,
          label='Q-Learning (Improved)', color='blue', linewidth=2, alpha=0.8)
 ax2.set_xlabel('Time (hours)')
 ax2.set_ylabel('Power Output (mW)')
@@ -55,11 +55,11 @@ ax3 = axes[0, 2]
 pid_additions = np.diff(pid_data['substrate_concentrations'], prepend=pid_data['substrate_concentrations'].iloc[0])
 pid_additions = np.maximum(pid_additions, 0)  # Only positive additions
 
-ax3.plot(pid_data['time_hours'], pid_additions, 
+ax3.plot(pid_data['time_hours'], pid_additions,
          label='PID Controller (estimated)', color='red', linewidth=2, alpha=0.8)
-ax3.plot(qlearning_old['time_hours'], qlearning_old['substrate_addition_rate'], 
+ax3.plot(qlearning_old['time_hours'], qlearning_old['substrate_addition_rate'],
          label='Q-Learning (Original)', color='orange', linewidth=2, alpha=0.8)
-ax3.plot(qlearning_improved['time_hours'], qlearning_improved['substrate_addition_rate'], 
+ax3.plot(qlearning_improved['time_hours'], qlearning_improved['substrate_addition_rate'],
          label='Q-Learning (Improved)', color='blue', linewidth=2, alpha=0.8)
 ax3.set_xlabel('Time (hours)')
 ax3.set_ylabel('Substrate Addition Rate (mM/h)')
@@ -70,10 +70,10 @@ ax3.grid(True, alpha=0.3)
 # 4. Detailed view: Critical period (45-65 hours)
 ax4 = axes[1, 0]
 critical_hours = (qlearning_old['time_hours'] >= 45) & (qlearning_old['time_hours'] <= 65)
-ax4.plot(qlearning_old[critical_hours]['time_hours'], 
-         qlearning_old[critical_hours]['reservoir_concentration'], 
+ax4.plot(qlearning_old[critical_hours]['time_hours'],
+         qlearning_old[critical_hours]['reservoir_concentration'],
          label='Original Q-Learning', color='orange', linewidth=2)
-ax4.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'], 
+ax4.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'],
          label='Improved Q-Learning', color='blue', linewidth=2)
 ax4.axhline(y=20, color='green', linestyle='--', alpha=0.7, label='Target')
 ax4.axhline(y=25, color='red', linestyle='--', alpha=0.7, label='Max Threshold')
@@ -94,9 +94,9 @@ improved_additions = qlearning_improved['substrate_addition_rate'] > 0
 old_exploration = pd.Series(old_additions.astype(int)).rolling(window=window, center=True).sum()
 improved_exploration = pd.Series(improved_additions.astype(int)).rolling(window=window, center=True).sum()
 
-ax5.plot(qlearning_old['time_hours'], old_exploration, 
+ax5.plot(qlearning_old['time_hours'], old_exploration,
          label='Original (High Exploration)', color='orange', linewidth=2)
-ax5.plot(qlearning_improved['time_hours'], improved_exploration, 
+ax5.plot(qlearning_improved['time_hours'], improved_exploration,
          label='Improved (Low Exploration)', color='blue', linewidth=2)
 ax5.set_xlabel('Time (hours)')
 ax5.set_ylabel('Addition Events per Hour')
@@ -168,9 +168,9 @@ fig2.suptitle('Q-Learning Substrate Control: Final Solution Performance', fontsi
 
 # Final solution performance
 ax1 = axes2[0, 0]
-ax1.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'], 
+ax1.plot(qlearning_improved['time_hours'], qlearning_improved['reservoir_concentration'],
          label='Reservoir Concentration', color='blue', linewidth=2)
-ax1.plot(qlearning_improved['time_hours'], qlearning_improved['outlet_concentration'], 
+ax1.plot(qlearning_improved['time_hours'], qlearning_improved['outlet_concentration'],
          label='Outlet Concentration', color='green', linewidth=2)
 ax1.axhline(y=20, color='blue', linestyle='--', alpha=0.7, label='Reservoir Target (20 mM)')
 ax1.axhline(y=12, color='green', linestyle='--', alpha=0.7, label='Outlet Target (12 mM)')
@@ -182,7 +182,7 @@ ax1.grid(True, alpha=0.3)
 
 # Power and efficiency
 ax2 = axes2[0, 1]
-ax2.plot(qlearning_improved['time_hours'], qlearning_improved['total_power'] * 1000, 
+ax2.plot(qlearning_improved['time_hours'], qlearning_improved['total_power'] * 1000,
          color='red', linewidth=2)
 ax2.set_xlabel('Time (hours)')
 ax2.set_ylabel('Power Output (mW)')
@@ -191,7 +191,7 @@ ax2.grid(True, alpha=0.3)
 
 # Substrate addition behavior
 ax3 = axes2[1, 0]
-ax3.plot(qlearning_improved['time_hours'], qlearning_improved['substrate_addition_rate'], 
+ax3.plot(qlearning_improved['time_hours'], qlearning_improved['substrate_addition_rate'],
          color='purple', linewidth=2)
 ax3.set_xlabel('Time (hours)')
 ax3.set_ylabel('Addition Rate (mM/h)')
@@ -204,9 +204,9 @@ ax4 = axes2[1, 1]
 reservoir_error = np.abs(qlearning_improved['reservoir_concentration'] - 20.0)
 outlet_error = np.abs(qlearning_improved['outlet_concentration'] - 12.0)
 
-ax4.plot(qlearning_improved['time_hours'], reservoir_error, 
+ax4.plot(qlearning_improved['time_hours'], reservoir_error,
          label='Reservoir Error', color='blue', linewidth=2)
-ax4.plot(qlearning_improved['time_hours'], outlet_error, 
+ax4.plot(qlearning_improved['time_hours'], outlet_error,
          label='Outlet Error', color='green', linewidth=2)
 ax4.set_xlabel('Time (hours)')
 ax4.set_ylabel('Control Error (mM)')
