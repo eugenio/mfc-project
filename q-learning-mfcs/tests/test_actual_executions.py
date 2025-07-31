@@ -8,10 +8,7 @@ import unittest
 import os
 import sys
 import subprocess
-import tempfile
-import time
 from pathlib import Path
-from unittest.mock import patch
 import matplotlib
 matplotlib.use('Agg')
 
@@ -19,20 +16,20 @@ matplotlib.use('Agg')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from path_config import (
-    get_figure_path, get_simulation_data_path, get_model_path, 
+    get_figure_path, get_simulation_data_path, get_model_path,
     FIGURES_DIR, SIMULATION_DATA_DIR, MODELS_DIR
 )
 
 
 class TestActualFileExecutions(unittest.TestCase):
     """Test actual file executions with minimal parameters."""
-    
+
     def setUp(self):
         """Set up test environment."""
         self.test_outputs = []
         self.original_dir = os.getcwd()
         os.chdir(os.path.join(os.path.dirname(__file__), '..', 'src'))
-        
+
     def tearDown(self):
         """Clean up after tests."""
         os.chdir(self.original_dir)
@@ -43,11 +40,11 @@ class TestActualFileExecutions(unittest.TestCase):
                     os.remove(output_path)
                 except Exception:
                     pass
-    
+
     def track_output(self, filepath):
         """Track an output file for cleanup."""
         self.test_outputs.append(filepath)
-    
+
     def test_simple_plotting_execution(self):
         """Test execution of a simple plotting script."""
         # Create a minimal script that uses path_config
@@ -75,20 +72,20 @@ plt.close()
 
 print(f"Plot saved to: {output_path}")
 '''
-        
+
         # Execute the script
-        result = subprocess.run([sys.executable, '-c', test_script], 
+        result = subprocess.run([sys.executable, '-c', test_script],
                               capture_output=True, text=True, cwd=os.getcwd())
-        
+
         # Check execution was successful
         self.assertEqual(result.returncode, 0, f"Script execution failed: {result.stderr}")
-        
+
         # Check output file was created
         expected_path = get_figure_path('test_execution_plot.png')
         self.track_output(expected_path)
         self.assertTrue(os.path.exists(expected_path))
         self.assertGreater(os.path.getsize(expected_path), 1000)  # Should be substantial PNG file
-    
+
     def test_data_generation_execution(self):
         """Test execution of a data generation script."""
         test_script = '''
@@ -132,26 +129,26 @@ with open(json_path, 'w') as f:
 print(f"CSV saved to: {csv_path}")
 print(f"JSON saved to: {json_path}")
 '''
-        
+
         # Execute the script
-        result = subprocess.run([sys.executable, '-c', test_script], 
+        result = subprocess.run([sys.executable, '-c', test_script],
                               capture_output=True, text=True, cwd=os.getcwd())
-        
+
         # Check execution was successful
         self.assertEqual(result.returncode, 0, f"Script execution failed: {result.stderr}")
-        
+
         # Check output files were created
         csv_path = get_simulation_data_path('test_execution_data.csv')
         json_path = get_simulation_data_path('test_execution_summary.json')
-        
+
         self.track_output(csv_path)
         self.track_output(json_path)
-        
+
         self.assertTrue(os.path.exists(csv_path))
         self.assertTrue(os.path.exists(json_path))
         self.assertGreater(os.path.getsize(csv_path), 100)
         self.assertGreater(os.path.getsize(json_path), 50)
-    
+
     def test_model_saving_execution(self):
         """Test execution of a model saving script."""
         test_script = '''
@@ -193,27 +190,27 @@ with open(model_path, 'wb') as f:
 
 print(f"Model saved to: {model_path}")
 '''
-        
+
         # Execute the script
-        result = subprocess.run([sys.executable, '-c', test_script], 
+        result = subprocess.run([sys.executable, '-c', test_script],
                               capture_output=True, text=True, cwd=os.getcwd())
-        
+
         # Check execution was successful
         self.assertEqual(result.returncode, 0, f"Script execution failed: {result.stderr}")
-        
+
         # Check output file was created
         model_path = get_model_path('test_execution_model.pkl')
         self.track_output(model_path)
-        
+
         self.assertTrue(os.path.exists(model_path))
         self.assertGreater(os.path.getsize(model_path), 100)
-    
+
     @unittest.skip("Requires long execution time - enable for full testing")
     def test_minimal_simulation_run(self):
         """Test running a minimal version of actual simulation file."""
         # This test is skipped by default as it takes longer
         # Enable it by removing the @unittest.skip decorator for comprehensive testing
-        
+
         test_script = '''
 # Minimal version of mfc_qlearning_demo simulation
 import sys
@@ -230,22 +227,22 @@ try:
 except ImportError as e:
     print(f"Could not import: {e}")
 '''
-        
-        result = subprocess.run([sys.executable, '-c', test_script], 
-                              capture_output=True, text=True, cwd=os.getcwd(), 
+
+        result = subprocess.run([sys.executable, '-c', test_script],
+                              capture_output=True, text=True, cwd=os.getcwd(),
                               timeout=30)  # 30 second timeout
-        
+
         # Just check that import works - actual execution would be too slow
         self.assertIn("Would run", result.stdout)
 
 
 class TestFileOutputPatterns(unittest.TestCase):
     """Test that files follow expected output patterns."""
-    
+
     def setUp(self):
         """Set up test environment."""
         self.src_dir = Path(__file__).parent.parent / 'src'
-    
+
     def test_files_use_path_config_import(self):
         """Test that modified files import path_config."""
         python_files = [
@@ -255,43 +252,43 @@ class TestFileOutputPatterns(unittest.TestCase):
             'generate_performance_graphs.py',
             'physics_accurate_biofilm_qcm.py'
         ]
-        
+
         for filename in python_files:
             filepath = self.src_dir / filename
             if filepath.exists():
                 with self.subTest(file=filename):
                     with open(filepath, 'r') as f:
                         content = f.read()
-                    
+
                     # Check for path_config import
-                    self.assertIn('from path_config import', content, 
+                    self.assertIn('from path_config import', content,
                                 f"{filename} should import from path_config")
-                    
+
                     # Check that it doesn't use hardcoded paths
                     hardcoded_patterns = [
                         "f'figures/",  # Old style figure paths
                         "f'simulation_data/",  # Old style data paths
                         "f'q_learning_models/"  # Old style model paths
                     ]
-                    
+
                     for pattern in hardcoded_patterns:
-                        self.assertNotIn(pattern, content, 
+                        self.assertNotIn(pattern, content,
                                        f"{filename} should not contain hardcoded pattern: {pattern}")
-    
+
     def test_expected_output_directories_have_content(self):
         """Test that output directories contain expected types of files."""
         # Check figures directory
         if FIGURES_DIR.exists():
             png_files = list(FIGURES_DIR.glob('*.png'))
             self.assertGreater(len(png_files), 0, "Figures directory should contain PNG files")
-        
-        # Check simulation data directory  
+
+        # Check simulation data directory
         if SIMULATION_DATA_DIR.exists():
             csv_files = list(SIMULATION_DATA_DIR.glob('*.csv'))
             json_files = list(SIMULATION_DATA_DIR.glob('*.json'))
-            self.assertGreater(len(csv_files) + len(json_files), 0, 
+            self.assertGreater(len(csv_files) + len(json_files), 0,
                              "Simulation data directory should contain CSV or JSON files")
-        
+
         # Check models directory
         if MODELS_DIR.exists():
             pkl_files = list(MODELS_DIR.glob('*.pkl'))
