@@ -40,6 +40,7 @@ from gui.qlearning_viz import (
     create_demo_qlearning_data,
     load_qtable_from_file
 )
+from gui.parameter_input import ParameterInputComponent
 
 # Import existing components and configs
 from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
@@ -150,6 +151,9 @@ class EnhancedMFCApp:
         # Initialize Q-learning visualizer
         self.qlearning_viz = QLearningVisualizer()
         
+        # Initialize parameter input component
+        self.parameter_input = ParameterInputComponent()
+        
         # Store configuration in session state
         st.session_state.ui_config = sidebar_config
     
@@ -206,117 +210,8 @@ class EnhancedMFCApp:
             """, unsafe_allow_html=True)
     
     def render_scientific_parameter_interface(self):
-        """Render scientific parameter input interface."""
-        st.markdown("## ⚙️ Scientific Parameter Configuration")
-        
-        # Define MFC-specific parameters with literature references
-        mfc_parameters = {
-            "Electrochemical Parameters": {
-                "anode_potential": {
-                    "type": "float",
-                    "default": -0.3,
-                    "min": -0.8,
-                    "max": 0.2,
-                    "unit": "V vs SHE",
-                    "description": "Anode electrode potential",
-                    "literature_reference": "Logan et al. (2006). Environ. Sci. Technol."
-                },
-                "cathode_potential": {
-                    "type": "float", 
-                    "default": 0.4,
-                    "min": 0.0,
-                    "max": 0.8,
-                    "unit": "V vs SHE",
-                    "description": "Cathode electrode potential",
-                    "literature_reference": "Rismani-Yazdi et al. (2008). J. Power Sources"
-                },
-                "membrane_conductivity": {
-                    "type": "float",
-                    "default": 5.0,
-                    "min": 0.1,
-                    "max": 20.0,
-                    "unit": "S/m",
-                    "description": "Proton exchange membrane conductivity", 
-                    "literature_reference": "Kim et al. (2007). Biosens. Bioelectron."
-                }
-            },
-            "Biological Parameters": {
-                "max_substrate_concentration": {
-                    "type": "float",
-                    "default": 100.0,
-                    "min": 10.0,
-                    "max": 500.0,
-                    "unit": "mM",
-                    "description": "Maximum substrate concentration",
-                    "literature_reference": "Pant et al. (2010). Bioresour. Technol."
-                },
-                "biofilm_thickness": {
-                    "type": "float",
-                    "default": 50.0,
-                    "min": 10.0,
-                    "max": 200.0,
-                    "unit": "μm",
-                    "description": "Average biofilm thickness",
-                    "literature_reference": "Torres et al. (2010). Environ. Sci. Technol."
-                },
-                "temperature": {
-                    "type": "float",
-                    "default": 25.0,
-                    "min": 15.0,
-                    "max": 40.0,
-                    "unit": "°C",
-                    "description": "Operating temperature",
-                    "literature_reference": "Cheng et al. (2006). Environ. Sci. Technol."
-                }
-            },
-            "Q-Learning Parameters": {
-                "learning_rate": {
-                    "type": "float",
-                    "default": 0.1,
-                    "min": 0.001,
-                    "max": 1.0,
-                    "unit": "",
-                    "description": "Q-learning algorithm learning rate",
-                    "literature_reference": "Sutton & Barto (2018). Reinforcement Learning"
-                },
-                "discount_factor": {
-                    "type": "float",
-                    "default": 0.95,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "unit": "",
-                    "description": "Future reward discount factor",
-                    "literature_reference": "Watkins (1989). Learning from delayed rewards"
-                },
-                "exploration_rate": {
-                    "type": "float",
-                    "default": 0.1,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "unit": "",
-                    "description": "Epsilon-greedy exploration rate",
-                    "literature_reference": "Thrun & Schwartz (1993). Machine Learning"
-                }
-            }
-        }
-        
-        # Render parameter sections
-        parameter_values = {}
-        for section_name, parameters in mfc_parameters.items():
-            values = self.components['parameter_input'].render_parameter_section(
-                section_name, 
-                parameters,
-                f"param_{section_name.lower().replace(' ', '_')}"
-            )
-            parameter_values.update(values)
-        
-        # Store parameters in session state
-        st.session_state.selected_parameters = parameter_values
-        
-        # Parameter validation summary
-        self.render_parameter_validation_summary(parameter_values)
-        
-        return parameter_values
+        """Render scientific parameter input interface with literature validation."""
+        return self.parameter_input.render_parameter_input_form()
     
     def render_parameter_validation_summary(self, parameters: Dict[str, Any]):
         """Render parameter validation summary."""
@@ -378,13 +273,13 @@ class EnhancedMFCApp:
                 col_a, col_b = st.columns(2)
                 
                 with col_a:
-                    use_pretrained = st.checkbox(
+                    _ = st.checkbox(
                         "Use Pre-trained Q-table",
                         value=True,
                         help="Use existing trained Q-learning policy"
                     )
                     
-                    enable_gpu = st.checkbox(
+                    _ = st.checkbox(
                         "Enable GPU Acceleration", 
                         value=True,
                         help="Use GPU for faster simulation (8400× speedup)"
@@ -399,7 +294,7 @@ class EnhancedMFCApp:
                         help="How often to save simulation data"
                     )
                     
-                    export_format = st.selectbox(
+                    _ = st.selectbox(
                         "Export Format",
                         options=["CSV", "HDF5", "JSON"],
                         help="Data export format for analysis"
@@ -413,8 +308,8 @@ class EnhancedMFCApp:
                 st.markdown("🟢 **Status**: Running")
                 
                 # Progress placeholder (would need integration with actual simulation)
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+                _ = st.progress(0)
+                _ = st.empty()
                 
                 if st.button("⏹️ Stop Simulation", type="secondary"):
                     st.session_state.simulation_runner.stop_simulation()
