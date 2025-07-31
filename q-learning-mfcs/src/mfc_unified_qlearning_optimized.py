@@ -41,31 +41,31 @@ class OptimizedUnifiedQController:
         self.epsilon = 0.3702  # Initial exploration rate
         self.epsilon_decay = 0.9978
         self.epsilon_min = 0.1020
-        
+
         # Target concentration
         self.target_outlet_conc = target_outlet_conc
-        
+
         # Initialize Q-table
         self.q_table = defaultdict(lambda: defaultdict(float))
-        
+
         # Performance tracking
         self.performance_history = []
         self.action_history = []
         self.total_rewards = 0  # Track total accumulated rewards
-        
+
         # OPTIMIZED ACTION SPACE from Optuna
         flow_actions = list(range(-12, 7))  # -12 to +6 mL/h
         substrate_actions = []
         # Coarse substrate adjustments as determined by optimization
         for val in np.arange(-1.046, 1.196, 1.0):
             substrate_actions.append(round(val, 3))
-        
+
         # Create combined action space
         self.actions = []
         for flow_adj in flow_actions:
             for substr_adj in substrate_actions:
                 self.actions.append((flow_adj, substr_adj))
-        
+
         # State space discretization (same structure as before)
         self.state_bins = {
             'power': np.linspace(0, 0.03, 10),
@@ -75,11 +75,11 @@ class OptimizedUnifiedQController:
             'flow_rate': np.linspace(5, 50, 10),
             'time_phase': np.linspace(0, 1000, 10)
         }
-        
+
         # Control bounds
         self.min_substrate = 5.0
         self.max_substrate = 50.0
-        
+
         # Optimized reward parameters from Optuna
         self.reward_params = {
             'biofilm_base_reward': 56.69,
@@ -96,28 +96,28 @@ class OptimizedUnifiedQController:
             'flow_penalty_multiplier': 24.77,
             'biofilm_threshold_ratio': 0.884
         }
-        
+
         print("Optimized Unified Q-learning initialized:")
         print("- State space dimensions: 6 (extended)")
         print(f"- Action space size: {len(self.actions)} dual actions")
         print(f"- Target outlet concentration: {self.target_outlet_conc:.1f} mmol/L")
         print("- Optimization source: Optuna Trial #37")
-        
-    def discretize_state(self, power, biofilm_deviation, substrate_utilization, 
+
+    def discretize_state(self, power, biofilm_deviation, substrate_utilization,
                         outlet_conc_error, flow_rate, time_hours):
         """Discretize continuous state into bins"""
         def get_bin(value, bins):
             return np.clip(np.digitize(value, bins) - 1, 0, len(bins) - 2)
-        
+
         power_idx = get_bin(power, self.state_bins['power'])
         biofilm_idx = get_bin(biofilm_deviation, self.state_bins['biofilm_deviation'])
         substrate_idx = get_bin(substrate_utilization, self.state_bins['substrate_utilization'])
         error_idx = get_bin(outlet_conc_error, self.state_bins['outlet_conc_error'])
         flow_idx = get_bin(flow_rate, self.state_bins['flow_rate'])
         time_idx = get_bin(time_hours, self.state_bins['time_phase'])
-        
+
         return (power_idx, biofilm_idx, substrate_idx, error_idx, flow_idx, time_idx)
-    
+
     def select_action(self, state, current_flow_rate, current_inlet_conc):
         """Select dual action using epsilon-greedy with optimized parameters"""
         if np.random.random() < self.epsilon:
@@ -135,54 +135,54 @@ class OptimizedUnifiedQController:
             # Exploitation: best known action
             q_values = [self.q_table[state][i] for i in range(len(self.actions))]
             action_idx = np.argmax(q_values)
-        
+
         # Extract dual action
         flow_adjustment, substrate_adjustment = self.actions[action_idx]
-        
+
         # Apply flow rate change with bounds (convert to L/h)
         flow_change_lh = flow_adjustment * 1e-3  # mL/h to L/h
         new_flow_rate = np.clip(current_flow_rate + flow_change_lh, 0.005, 0.050)
-        
+
         # Track current flow rate for reward calculation (in mL/h)
         self.current_flow_rate = new_flow_rate * 1000  # L/h to mL/h
-        
+
         # Apply substrate concentration change with bounds
-        new_inlet_conc = np.clip(current_inlet_conc + substrate_adjustment, 
+        new_inlet_conc = np.clip(current_inlet_conc + substrate_adjustment,
                                 self.min_substrate, self.max_substrate)
-        
+
         # Store action in history
         self.action_history.append((flow_adjustment, substrate_adjustment))
         if len(self.action_history) > 1000:  # Keep last 1000 actions
             self.action_history.pop(0)
-        
+
         return action_idx, new_flow_rate, new_inlet_conc
-    
+
     def update_q_table(self, state, action, reward, next_state):
         """Update Q-table using optimized Q-learning parameters"""
         current_q = self.q_table[state][action]
         next_max_q = max([self.q_table[next_state][a] for a in range(len(self.actions))]) if next_state in self.q_table else 0
-        
+
         # Q-learning update with optimized parameters
         new_q = current_q + self.learning_rate * (reward + self.discount_factor * next_max_q - current_q)
         self.q_table[state][action] = new_q
-        
+
         # Update statistics
         self.total_rewards += reward
-        
+
         # Update exploration rate with optimized decay
         if len(self.performance_history) > 0 and len(self.performance_history) % 100 == 0:
             avg_recent_reward = np.mean(self.performance_history[-100:])
-            
+
             # Adaptive decay based on performance (adjusted threshold for realistic rewards)
             if avg_recent_reward > -1200:  # Good performance - faster decay (realistic threshold)
                 decay_factor = self.epsilon_decay * 0.998  # Slightly more aggressive decay
-            else:  # Poor performance - use normal decay (don't slow down further)  
+            else:  # Poor performance - use normal decay (don't slow down further)
                 decay_factor = self.epsilon_decay  # Normal decay rate
-            
+
             self.epsilon = max(self.epsilon_min, self.epsilon * decay_factor)
         else:
             self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-    
+
     def calculate_optimized_reward(self, power, biofilm_deviation, substrate_utilization,
                                   outlet_conc, prev_power, prev_biofilm_dev, prev_substrate_util,
                                   prev_outlet_conc, biofilm_thickness_history=None):
@@ -193,30 +193,30 @@ class OptimizedUnifiedQController:
         power_change = power - prev_power
         substrate_change = substrate_utilization - prev_substrate_util
         error_improvement = abs(prev_outlet_conc - self.target_outlet_conc) - abs(outlet_conc - self.target_outlet_conc)
-        
+
         # 1. POWER COMPONENT with optimized multipliers
         if power_change > 0:
             power_reward = power_change * self.reward_params['power_increase_multiplier']
         else:
             power_reward = power_change * self.reward_params['power_decrease_multiplier']
-        
+
         power_base = 10.0 if power > 0.005 else -5.0
-        
+
         # 2. SUBSTRATE COMPONENT with optimized multipliers
         if substrate_change > 0:
             substrate_reward = substrate_change * self.reward_params['substrate_increase_multiplier']
         else:
             substrate_reward = substrate_change * self.reward_params['substrate_decrease_multiplier']
-        
+
         substrate_base = 5.0 if substrate_utilization > 10.0 else -2.0
-        
+
         # 3. BIOFILM COMPONENT with optimized parameters
         optimal_thickness = 1.3
         deviation_threshold = 0.05 * optimal_thickness
-        
+
         if biofilm_deviation <= deviation_threshold:
             biofilm_reward = self.reward_params['biofilm_base_reward'] - (biofilm_deviation / deviation_threshold) * 15.0
-            
+
             if biofilm_thickness_history is not None and len(biofilm_thickness_history) >= 3:
                 recent_thickness = biofilm_thickness_history[-3:]
                 if len(recent_thickness) >= 2:
@@ -226,25 +226,25 @@ class OptimizedUnifiedQController:
         else:
             excess_deviation = biofilm_deviation - deviation_threshold
             biofilm_reward = -self.reward_params['biofilm_penalty_multiplier'] * (excess_deviation / deviation_threshold)
-        
+
         # 4. CONCENTRATION CONTROL with optimized parameters
         outlet_error = abs(outlet_conc - self.target_outlet_conc)
-        
+
         if outlet_error <= 0.5:
             concentration_reward = self.reward_params['conc_precise_reward'] - (outlet_error * 10.0)
         elif outlet_error <= 2.0:
             concentration_reward = self.reward_params['conc_acceptable_reward'] - (outlet_error * 2.5)
         else:
             concentration_reward = self.reward_params['conc_poor_penalty'] - (outlet_error * 5.0)
-        
+
         concentration_base = 3.0 if error_improvement > 0 else -1.0
-        
+
         # 5. STABILITY BONUS
         stability_bonus = 0
-        if (abs(power_change) < 0.001 and abs(substrate_change) < 0.5 and 
+        if (abs(power_change) < 0.001 and abs(substrate_change) < 0.5 and
             outlet_error < 1.0 and biofilm_deviation <= deviation_threshold):
             stability_bonus = 30.0
-        
+
         # 6. FLOW PENALTY with optimized thresholds
         flow_penalty = 0
         current_flow_rate = getattr(self, 'current_flow_rate', 10.0)
@@ -254,34 +254,34 @@ class OptimizedUnifiedQController:
                 if current_flow_rate > self.reward_params['flow_penalty_threshold']:
                     flow_penalty = -self.reward_params['flow_penalty_multiplier'] * \
                                   (current_flow_rate - self.reward_params['flow_penalty_threshold']) / 10.0
-        
+
         # 7. COMBINED PENALTY
         combined_penalty = 0
-        if (power_change < 0 and substrate_change < 0 and 
+        if (power_change < 0 and substrate_change < 0 and
             error_improvement < 0 and biofilm_deviation > deviation_threshold):
             combined_penalty = -200.0
-        
+
         # Total reward
-        total_reward = (power_reward + power_base + 
-                       substrate_reward + substrate_base + 
-                       biofilm_reward + 
+        total_reward = (power_reward + power_base +
+                       substrate_reward + substrate_base +
+                       biofilm_reward +
                        concentration_reward + concentration_base +
                        stability_bonus + flow_penalty + combined_penalty)
-        
+
         # Track performance
         self.performance_history.append(total_reward)
         if len(self.performance_history) > 1000:
             self.performance_history.pop(0)
-        
+
         return total_reward
-    
+
     def get_control_statistics(self):
         """Get comprehensive control performance statistics"""
         if len(self.performance_history) == 0:
             return {'avg_reward': 0, 'reward_trend': 0, 'exploration_rate': self.epsilon}
-        
+
         recent_rewards = self.performance_history[-50:] if len(self.performance_history) >= 50 else self.performance_history
-        
+
         # Calculate trend
         if len(recent_rewards) >= 10:
             x = np.arange(len(recent_rewards))
@@ -289,7 +289,7 @@ class OptimizedUnifiedQController:
             trend = z[0]  # Slope of the trend line
         else:
             trend = 0
-        
+
         return {
             'avg_reward': np.mean(recent_rewards),
             'reward_trend': trend,
@@ -312,13 +312,13 @@ class OptimizedMFCSimulation(MFCUnifiedQLearningSimulation):
         """Initialize simulation with optimized controller"""
         # Initialize base class
         super().__init__(use_gpu, target_outlet_conc)
-        
+
         # Replace the controller with optimized version
         self.unified_controller = OptimizedUnifiedQController(target_outlet_conc)
-        
+
         # Override the reward calculation method
         self.unified_controller.calculate_unified_reward = self.unified_controller.calculate_optimized_reward
-        
+
         print("\n=== MFC Simulation with Optuna-Optimized Parameters ===")
         print("Based on optimization results from Trial #37")
         print("Optimized for minimal control error and stable operation")
@@ -329,18 +329,18 @@ def main():
     """Run optimized MFC simulation"""
     print("MFC Unified Q-Learning with Optuna-Optimized Parameters")
     print("=" * 60)
-    
+
     # Create and run optimized simulation
     sim = OptimizedMFCSimulation(use_gpu=False, target_outlet_conc=12.0)
     sim.run_simulation()
-    
+
     # Save simulation data and results
     sim.save_data()
-    
+
     # Generate visualization dashboard
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sim.generate_plots(timestamp)
-    
+
     print("\n=== OPTIMIZED SIMULATION COMPLETE ===")
     print("Results saved with optimized parameters from Optuna")
     print("Compare with baseline to see improvements!")
