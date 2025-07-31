@@ -434,7 +434,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
             eis_conductivity = eis_data.get('conductivity_S_per_m', 0.0)
             
             # Optimal thickness reward using configuration
-            rewards_config = self.qlearning_config.rewards
+            rewards_config = self.qlearning_config.reward_weights
             optimal_thickness = rewards_config.biofilm_optimal_thickness_um
             thickness_deviation = abs(eis_thickness - optimal_thickness) / optimal_thickness
             thickness_reward = max(0, 1.0 - thickness_deviation)
@@ -454,7 +454,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
             if len(self.sensor_confidence_history) > 1:
                 previous_mass = getattr(self, '_previous_qcm_mass', 0.0)
                 mass_growth_rate = (qcm_mass - previous_mass) / max(1.0, qcm_mass)
-                growth_reward = max(0, min(1.0, mass_growth_rate * self.qlearning_config.rewards.mass_growth_rate_factor))
+                growth_reward = max(0, min(1.0, mass_growth_rate * self.qlearning_config.reward_weights.mass_growth_rate_factor))
                 biofilm_reward += growth_reward * qcm_quality
             
             self._previous_qcm_mass = qcm_mass

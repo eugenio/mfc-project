@@ -413,10 +413,10 @@ class GPUAcceleratedMFC:
         conc_deviation = jnp.abs(reservoir_conc - target_conc)
         
         # Exponential penalty for large deviations
-        substrate_penalty = -self.config.rewards.substrate_penalty_multiplier * jnp.exp(conc_deviation / 10.0)
+        substrate_penalty = -self.config.reward_weights.substrate_penalty_multiplier * jnp.exp(conc_deviation / 10.0)
         
         # Power reward
-        power_reward = self.config.rewards.power_weight * jnp.log1p(power)
+        power_reward = self.config.reward_weights.power_weight * jnp.log1p(power)
         
         # Stability bonus for staying near target
         stability_bonus = jnp.where(conc_deviation < 2.0, 50.0, 0.0)
