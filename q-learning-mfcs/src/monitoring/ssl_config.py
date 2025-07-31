@@ -9,7 +9,7 @@ import ssl
 import subprocess
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import json
@@ -84,8 +84,9 @@ class CertificateManager:
         Returns: (is_valid, expiration_date)
         """
         try:
-            with open(self.config.cert_file, 'rb') as f:
-                cert_data = f.read()
+            # Check if certificate file exists and is readable
+            with open(self.config.cert_file, 'rb'):
+                pass  # File exists and is readable
             
             # Use openssl command to check certificate
             result = subprocess.run([
@@ -161,8 +162,8 @@ class CertificateManager:
         
         try:
             # Check if certbot is available
-            result = subprocess.run(['which', 'certbot'], capture_output=True)
-            if result.returncode != 0:
+            check_result = subprocess.run(['which', 'certbot'], capture_output=True)
+            if check_result.returncode != 0:
                 logger.error("Certbot not found. Please install certbot first.")
                 logger.info("Install with: sudo apt-get install certbot")
                 return False
@@ -305,7 +306,7 @@ class SSLContextManager:
         
         return context
     
-    def get_uvicorn_ssl_config(self) -> Dict[str, Union[str, ssl.SSLContext]]:
+    def get_uvicorn_ssl_config(self) -> Dict[str, Any]:
         """Get SSL configuration for uvicorn (FastAPI)"""
         return {
             'ssl_keyfile': self.config.key_file,
@@ -353,12 +354,14 @@ def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
         if env_value is not None:
             # Handle boolean conversion
             if attr_name in ['use_letsencrypt', 'staging', 'auto_renew', 'enable_hsts', 'enable_csp']:
-                env_value = env_value.lower() in ('true', '1', 'yes', 'on')
+                converted_value: Union[bool, int, str] = env_value.lower() in ('true', '1', 'yes', 'on')
             # Handle integer conversion
             elif attr_name in ['https_port_api', 'https_port_frontend', 'wss_port_streaming', 'hsts_max_age', 'renewal_days_before']:
-                env_value = int(env_value)
+                converted_value = int(env_value)
+            else:
+                converted_value = env_value
             
-            setattr(config, attr_name, env_value)
+            setattr(config, attr_name, converted_value)
     
     return config
 
