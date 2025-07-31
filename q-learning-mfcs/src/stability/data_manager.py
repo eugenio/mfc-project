@@ -112,19 +112,19 @@ class DataSchema:
     def validate_record(self, record: DataRecord) -> Tuple[bool, List[str]]:
         """Validate a data record against this schema."""
         errors = []
-        
+
         # Check required fields
         for field_name, field_config in self.fields.items():
             if field_config.get('required', False) and field_name not in record:
                 errors.append(f"Missing required field: {field_name}")
                 continue
-            
+
             if field_name not in record:
                 continue
-            
+
             value = record[field_name]
             expected_type = field_config.get('type')
-            
+
             # Type validation
             if expected_type and not isinstance(value, expected_type):
                 if not self._is_compatible_type(value, expected_type):
@@ -132,12 +132,12 @@ class DataSchema:
                         f"Field {field_name} has incorrect type. "
                         f"Expected {expected_type.__name__}, got {type(value).__name__}"
                     )
-            
+
             # Constraint validation
             constraints = field_config.get('constraints', {})
             field_errors = self._validate_constraints(field_name, value, constraints)
             errors.extend(field_errors)
-        
+
         return len(errors) == 0, errors
 
     def _is_compatible_type(self, value: Any, expected_type: Type) -> bool:
@@ -153,68 +153,68 @@ class DataSchema:
         return False
 
     def _validate_constraints(
-        self, 
-        field_name: str, 
-        value: Any, 
+        self,
+        field_name: str,
+        value: Any,
         constraints: Dict[str, Any]
     ) -> List[str]:
         """Validate field constraints."""
         errors = []
-        
+
         if 'min_value' in constraints and value < constraints['min_value']:
             errors.append(f"Field {field_name} below minimum value {constraints['min_value']}")
-        
+
         if 'max_value' in constraints and value > constraints['max_value']:
             errors.append(f"Field {field_name} above maximum value {constraints['max_value']}")
-        
+
         if 'min_length' in constraints and len(str(value)) < constraints['min_length']:
             errors.append(f"Field {field_name} below minimum length {constraints['min_length']}")
-        
+
         if 'max_length' in constraints and len(str(value)) > constraints['max_length']:
             errors.append(f"Field {field_name} above maximum length {constraints['max_length']}")
-        
+
         if 'allowed_values' in constraints and value not in constraints['allowed_values']:
             errors.append(f"Field {field_name} not in allowed values {constraints['allowed_values']}")
-        
+
         return errors
 
 
 @dataclass
 class DataQualityReport:
     """Comprehensive data quality assessment report."""
-    
+
     # Basic quality metrics
     total_records: int = 0
     valid_records: int = 0
     invalid_records: int = 0
     missing_data_percentage: float = 0.0
     duplicate_records: int = 0
-    
+
     # Temporal quality
     temporal_coverage: timedelta = field(default=timedelta())
     temporal_gaps: List[Tuple[datetime, datetime]] = field(default_factory=list)
     sampling_rate_consistency: float = 0.0
-    
+
     # Value quality
     outlier_count: int = 0
     outlier_percentage: float = 0.0
     value_range_violations: int = 0
     type_consistency: float = 0.0
-    
+
     # Statistical quality
     completeness_score: float = 0.0
     accuracy_score: float = 0.0
     consistency_score: float = 0.0
     timeliness_score: float = 0.0
-    
+
     # Overall assessment
     overall_quality_score: float = 0.0
     quality_level: DataQuality = DataQuality.ACCEPTABLE
-    
+
     # Issues and recommendations
     quality_issues: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
-    
+
     # Metadata
     assessment_timestamp: datetime = field(default_factory=datetime.now)
     data_source: str = ""
@@ -234,7 +234,7 @@ class DataQualityReport:
             self.consistency_score,
             self.timeliness_score
         ]
-        
+
         # Weight different aspects of quality
         weights = [0.3, 0.3, 0.2, 0.2]
         self.overall_quality_score = sum(score * weight for score, weight in zip(scores, weights))
@@ -256,16 +256,16 @@ class DataQualityReport:
         """Generate quality improvement recommendations."""
         if self.missing_data_percentage > 10:
             self.recommendations.append("Investigate and fix data collection gaps")
-        
+
         if self.outlier_percentage > 5:
             self.recommendations.append("Review outlier detection and data validation")
-        
+
         if self.duplicate_records > 0:
             self.recommendations.append("Implement duplicate detection and removal")
-        
+
         if self.temporal_gaps:
             self.recommendations.append("Address temporal gaps in data collection")
-        
+
         if self.sampling_rate_consistency < 0.8:
             self.recommendations.append("Improve sampling rate consistency")
 
@@ -300,7 +300,7 @@ class DataQualityReport:
 
 class DataStorage(Protocol):
     """Protocol for data storage implementations."""
-    
+
     def store_data(
         self,
         data: Union[pd.DataFrame, List[DataRecord], DataRecord],
@@ -332,7 +332,7 @@ class DataStorage(Protocol):
 
 class BaseDataStorage(ABC):
     """Base class for data storage implementations."""
-    
+
     def __init__(
         self,
         storage_path: Union[str, Path],
@@ -395,18 +395,18 @@ class BaseDataStorage(ABC):
         """Create backup of stored data."""
         if not self.backup_enabled:
             return False
-        
+
         try:
             backup_path = backup_path or self.storage_path.parent / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             backup_path.mkdir(parents=True, exist_ok=True)
-            
+
             # Copy all data files to backup location
             import shutil
             shutil.copytree(self.storage_path, backup_path / "data", dirs_exist_ok=True)
-            
+
             self.logger.info(f"Backup created at {backup_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Backup creation failed: {str(e)}")
             return False
@@ -414,7 +414,7 @@ class BaseDataStorage(ABC):
 
 class SQLiteDataStorage(BaseDataStorage):
     """SQLite-based data storage implementation."""
-    
+
     def __init__(
         self,
         storage_path: Union[str, Path],
@@ -439,7 +439,7 @@ class SQLiteDataStorage(BaseDataStorage):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Create main data table
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS mfc_data (
@@ -455,23 +455,23 @@ class SQLiteDataStorage(BaseDataStorage):
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                
+
                 # Create indices for better query performance
                 cursor.execute("""
                     CREATE INDEX IF NOT EXISTS idx_timestamp 
                     ON mfc_data(timestamp)
                 """)
-                
+
                 cursor.execute("""
                     CREATE INDEX IF NOT EXISTS idx_data_type_timestamp 
                     ON mfc_data(data_type, timestamp)
                 """)
-                
+
                 cursor.execute("""
                     CREATE INDEX IF NOT EXISTS idx_component_metric 
                     ON mfc_data(component_id, metric_name)
                 """)
-                
+
                 # Create data quality log table
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS data_quality_log (
@@ -487,10 +487,10 @@ class SQLiteDataStorage(BaseDataStorage):
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                
+
                 conn.commit()
                 self.logger.info("SQLite database initialized successfully")
-                
+
         except Exception as e:
             self.logger.error(f"Database initialization failed: {str(e)}")
             raise
@@ -530,13 +530,13 @@ class SQLiteDataStorage(BaseDataStorage):
         try:
             # Normalize data to list of records
             records = self._normalize_data_input(data)
-            
+
             if not records:
                 return True  # Nothing to store
-            
+
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 for record in records:
                     # Extract standard fields
                     timestamp = record.get('timestamp', datetime.now())
@@ -545,14 +545,14 @@ class SQLiteDataStorage(BaseDataStorage):
                     value = record.get('value', 0.0)
                     unit = record.get('unit', '')
                     quality_score = record.get('quality_score', 1.0)
-                    
+
                     # Store additional fields as JSON metadata
                     metadata_fields = {
                         k: v for k, v in record.items()
                         if k not in ['timestamp', 'component_id', 'metric_name', 'value', 'unit', 'quality_score']
                     }
                     metadata_json = json.dumps(metadata_fields) if metadata_fields else None
-                    
+
                     cursor.execute("""
                         INSERT INTO mfc_data 
                         (timestamp, data_type, component_id, metric_name, value, unit, quality_score, metadata)
@@ -567,11 +567,11 @@ class SQLiteDataStorage(BaseDataStorage):
                         float(quality_score) if isinstance(quality_score, (int, float, np.number)) else 0.0,
                         metadata_json
                     ))
-                
+
                 conn.commit()
                 self.logger.info(f"Stored {len(records)} records of type {data_type.name}")
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Data storage failed: {str(e)}")
             return False
@@ -599,44 +599,44 @@ class SQLiteDataStorage(BaseDataStorage):
                 # Build query
                 query = "SELECT * FROM mfc_data WHERE data_type = ?"
                 params = [data_type.name]
-                
+
                 if start_time:
                     query += " AND timestamp >= ?"
                     params.append(start_time.isoformat())
-                
+
                 if end_time:
                     query += " AND timestamp <= ?"
                     params.append(end_time.isoformat())
-                
+
                 # Add additional filters
                 component_id = kwargs.get('component_id')
                 if component_id:
                     query += " AND component_id = ?"
                     params.append(component_id)
-                
+
                 metric_name = kwargs.get('metric_name')
                 if metric_name:
                     query += " AND metric_name = ?"
                     params.append(metric_name)
-                
+
                 # Add ordering
                 query += " ORDER BY timestamp"
-                
+
                 # Add limit if specified
                 limit = kwargs.get('limit')
                 if limit:
                     query += f" LIMIT {int(limit)}"
-                
+
                 # Execute query
                 df = pd.read_sql_query(query, conn, params=params)
-                
+
                 # Convert timestamp column to datetime
                 if not df.empty and 'timestamp' in df.columns:
                     df['timestamp'] = pd.to_datetime(df['timestamp'])
-                
+
                 self.logger.info(f"Retrieved {len(df)} records of type {data_type.name}")
                 return df
-                
+
         except Exception as e:
             self.logger.error(f"Data retrieval failed: {str(e)}")
             return pd.DataFrame()  # Return empty DataFrame on error
@@ -660,31 +660,31 @@ class SQLiteDataStorage(BaseDataStorage):
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Build delete query
                 query = "DELETE FROM mfc_data WHERE data_type = ?"
                 params = [data_type.name]
-                
+
                 if conditions:
                     for key, value in conditions.items():
                         if key in ['timestamp', 'component_id', 'metric_name']:
                             query += f" AND {key} = ?"
                             params.append(value)
-                
+
                 # Execute deletion
                 cursor.execute(query, params)
                 deleted_count = cursor.rowcount
-                
+
                 conn.commit()
                 self.logger.info(f"Deleted {deleted_count} records of type {data_type.name}")
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Data deletion failed: {str(e)}")
             return False
 
     def _normalize_data_input(
-        self, 
+        self,
         data: Union[pd.DataFrame, List[DataRecord], DataRecord]
     ) -> List[DataRecord]:
         """Normalize data input to list of records."""
@@ -700,7 +700,7 @@ class SQLiteDataStorage(BaseDataStorage):
 
 class MFCDataManager:
     """Main data manager for MFC stability analysis."""
-    
+
     def __init__(
         self,
         storage: Optional[DataStorage] = None,
@@ -726,7 +726,7 @@ class MFCDataManager:
     def _create_default_schemas(self) -> Dict[DataType, DataSchema]:
         """Create default data schemas for MFC data types."""
         schemas = {}
-        
+
         # Sensor reading schema
         schemas[DataType.SENSOR_READING] = DataSchema(
             schema_name="sensor_reading",
@@ -741,7 +741,7 @@ class MFCDataManager:
             },
             description="Schema for sensor readings and measurements"
         )
-        
+
         # Performance metric schema
         schemas[DataType.PERFORMANCE_METRIC] = DataSchema(
             schema_name="performance_metric",
@@ -756,7 +756,7 @@ class MFCDataManager:
             },
             description="Schema for performance metrics and KPIs"
         )
-        
+
         return schemas
 
     def _create_default_thresholds(self) -> Dict[str, float]:
@@ -789,33 +789,33 @@ class MFCDataManager:
             Tuple of (success, validation_errors)
         """
         validation_errors = []
-        
+
         try:
             # Validate data if requested and schema exists
             if validate and data_type in self.schema_registry:
                 schema = self.schema_registry[data_type]
                 records = self._normalize_data_for_validation(data)
-                
+
                 for i, record in enumerate(records):
                     is_valid, errors = schema.validate_record(record)
                     if not is_valid:
                         validation_errors.extend([f"Record {i}: {error}" for error in errors])
-                
+
                 # Stop if validation failed and we have errors
                 if validation_errors:
                     self.logger.warning(f"Data validation failed with {len(validation_errors)} errors")
                     return False, validation_errors
-            
+
             # Store data
             success = self.storage.store_data(data, data_type, **kwargs)
-            
+
             if success:
                 self.logger.info(f"Successfully stored data of type {data_type.name}")
             else:
                 self.logger.error(f"Failed to store data of type {data_type.name}")
-            
+
             return success, validation_errors
-            
+
         except Exception as e:
             self.logger.error(f"Data storage operation failed: {str(e)}")
             return False, [str(e)]
@@ -842,7 +842,7 @@ class MFCDataManager:
             result = self.storage.retrieve_data(data_type, start_time, end_time, **kwargs)
             self.logger.info(f"Retrieved data of type {data_type.name}")
             return result
-            
+
         except Exception as e:
             self.logger.error(f"Data retrieval failed: {str(e)}")
             return pd.DataFrame()
@@ -872,47 +872,47 @@ class MFCDataManager:
                     data = df
                 else:
                     return DataQualityReport(quality_level=DataQuality.INVALID)
-            
+
             if not isinstance(data, pd.DataFrame):
                 return DataQualityReport(quality_level=DataQuality.INVALID)
-            
+
             # Initialize quality report
             report = DataQualityReport(
                 total_records=len(data),
                 data_source=kwargs.get('data_source', 'unknown')
             )
-            
+
             if len(data) == 0:
                 return report
-            
+
             # Assess completeness
             report.missing_data_percentage = (data.isnull().sum().sum() / (len(data) * len(data.columns))) * 100
             report.completeness_score = max(0.0, 1.0 - report.missing_data_percentage / 100.0)
-            
+
             # Assess duplicates
             report.duplicate_records = len(data) - len(data.drop_duplicates())
-            
+
             # Assess temporal quality if timestamp column exists
             if 'timestamp' in data.columns:
                 report = self._assess_temporal_quality(data, report)
-            
+
             # Assess value quality for numeric columns
             numeric_columns = data.select_dtypes(include=[np.number]).columns
             if len(numeric_columns) > 0:
                 report = self._assess_value_quality(data[numeric_columns], report)
-            
+
             # Calculate overall scores
             report.accuracy_score = self._calculate_accuracy_score(data)
             report.consistency_score = self._calculate_consistency_score(data)
             report.timeliness_score = self._calculate_timeliness_score(data)
-            
+
             # Determine valid/invalid records
             report.valid_records = len(data) - report.duplicate_records
             report.invalid_records = report.duplicate_records
-            
+
             self.logger.info(f"Data quality assessment completed. Overall score: {report.overall_quality_score:.3f}")
             return report
-            
+
         except Exception as e:
             self.logger.error(f"Data quality assessment failed: {str(e)}")
             return DataQualityReport(quality_level=DataQuality.INVALID)
@@ -921,30 +921,30 @@ class MFCDataManager:
         """Assess temporal aspects of data quality."""
         try:
             timestamps = pd.to_datetime(data['timestamp'])
-            
+
             # Calculate temporal coverage
             if len(timestamps) > 1:
                 report.temporal_coverage = timestamps.max() - timestamps.min()
-                
+
                 # Find temporal gaps (gaps > expected sampling interval)
                 time_diffs = timestamps.diff().dropna()
                 if len(time_diffs) > 0:
                     median_interval = time_diffs.median()
                     gap_threshold = median_interval * 3  # Gaps > 3x median interval
-                    
+
                     gaps = time_diffs[time_diffs > gap_threshold]
                     report.temporal_gaps = [
                         (timestamps.iloc[i-1], timestamps.iloc[i])
                         for i in gaps.index
                     ]
-                    
+
                     # Sampling rate consistency
                     interval_cv = (time_diffs.std() / time_diffs.mean()) if time_diffs.mean() > 0 else 1.0
                     report.sampling_rate_consistency = max(0.0, 1.0 - interval_cv)
-            
+
         except Exception as e:
             self.logger.warning(f"Temporal quality assessment failed: {str(e)}")
-        
+
         return report
 
     def _assess_value_quality(self, data: pd.DataFrame, report: DataQualityReport) -> DataQualityReport:
@@ -952,26 +952,26 @@ class MFCDataManager:
         try:
             # Outlier detection using IQR method
             outlier_counts = []
-            
+
             for column in data.columns:
                 if data[column].dtype in ['float64', 'int64']:
                     Q1 = data[column].quantile(0.25)
                     Q3 = data[column].quantile(0.75)
                     IQR = Q3 - Q1
-                    
+
                     lower_bound = Q1 - 1.5 * IQR
                     upper_bound = Q3 + 1.5 * IQR
-                    
+
                     outliers = ((data[column] < lower_bound) | (data[column] > upper_bound)).sum()
                     outlier_counts.append(outliers)
-            
+
             if outlier_counts:
                 report.outlier_count = sum(outlier_counts)
                 report.outlier_percentage = (report.outlier_count / len(data)) * 100
-            
+
         except Exception as e:
             self.logger.warning(f"Value quality assessment failed: {str(e)}")
-        
+
         return report
 
     def _calculate_accuracy_score(self, data: pd.DataFrame) -> float:
@@ -988,7 +988,7 @@ class MFCDataManager:
         try:
             # Check for consistent data types and patterns
             consistency_factors = []
-            
+
             for column in data.columns:
                 if data[column].dtype == 'object':
                     # For string columns, check for consistent formatting
@@ -1001,9 +1001,9 @@ class MFCDataManager:
                         consistency_factors.append(max(0.0, 1.0 - min(cv, 1.0)))
                     else:
                         consistency_factors.append(1.0)
-            
+
             return float(np.mean(consistency_factors)) if consistency_factors else 0.5
-            
+
         except Exception:
             return 0.5
 
@@ -1014,21 +1014,21 @@ class MFCDataManager:
                 timestamps = pd.to_datetime(data['timestamp'])
                 latest_timestamp = timestamps.max()
                 current_time = datetime.now()
-                
+
                 # Score based on how recent the latest data is
                 time_diff = current_time - latest_timestamp
                 hours_old = time_diff.total_seconds() / 3600
-                
+
                 # Full score if data is less than 1 hour old, decreasing score for older data
                 return max(0.0, 1.0 - min(hours_old / 24.0, 1.0))  # 24 hours = 0 score
             else:
                 return 1.0  # No timestamp info, assume timely
-                
+
         except Exception:
             return 0.5
 
     def _normalize_data_for_validation(
-        self, 
+        self,
         data: Union[pd.DataFrame, List[DataRecord], DataRecord]
     ) -> List[DataRecord]:
         """Normalize data for validation."""
@@ -1066,10 +1066,10 @@ class MFCDataManager:
         try:
             # Retrieve data
             data = self.retrieve_data(data_type, start_time, end_time, **kwargs)
-            
+
             if isinstance(data, pd.DataFrame) and not data.empty:
                 output_file = Path(output_path).with_suffix(format_type.file_extension)
-                
+
                 if format_type == StorageFormat.CSV:
                     data.to_csv(output_file, index=False)
                 elif format_type == StorageFormat.JSON:
@@ -1080,13 +1080,13 @@ class MFCDataManager:
                     data.to_pickle(output_file)
                 else:
                     raise ValueError(f"Unsupported export format: {format_type}")
-                
+
                 self.logger.info(f"Data exported to {output_file}")
                 return True
             else:
                 self.logger.warning("No data to export")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Data export failed: {str(e)}")
             return False
@@ -1103,7 +1103,7 @@ def create_mfc_data_manager(
         storage = SQLiteDataStorage(storage_path, **kwargs)
     else:
         raise ValueError(f"Unsupported storage type: {storage_type}")
-    
+
     return MFCDataManager(storage=storage)
 
 
@@ -1114,20 +1114,20 @@ def generate_sample_sensor_data(
 ) -> pd.DataFrame:
     """Generate sample sensor data for testing."""
     np.random.seed(42)
-    
+
     # Generate timestamps
     timestamps = pd.date_range(
         start=start_time,
         periods=duration_hours * 60 // sampling_interval_minutes,
         freq=f'{sampling_interval_minutes}min'
     )
-    
+
     # Generate synthetic sensor data
     base_power = 20.0
     power_variation = 2.0 * np.sin(2 * np.pi * np.arange(len(timestamps)) / (24 * 60 / sampling_interval_minutes))
     noise = np.random.normal(0, 0.5, len(timestamps))
     power_data = base_power + power_variation + noise
-    
+
     # Create DataFrame
     data = pd.DataFrame({
         'timestamp': timestamps,
@@ -1137,7 +1137,7 @@ def generate_sample_sensor_data(
         'unit': 'W',
         'quality_score': np.random.uniform(0.8, 1.0, len(timestamps))
     })
-    
+
     return data
 
 
@@ -1146,50 +1146,50 @@ def run_example_data_management() -> None:
     """Run example data management operations."""
     # Create data manager
     data_manager = create_mfc_data_manager()
-    
+
     # Generate sample data
     start_time = datetime.now() - timedelta(hours=24)
     sample_data = generate_sample_sensor_data(start_time, duration_hours=24)
-    
+
     print("Data Management Example:")
     print(f"Generated {len(sample_data)} sample records")
-    
+
     # Store data
     success, errors = data_manager.store_data(
         sample_data,
         DataType.SENSOR_READING,
         validate=True
     )
-    
+
     if success:
         print("✓ Data stored successfully")
     else:
         print(f"✗ Data storage failed: {errors}")
-    
+
     # Retrieve data
     retrieved_data = data_manager.retrieve_data(
         DataType.SENSOR_READING,
         start_time=start_time,
         end_time=datetime.now()
     )
-    
+
     print(f"Retrieved {len(retrieved_data)} records")
-    
+
     # Assess data quality
     quality_report = data_manager.assess_data_quality(retrieved_data)
-    
+
     print("\nData Quality Assessment:")
     print(f"Overall Quality Score: {quality_report.overall_quality_score:.3f}")
     print(f"Quality Level: {quality_report.quality_level}")
     print(f"Completeness Score: {quality_report.completeness_score:.3f}")
     print(f"Missing Data: {quality_report.missing_data_percentage:.1f}%")
     print(f"Outliers: {quality_report.outlier_count} ({quality_report.outlier_percentage:.1f}%)")
-    
+
     if quality_report.recommendations:
         print("Recommendations:")
         for rec in quality_report.recommendations:
             print(f"- {rec}")
-    
+
     # Export data
     export_success = data_manager.export_data(
         DataType.SENSOR_READING,
@@ -1197,7 +1197,7 @@ def run_example_data_management() -> None:
         StorageFormat.CSV,
         start_time=start_time
     )
-    
+
     if export_success:
         print("✓ Data exported successfully")
     else:

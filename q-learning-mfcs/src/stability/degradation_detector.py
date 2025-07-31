@@ -108,7 +108,7 @@ class DegradationThresholds:
             ('biofilm_health_threshold', 0.0, 1.0),
             ('electrode_performance_threshold', 0.0, 1.0),
         ]
-        
+
         for threshold_name, min_val, max_val in thresholds_to_validate:
             value = getattr(self, threshold_name)
             if not (min_val <= value <= max_val):
@@ -169,49 +169,49 @@ class DegradationEvent:
 @dataclass
 class DegradationMetrics:
     """Comprehensive degradation analysis metrics."""
-    
+
     # Overall degradation indicators
     overall_health_score: float = 1.0  # 0-1 scale, 1 = perfect health
     degradation_rate: float = 0.0  # Rate of health decline per hour
     time_to_critical_degradation: float = float('inf')  # Hours until critical state
-    
+
     # Component-specific health scores
     biofilm_health_score: float = 1.0
     electrode_health_score: float = 1.0
     membrane_health_score: float = 1.0
     system_health_score: float = 1.0
-    
+
     # Performance degradation metrics
     power_degradation_percentage: float = 0.0
     efficiency_degradation_percentage: float = 0.0
     output_stability_degradation: float = 0.0
-    
+
     # Trend analysis results
     short_term_trend: float = 0.0  # Trend over last 24 hours
     medium_term_trend: float = 0.0  # Trend over last week
     long_term_trend: float = 0.0  # Trend over last month
     trend_acceleration: float = 0.0  # Rate of change in trend
-    
+
     # Anomaly detection results
     anomaly_score: float = 0.0  # Anomaly detection score
     anomaly_count: int = 0  # Number of anomalies detected
     anomaly_severity: float = 0.0  # Average severity of anomalies
-    
+
     # Change point detection
     change_points_detected: List[Tuple[float, float]] = field(default_factory=list)  # (time, magnitude)
     significant_changes: int = 0
     last_significant_change: Optional[datetime] = None
-    
+
     # Predictive metrics
     predicted_failure_time: Optional[datetime] = None
     prediction_confidence: float = 0.0
     remaining_useful_life: float = float('inf')  # Hours
-    
+
     # Detection quality metrics
     detection_accuracy: float = 0.0
     false_positive_rate: float = 0.0
     detection_latency: float = 0.0  # Hours from actual to detected degradation
-    
+
     # Metadata
     analysis_timestamp: datetime = field(default_factory=datetime.now)
     analysis_duration: timedelta = field(default=timedelta(hours=1))
@@ -227,10 +227,10 @@ class DegradationMetrics:
     def _validate_metrics(self) -> None:
         """Validate metric values."""
         health_scores = [
-            'overall_health_score', 'biofilm_health_score', 
+            'overall_health_score', 'biofilm_health_score',
             'electrode_health_score', 'membrane_health_score', 'system_health_score'
         ]
-        
+
         for score_name in health_scores:
             value = getattr(self, score_name)
             if not (0.0 <= value <= 1.0):
@@ -244,11 +244,11 @@ class DegradationMetrics:
             self.electrode_health_score,
             self.membrane_health_score
         ]
-        
+
         # Use weighted average (biofilm is most critical)
         weights = [0.4, 0.3, 0.3]
         self.system_health_score = sum(score * weight for score, weight in zip(component_scores, weights))
-        
+
         # Update overall health score
         self.overall_health_score = min(self.system_health_score, self.overall_health_score)
 
@@ -305,7 +305,7 @@ class DegradationMetrics:
 
 class DegradationDetector(Protocol):
     """Protocol for degradation detector implementations."""
-    
+
     def detect_degradation(
         self,
         data: TimeSeriesData,
@@ -327,7 +327,7 @@ class DegradationDetector(Protocol):
 
 class BaseDegradationDetector(ABC):
     """Base class for degradation detectors."""
-    
+
     def __init__(
         self,
         thresholds: Optional[DegradationThresholds] = None,
@@ -383,25 +383,25 @@ class BaseDegradationDetector(ABC):
         """
         try:
             data_array = np.asarray(data, dtype=np.float64)
-            
+
             if len(data_array) < self.min_data_points:
                 self.logger.warning(
                     f"Insufficient data points: {len(data_array)} < {self.min_data_points}"
                 )
                 return False
-            
+
             if np.any(np.isnan(data_array)) or np.any(np.isinf(data_array)):
                 self.logger.warning("Data contains NaN or infinite values")
                 return False
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Data validation error: {str(e)}")
             return False
 
     def establish_baseline(
-        self, 
+        self,
         baseline_data: TimeSeriesData,
         **kwargs: Any
     ) -> Dict[str, float]:
@@ -416,7 +416,7 @@ class BaseDegradationDetector(ABC):
         """
         try:
             data_array = np.asarray(baseline_data, dtype=np.float64)
-            
+
             baseline_stats = {
                 'mean': float(np.mean(data_array)),
                 'std': float(np.std(data_array)),
@@ -428,20 +428,20 @@ class BaseDegradationDetector(ABC):
                 'iqr': float(np.percentile(data_array, 75) - np.percentile(data_array, 25)),
                 'trend': float(np.polyfit(np.arange(len(data_array)), data_array, 1)[0])
             }
-            
+
             self.baseline_stats = baseline_stats
             self.baseline_established = True
-            
+
             self.logger.info("Baseline established successfully")
             return baseline_stats
-            
+
         except Exception as e:
             self.logger.error(f"Baseline establishment failed: {str(e)}")
             return {}
 
     def _calculate_health_score(
-        self, 
-        current_value: float, 
+        self,
+        current_value: float,
         baseline_value: float,
         component_type: str = "general"
     ) -> float:
@@ -457,10 +457,10 @@ class BaseDegradationDetector(ABC):
         """
         if baseline_value == 0:
             return 1.0
-        
+
         # Calculate relative performance
         relative_performance = current_value / baseline_value
-        
+
         # Different components may have different degradation patterns
         if component_type == "biofilm":
             # Biofilm health decreases more sensitively
@@ -471,13 +471,13 @@ class BaseDegradationDetector(ABC):
         else:
             # General case
             health_score = min(1.0, relative_performance)
-        
+
         return max(0.0, health_score)
 
 
 class StatisticalDegradationDetector(BaseDegradationDetector):
     """Statistical degradation detector using control charts and trend analysis."""
-    
+
     def __init__(
         self,
         thresholds: Optional[DegradationThresholds] = None,
@@ -516,73 +516,73 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         """
         if not self.validate_data(data):
             raise ValueError("Invalid input data for degradation detection")
-        
+
         data_array = np.asarray(data, dtype=np.float64)
         n_samples = len(data_array)
-        
+
         # Establish baseline if not already done
         if not self.baseline_established:
             baseline_length = min(n_samples // 3, 100)  # Use first third or 100 points
             self.establish_baseline(data_array[:baseline_length])
-        
+
         # Initialize metrics
         metrics = DegradationMetrics(
             analysis_timestamp=datetime.now(),
             sample_size=n_samples,
             method_used=DetectionMethod.STATISTICAL_PROCESS_CONTROL
         )
-        
+
         degradation_events: List[DegradationEvent] = []
-        
+
         # Perform trend analysis
         trend_results = self._analyze_trends(data_array, timestamps)
         metrics.short_term_trend = trend_results['short_term']
-        metrics.medium_term_trend = trend_results['medium_term'] 
+        metrics.medium_term_trend = trend_results['medium_term']
         metrics.long_term_trend = trend_results['long_term']
         metrics.trend_acceleration = trend_results['acceleration']
-        
+
         # Perform anomaly detection
         anomaly_results = self._detect_anomalies(data_array)
         metrics.anomaly_score = anomaly_results['score']
         metrics.anomaly_count = int(anomaly_results['count'])
         metrics.anomaly_severity = anomaly_results['severity']
-        
+
         # Perform change point detection
         change_point_results = self._detect_change_points(data_array, timestamps)
         metrics.change_points_detected = change_point_results['change_points']
         metrics.significant_changes = change_point_results['significant_count']
         metrics.last_significant_change = change_point_results['last_change']
-        
+
         # Calculate health scores
         health_scores = self._calculate_component_health_scores(data_array)
         metrics.biofilm_health_score = health_scores['biofilm']
         metrics.electrode_health_score = health_scores['electrode']
         metrics.membrane_health_score = health_scores['membrane']
-        
+
         # Calculate degradation percentages
         degradation_percentages = self._calculate_degradation_percentages(data_array)
         metrics.power_degradation_percentage = degradation_percentages['power']
         metrics.efficiency_degradation_percentage = degradation_percentages['efficiency']
         metrics.output_stability_degradation = degradation_percentages['stability']
-        
+
         # Calculate degradation rate
         metrics.degradation_rate = self._calculate_degradation_rate(data_array)
-        
+
         # Predict failure and remaining useful life
         failure_prediction = self._predict_failure(data_array)
         metrics.predicted_failure_time = failure_prediction['failure_time']
         metrics.prediction_confidence = failure_prediction['confidence']
         metrics.remaining_useful_life = failure_prediction['remaining_life']
         metrics.time_to_critical_degradation = failure_prediction['time_to_critical']
-        
+
         # Calculate data quality score
         metrics.data_quality_score = self._assess_data_quality(data_array)
-        
+
         # Generate degradation events based on analysis
         degradation_events = self._generate_degradation_events(
             data_array, metrics, timestamps
         )
-        
+
         return metrics, degradation_events
 
     def predict_degradation(
@@ -608,21 +608,21 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                 'confidence': 0.0,
                 'prediction_horizon': prediction_horizon
             }
-        
+
         # Use trend extrapolation for prediction
         current_trend = self.baseline_stats.get('trend', 0.0)
         current_mean = self.baseline_stats.get('mean', 1.0)
-        
+
         # Generate prediction time points
         time_points = np.linspace(current_time, current_time + prediction_horizon, 100)
         predicted_values = current_mean + current_trend * (time_points - current_time)
-        
+
         # Calculate predicted health scores
         predicted_health_scores = [
-            self._calculate_health_score(value, current_mean) 
+            self._calculate_health_score(value, current_mean)
             for value in predicted_values
         ]
-        
+
         # Identify predicted degradation events
         predicted_events = []
         for i, (time_point, health_score) in enumerate(zip(time_points, predicted_health_scores)):
@@ -635,11 +635,11 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                         'severity': severity.name,
                         'type': 'PREDICTED_DEGRADATION'
                     })
-        
+
         # Calculate overall prediction confidence
         trend_consistency = 1.0 - abs(current_trend) / max(current_mean, 1.0)
         prediction_confidence = max(0.0, min(1.0, trend_consistency))
-        
+
         return {
             'predicted_health_scores': list(zip(time_points.tolist(), predicted_health_scores)),
             'predicted_degradation_events': predicted_events,
@@ -650,26 +650,26 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         }
 
     def _analyze_trends(
-        self, 
-        data: np.ndarray, 
+        self,
+        data: np.ndarray,
         timestamps: Optional[Sequence[Timestamp]] = None
     ) -> Dict[str, float]:
         """Analyze trends at different time scales."""
         n = len(data)
-        
+
         # Short-term trend (last 24 data points or 10% of data)
         short_term_window = min(24, max(10, n // 10))
         short_term_data = data[-short_term_window:]
         short_term_trend = float(np.polyfit(np.arange(len(short_term_data)), short_term_data, 1)[0])
-        
+
         # Medium-term trend (last week equivalent or 30% of data)
         medium_term_window = min(168, max(30, n // 3))  # Assuming hourly data
         medium_term_data = data[-medium_term_window:]
         medium_term_trend = float(np.polyfit(np.arange(len(medium_term_data)), medium_term_data, 1)[0])
-        
+
         # Long-term trend (all data)
         long_term_trend = float(np.polyfit(np.arange(n), data, 1)[0])
-        
+
         # Trend acceleration (change in trend)
         if n > 50:
             first_half = data[:n//2]
@@ -679,7 +679,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             acceleration = float(second_trend - first_trend)
         else:
             acceleration = 0.0
-        
+
         return {
             'short_term': short_term_trend,
             'medium_term': medium_term_trend,
@@ -692,20 +692,20 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         # Calculate z-scores
         mean_val = np.mean(data)
         std_val = np.std(data)
-        
+
         if std_val == 0:
             return {'score': 0.0, 'count': 0, 'severity': 0.0}
-        
+
         z_scores = np.abs((data - mean_val) / std_val)
-        
+
         # Identify anomalies (beyond threshold standard deviations)
         threshold = self.thresholds.anomaly_detection_sensitivity
         anomalies = z_scores > threshold
-        
+
         anomaly_count = int(np.sum(anomalies))
         anomaly_score = float(np.mean(z_scores))
         anomaly_severity = float(np.mean(z_scores[anomalies])) if anomaly_count > 0 else 0.0
-        
+
         return {
             'score': anomaly_score,
             'count': anomaly_count,
@@ -713,8 +713,8 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         }
 
     def _detect_change_points(
-        self, 
-        data: np.ndarray, 
+        self,
+        data: np.ndarray,
         timestamps: Optional[Sequence[Timestamp]] = None
     ) -> Dict[str, Any]:
         """Detect change points in the data."""
@@ -725,20 +725,20 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             deviations = data - mean_val
             cusum_pos = np.maximum.accumulate(np.maximum(0, np.cumsum(deviations - 0.5 * np.std(data))))
             cusum_neg = np.maximum.accumulate(np.maximum(0, np.cumsum(-deviations - 0.5 * np.std(data))))
-            
+
             # Threshold for change detection
             threshold = 4 * np.std(data)
-            
+
             # Find change points
             change_points = []
             pos_changes = np.where(cusum_pos > threshold)[0]
             neg_changes = np.where(cusum_neg > threshold)[0]
-            
+
             for change_idx in np.concatenate([pos_changes, neg_changes]):
                 if change_idx < len(data):
                     magnitude = abs(data[change_idx] - mean_val)
                     change_points.append((float(change_idx), float(magnitude)))
-            
+
             # Remove duplicate nearby change points
             if change_points:
                 change_points = sorted(set(change_points), key=lambda x: x[0])
@@ -747,11 +747,11 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                     if point[0] - filtered_points[-1][0] > 10:  # Minimum distance between changes
                         filtered_points.append(point)
                 change_points = filtered_points
-            
+
             # Count significant changes (above certain magnitude)
             significant_threshold = 2 * np.std(data)
             significant_changes = sum(1 for _, magnitude in change_points if magnitude > significant_threshold)
-            
+
             # Find last significant change
             last_change = None
             if change_points and timestamps:
@@ -762,13 +762,13 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                         else:
                             last_change = datetime.now() - timedelta(hours=len(data) - time_idx)
                         break
-            
+
             return {
                 'change_points': change_points,
                 'significant_count': significant_changes,
                 'last_change': last_change
             }
-            
+
         except Exception as e:
             self.logger.error(f"Change point detection failed: {str(e)}")
             return {
@@ -781,21 +781,21 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         """Calculate health scores for different MFC components."""
         if not self.baseline_established:
             return {'biofilm': 1.0, 'electrode': 1.0, 'membrane': 1.0}
-        
+
         current_mean = np.mean(data[-min(24, len(data)):])  # Recent average
         baseline_mean = self.baseline_stats['mean']
-        
+
         # Calculate component-specific health scores
         biofilm_health = self._calculate_health_score(current_mean, baseline_mean, "biofilm")
         electrode_health = self._calculate_health_score(current_mean, baseline_mean, "electrode")
         membrane_health = self._calculate_health_score(current_mean, baseline_mean, "general")
-        
+
         # Add noise factors based on data variability
         current_std = np.std(data[-min(24, len(data)):])
         baseline_std = self.baseline_stats['std']
-        
+
         stability_factor = min(1.0, baseline_std / max(current_std, 0.001))
-        
+
         return {
             'biofilm': float(biofilm_health * stability_factor),
             'electrode': float(electrode_health * stability_factor),
@@ -806,22 +806,22 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         """Calculate degradation percentages for different metrics."""
         if not self.baseline_established:
             return {'power': 0.0, 'efficiency': 0.0, 'stability': 0.0}
-        
+
         current_mean = np.mean(data[-min(24, len(data)):])
         baseline_mean = self.baseline_stats['mean']
-        
+
         current_std = np.std(data[-min(24, len(data)):])
         baseline_std = self.baseline_stats['std']
-        
+
         # Power degradation (assuming data represents power output)
         power_degradation = max(0.0, (baseline_mean - current_mean) / baseline_mean) if baseline_mean > 0 else 0.0
-        
+
         # Efficiency degradation (similar to power)
         efficiency_degradation = power_degradation
-        
+
         # Stability degradation (increased variability)
         stability_degradation = max(0.0, (current_std - baseline_std) / baseline_std) if baseline_std > 0 else 0.0
-        
+
         return {
             'power': float(power_degradation),
             'efficiency': float(efficiency_degradation),
@@ -832,10 +832,10 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         """Calculate overall degradation rate."""
         if len(data) < 10:
             return 0.0
-        
+
         # Use trend slope as degradation rate
         trend_slope = np.polyfit(np.arange(len(data)), data, 1)[0]
-        
+
         # Normalize by baseline value
         if self.baseline_established:
             baseline_mean = self.baseline_stats['mean']
@@ -843,7 +843,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         else:
             data_mean = np.mean(data)
             normalized_rate = -trend_slope / data_mean if data_mean > 0 else 0.0
-        
+
         return max(0.0, float(normalized_rate))  # Only positive degradation rates
 
     def _predict_failure(self, data: np.ndarray) -> Dict[str, Any]:
@@ -851,13 +851,13 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         try:
             current_trend = np.polyfit(np.arange(len(data)), data, 1)[0]
             current_value = data[-1]
-            
+
             # Critical threshold (20% of baseline or minimum operational level)
             if self.baseline_established:
                 critical_threshold = 0.2 * self.baseline_stats['mean']
             else:
                 critical_threshold = 0.2 * np.mean(data[:min(50, len(data))])
-            
+
             # Calculate time to reach critical threshold
             if current_trend < 0 and current_value > critical_threshold:
                 time_to_critical = (current_value - critical_threshold) / abs(current_trend)
@@ -869,14 +869,14 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                 failure_time = None
                 remaining_life = float('inf')
                 confidence = 0.0
-            
+
             return {
                 'failure_time': failure_time,
                 'remaining_life': float(remaining_life),
                 'time_to_critical': float(time_to_critical),
                 'confidence': float(confidence)
             }
-            
+
         except Exception as e:
             self.logger.error(f"Failure prediction failed: {str(e)}")
             return {
@@ -889,17 +889,17 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     def _assess_data_quality(self, data: np.ndarray) -> float:
         """Assess quality of input data."""
         quality_factors = []
-        
+
         # Completeness (no missing values)
         completeness = 1.0 - (np.sum(np.isnan(data)) / len(data))
         quality_factors.append(completeness)
-        
+
         # Consistency (low number of extreme outliers)
         z_scores = np.abs((data - np.mean(data)) / (np.std(data) + 1e-10))
         outlier_ratio = np.sum(z_scores > 3) / len(data)
         consistency = 1.0 - min(outlier_ratio, 1.0)
         quality_factors.append(consistency)
-        
+
         # Temporal stability (reasonable rate of change)
         if len(data) > 1:
             rate_of_change = np.abs(np.diff(data))
@@ -907,7 +907,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             data_range = np.max(data) - np.min(data)
             stability = 1.0 - min(mean_change / (data_range + 1e-10), 1.0)
             quality_factors.append(stability)
-        
+
         return float(np.mean(quality_factors))
 
     def _generate_degradation_events(
@@ -918,12 +918,12 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     ) -> List[DegradationEvent]:
         """Generate degradation events based on analysis results."""
         events = []
-        
+
         try:
             # Check if overall degradation is significant
             if metrics.overall_health_score < 0.9:
                 severity = self._determine_severity_from_health_score(metrics.overall_health_score)
-                
+
                 event = DegradationEvent(
                     detection_time=datetime.now(),
                     degradation_type=DegradationType.BIOFILM_AGING,  # Default primary concern
@@ -943,27 +943,27 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                     recommended_actions=self._generate_recommendations(metrics)
                 )
                 events.append(event)
-            
+
             # Check for component-specific degradation
             if metrics.biofilm_health_score < 0.8:
                 events.append(self._create_component_degradation_event(
-                    "Biofilm", DegradationType.BIOFILM_AGING, 
+                    "Biofilm", DegradationType.BIOFILM_AGING,
                     metrics.biofilm_health_score, data, metrics
                 ))
-            
+
             if metrics.electrode_health_score < 0.8:
                 events.append(self._create_component_degradation_event(
                     "Electrode", DegradationType.ELECTRODE_CORROSION,
                     metrics.electrode_health_score, data, metrics
                 ))
-            
+
             # Check for anomalies
             if metrics.anomaly_count > 5:
                 events.append(self._create_anomaly_event(data, metrics))
-            
+
         except Exception as e:
             self.logger.error(f"Event generation failed: {str(e)}")
-        
+
         return events
 
     def _determine_severity_from_health_score(self, health_score: float) -> DegradationSeverity:
@@ -989,7 +989,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     ) -> DegradationEvent:
         """Create degradation event for specific component."""
         severity = self._determine_severity_from_health_score(health_score)
-        
+
         return DegradationEvent(
             detection_time=datetime.now(),
             degradation_type=degradation_type,
@@ -1028,25 +1028,25 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     def _generate_recommendations(self, metrics: DegradationMetrics) -> List[str]:
         """Generate maintenance recommendations based on degradation metrics."""
         recommendations = []
-        
+
         if metrics.overall_health_score < 0.7:
             recommendations.append("Schedule comprehensive system inspection")
-        
+
         if metrics.biofilm_health_score < 0.8:
             recommendations.append("Consider biofilm cleaning or replacement")
-        
+
         if metrics.electrode_health_score < 0.8:
             recommendations.append("Inspect electrodes for corrosion or fouling")
-        
+
         if metrics.degradation_rate > 0.01:  # 1% per hour
             recommendations.append("Investigate rapid degradation causes")
-        
+
         if metrics.anomaly_count > 10:
             recommendations.append("Review operational parameters for anomalies")
-        
+
         if not recommendations:
             recommendations.append("Continue normal monitoring")
-        
+
         return recommendations
 
 
@@ -1064,40 +1064,40 @@ def run_example_degradation_detection() -> None:
     """Run example degradation detection."""
     # Generate synthetic MFC data with degradation
     np.random.seed(42)
-    
+
     # Create baseline data (healthy operation)
     baseline_hours = 100
     baseline_data = 20.0 + np.random.normal(0, 0.5, baseline_hours)  # Stable ~20W
-    
+
     # Create degrading data
     degradation_hours = 200
     time_points = np.arange(degradation_hours)
-    
+
     # Add gradual degradation
     degradation_trend = -0.02 * time_points  # 2% degradation per 100 hours
-    
+
     # Add random events
     random_events = np.zeros(degradation_hours)
     random_events[50:60] = -2.0  # Sudden drop at hour 50-60
     random_events[120:125] = -1.5  # Another drop
-    
+
     # Add noise
     noise = np.random.normal(0, 0.3, degradation_hours)
-    
+
     degraded_data = 20.0 + degradation_trend + random_events + noise
-    
+
     # Combine baseline and degraded data
     full_data = np.concatenate([baseline_data, degraded_data])
-    
+
     # Create detector and analyze
     detector = create_statistical_degradation_detector()
-    
+
     # Establish baseline
     detector.establish_baseline(baseline_data)
-    
+
     # Detect degradation
     metrics, events = detector.detect_degradation(full_data)
-    
+
     print("Degradation Detection Results:")
     print(f"Overall Health Score: {metrics.overall_health_score:.3f}")
     print(f"Degradation Rate: {metrics.degradation_rate:.6f} per hour")
@@ -1106,18 +1106,18 @@ def run_example_degradation_detection() -> None:
     print(f"Long-term Trend: {metrics.long_term_trend:.6f}")
     print(f"Anomaly Count: {metrics.anomaly_count}")
     print(f"Remaining Useful Life: {metrics.remaining_useful_life:.1f} hours")
-    
+
     print(f"\nDetected Events: {len(events)}")
     for i, event in enumerate(events):
         print(f"Event {i+1}: {event.degradation_type} - {event.severity} "
               f"(Confidence: {event.confidence:.3f})")
-    
+
     # Test prediction
     prediction = detector.predict_degradation(
         current_time=len(full_data),
         prediction_horizon=100.0
     )
-    
+
     print("\nPrediction Results:")
     print(f"Prediction Confidence: {prediction['confidence']:.3f}")
     print(f"Predicted Events: {len(prediction['predicted_degradation_events'])}")
