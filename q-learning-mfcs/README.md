@@ -18,6 +18,7 @@ This system provides a robust framework for managing complex biological configur
 ## Features
 
 ### 🔧 Configuration Management
+
 - **Multi-format Support**: YAML, JSON, TOML configuration files
 - **Profile-based Management**: Environment-specific configurations (development, production, research)
 - **Configuration Inheritance**: Hierarchical configuration with override capabilities
@@ -25,7 +26,8 @@ This system provides a robust framework for managing complex biological configur
 - **Hot Reloading**: Dynamic configuration updates without system restart
 
 ### 📊 Advanced Analytics
-- **Parameter Optimization**: 
+
+- **Parameter Optimization**:
   - Bayesian optimization with Gaussian processes
   - Genetic algorithms with multi-objective support
   - Gradient-based optimization methods
@@ -39,24 +41,28 @@ This system provides a robust framework for managing complex biological configur
   - Variance-based methods
 
 ### 🔬 Biological System Support
+
 - **Species Configuration**: Geobacter, Shewanella, and custom microbial species
 - **Substrate Management**: Multi-substrate kinetics and concentration control
 - **Environmental Parameters**: Temperature, pH, conductivity, and dissolved oxygen
 - **Growth Models**: Monod kinetics, inhibition models, and biofilm dynamics
 
 ### 🎛️ Control Systems
+
 - **PID Controllers**: Flow rate, substrate concentration, and environmental control
 - **Q-Learning Integration**: Reinforcement learning for adaptive control
 - **Multi-objective Optimization**: Power output, biofilm health, and stability
 - **Fault Tolerance**: Emergency shutdown and error recovery
 
 ### 📈 Real-time Analytics
+
 - **Data Streaming**: High-frequency sensor data acquisition
 - **Signal Processing**: Filtering, smoothing, and outlier detection
 - **Anomaly Detection**: Statistical and machine learning-based detection
 - **Alert System**: Configurable thresholds and notification system
 
 ### 📊 Visualization
+
 - **Multi-dimensional Plotting**: 3D scatter plots, surface plots, parallel coordinates
 - **Interactive Analysis**: Zoom, pan, selection, and real-time updates
 - **Statistical Plots**: Distribution comparisons, correlation matrices, uncertainty bands
@@ -65,6 +71,7 @@ This system provides a robust framework for managing complex biological configur
 ## Installation
 
 ### Prerequisites
+
 - Python 3.8+
 - NumPy, SciPy, Pandas
 - Matplotlib, Seaborn (for visualization)
@@ -72,6 +79,7 @@ This system provides a robust framework for managing complex biological configur
 - Optional: Plotly (for interactive plots), Statsmodels (for advanced statistics)
 
 ### Basic Installation
+
 ```bash
 git clone https://github.com/your-repo/mfc-project.git
 cd mfc-project/q-learning-mfcs
@@ -79,6 +87,7 @@ pip install -r requirements.txt
 ```
 
 ### Development Installation
+
 ```bash
 git clone https://github.com/your-repo/mfc-project.git
 cd mfc-project/q-learning-mfcs
@@ -89,6 +98,7 @@ pip install -r requirements-dev.txt
 ## Quick Start
 
 ### Basic Configuration
+
 ```python
 from config.config_manager import ConfigurationManager
 from config.biological_config import BiologicalConfig
@@ -102,6 +112,7 @@ config_manager.validate_configuration(config)
 ```
 
 ### Parameter Optimization
+
 ```python
 from config.parameter_optimization import BayesianOptimizer
 from config.sensitivity_analysis import ParameterSpace, ParameterDefinition, ParameterBounds
@@ -120,6 +131,7 @@ result = optimizer.optimize(objective_function, max_evaluations=50)
 ```
 
 ### Uncertainty Quantification
+
 ```python
 from config.uncertainty_quantification import MonteCarloAnalyzer, UncertainParameter
 
@@ -137,6 +149,7 @@ result = analyzer.propagate_uncertainty(model_function, n_samples=1000)
 ```
 
 ### Real-time Processing
+
 ```python
 from config.real_time_processing import MFCDataStream, StreamProcessor
 
@@ -154,6 +167,7 @@ stream.start()
 ## Configuration Files
 
 ### Directory Structure
+
 ```
 configs/
 ├── conservative_control.yaml    # Conservative operation settings
@@ -166,6 +180,7 @@ configs/
 ```
 
 ### Example Configuration
+
 ```yaml
 metadata:
   version: "2.0.0"
@@ -205,12 +220,14 @@ visualization:
 ## API Reference
 
 ### Configuration Management
+
 - `ConfigurationManager`: Main configuration management class
 - `BiologicalConfig`: Biological system configuration
 - `ControlConfig`: Control system configuration
 - `VisualizationConfig`: Visualization settings
 
 ### Optimization & Analysis
+
 - `BayesianOptimizer`: Gaussian process-based optimization
 - `GeneticOptimizer`: Multi-objective genetic algorithm
 - `SensitivityAnalyzer`: Parameter sensitivity analysis
@@ -218,12 +235,14 @@ visualization:
 - `StatisticalAnalyzer`: Hypothesis testing and statistical analysis
 
 ### Real-time Processing
+
 - `MFCDataStream`: Real-time data acquisition
 - `StreamProcessor`: Data processing pipeline
 - `RealTimeAnalyzer`: Live analytics and monitoring
 - `AlertSystem`: Configurable alerting system
 
 ### Visualization
+
 - `MultiDimensionalPlotter`: Advanced plotting capabilities
 - `InteractiveAnalyzer`: Interactive visualization tools
 - `StatisticalVisualizer`: Statistical plots and analysis
@@ -232,12 +251,14 @@ visualization:
 ## Examples
 
 ### Comprehensive Example
+
 ```python
 # Run the comprehensive example
 python examples/comprehensive_example.py
 ```
 
 This example demonstrates:
+
 - Complete system configuration and validation
 - Parameter optimization with multiple objectives
 - Uncertainty quantification with Monte Carlo methods
@@ -248,6 +269,7 @@ This example demonstrates:
 - Interactive visualization and reporting
 
 ### Specific Use Cases
+
 ```python
 # Parameter optimization
 python examples/optimization_example.py
@@ -265,6 +287,7 @@ python examples/statistical_example.py
 ## Testing
 
 Run the test suite:
+
 ```bash
 # Run all tests
 python -m pytest tests/
@@ -279,12 +302,13 @@ python -m pytest --cov=config tests/
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+1. Commit your changes (`git commit -m 'Add amazing feature'`)
+1. Push to the branch (`git push origin feature/amazing-feature`)
+1. Open a Pull Request
 
 ### Development Guidelines
+
 - Follow PEP 8 style guidelines
 - Add comprehensive docstrings to all public functions
 - Include unit tests for new features
@@ -294,12 +318,14 @@ python -m pytest --cov=config tests/
 ## Performance Considerations
 
 ### Optimization Tips
+
 - Use Latin Hypercube sampling for better parameter space coverage
 - Enable parallel processing for Monte Carlo analyses
 - Configure appropriate buffer sizes for real-time streams
 - Use vector operations where possible for large datasets
 
 ### Scalability
+
 - The system is designed to handle:
   - 10,000+ parameter samples for uncertainty quantification
   - Real-time data streams up to 1000 Hz
@@ -309,12 +335,14 @@ python -m pytest --cov=config tests/
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Import Errors**: Ensure all dependencies are installed
-2. **Configuration Validation Failures**: Check parameter ranges and types
-3. **Optimization Convergence**: Adjust algorithm parameters or increase evaluations
-4. **Memory Issues**: Reduce sample sizes or enable parallel processing
+1. **Configuration Validation Failures**: Check parameter ranges and types
+1. **Optimization Convergence**: Adjust algorithm parameters or increase evaluations
+1. **Memory Issues**: Reduce sample sizes or enable parallel processing
 
 ### Debug Mode
+
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -323,12 +351,14 @@ logging.basicConfig(level=logging.DEBUG)
 ## Roadmap
 
 ### Version 2.1 (Q3 2025)
+
 - [ ] Advanced machine learning models for parameter prediction
 - [ ] Integration with IoT sensor networks
 - [ ] Cloud-based configuration management
 - [ ] Enhanced web-based visualization dashboard
 
 ### Version 2.2 (Q4 2025)
+
 - [ ] Multi-MFC system coordination
 - [ ] Advanced process control algorithms
 - [ ] Machine learning-based fault detection
@@ -366,7 +396,7 @@ If you use this system in your research, please cite:
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/mfc-project/discussions)
 - **Email**: support@your-organization.com
 
----
+______________________________________________________________________
 
 **Note**: This system is designed for research and educational purposes. Always validate results with experimental data and consult domain experts for production deployments.
 
@@ -378,7 +408,7 @@ This project implements a complete MFC stack control system featuring:
 - **Q-learning controller** optimized for accelerator hardware (GPU/NPU/ASIC)
 - **Advanced sensor simulation** with EIS/QCM biofilm sensing, noise and calibration effects
 - **Comprehensive configuration system** with literature-referenced biological parameters
-- **Species-specific modeling** for Geobacter, Shewanella, and mixed cultures  
+- **Species-specific modeling** for Geobacter, Shewanella, and mixed cultures
 - **Substrate-specific kinetics** for acetate, lactate, pyruvate, and glucose
 - **Control system parameterization** with PID tuning and Q-learning optimization
 - **Visualization configuration** with publication-ready plotting and analysis
@@ -570,16 +600,19 @@ The MFC system features a comprehensive configuration management framework that 
 #### 1. Biological Configuration (`src/config/biological_config.py`)
 
 **Species-Specific Parameters**:
+
 - Metabolic rates and electron transport efficiency
 - Cytochrome content and growth characteristics
 - Literature-referenced parameters for Geobacter and Shewanella
 
 **Substrate-Specific Parameters**:
+
 - Michaelis-Menten kinetics (Vmax, Km, Ki)
 - Molecular properties and chemical formulas
 - Species-substrate interaction parameters
 
 **Example**:
+
 ```python
 from config.biological_config import get_geobacter_config
 config = get_geobacter_config()
@@ -589,21 +622,25 @@ config = get_geobacter_config()
 #### 2. Control System Configuration (`src/config/control_config.py`)
 
 **PID Controller Parameters**:
+
 - Proportional, integral, and derivative gains
 - Anti-windup and bumpless transfer settings
 - Setpoint weighting and derivative filtering
 
 **Flow Control Parameters**:
+
 - Flow rate bounds and tolerance settings
 - Pump characteristics and response times
 - Safety parameters and alarm thresholds
 
 **Q-Learning Parameters**:
+
 - Learning rate, discount factor, exploration parameters
 - State and action space discretization
 - Multi-objective reward weights
 
 **Example**:
+
 ```python
 from config.control_config import get_precision_control_config
 config = get_precision_control_config()
@@ -613,16 +650,19 @@ config = get_precision_control_config()
 #### 3. Visualization Configuration (`src/config/visualization_config.py`)
 
 **Plot Styling**:
+
 - Figure dimensions, DPI, and font settings
 - Line widths, marker sizes, and transparency
 - Grid styling and color schemes
 
 **Data Processing**:
+
 - Sampling rates and smoothing parameters
 - Outlier detection and missing data handling
 - Statistical analysis settings
 
 **Layout Configuration**:
+
 - Subplot arrangements and spacing
 - Legend positioning and styling
 - Axis scaling and limits
@@ -630,11 +670,13 @@ config = get_precision_control_config()
 #### 4. Configuration Management (`src/config/config_manager.py`)
 
 **Profile Management**:
+
 - Multiple configuration profiles (conservative, aggressive, precision)
 - Profile inheritance and overrides
 - Version control and migration
 
 **Validation and Loading**:
+
 - JSON Schema validation
 - YAML/JSON file support
 - Environment variable substitution
@@ -642,16 +684,19 @@ config = get_precision_control_config()
 ### Configuration Profiles
 
 #### Conservative Control (`configs/conservative_control.yaml`)
+
 - Stable operation with conservative PID tuning
 - Higher safety margins and slower response times
 - Suitable for long-term continuous operation
 
 #### Research Optimization (`configs/research_optimization.yaml`)
+
 - Aggressive optimization for maximum performance
 - High exploration rates and rapid adaptation
 - Ideal for research and development scenarios
 
 #### Precision Control (`configs/precision_control.yaml`)
+
 - High-accuracy control for laboratory applications
 - Tight tolerances and precise parameter tuning
 - Publication-quality measurement requirements
@@ -661,16 +706,19 @@ config = get_precision_control_config()
 #### Framework Features (`src/config/sensitivity_analysis.py`)
 
 **Local Sensitivity Analysis**:
+
 - One-at-a-time parameter perturbation
 - Gradient-based sensitivity calculation
 - Local parameter importance ranking
 
 **Global Sensitivity Analysis**:
+
 - Sobol global sensitivity indices
 - Morris elementary effects method
 - Variance-based importance measures
 
 **Sampling Methods**:
+
 - Latin Hypercube sampling
 - Sobol sequence sampling
 - Random and grid-based sampling
