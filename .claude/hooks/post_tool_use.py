@@ -16,7 +16,7 @@ def get_current_branch():
         result = subprocess.run(['git', 'branch', '--show-current'], 
                               capture_output=True, text=True, check=True)
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, Exception):
         return "unknown"
 
 def count_recent_commits(branch: str = None, hours: int = 24) -> int:
@@ -44,7 +44,7 @@ def count_recent_commits(branch: str = None, hours: int = 24) -> int:
         ], capture_output=True, text=True, check=True)
         
         return int(result.stdout.strip())
-    except (subprocess.CalledProcessError, ValueError):
+    except (subprocess.CalledProcessError, ValueError, Exception):
         return 0
 
 def handle_gitlab_integrations(input_data: dict):
