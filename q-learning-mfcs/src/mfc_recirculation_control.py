@@ -440,6 +440,12 @@ class AdvancedQLearningFlowController:
         substrate_idx = action_idx % len(self.substrate_actions)
 
         return action_idx, flow_idx, substrate_idx
+    
+    def choose_action(self, state):
+        """Simple action selection for integrated model compatibility."""
+        # Use the combined action method and return just the flow action
+        action_idx, flow_idx, substrate_idx = self.choose_combined_action(state)
+        return flow_idx
 
     def update_q_value(self, state, action_idx, reward, next_state):
         """Update Q-value using Q-learning rule"""
@@ -454,6 +460,17 @@ class AdvancedQLearningFlowController:
 
         # Decay epsilon
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+    
+    def get_state_hash(self, inlet_conc, outlet_conc, current):
+        """Generate state hash for Q-learning from system parameters."""
+        # Discretize continuous values for state representation
+        inlet_disc = int(inlet_conc / 5.0)  # Discretize in 5 mmol/L bins
+        outlet_disc = int(outlet_conc / 2.0)  # Discretize in 2 mmol/L bins  
+        current_disc = int(current / 0.5)  # Discretize in 0.5 A bins
+        
+        # Create state hash
+        state_hash = f"{inlet_disc}_{outlet_disc}_{current_disc}"
+        return state_hash
 
     def save_checkpoint(self, filepath):
         """Save Q-learning model checkpoint to file"""
