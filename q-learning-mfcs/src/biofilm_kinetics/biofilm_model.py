@@ -21,7 +21,7 @@ from .substrate_params import SubstrateParameters
 # Import biological configuration
 try:
     from config.biological_config import (
-        SpeciesMetabolicConfig, BiofilmKineticsConfig, BacterialSpecies,
+        SpeciesMetabolicConfig, BiofilmKineticsConfig,
         get_geobacter_config, get_shewanella_config, get_default_biofilm_config
     )
     from config.substrate_config import (
@@ -108,6 +108,10 @@ class BiofilmKineticsModel:
         self.gpu_acc = get_gpu_accelerator() if use_gpu else None
         self.gpu_available = self.gpu_acc.is_gpu_available() if self.gpu_acc else False
 
+        # Initialize fallback parameter objects to ensure they always exist
+        self.kinetic_params = self.species_db.get_parameters(self.species)
+        self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
+
         # Load and compensate parameters
         self._load_parameters()
 
@@ -128,9 +132,19 @@ class BiofilmKineticsModel:
             self.E_an = -0.5  # Typical anode potential
             self.attachment_prob = self.species_config.attachment_rate
             self.biofilm_thickness_max = self.species_config.max_biofilm_thickness
+            
+            # Update kinetic_params object attributes for backward compatibility
+            self.kinetic_params.mu_max = self.mu_max
+            self.kinetic_params.K_s = self.K_s
+            self.kinetic_params.Y_xs = self.Y_xs
+            self.kinetic_params.j_max = self.j_max
+            self.kinetic_params.sigma_biofilm = self.sigma_biofilm
+            self.kinetic_params.E_ka = self.E_ka
+            self.kinetic_params.E_an = self.E_an
+            self.kinetic_params.attachment_prob = self.attachment_prob
+            self.kinetic_params.biofilm_thickness_max = self.biofilm_thickness_max
         else:
-            # Fallback to legacy parameter database
-            self.kinetic_params = self.species_db.get_parameters(self.species)
+            # Use fallback parameter database values
             self.mu_max = getattr(self.kinetic_params, 'mu_max', 0.3)
             self.K_s = getattr(self.kinetic_params, 'K_s', 0.5)
             self.Y_xs = getattr(self.kinetic_params, 'Y_xs', 0.1)
@@ -144,8 +158,9 @@ class BiofilmKineticsModel:
         # Get substrate properties
         if self.substrate_config:
             self.substrate_molecular_weight = self.substrate_config.molecular_weight
+            # Update substrate_props object for backward compatibility
+            self.substrate_props.molecular_weight = self.substrate_molecular_weight
         else:
-            self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
             self.substrate_molecular_weight = getattr(self.substrate_props, 'molecular_weight', 90.08)
 
         # Apply temperature compensation (Arrhenius equation)
@@ -158,6 +173,15 @@ class BiofilmKineticsModel:
             ph_optimal = 7.0
             ph_factor = np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2)
             self.mu_max *= ph_factor
+            
+            # pH also affects electrochemical parameters (Nernst equation influence)
+            # E_ka shifts with pH: dE/dpH ≈ -0.059 V/pH unit for typical bioelectrochemical systems
+            ph_shift = (self.ph - ph_optimal) * (-0.059)  # V/pH unit
+            self.E_ka += ph_shift
+
+        # Update kinetic_params with compensated values for backward compatibility
+        self.kinetic_params.mu_max = self.mu_max
+        self.kinetic_params.E_ka = self.E_ka
 
     def reset_state(self):
         """Reset biofilm state variables."""
@@ -327,9 +351,10 @@ class BiofilmKineticsModel:
         # Use GPU arrays if available
         if self.gpu_available:
             # Convert to GPU arrays for computation
-            thickness_gpu = self.gpu_acc.array([self.biofilm_thickness])
-            biomass_gpu = self.gpu_acc.array([self.biomass_density])
-            substrate_gpu = self.gpu_acc.array([self.substrate_concentration])
+            # Note: GPU arrays prepared for future GPU-accelerated calculations
+            _ = self.gpu_acc.array([self.biofilm_thickness])
+            _ = self.gpu_acc.array([self.biomass_density])
+            _ = self.gpu_acc.array([self.substrate_concentration])
 
         # Calculate growth rate
         growth_rate = self.calculate_nernst_monod_growth_rate(
@@ -360,7 +385,7 @@ class BiofilmKineticsModel:
 
         # Update biofilm thickness
         # Thickness growth proportional to biomass growth and attachment
-        attachment_rate = self.calculate_stochastic_attachment(
+        _ = self.calculate_stochastic_attachment(
             cell_density=1e12,  # cells/m³ typical planktonic density
             surface_area=1.0    # m² reference area
         )
@@ -388,13 +413,14 @@ class BiofilmKineticsModel:
 
     def get_model_parameters(self) -> Dict[str, Any]:
         """Get current model parameters for inspection."""
+        import copy
         return {
             'species': self.species,
             'substrate': self.substrate,
             'temperature': self.temperature,
             'ph': self.ph,
-            'kinetic_params': self.kinetic_params.__dict__,
-            'substrate_props': self.substrate_props.__dict__,
+            'kinetic_params': copy.deepcopy(self.kinetic_params.__dict__),
+            'substrate_props': copy.deepcopy(self.substrate_props.__dict__),
             'gpu_available': self.gpu_available
         }
 
