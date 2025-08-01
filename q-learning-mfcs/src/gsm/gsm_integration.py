@@ -10,13 +10,8 @@ Based on Shewanella oneidensis MR-1 metabolic network analysis.
 Created: 2025-08-01
 """
 
-import numpy as np
-import pandas as pd
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any
-import warnings
-from pathlib import Path
-import json
+from dataclasses import dataclass
+from typing import Dict, Optional, Any, List
 
 @dataclass
 class MetabolicReaction:
@@ -82,15 +77,15 @@ class ShewanellaGSMModel:
         self.config = config or GSMModelConfig()
         
         # Initialize metabolic network
-        self.metabolites = {}
-        self.reactions = {}
-        self.flux_solutions = {}
+        self.metabolites: Dict[str, Metabolite] = {}
+        self.reactions: Dict[str, MetabolicReaction] = {}
+        self.flux_solutions: Dict[str, Dict[str, float]] = {}
         
         # Build core metabolic network
         self._build_metabolic_network()
         
         # Current metabolic state
-        self.current_fluxes = {}
+        self.current_fluxes: Dict[str, float] = {}
         self.current_growth_rate = 0.0
         self.current_electron_production = 0.0
         
@@ -379,12 +374,14 @@ class ShewanellaGSMModel:
                                       substrate_concentration: float,
                                       oxygen_availability: float,
                                       electrode_potential: float,
-                                      temperature: float = None,
-                                      ph: float = None):
+                                      temperature: Optional[float] = None,
+                                      ph: Optional[float] = None):
         """Update environmental conditions affecting metabolism."""
         
-        # Update substrate availability
-        self.config.max_lactate_uptake = min(4.11, substrate_concentration * 0.1)  # Scale appropriately
+        # Update substrate availability 
+        max_possible = min(4.11, substrate_concentration * 0.1)  # Scale appropriately
+        if max_possible != self.config.max_lactate_uptake:
+            self.config.max_lactate_uptake = max_possible
         
         # Update oxygen availability
         self.config.max_oxygen_uptake = oxygen_availability * 10.0
@@ -439,7 +436,7 @@ class GSMPhysicsIntegrator:
     
     def __init__(self, gsm_model: ShewanellaGSMModel):
         self.gsm_model = gsm_model
-        self.integration_history = []
+        self.integration_history: List[Dict[str, Any]] = []
     
     def integrate_with_electrode_model(self, electrode_results: Dict[str, Any]) -> Dict[str, float]:
         """
@@ -562,7 +559,7 @@ if __name__ == "__main__":
     
     # Get metabolic objectives
     objectives = gsm_model.calculate_metabolic_objectives()
-    print(f"\nMetabolic objectives:")
+    print("\nMetabolic objectives:")
     for name, value in objectives.items():
         print(f"  {name}: {value:.3f}")
     
@@ -580,7 +577,7 @@ if __name__ == "__main__":
     
     # Integrate with electrode model
     integrated_objectives = integrator.integrate_with_electrode_model(dummy_electrode_results)
-    print(f"\nIntegrated objectives:")
+    print("\nIntegrated objectives:")
     for name, value in integrated_objectives.items():
         print(f"  {name}: {value:.3f}")
     
