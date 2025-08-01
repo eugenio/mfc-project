@@ -474,7 +474,8 @@ class TestGPUCapability(unittest.TestCase):
 
             # Check available devices
             devices = jax.devices()
-            gpu_devices = [d for d in devices if d.device_kind == 'gpu']
+            # Check for GPU devices by platform (works for both CUDA and ROCm)
+            gpu_devices = [d for d in devices if d.platform == 'gpu']
 
             if not gpu_devices:
                 self.skipTest("JAX GPU not available")

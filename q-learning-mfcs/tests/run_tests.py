@@ -19,6 +19,10 @@ from test_file_outputs import TestFileOutputIntegration, TestSpecificFileImports
 from test_actual_executions import TestActualFileExecutions, TestFileOutputPatterns
 from test_gpu_capability import TestGPUCapability
 from test_gpu_acceleration import TestGPUAcceleration
+from test_advanced_electrode_model import (
+    TestCellGeometry, TestFluidDynamicsProperties, TestMassTransportProperties,
+    TestBiofilmDynamics, TestAdvancedElectrodeModel, TestIntegrationTests
+)
 
 
 def create_test_suite():
@@ -40,6 +44,14 @@ def create_test_suite():
     # Add GPU capability tests
     suite.addTest(loader.loadTestsFromTestCase(TestGPUCapability))
     suite.addTest(loader.loadTestsFromTestCase(TestGPUAcceleration))
+
+    # Add advanced electrode model tests (Phase 2)
+    suite.addTest(loader.loadTestsFromTestCase(TestCellGeometry))
+    suite.addTest(loader.loadTestsFromTestCase(TestFluidDynamicsProperties))
+    suite.addTest(loader.loadTestsFromTestCase(TestMassTransportProperties))
+    suite.addTest(loader.loadTestsFromTestCase(TestBiofilmDynamics))
+    suite.addTest(loader.loadTestsFromTestCase(TestAdvancedElectrodeModel))
+    suite.addTest(loader.loadTestsFromTestCase(TestIntegrationTests))
 
     return suite
 
@@ -101,7 +113,13 @@ def run_specific_test_class(test_class_name, verbosity=2):
         'executions': TestActualFileExecutions,
         'patterns': TestFileOutputPatterns,
         'gpu_capability': TestGPUCapability,
-        'gpu_acceleration': TestGPUAcceleration
+        'gpu_acceleration': TestGPUAcceleration,
+        'cell_geometry': TestCellGeometry,
+        'fluid_dynamics': TestFluidDynamicsProperties,
+        'mass_transport': TestMassTransportProperties,
+        'biofilm_dynamics': TestBiofilmDynamics,
+        'advanced_electrode': TestAdvancedElectrodeModel,
+        'integration_tests': TestIntegrationTests
     }
 
     if test_class_name not in test_classes:
@@ -122,7 +140,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run MFC Q-Learning path output tests')
     parser.add_argument('--test-class', '-c',
-                       help='Run specific test class (path_config, file_outputs, imports, executions, patterns, gpu_capability, gpu_acceleration)')
+                       help='Run specific test class (path_config, file_outputs, imports, executions, patterns, gpu_capability, gpu_acceleration, cell_geometry, fluid_dynamics, mass_transport, biofilm_dynamics, advanced_electrode, integration_tests)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output')
     parser.add_argument('--quiet', '-q', action='store_true',
