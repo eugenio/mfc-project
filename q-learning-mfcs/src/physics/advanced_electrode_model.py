@@ -19,14 +19,10 @@ Literature References:
 """
 
 import numpy as np
-import pandas as pd
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional, Any, Callable
 from enum import Enum
 import scipy.sparse as sp
-from scipy.integrate import solve_ivp
-from scipy.optimize import minimize
-import warnings
 
 from config.electrode_config import ElectrodeConfiguration, ElectrodeGeometry
 
@@ -427,16 +423,25 @@ class AdvancedElectrodeModel:
         }
     
     def step(self, dt: float) -> Dict[str, Any]:
-        """Advance simulation by one time step."""
-        # Solve coupled physics in sequence (would need iterative coupling for full accuracy)
+        """
+        Advance simulation by one time step with coupled physics.
         
-        # 1. Solve flow field
+        Solves the coupled system of:
+        1. Flow field (momentum transport)
+        2. Mass transport (species transport)  
+        3. Biofilm growth (biological processes)
+        """
+        step_results = {}
+        
+        # 1. Solve flow field (pressure and velocity)
         flow_results = self.solve_flow_field()
+        step_results['flow'] = flow_results
         
-        # 2. Solve mass transport
-        substrate_new = self.solve_mass_transport(dt)
+        # 2. Solve mass transport for all species
+        transport_results = self.solve_mass_transport(dt)
+        step_results['mass_transport'] = transport_results
         
-        # 3. Solve biofilm growth
+        # 3. Solve biofilm growth and dynamics
         biofilm_results = self.solve_biofilm_growth(dt)
         
         # 4. Update time
@@ -448,7 +453,7 @@ class AdvancedElectrodeModel:
         return {
             'time': self.time,
             'flow_results': flow_results,
-            'substrate_concentration': substrate_new,
+            'transport_results': transport_results,
             'biofilm_results': biofilm_results,
             'performance_metrics': metrics,
             'compatibility_check': self.compatibility_check
@@ -531,7 +536,7 @@ def create_optimization_objective(electrode_model: AdvancedElectrodeModel,
             
             return -objective  # Minimize negative of objective
             
-        except Exception as e:
+        except Exception:
             # Return large penalty for invalid parameters
             return 1e6
     
