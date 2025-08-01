@@ -1,7 +1,7 @@
 [workspace]
 authors = ["Eugenio La Cava"]
 channels = ["conda-forge","https://conda.modular.com/max-nightly/", "https://repo.prefix.dev/modular", "https://repo.prefix.dev/mojo", "https://repo.prefix.dev/modular-community"]
-name = "mojo-practice"
+name = "mfc-project"
 platforms = ["linux-64"]
 version = "0.1.0"
 
@@ -178,8 +178,11 @@ scikit-optimize = ">=0.9.0"
 #   AMD GPU (ROCm): jax==0.4.38 + jaxlib==0.4.38
 #   NVIDIA GPU (CUDA12): jax>=0.4.0 + jaxlib>=0.4.0
 [feature.amd-gpu.pypi-dependencies]
-jax = { version = "==0.4.38", extras = ["rocm"] }
-jaxlib = { version = "==0.4.38", extras = ["rocm"] }
+# JAX with ROCm support - use exact compatible versions
+jax = "==0.5.0"
+jaxlib = "==0.5.0"
+jax-rocm60-plugin = "==0.5.0"
+jax-rocm60-pjrt = "==0.5.0"
 
 [feature.nvidia-gpu.pypi-dependencies]
 jax = { version = ">=0.4.0", extras = ["cuda12"] }
