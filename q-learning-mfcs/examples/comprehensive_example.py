@@ -576,7 +576,7 @@ def demonstrate_real_time_processing():
         )
 
         # Create stream processor
-        processor = StreamProcessor(processing_config)
+        _processor = StreamProcessor(processing_config)
 
         # Create real-time analyzer
         analyzer = RealTimeAnalyzer(alert_config)
