@@ -99,32 +99,32 @@ class ExperimentalDataset:
     name: str
     data: pd.DataFrame
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Data quality information
     quality_score: float = 0.0
     quality_issues: List[str] = field(default_factory=list)
-    
+
     # Measurement information
     measurement_units: Dict[str, str] = field(default_factory=dict)
     measurement_uncertainty: Dict[str, float] = field(default_factory=dict)
     sampling_frequency: Optional[float] = None  # Hz
-    
+
     # Temporal information
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     duration: Optional[timedelta] = None
-    
+
     # Experimental conditions
     experimental_conditions: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Processing history
     processing_history: List[str] = field(default_factory=list)
-    
+
     def __post_init__(self):
         """Initialize derived properties."""
         if self.start_time and self.end_time:
             self.duration = self.end_time - self.start_time
-        
+
         if 'timestamp' in self.data.columns:
             if self.start_time is None:
                 self.start_time = pd.to_datetime(self.data['timestamp'].min())
@@ -139,26 +139,26 @@ class CalibrationResult:
     dataset_name: str
     calibrated_parameters: Dict[str, float]
     parameter_uncertainties: Dict[str, float]
-    
+
     # Goodness of fit metrics
     r_squared: float
     rmse: float
     mae: float
     aic: float
     bic: float
-    
+
     # Residual analysis
     residuals: np.ndarray
     standardized_residuals: np.ndarray
-    
+
     # Uncertainty quantification
     parameter_covariance: Optional[np.ndarray] = None
     prediction_bands: Optional[Dict[str, Tuple[np.ndarray, np.ndarray]]] = None
-    
+
     # Validation metrics
     cross_validation_score: Optional[float] = None
     validation_residuals: Optional[np.ndarray] = None
-    
+
     # Metadata
     calibration_time: float = 0.0
     convergence_info: Dict[str, Any] = field(default_factory=dict)
@@ -167,7 +167,7 @@ class CalibrationResult:
 
 class DataLoader:
     """Advanced data loading with automatic format detection and preprocessing."""
-    
+
     def __init__(self):
         """Initialize data loader."""
         self.logger = logging.getLogger(__name__)
@@ -182,8 +182,8 @@ class DataLoader:
             '.sqlite': self._load_sqlite,
             '.parquet': self._load_parquet
         }
-    
-    def load_data(self, file_path: Union[str, Path], 
+
+    def load_data(self, file_path: Union[str, Path],
                   format: Optional[DataFormat] = None,
                   **kwargs) -> ExperimentalDataset:
         """
@@ -198,41 +198,41 @@ class DataLoader:
             Experimental dataset
         """
         file_path = Path(file_path)
-        
+
         if not file_path.exists():
             raise FileNotFoundError(f"Data file not found: {file_path}")
-        
+
         # Auto-detect format if not specified
         if format is None:
             format = self._detect_format(file_path)
-        
+
         # Load data using appropriate method
         if file_path.suffix.lower() in self.supported_formats:
             data = self.supported_formats[file_path.suffix.lower()](file_path, **kwargs)
         else:
             raise ValueError(f"Unsupported file format: {file_path.suffix}")
-        
+
         # Create dataset
         dataset = ExperimentalDataset(
             name=file_path.stem,
             data=data,
             metadata={'file_path': str(file_path), 'format': format.value}
         )
-        
+
         # Auto-detect timestamp columns
-        timestamp_cols = [col for col in data.columns 
-                         if any(keyword in col.lower() 
+        timestamp_cols = [col for col in data.columns
+                         if any(keyword in col.lower()
                                for keyword in ['time', 'date', 'timestamp'])]
-        
+
         if timestamp_cols:
             dataset.data['timestamp'] = pd.to_datetime(dataset.data[timestamp_cols[0]])
-        
+
         return dataset
-    
+
     def _detect_format(self, file_path: Path) -> DataFormat:
         """Auto-detect data format from file extension."""
         suffix = file_path.suffix.lower()
-        
+
         format_map = {
             '.csv': DataFormat.CSV,
             '.json': DataFormat.JSON,
@@ -244,38 +244,38 @@ class DataLoader:
             '.sqlite': DataFormat.SQLITE,
             '.parquet': DataFormat.PARQUET
         }
-        
+
         return format_map.get(suffix, DataFormat.CSV)
-    
+
     def _load_csv(self, file_path: Path, **kwargs) -> pd.DataFrame:
         """Load CSV file."""
         default_kwargs = {'parse_dates': True, 'infer_datetime_format': True}
         default_kwargs.update(kwargs)
         return pd.read_csv(file_path, **default_kwargs)
-    
+
     def _load_json(self, file_path: Path, **kwargs) -> pd.DataFrame:
         """Load JSON file."""
         with open(file_path, 'r') as f:
             data = json.load(f)
-        
+
         if isinstance(data, list):
             return pd.DataFrame(data)
         elif isinstance(data, dict):
             return pd.DataFrame([data])
         else:
             raise ValueError("JSON data must be a list or dictionary")
-    
+
     def _load_excel(self, file_path: Path, **kwargs) -> pd.DataFrame:
         """Load Excel file."""
         return pd.read_excel(file_path, **kwargs)
-    
+
     def _load_hdf5(self, file_path: Path, key: str = 'data', **kwargs) -> pd.DataFrame:
         """Load HDF5 file."""
         if not HAS_HDF5:
             raise ImportError("h5py required for HDF5 support")
-        
+
         return pd.read_hdf(file_path, key=key, **kwargs)
-    
+
     def _load_sqlite(self, file_path: Path, table: str, **kwargs) -> pd.DataFrame:
         """Load SQLite database."""
         conn = sqlite3.connect(file_path)
@@ -283,7 +283,7 @@ class DataLoader:
             return pd.read_sql_query(f"SELECT * FROM {table}", conn, **kwargs)
         finally:
             conn.close()
-    
+
     def _load_parquet(self, file_path: Path, **kwargs) -> pd.DataFrame:
         """Load Parquet file."""
         return pd.read_parquet(file_path, **kwargs)
@@ -291,11 +291,11 @@ class DataLoader:
 
 class DataPreprocessor:
     """Advanced data preprocessing and quality control."""
-    
+
     def __init__(self):
         """Initialize data preprocessor."""
         self.logger = logging.getLogger(__name__)
-    
+
     def preprocess_dataset(self, dataset: ExperimentalDataset,
                           operations: List[str] = None) -> ExperimentalDataset:
         """
@@ -310,17 +310,17 @@ class DataPreprocessor:
         """
         if operations is None:
             operations = ['clean_data', 'detect_outliers', 'interpolate_missing']
-        
+
         processed_data = dataset.data.copy()
         processing_history = dataset.processing_history.copy()
-        
+
         for operation in operations:
             if hasattr(self, f'_{operation}'):
                 processed_data = getattr(self, f'_{operation}')(processed_data)
                 processing_history.append(f"Applied {operation}")
             else:
                 self.logger.warning(f"Unknown preprocessing operation: {operation}")
-        
+
         # Create new dataset with processed data
         processed_dataset = ExperimentalDataset(
             name=f"{dataset.name}_processed",
@@ -332,31 +332,31 @@ class DataPreprocessor:
             experimental_conditions=dataset.experimental_conditions.copy(),
             processing_history=processing_history
         )
-        
+
         # Calculate quality score
         processed_dataset.quality_score = self._calculate_quality_score(processed_data)
         processed_dataset.quality_issues = self._identify_quality_issues(processed_data)
-        
+
         return processed_dataset
-    
+
     def _clean_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Basic data cleaning operations."""
         cleaned = data.copy()
-        
+
         # Remove completely empty rows/columns
         cleaned = cleaned.dropna(how='all').dropna(axis=1, how='all')
-        
+
         # Convert numeric columns
         for col in cleaned.columns:
             if col != 'timestamp':
                 cleaned[col] = pd.to_numeric(cleaned[col], errors='coerce')
-        
+
         return cleaned
-    
+
     def _detect_outliers(self, data: pd.DataFrame, method: str = 'iqr') -> pd.DataFrame:
         """Detect and flag outliers."""
         processed = data.copy()
-        
+
         for col in processed.select_dtypes(include=[np.number]).columns:
             if method == 'iqr':
                 Q1 = processed[col].quantile(0.25)
@@ -364,21 +364,21 @@ class DataPreprocessor:
                 IQR = Q3 - Q1
                 lower_bound = Q1 - 1.5 * IQR
                 upper_bound = Q3 + 1.5 * IQR
-                
+
                 outliers = (processed[col] < lower_bound) | (processed[col] > upper_bound)
                 processed.loc[outliers, f'{col}_outlier'] = True
-                
+
             elif method == 'zscore':
                 z_scores = np.abs(stats.zscore(processed[col].dropna()))
                 outliers = z_scores > 3
                 processed.loc[processed[col].notna(), f'{col}_outlier'] = outliers
-        
+
         return processed
-    
+
     def _interpolate_missing(self, data: pd.DataFrame, method: str = 'linear') -> pd.DataFrame:
         """Interpolate missing values."""
         interpolated = data.copy()
-        
+
         for col in interpolated.select_dtypes(include=[np.number]).columns:
             if interpolated[col].isna().any():
                 if method == 'linear':
@@ -389,83 +389,83 @@ class DataPreprocessor:
                     interpolated[col] = interpolated[col].fillna(method='ffill')
                 elif method == 'backward_fill':
                     interpolated[col] = interpolated[col].fillna(method='bfill')
-        
+
         return interpolated
-    
+
     def _smooth_data(self, data: pd.DataFrame, window_size: int = 5) -> pd.DataFrame:
         """Apply smoothing filter to data."""
         smoothed = data.copy()
-        
+
         for col in smoothed.select_dtypes(include=[np.number]).columns:
             if not col.endswith('_outlier'):
                 smoothed[col] = smoothed[col].rolling(window=window_size, center=True).mean()
-        
+
         return smoothed
-    
+
     def _resample_data(self, data: pd.DataFrame, frequency: str = '1S') -> pd.DataFrame:
         """Resample data to uniform frequency."""
         if 'timestamp' not in data.columns:
             self.logger.warning("No timestamp column found for resampling")
             return data
-        
+
         resampled = data.set_index('timestamp').resample(frequency).mean().reset_index()
         return resampled
-    
+
     def _calculate_quality_score(self, data: pd.DataFrame) -> float:
         """Calculate overall data quality score."""
         scores = []
-        
+
         # Completeness score
         completeness = 1.0 - data.isnull().sum().sum() / (data.shape[0] * data.shape[1])
         scores.append(completeness)
-        
+
         # Consistency score (based on outlier detection)
         outlier_cols = [col for col in data.columns if col.endswith('_outlier')]
         if outlier_cols:
             outlier_rate = data[outlier_cols].sum().sum() / (data.shape[0] * len(outlier_cols))
             consistency = 1.0 - outlier_rate
             scores.append(consistency)
-        
+
         # Temporal regularity (if timestamp exists)
         if 'timestamp' in data.columns:
             time_diffs = data['timestamp'].diff().dropna()
             if len(time_diffs) > 1:
                 regularity = 1.0 - (time_diffs.std() / time_diffs.mean())
                 scores.append(np.clip(regularity, 0, 1))
-        
+
         return np.mean(scores) if scores else 0.0
-    
+
     def _identify_quality_issues(self, data: pd.DataFrame) -> List[str]:
         """Identify data quality issues."""
         issues = []
-        
+
         # Check for missing data
         missing_rate = data.isnull().sum().sum() / (data.shape[0] * data.shape[1])
         if missing_rate > 0.1:
             issues.append(f"High missing data rate: {missing_rate:.2%}")
-        
+
         # Check for outliers
         outlier_cols = [col for col in data.columns if col.endswith('_outlier')]
         if outlier_cols:
             outlier_rate = data[outlier_cols].sum().sum() / (data.shape[0] * len(outlier_cols))
             if outlier_rate > 0.05:
                 issues.append(f"High outlier rate: {outlier_rate:.2%}")
-        
+
         # Check for duplicates
         duplicate_rate = data.duplicated().sum() / len(data)
         if duplicate_rate > 0.01:
             issues.append(f"Duplicate rows detected: {duplicate_rate:.2%}")
-        
+
         return issues
 
 
 class ModelCalibrator:
     """Model calibration against experimental data with uncertainty quantification."""
-    
+
     def __init__(self):
         """Initialize model calibrator."""
         self.logger = logging.getLogger(__name__)
-    
+
     def calibrate_model(self, model_function: Callable[[np.ndarray], Dict[str, float]],
                        dataset: ExperimentalDataset,
                        parameters_to_calibrate: List[str],
@@ -488,17 +488,17 @@ class ModelCalibrator:
         """
         import time
         start_time = time.time()
-        
+
         # Extract experimental data
         exp_data = dataset.data
-        
+
         # Determine output variables to match
-        output_variables = [col for col in exp_data.columns 
+        output_variables = [col for col in exp_data.columns
                           if col not in ['timestamp'] and not col.endswith('_outlier')]
-        
+
         if method == CalibrationMethod.LEAST_SQUARES:
             result = self._least_squares_calibration(
-                model_function, exp_data, parameters_to_calibrate, 
+                model_function, exp_data, parameters_to_calibrate,
                 parameter_bounds, output_variables, **kwargs
             )
         elif method == CalibrationMethod.BAYESIAN:
@@ -513,13 +513,13 @@ class ModelCalibrator:
             )
         else:
             raise NotImplementedError(f"Calibration method {method} not implemented")
-        
+
         result.method = method
         result.dataset_name = dataset.name
         result.calibration_time = time.time() - start_time
-        
+
         return result
-    
+
     def _least_squares_calibration(self, model_function: Callable,
                                   exp_data: pd.DataFrame,
                                   parameters_to_calibrate: List[str],
@@ -528,73 +528,73 @@ class ModelCalibrator:
                                   **kwargs) -> CalibrationResult:
         """Least squares parameter calibration."""
         from scipy.optimize import differential_evolution
-        
+
         # Define objective function
         def objective(params):
             param_dict = dict(zip(parameters_to_calibrate, params))
-            
+
             total_error = 0.0
             for _, row in exp_data.iterrows():
                 try:
                     # Create parameter array for model
                     model_params = self._create_parameter_array(param_dict, row)
                     model_output = model_function(model_params)
-                    
+
                     # Calculate squared errors
                     for var in output_variables:
                         if var in model_output and not pd.isna(row[var]):
                             error = (model_output[var] - row[var])**2
                             total_error += error
-                            
+
                 except Exception:
                     return 1e10  # Large penalty for failed evaluations
-            
+
             return total_error
-        
+
         # Set up bounds
         bounds = [parameter_bounds[param] for param in parameters_to_calibrate]
-        
+
         # Optimize using differential evolution for global optimization
         result = differential_evolution(objective, bounds, seed=42, maxiter=1000)
-        
+
         if not result.success:
             self.logger.warning("Calibration optimization did not converge")
-        
+
         # Calculate goodness of fit metrics
         calibrated_params = dict(zip(parameters_to_calibrate, result.x))
-        
+
         # Generate predictions with calibrated parameters
         predictions = []
         observations = []
-        
+
         for _, row in exp_data.iterrows():
             try:
                 model_params = self._create_parameter_array(calibrated_params, row)
                 model_output = model_function(model_params)
-                
+
                 for var in output_variables:
                     if var in model_output and not pd.isna(row[var]):
                         predictions.append(model_output[var])
                         observations.append(row[var])
             except Exception:
                 continue
-        
+
         predictions = np.array(predictions)
         observations = np.array(observations)
-        
+
         # Calculate metrics
         r_squared = self._calculate_r_squared(observations, predictions)
         rmse = np.sqrt(np.mean((observations - predictions)**2))
         mae = np.mean(np.abs(observations - predictions))
         residuals = observations - predictions
-        
+
         # Calculate AIC and BIC
         n = len(observations)
         k = len(parameters_to_calibrate)
         mse = np.mean(residuals**2)
         aic = n * np.log(mse) + 2 * k
         bic = n * np.log(mse) + k * np.log(n)
-        
+
         # Create calibration result
         calibration_result = CalibrationResult(
             method=CalibrationMethod.LEAST_SQUARES,
@@ -610,9 +610,9 @@ class ModelCalibrator:
             standardized_residuals=residuals / np.std(residuals) if np.std(residuals) > 0 else residuals,
             convergence_info={'success': result.success, 'nit': result.nit, 'fun': result.fun}
         )
-        
+
         return calibration_result
-    
+
     def _bayesian_calibration(self, model_function: Callable,
                             exp_data: pd.DataFrame,
                             parameters_to_calibrate: List[str],
@@ -623,7 +623,7 @@ class ModelCalibrator:
         # This would use the BayesianInference class from uncertainty_quantification
         # For now, return a placeholder
         self.logger.warning("Bayesian calibration not fully implemented")
-        
+
         return CalibrationResult(
             method=CalibrationMethod.BAYESIAN,
             dataset_name="",
@@ -637,7 +637,7 @@ class ModelCalibrator:
             residuals=np.array([]),
             standardized_residuals=np.array([])
         )
-    
+
     def _maximum_likelihood_calibration(self, model_function: Callable,
                                       exp_data: pd.DataFrame,
                                       parameters_to_calibrate: List[str],
@@ -647,7 +647,7 @@ class ModelCalibrator:
         """Maximum likelihood parameter calibration."""
         # Similar to least squares but with likelihood maximization
         self.logger.warning("Maximum likelihood calibration not fully implemented")
-        
+
         return CalibrationResult(
             method=CalibrationMethod.MAXIMUM_LIKELIHOOD,
             dataset_name="",
@@ -661,28 +661,28 @@ class ModelCalibrator:
             residuals=np.array([]),
             standardized_residuals=np.array([])
         )
-    
-    def _create_parameter_array(self, param_dict: Dict[str, float], 
+
+    def _create_parameter_array(self, param_dict: Dict[str, float],
                               data_row: pd.Series) -> np.ndarray:
         """Create parameter array for model evaluation."""
         # This would need to be customized based on the specific model structure
         # For now, return the parameter values as an array
         return np.array(list(param_dict.values()))
-    
+
     def _calculate_r_squared(self, observed: np.ndarray, predicted: np.ndarray) -> float:
         """Calculate coefficient of determination (R²)."""
         ss_res = np.sum((observed - predicted)**2)
         ss_tot = np.sum((observed - np.mean(observed))**2)
-        
+
         if ss_tot == 0:
             return 1.0 if ss_res == 0 else 0.0
-        
+
         return 1 - (ss_res / ss_tot)
 
 
 class ExperimentalDataManager:
     """Main experimental data management and integration system."""
-    
+
     def __init__(self, data_directory: Optional[Union[str, Path]] = None):
         """
         Initialize experimental data manager.
@@ -692,17 +692,17 @@ class ExperimentalDataManager:
         """
         self.data_directory = Path(data_directory) if data_directory else Path("experimental_data")
         self.data_directory.mkdir(parents=True, exist_ok=True)
-        
+
         self.datasets: Dict[str, ExperimentalDataset] = {}
         self.calibration_results: Dict[str, CalibrationResult] = {}
-        
+
         # Initialize components
         self.loader = DataLoader()
         self.preprocessor = DataPreprocessor()
         self.calibrator = ModelCalibrator()
-        
+
         self.logger = logging.getLogger(__name__)
-    
+
     def load_experimental_data(self, file_path: Union[str, Path],
                              dataset_name: Optional[str] = None,
                              preprocess: bool = True,
@@ -721,23 +721,23 @@ class ExperimentalDataManager:
         """
         # Load raw data
         dataset = self.loader.load_data(file_path, **kwargs)
-        
+
         if dataset_name:
             dataset.name = dataset_name
-        
+
         # Apply preprocessing if requested
         if preprocess:
             dataset = self.preprocessor.preprocess_dataset(dataset)
-        
+
         # Store dataset
         self.datasets[dataset.name] = dataset
-        
+
         self.logger.info(f"Loaded experimental dataset: {dataset.name}")
         self.logger.info(f"Data shape: {dataset.data.shape}")
         self.logger.info(f"Quality score: {dataset.quality_score:.3f}")
-        
+
         return dataset.name
-    
+
     def calibrate_model_against_data(self, dataset_name: str,
                                    model_function: Callable,
                                    parameters_to_calibrate: List[str],
@@ -760,31 +760,31 @@ class ExperimentalDataManager:
         """
         if dataset_name not in self.datasets:
             raise ValueError(f"Dataset not found: {dataset_name}")
-        
+
         dataset = self.datasets[dataset_name]
-        
+
         # Perform calibration
         result = self.calibrator.calibrate_model(
             model_function, dataset, parameters_to_calibrate,
             parameter_bounds, method, **kwargs
         )
-        
+
         # Store result
         result_id = f"{dataset_name}_{method.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.calibration_results[result_id] = result
-        
+
         self.logger.info(f"Model calibration completed: {result_id}")
         self.logger.info(f"R²: {result.r_squared:.3f}, RMSE: {result.rmse:.3f}")
-        
+
         return result_id
-    
+
     def get_dataset_summary(self, dataset_name: str) -> Dict[str, Any]:
         """Get summary statistics for dataset."""
         if dataset_name not in self.datasets:
             raise ValueError(f"Dataset not found: {dataset_name}")
-        
+
         dataset = self.datasets[dataset_name]
-        
+
         summary = {
             'name': dataset.name,
             'shape': dataset.data.shape,
@@ -795,22 +795,22 @@ class ExperimentalDataManager:
             'missing_values': dataset.data.isnull().sum().to_dict(),
             'processing_history': dataset.processing_history
         }
-        
+
         # Add statistical summary for numeric columns
         numeric_summary = dataset.data.describe()
         if not numeric_summary.empty:
             summary['statistical_summary'] = numeric_summary.to_dict()
-        
+
         return summary
-    
+
     def compare_calibration_results(self, result_ids: List[str]) -> pd.DataFrame:
         """Compare multiple calibration results."""
         comparison_data = []
-        
+
         for result_id in result_ids:
             if result_id in self.calibration_results:
                 result = self.calibration_results[result_id]
-                
+
                 row = {
                     'result_id': result_id,
                     'method': result.method.value,
@@ -822,23 +822,23 @@ class ExperimentalDataManager:
                     'bic': result.bic,
                     'calibration_time': result.calibration_time
                 }
-                
+
                 # Add calibrated parameter values
                 for param, value in result.calibrated_parameters.items():
                     row[f'param_{param}'] = value
-                
+
                 comparison_data.append(row)
-        
+
         return pd.DataFrame(comparison_data)
-    
-    def export_calibration_results(self, result_id: str, 
+
+    def export_calibration_results(self, result_id: str,
                                  output_path: Union[str, Path]) -> None:
         """Export calibration results to file."""
         if result_id not in self.calibration_results:
             raise ValueError(f"Calibration result not found: {result_id}")
-        
+
         result = self.calibration_results[result_id]
-        
+
         # Convert to dictionary for JSON export
         export_data = {
             'result_id': result_id,
@@ -858,16 +858,16 @@ class ExperimentalDataManager:
             'convergence_info': result.convergence_info,
             'created_at': result.created_at.isoformat()
         }
-        
+
         with open(output_path, 'w') as f:
             json.dump(export_data, f, indent=2)
-        
+
         self.logger.info(f"Calibration results exported to: {output_path}")
-    
+
     def list_datasets(self) -> List[str]:
         """List all loaded datasets."""
         return list(self.datasets.keys())
-    
+
     def list_calibration_results(self) -> List[str]:
         """List all calibration results."""
         return list(self.calibration_results.keys())
@@ -877,27 +877,27 @@ class ExperimentalDataManager:
 def calculate_model_validation_metrics(observed: np.ndarray, predicted: np.ndarray) -> Dict[str, float]:
     """Calculate comprehensive model validation metrics."""
     metrics = {}
-    
+
     # Basic metrics
     metrics['r_squared'] = 1 - np.sum((observed - predicted)**2) / np.sum((observed - np.mean(observed))**2)
     metrics['rmse'] = np.sqrt(np.mean((observed - predicted)**2))
     metrics['mae'] = np.mean(np.abs(observed - predicted))
     metrics['mape'] = np.mean(np.abs((observed - predicted) / observed)) * 100
-    
+
     # Correlation metrics
     metrics['pearson_r'] = np.corrcoef(observed, predicted)[0, 1]
-    
+
     if HAS_SCIPY:
         from scipy.stats import spearmanr
         metrics['spearman_r'] = spearmanr(observed, predicted)[0]
-    
+
     # Bias metrics
     metrics['bias'] = np.mean(predicted - observed)
     metrics['relative_bias'] = metrics['bias'] / np.mean(observed) * 100
-    
+
     # Efficiency metrics
     metrics['nash_sutcliffe'] = 1 - np.sum((observed - predicted)**2) / np.sum((observed - np.mean(observed))**2)
-    
+
     return metrics
 
 
@@ -906,42 +906,42 @@ def detect_change_points(time_series: np.ndarray, method: str = 'pelt') -> List[
     if not HAS_SCIPY:
         warnings.warn("SciPy required for change point detection")
         return []
-    
+
     # Simple implementation using variance change detection
     n = len(time_series)
     change_points = []
-    
+
     window_size = max(10, n // 20)
-    
+
     for i in range(window_size, n - window_size):
         before = time_series[i-window_size:i]
         after = time_series[i:i+window_size]
-        
+
         # Test for variance change
         f_stat = np.var(after) / np.var(before) if np.var(before) > 0 else 1.0
-        
+
         # Simple threshold-based detection
         if f_stat > 2.0 or f_stat < 0.5:
             change_points.append(i)
-    
+
     return change_points
 
 
-def align_time_series(ts1: pd.DataFrame, ts2: pd.DataFrame, 
+def align_time_series(ts1: pd.DataFrame, ts2: pd.DataFrame,
                      time_col: str = 'timestamp',
                      method: str = 'nearest') -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Align two time series datasets."""
     if time_col not in ts1.columns or time_col not in ts2.columns:
         raise ValueError(f"Time column '{time_col}' not found in both datasets")
-    
+
     # Convert to datetime if not already
     ts1[time_col] = pd.to_datetime(ts1[time_col])
     ts2[time_col] = pd.to_datetime(ts2[time_col])
-    
+
     # Set time as index
     ts1_indexed = ts1.set_index(time_col)
     ts2_indexed = ts2.set_index(time_col)
-    
+
     # Align using pandas reindex
     if method == 'nearest':
         aligned_ts2 = ts2_indexed.reindex(ts1_indexed.index, method='nearest')
@@ -953,10 +953,10 @@ def align_time_series(ts1: pd.DataFrame, ts2: pd.DataFrame,
             end=min(ts1[time_col].max(), ts2[time_col].max()),
             freq='1S'  # 1 second frequency
         )
-        
+
         aligned_ts1 = ts1_indexed.reindex(common_times).interpolate()
         aligned_ts2 = ts2_indexed.reindex(common_times).interpolate()
-        
+
         return aligned_ts1.reset_index(), aligned_ts2.reset_index()
-    
+
     return ts1, ts2

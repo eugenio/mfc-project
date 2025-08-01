@@ -1,754 +1,1028 @@
+#!/usr/bin/env python3
 """
-Predictive Maintenance Scheduling for MFC Long-term Stability
+Maintenance Scheduler Module for MFC Systems
 
-Intelligent maintenance scheduling system that uses degradation patterns,
-reliability analysis, and operational constraints to optimize maintenance
-timing and minimize system downtime.
+This module provides comprehensive maintenance scheduling and management for
+Microbial Fuel Cell (MFC) systems, including predictive maintenance,
+preventive maintenance scheduling, resource optimization, and maintenance
+cost analysis.
 
-Created: 2025-07-28
+Author: MFC Analysis Team
+Created: 2025-07-31
+Last Modified: 2025-07-31
 """
-import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import field
-from enum import Enum
-from datetime import datetime, timedelta
-import json
+
+from __future__ import annotations
+
 import logging
+import numpy as np
+import pandas as pd
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from typing import (
+    Any, Dict, List, Optional, Tuple, Union, Protocol,
+    TypeVar, DefaultDict
+)
+from collections import defaultdict
 
-from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
-from reliability_analyzer import ReliabilityAnalyzer
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Type aliases
+MaintenanceTime = Union[datetime, pd.Timestamp]
+CostValue = Union[float, int, np.number]
+Priority = Union[int, float]
+
+# Generic types
+T = TypeVar('T')
+MaintenanceTaskType = TypeVar('MaintenanceTaskType', bound='MaintenanceTask')
+
 
 class MaintenanceType(Enum):
     """Types of maintenance activities."""
-    PREVENTIVE = "preventive"
-    PREDICTIVE = "predictive"
-    CORRECTIVE = "corrective"
-    EMERGENCY = "emergency"
-    ROUTINE = "routine"
+    PREVENTIVE = auto()
+    PREDICTIVE = auto()
+    CORRECTIVE = auto()
+    CONDITION_BASED = auto()
+    EMERGENCY = auto()
+    ROUTINE_INSPECTION = auto()
+    CALIBRATION = auto()
+    CLEANING = auto()
+    REPLACEMENT = auto()
+    UPGRADE = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower().replace('_', ' ')
 
 
 class MaintenancePriority(Enum):
     """Priority levels for maintenance tasks."""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-    EMERGENCY = "emergency"
+    LOW = auto()
+    MEDIUM = auto()
+    HIGH = auto()
+    CRITICAL = auto()
+    EMERGENCY = auto()
 
-class ComponentStatus(Enum):
-    """Component operational status."""
-    HEALTHY = "healthy"
-    DEGRADING = "degrading"
-    WARNING = "warning"
-    CRITICAL = "critical"
-    FAILED = "failed"
+    @property
+    def numeric_value(self) -> int:
+        """Return numeric representation of priority level."""
+        return {
+            MaintenancePriority.LOW: 1,
+            MaintenancePriority.MEDIUM: 2,
+            MaintenancePriority.HIGH: 3,
+            MaintenancePriority.CRITICAL: 4,
+            MaintenancePriority.EMERGENCY: 5
+        }[self]
 
+
+class MaintenanceStatus(Enum):
+    """Status of maintenance tasks."""
+    SCHEDULED = auto()
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+    CANCELLED = auto()
+    OVERDUE = auto()
+    POSTPONED = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower().replace('_', ' ')
+
+
+class ResourceType(Enum):
+    """Types of maintenance resources."""
+    TECHNICIAN = auto()
+    EQUIPMENT = auto()
+    SPARE_PARTS = auto()
+    CONSUMABLES = auto()
+    TOOLS = auto()
+    EXTERNAL_SERVICE = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower().replace('_', ' ')
+
+
+@dataclass(frozen=True)
+class MaintenanceResource:
+    """Represents a maintenance resource."""
+    resource_id: str
+    resource_type: ResourceType
+    name: str
+    availability_schedule: Dict[str, List[Tuple[datetime, datetime]]] = field(default_factory=dict)
+    cost_per_hour: float = 0.0
+    cost_per_use: float = 0.0
+    capacity: int = 1
+    current_utilization: float = 0.0
+    location: str = ""
+    qualifications: List[str] = field(default_factory=list)
+    maintenance_requirements: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Validate resource data."""
+        if self.cost_per_hour < 0:
+            raise ValueError("Cost per hour must be non-negative")
+        if self.cost_per_use < 0:
+            raise ValueError("Cost per use must be non-negative")
+        if not (0.0 <= self.current_utilization <= 1.0):
+            raise ValueError("Current utilization must be between 0 and 1")
+
+    def is_available(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        day_of_week: Optional[str] = None
+    ) -> bool:
+        """Check if resource is available during specified time period."""
+        if day_of_week is None:
+            day_of_week = start_time.strftime('%A').lower()
+
+        if day_of_week not in self.availability_schedule:
+            return True  # Available if no schedule specified
+
+        schedule = self.availability_schedule[day_of_week]
+        for available_start, available_end in schedule:
+            if available_start <= start_time and end_time <= available_end:
+                return True
+
+        return False
+
+    def calculate_cost(self, duration_hours: float, usage_count: int = 1) -> float:
+        """Calculate cost for using this resource."""
+        hourly_cost = self.cost_per_hour * duration_hours
+        usage_cost = self.cost_per_use * usage_count
+        return hourly_cost + usage_cost
+
+
+@dataclass
 class MaintenanceTask:
-    """Data structure for a maintenance task."""
+    """Represents a maintenance task."""
     task_id: str
-    component: str
+    task_name: str
     maintenance_type: MaintenanceType
     priority: MaintenancePriority
-    scheduled_date: datetime
-    estimated_duration_hours: float
-    description: str
-    required_resources: List[str] = field(default_factory=list)
-    prerequisites: List[str] = field(default_factory=list)
-    cost_estimate: float = 0.0
+    affected_component: str
+    description: str = ""
+
+    # Scheduling information
+    scheduled_start: Optional[datetime] = None
+    scheduled_end: Optional[datetime] = None
+    actual_start: Optional[datetime] = None
+    actual_end: Optional[datetime] = None
+    duration_estimate: timedelta = field(default=timedelta(hours=1))
+
+    # Status and progress
+    status: MaintenanceStatus = MaintenanceStatus.SCHEDULED
+    progress_percentage: float = 0.0
+
+    # Resource requirements
+    required_resources: List[str] = field(default_factory=list)  # Resource IDs
+    assigned_resources: List[str] = field(default_factory=list)  # Assigned resource IDs
+
+    # Dependencies
+    prerequisite_tasks: List[str] = field(default_factory=list)  # Task IDs
+    dependent_tasks: List[str] = field(default_factory=list)  # Task IDs
+
+    # Cost and impact
+    estimated_cost: float = 0.0
+    actual_cost: float = 0.0
     downtime_impact: float = 0.0  # Hours of system downtime
+    reliability_impact: float = 0.0  # Impact on system reliability (0-1)
+
+    # Recurrence
+    recurrence_interval: Optional[timedelta] = None
+    last_performed: Optional[datetime] = None
+    next_due: Optional[datetime] = None
+
+    # Documentation
+    work_instructions: List[str] = field(default_factory=list)
     safety_requirements: List[str] = field(default_factory=list)
-    completion_criteria: List[str] = field(default_factory=list)
-    related_patterns: List[str] = field(default_factory=list)  # Pattern IDs
+    completion_notes: str = ""
+
+    # Metadata
+    created_by: str = ""
     created_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
-    notes: str = ""
-    
-class MaintenanceWindow:
-    """Available maintenance window."""
-    start_time: datetime
-    end_time: datetime
-    max_downtime_hours: float
-    available_resources: List[str]
-    restrictions: List[str] = field(default_factory=list)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self) -> None:
+        """Validate task data and compute derived fields."""
+        self._validate_task_data()
+        self._update_next_due_date()
+
+    def _validate_task_data(self) -> None:
+        """Validate task data."""
+        if not (0.0 <= self.progress_percentage <= 100.0):
+            raise ValueError("Progress percentage must be between 0 and 100")
+
+        if self.estimated_cost < 0:
+            raise ValueError("Estimated cost must be non-negative")
+
+        if self.downtime_impact < 0:
+            raise ValueError("Downtime impact must be non-negative")
+
+    def _update_next_due_date(self) -> None:
+        """Update next due date based on recurrence interval."""
+        if self.recurrence_interval and self.last_performed:
+            self.next_due = self.last_performed + self.recurrence_interval
+        elif self.recurrence_interval and not self.last_performed:
+            # If no last performed date, schedule for now + interval
+            self.next_due = datetime.now() + self.recurrence_interval
+
+    def is_overdue(self, current_time: Optional[datetime] = None) -> bool:
+        """Check if task is overdue."""
+        if not self.next_due:
+            return False
+
+        current_time = current_time or datetime.now()
+        return current_time > self.next_due and self.status != MaintenanceStatus.COMPLETED
+
+    def mark_completed(
+        self,
+        completion_time: Optional[datetime] = None,
+        actual_cost: Optional[float] = None,
+        notes: str = ""
+    ) -> None:
+        """Mark task as completed."""
+        completion_time = completion_time or datetime.now()
+
+        self.status = MaintenanceStatus.COMPLETED
+        self.actual_end = completion_time
+        self.progress_percentage = 100.0
+        self.completion_notes = notes
+        self.updated_at = datetime.now()
+
+        if actual_cost is not None:
+            self.actual_cost = actual_cost
+
+        # Update last performed and next due date
+        self.last_performed = completion_time
+        self._update_next_due_date()
+
+    def estimate_effort(self) -> Dict[str, float]:
+        """Estimate effort required for this task."""
+        base_hours = self.duration_estimate.total_seconds() / 3600
+
+        # Adjust based on priority and complexity
+        priority_multiplier = {
+            MaintenancePriority.LOW: 0.8,
+            MaintenancePriority.MEDIUM: 1.0,
+            MaintenancePriority.HIGH: 1.2,
+            MaintenancePriority.CRITICAL: 1.5,
+            MaintenancePriority.EMERGENCY: 2.0
+        }
+
+        complexity_multiplier = 1.0
+        if self.maintenance_type == MaintenanceType.EMERGENCY:
+            complexity_multiplier = 1.8
+        elif self.maintenance_type == MaintenanceType.PREDICTIVE:
+            complexity_multiplier = 1.3
+        elif self.maintenance_type == MaintenanceType.ROUTINE_INSPECTION:
+            complexity_multiplier = 0.6
+
+        adjusted_hours = base_hours * priority_multiplier[self.priority] * complexity_multiplier
+
+        return {
+            'base_hours': base_hours,
+            'adjusted_hours': adjusted_hours,
+            'priority_factor': priority_multiplier[self.priority],
+            'complexity_factor': complexity_multiplier
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert task to dictionary format."""
+        return {
+            'task_id': self.task_id,
+            'task_name': self.task_name,
+            'maintenance_type': self.maintenance_type.name,
+            'priority': self.priority.name,
+            'affected_component': self.affected_component,
+            'description': self.description,
+            'scheduled_start': self.scheduled_start.isoformat() if self.scheduled_start else None,
+            'scheduled_end': self.scheduled_end.isoformat() if self.scheduled_end else None,
+            'actual_start': self.actual_start.isoformat() if self.actual_start else None,
+            'actual_end': self.actual_end.isoformat() if self.actual_end else None,
+            'duration_estimate': self.duration_estimate.total_seconds(),
+            'status': self.status.name,
+            'progress_percentage': self.progress_percentage,
+            'required_resources': self.required_resources,
+            'assigned_resources': self.assigned_resources,
+            'prerequisite_tasks': self.prerequisite_tasks,
+            'dependent_tasks': self.dependent_tasks,
+            'estimated_cost': self.estimated_cost,
+            'actual_cost': self.actual_cost,
+            'downtime_impact': self.downtime_impact,
+            'reliability_impact': self.reliability_impact,
+            'recurrence_interval': self.recurrence_interval.total_seconds() if self.recurrence_interval else None,
+            'last_performed': self.last_performed.isoformat() if self.last_performed else None,
+            'next_due': self.next_due.isoformat() if self.next_due else None,
+            'work_instructions': self.work_instructions,
+            'safety_requirements': self.safety_requirements,
+            'completion_notes': self.completion_notes,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'is_overdue': self.is_overdue()
+        }
 
 
-class OptimizationResult:
-    """Result of maintenance schedule optimization."""
-    total_cost: float
-    total_downtime: float
-    scheduled_tasks: List[MaintenanceTask]
-    unscheduled_tasks: List[MaintenanceTask]
-    optimization_score: float
-    constraints_violated: List[str]
+@dataclass
+class MaintenanceSchedule:
+    """Represents a complete maintenance schedule."""
+    schedule_id: str
+    schedule_name: str
+    tasks: List[MaintenanceTask] = field(default_factory=list)
+    resources: List[MaintenanceResource] = field(default_factory=list)
+    schedule_start: datetime = field(default_factory=datetime.now)
+    schedule_end: Optional[datetime] = None
+    optimization_objective: str = "cost_minimize"  # cost_minimize, downtime_minimize, reliability_maximize
 
-class MaintenanceScheduler:
-    """
-    Intelligent predictive maintenance scheduling system.
-    
-    Integrates with degradation detection and reliability analysis to
-    create optimal maintenance schedules that balance:
-    - System reliability and availability
-    - Maintenance costs and resources
-    - Operational constraints
-    - Safety requirements
-    """
-    
-    def __init__(self,
-                 planning_horizon_days: int = 365,
-                 max_simultaneous_tasks: int = 3,
-                 emergency_response_hours: float = 2.0,
-                 cost_per_downtime_hour: float = 100.0):
-        """
-        Initialize the maintenance scheduler.
+    # Schedule metrics
+    total_estimated_cost: float = 0.0
+    total_estimated_downtime: float = 0.0
+    resource_utilization: Dict[str, float] = field(default_factory=dict)
+    schedule_efficiency: float = 0.0
+
+    # Metadata
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self) -> None:
+        """Initialize schedule and compute metrics."""
+        self._compute_schedule_metrics()
+
+    def _compute_schedule_metrics(self) -> None:
+        """Compute schedule-wide metrics."""
+        if not self.tasks:
+            return
+
+        # Calculate total estimated cost
+        self.total_estimated_cost = sum(task.estimated_cost for task in self.tasks)
+
+        # Calculate total estimated downtime
+        self.total_estimated_downtime = sum(task.downtime_impact for task in self.tasks)
+
+        # Calculate resource utilization
+        resource_hours: DefaultDict[str, float] = defaultdict(float)
+        total_schedule_hours = (self.schedule_end - self.schedule_start).total_seconds() / 3600 if self.schedule_end else 168  # Default to 1 week
+
+        for task in self.tasks:
+            task_hours = task.duration_estimate.total_seconds() / 3600
+            for resource_id in task.assigned_resources:
+                resource_hours[resource_id] += task_hours
+
+        self.resource_utilization = {
+            resource_id: min(1.0, hours / total_schedule_hours)
+            for resource_id, hours in resource_hours.items()
+        }
+
+    def add_task(self, task: MaintenanceTask) -> None:
+        """Add a task to the schedule."""
+        self.tasks.append(task)
+        self.updated_at = datetime.now()
+        self._compute_schedule_metrics()
+
+    def remove_task(self, task_id: str) -> bool:
+        """Remove a task from the schedule."""
+        original_length = len(self.tasks)
+        self.tasks = [task for task in self.tasks if task.task_id != task_id]
+
+        if len(self.tasks) < original_length:
+            self.updated_at = datetime.now()
+            self._compute_schedule_metrics()
+            return True
+        return False
+
+    def get_tasks_by_priority(self, priority: MaintenancePriority) -> List[MaintenanceTask]:
+        """Get tasks with specified priority."""
+        return [task for task in self.tasks if task.priority == priority]
+
+    def get_overdue_tasks(self, current_time: Optional[datetime] = None) -> List[MaintenanceTask]:
+        """Get overdue tasks."""
+        return [task for task in self.tasks if task.is_overdue(current_time)]
+
+    def get_tasks_in_timeframe(
+        self,
+        start_time: datetime,
+        end_time: datetime
+    ) -> List[MaintenanceTask]:
+        """Get tasks scheduled within specified timeframe."""
+        return [
+            task for task in self.tasks
+            if task.scheduled_start and task.scheduled_end and
+            task.scheduled_start >= start_time and task.scheduled_end <= end_time
+        ]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert schedule to dictionary format."""
+        return {
+            'schedule_id': self.schedule_id,
+            'schedule_name': self.schedule_name,
+            'tasks': [task.to_dict() for task in self.tasks],
+            'resources': [
+                {
+                    'resource_id': resource.resource_id,
+                    'resource_type': resource.resource_type.name,
+                    'name': resource.name,
+                    'cost_per_hour': resource.cost_per_hour,
+                    'cost_per_use': resource.cost_per_use,
+                    'capacity': resource.capacity,
+                    'current_utilization': resource.current_utilization,
+                    'location': resource.location
+                }
+                for resource in self.resources
+            ],
+            'schedule_start': self.schedule_start.isoformat(),
+            'schedule_end': self.schedule_end.isoformat() if self.schedule_end else None,
+            'optimization_objective': self.optimization_objective,
+            'total_estimated_cost': self.total_estimated_cost,
+            'total_estimated_downtime': self.total_estimated_downtime,
+            'resource_utilization': self.resource_utilization,
+            'schedule_efficiency': self.schedule_efficiency,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+
+class MaintenanceScheduler(Protocol):
+    """Protocol for maintenance scheduler implementations."""
+
+    def create_schedule(
+        self,
+        tasks: List[MaintenanceTask],
+        resources: Optional[List[MaintenanceResource]] = None,
+        constraints: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Create optimized maintenance schedule."""
+        ...
+
+    def optimize_schedule(
+        self,
+        schedule: MaintenanceSchedule,
+        objective: str = "cost_minimize",
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Optimize existing maintenance schedule."""
+        ...
+
+
+class BaseMaintenanceScheduler(ABC):
+    """Base class for maintenance schedulers."""
+
+    def __init__(
+        self,
+        optimization_method: str = "greedy",
+        default_buffer_time: timedelta = timedelta(hours=1),
+        max_daily_tasks: int = 8
+    ) -> None:
+        """Initialize maintenance scheduler.
         
         Args:
-            planning_horizon_days: How far ahead to schedule maintenance
-            max_simultaneous_tasks: Maximum concurrent maintenance tasks
-            emergency_response_hours: Maximum response time for emergencies
-            cost_per_downtime_hour: Cost per hour of system downtime
+            optimization_method: Method for schedule optimization
+            default_buffer_time: Default buffer time between tasks
+            max_daily_tasks: Maximum tasks per day per resource
         """
-        self.planning_horizon_days = planning_horizon_days
-        self.max_simultaneous_tasks = max_simultaneous_tasks
-        self.emergency_response_hours = emergency_response_hours
-        self.cost_per_downtime_hour = cost_per_downtime_hour
-        
-        # Component libraries
-        self.degradation_detector = DegradationDetector()
-        self.reliability_analyzer = ReliabilityAnalyzer()
-        
-        # Maintenance data
-        self.scheduled_tasks: List[MaintenanceTask] = []
-        self.completed_tasks: List[MaintenanceTask] = []
-        self.maintenance_windows: List[MaintenanceWindow] = []
-        
-        # Component tracking
-        self.component_status: Dict[str, ComponentStatus] = {}
-        self.component_last_maintenance: Dict[str, datetime] = {}
-        self.component_maintenance_intervals: Dict[str, float] = {}  # hours
-        
-        # Resource management
-        self.available_resources: List[str] = []
-        self.resource_costs: Dict[str, float] = {}
-        
-        # Maintenance templates
-        self.maintenance_templates = self._initialize_maintenance_templates()
-        
-        # Optimization weights
-        self.optimization_weights = {
-            'reliability': 0.4,
-            'cost': 0.3,
-            'downtime': 0.2,
-            'resource_utilization': 0.1
+        self.optimization_method = optimization_method
+        self.default_buffer_time = default_buffer_time
+        self.max_daily_tasks = max_daily_tasks
+        self._setup_logging()
+
+    def _setup_logging(self) -> None:
+        """Setup logging for the scheduler."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    @abstractmethod
+    def create_schedule(
+        self,
+        tasks: List[MaintenanceTask],
+        resources: Optional[List[MaintenanceResource]] = None,
+        constraints: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Create optimized maintenance schedule."""
+        pass
+
+    @abstractmethod
+    def optimize_schedule(
+        self,
+        schedule: MaintenanceSchedule,
+        objective: str = "cost_minimize",
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Optimize existing maintenance schedule."""
+        pass
+
+    def validate_schedule(self, schedule: MaintenanceSchedule) -> Dict[str, Any]:
+        """Validate schedule for conflicts and constraints."""
+        validation_results: Dict[str, Any] = {
+            'is_valid': True,
+            'conflicts': [],
+            'warnings': [],
+            'resource_conflicts': [],
+            'dependency_violations': []
         }
-        
-        # Logger
-        self.logger = logging.getLogger(__name__)
-    
-    def _initialize_maintenance_templates(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize maintenance task templates for different components."""
-        return {
-            'membrane': {
-                'cleaning': {
-                    'duration_hours': 4.0,
-                    'cost': 50.0,
-                    'downtime': 4.0,
-                    'interval_hours': 168,  # Weekly
-                    'resources': ['maintenance_tech', 'cleaning_solution'],
-                    'description': 'Membrane cleaning and inspection'
-                },
-                'replacement': {
-                    'duration_hours': 8.0,
-                    'cost': 500.0,
-                    'downtime': 8.0,
-                    'interval_hours': 8760,  # Yearly
-                    'resources': ['senior_tech', 'membrane_replacement'],
-                    'description': 'Complete membrane replacement'
-                }
-            },
-            'electrode': {
-                'inspection': {
-                    'duration_hours': 2.0,
-                    'cost': 25.0,
-                    'downtime': 2.0,
-                    'interval_hours': 720,  # Monthly
-                    'resources': ['maintenance_tech'],
-                    'description': 'Electrode visual inspection and testing'
-                },
-                'refurbishment': {
-                    'duration_hours': 6.0,
-                    'cost': 200.0,
-                    'downtime': 6.0,
-                    'interval_hours': 4380,  # Semi-annually
-                    'resources': ['senior_tech', 'electrode_materials'],
-                    'description': 'Electrode surface treatment and refurbishment'
-                }
-            },
-            'biofilm': {
-                'refresh': {
-                    'duration_hours': 12.0,
-                    'cost': 100.0,
-                    'downtime': 12.0,
-                    'interval_hours': 2160,  # Quarterly
-                    'resources': ['bio_tech', 'culture_medium'],
-                    'description': 'Biofilm culture refresh and optimization'
-                },
-                'analysis': {
-                    'duration_hours': 1.0,
-                    'cost': 15.0,
-                    'downtime': 0.0,
-                    'interval_hours': 168,  # Weekly
-                    'resources': ['bio_tech'],
-                    'description': 'Biofilm health analysis and monitoring'
-                }
-            },
-            'system': {
-                'calibration': {
-                    'duration_hours': 3.0,
-                    'cost': 40.0,
-                    'downtime': 3.0,
-                    'interval_hours': 720,  # Monthly
-                    'resources': ['calibration_tech', 'reference_standards'],
-                    'description': 'System sensor calibration and verification'
-                },
-                'comprehensive_inspection': {
-                    'duration_hours': 16.0,
-                    'cost': 300.0,
-                    'downtime': 16.0,
-                    'interval_hours': 4380,  # Semi-annually
-                    'resources': ['senior_tech', 'inspection_tools'],
-                    'description': 'Comprehensive system inspection and testing'
-                }
-            }
-        }
-    
-    def add_maintenance_window(self, window: MaintenanceWindow):
-        """Add an available maintenance window."""
-        self.maintenance_windows.append(window)
-        self.maintenance_windows.sort(key=lambda w: w.start_time)
-    
-    def update_component_status(self, component: str, status: ComponentStatus):
-        """Update the operational status of a component."""
-        self.component_status[component] = status
-        
-        # Log status change
-        self.logger.info(f"Component {component} status updated to {status.value}")
-        
-        # Check if emergency maintenance is needed
-        if status in [ComponentStatus.CRITICAL, ComponentStatus.FAILED]:
-            self._create_emergency_maintenance(component, status)
-    
-    def _create_emergency_maintenance(self, component: str, status: ComponentStatus):
-        """Create emergency maintenance task for critical/failed components."""
-        task_id = f"emergency_{component}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
-        # Determine maintenance type based on status
-        if status == ComponentStatus.FAILED:
-            description = f"EMERGENCY: {component} failure - immediate repair required"
-            priority = MaintenancePriority.EMERGENCY
-        else:
-            description = f"CRITICAL: {component} in critical state - urgent maintenance required"
-            priority = MaintenancePriority.CRITICAL
-        
-        # Schedule for immediate execution
-        scheduled_date = datetime.now() + timedelta(hours=self.emergency_response_hours)
-        
-        emergency_task = MaintenanceTask(
-            task_id=task_id,
-            component=component,
-            maintenance_type=MaintenanceType.EMERGENCY,
-            priority=priority,
-            scheduled_date=scheduled_date,
-            estimated_duration_hours=8.0,  # Default emergency duration
-            description=description,
-            required_resources=['emergency_tech', 'emergency_parts'],
-            downtime_impact=8.0,
-            safety_requirements=['lockout_tagout', 'safety_review'],
-            completion_criteria=['component_functional', 'safety_verified']
-        )
-        
-        self.scheduled_tasks.append(emergency_task)
-        self.logger.warning(f"Emergency maintenance scheduled for {component}: {task_id}")
-    
-    def analyze_degradation_patterns(self, patterns: List[DegradationPattern]) -> List[MaintenanceTask]:
-        """Analyze degradation patterns and create predictive maintenance tasks."""
-        predictive_tasks = []
-        
-        for pattern in patterns:
-            # Skip patterns with low confidence
-            if pattern.confidence < 0.7:
-                continue
-            
-            # Determine maintenance urgency based on severity
-            if pattern.severity == DegradationSeverity.CRITICAL:
-                priority = MaintenancePriority.CRITICAL
-                lead_time_hours = 24  # 1 day
-            elif pattern.severity == DegradationSeverity.HIGH:
-                priority = MaintenancePriority.HIGH
-                lead_time_hours = 168  # 1 week
-            elif pattern.severity == DegradationSeverity.MODERATE:
-                priority = MaintenancePriority.MEDIUM
-                lead_time_hours = 720  # 1 month
-            else:
-                priority = MaintenancePriority.LOW
-                lead_time_hours = 2160  # 3 months
-            
-            # Create maintenance task for each affected component
-            for component in pattern.affected_components:
-                task_id = f"predictive_{pattern.pattern_id}_{component}"
-                scheduled_date = datetime.now() + timedelta(hours=lead_time_hours)
-                
-                # Get maintenance template
-                template = self._get_maintenance_template(component, pattern.degradation_type.value)
-                
-                predictive_task = MaintenanceTask(
-                    task_id=task_id,
-                    component=component,
-                    maintenance_type=MaintenanceType.PREDICTIVE,
-                    priority=priority,
-                    scheduled_date=scheduled_date,
-                    estimated_duration_hours=template['duration_hours'],
-                    description=f"Predictive maintenance for {pattern.degradation_type.value} in {component}",
-                    required_resources=template['resources'],
-                    cost_estimate=template['cost'],
-                    downtime_impact=template['downtime'],
-                    completion_criteria=template.get('completion_criteria', []),
-                    related_patterns=[pattern.pattern_id]
+
+        try:
+            # Check for task scheduling conflicts
+            scheduled_tasks = [
+                task for task in schedule.tasks
+                if task.scheduled_start and task.scheduled_end
+            ]
+
+            for i, task1 in enumerate(scheduled_tasks):
+                for task2 in scheduled_tasks[i+1:]:
+                    # Check for resource conflicts
+                    common_resources = set(task1.assigned_resources) & set(task2.assigned_resources)
+                    if common_resources:
+                        # Check time overlap (both tasks must have scheduled times)
+                        if (task1.scheduled_start is not None and task1.scheduled_end is not None and
+                            task2.scheduled_start is not None and task2.scheduled_end is not None and
+                            task1.scheduled_start < task2.scheduled_end and
+                            task2.scheduled_start < task1.scheduled_end):
+                            conflict = {
+                                'task1': task1.task_id,
+                                'task2': task2.task_id,
+                                'conflicting_resources': list(common_resources),
+                                'time_overlap': True
+                            }
+                            validation_results['resource_conflicts'].append(conflict)
+                            validation_results['is_valid'] = False
+
+            # Check dependency constraints
+            for task in schedule.tasks:
+                for prereq_id in task.prerequisite_tasks:
+                    prereq_task = next(
+                        (t for t in schedule.tasks if t.task_id == prereq_id), None
+                    )
+                    if prereq_task and task.scheduled_start and prereq_task.scheduled_end:
+                        if task.scheduled_start < prereq_task.scheduled_end:
+                            violation = {
+                                'task': task.task_id,
+                                'prerequisite': prereq_id,
+                                'violation_type': 'starts_before_prerequisite_ends'
+                            }
+                            validation_results['dependency_violations'].append(violation)
+                            validation_results['is_valid'] = False
+
+            # Check for overdue tasks
+            overdue_tasks = schedule.get_overdue_tasks()
+            if overdue_tasks:
+                validation_results['warnings'].append(
+                    f"{len(overdue_tasks)} tasks are overdue"
                 )
-                
-                predictive_tasks.append(predictive_task)
+
+        except Exception as e:
+            self.logger.error(f"Schedule validation failed: {str(e)}")
+            validation_results['is_valid'] = False
+            validation_results['errors'] = [str(e)]
+
+        return validation_results
+
+
+class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
+    """Greedy maintenance scheduler using priority-based heuristics."""
+
+    def __init__(
+        self,
+        optimization_method: str = "greedy",
+        default_buffer_time: timedelta = timedelta(hours=1),
+        max_daily_tasks: int = 8,
+        priority_weights: Optional[Dict[str, float]] = None
+    ) -> None:
+        """Initialize greedy scheduler.
         
-        return predictive_tasks
-    
-    def _get_maintenance_template(self, component: str, degradation_type: str) -> Dict[str, Any]:
-        """Get appropriate maintenance template for component and degradation type."""
-        component_templates = self.maintenance_templates.get(component, {})
-        
-        # Map degradation types to maintenance activities
-        degradation_maintenance_map = {
-            'membrane_fouling': 'cleaning',
-            'electrode_corrosion': 'refurbishment',
-            'biofilm_aging': 'refresh',
-            'catalyst_deactivation': 'refurbishment',
-            'structural_fatigue': 'inspection',
-            'chemical_poisoning': 'cleaning',
-            'thermal_damage': 'inspection',
-            'mechanical_wear': 'refurbishment'
-        }
-        
-        maintenance_type = degradation_maintenance_map.get(degradation_type, 'inspection')
-        template = component_templates.get(maintenance_type)
-        
-        if not template:
-            # Default template
-            template = {
-                'duration_hours': 4.0,
-                'cost': 100.0,
-                'downtime': 4.0,
-                'resources': ['maintenance_tech'],
-                'completion_criteria': ['component_inspected']
-            }
-        
-        return template
-    
-    def generate_preventive_schedule(self) -> List[MaintenanceTask]:
-        """Generate preventive maintenance schedule based on intervals."""
-        preventive_tasks = []
-        now = datetime.now()
-        
-        for component, interval_hours in self.component_maintenance_intervals.items():
-            last_maintenance = self.component_last_maintenance.get(component, now - timedelta(days=365))
-            
-            # Calculate next maintenance date
-            next_maintenance = last_maintenance + timedelta(hours=interval_hours)
-            
-            # If due within planning horizon
-            if next_maintenance <= now + timedelta(days=self.planning_horizon_days):
-                # Get appropriate maintenance template
-                templates = self.maintenance_templates.get(component, {})
-                
-                for maintenance_name, template in templates.items():
-                    if template.get('interval_hours', float('inf')) == interval_hours:
-                        task_id = f"preventive_{component}_{maintenance_name}_{next_maintenance.strftime('%Y%m%d')}"
-                        
-                        preventive_task = MaintenanceTask(
-                            task_id=task_id,
-                            component=component,
-                            maintenance_type=MaintenanceType.PREVENTIVE,
-                            priority=MaintenancePriority.MEDIUM,
-                            scheduled_date=next_maintenance,
-                            estimated_duration_hours=template['duration_hours'],
-                            description=template['description'],
-                            required_resources=template['resources'],
-                            cost_estimate=template['cost'],
-                            downtime_impact=template['downtime']
-                        )
-                        
-                        preventive_tasks.append(preventive_task)
-                        break
-        
-        return preventive_tasks
-    
-    def optimize_schedule(self, 
-                         tasks: List[MaintenanceTask],
-                         constraints: Optional[Dict[str, Any]] = None) -> OptimizationResult:
+        Args:
+            optimization_method: Method for schedule optimization
+            default_buffer_time: Default buffer time between tasks
+            max_daily_tasks: Maximum tasks per day per resource
+            priority_weights: Custom weights for different priority factors
         """
-        Optimize maintenance schedule using multiple objectives.
+        super().__init__(optimization_method, default_buffer_time, max_daily_tasks)
+
+        self.priority_weights = priority_weights or {
+            'urgency': 0.4,        # How urgent/overdue the task is
+            'impact': 0.3,         # Impact on system reliability
+            'cost_efficiency': 0.2, # Cost-effectiveness of the task
+            'resource_availability': 0.1  # Availability of required resources
+        }
+
+    def create_schedule(
+        self,
+        tasks: List[MaintenanceTask],
+        resources: Optional[List[MaintenanceResource]] = None,
+        constraints: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Create optimized maintenance schedule using greedy algorithm.
         
         Args:
             tasks: List of maintenance tasks to schedule
-            constraints: Additional scheduling constraints
+            resources: Available maintenance resources
+            constraints: Scheduling constraints
+            **kwargs: Additional scheduling parameters
             
         Returns:
-            Optimization result with scheduled tasks and metrics
+            Optimized maintenance schedule
         """
-        if not tasks:
-            return OptimizationResult(
-                total_cost=0.0,
-                total_downtime=0.0,
-                scheduled_tasks=[],
-                unscheduled_tasks=[],
-                optimization_score=1.0,
-                constraints_violated=[]
+        try:
+            self.logger.info(f"Creating schedule for {len(tasks)} tasks using greedy algorithm")
+
+            # Initialize schedule
+            schedule_id = f"schedule_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            schedule = MaintenanceSchedule(
+                schedule_id=schedule_id,
+                schedule_name="Greedy Optimized Schedule",
+                resources=resources or [],
+                optimization_objective=kwargs.get('objective', 'cost_minimize')
             )
-        
-        # Sort tasks by priority and due date
-        sorted_tasks = sorted(tasks, key=lambda t: (
-            -self._priority_score(t.priority),
-            t.scheduled_date
-        ))
-        
-        scheduled_tasks = []
-        unscheduled_tasks = []
-        total_cost = 0.0
-        total_downtime = 0.0
-        constraints_violated = []
-        
-        # Track resource utilization
-        resource_schedule = {}
-        
-        for task in sorted_tasks:
-            # Check if task can be scheduled
-            can_schedule, violation_reason = self._can_schedule_task(
-                task, scheduled_tasks, resource_schedule, constraints
-            )
-            
-            if can_schedule:
-                # Find best maintenance window
-                best_window = self._find_best_maintenance_window(task, scheduled_tasks)
-                
-                if best_window:
-                    # Adjust task timing to fit window
-                    task.scheduled_date = max(task.scheduled_date, best_window.start_time)
-                    
-                    # Check if task fits in window
-                    task_end = task.scheduled_date + timedelta(hours=task.estimated_duration_hours)
-                    
-                    if task_end <= best_window.end_time:
-                        scheduled_tasks.append(task)
-                        total_cost += task.cost_estimate
-                        total_downtime += task.downtime_impact
-                        
-                        # Update resource schedule
-                        self._update_resource_schedule(task, resource_schedule)
-                    else:
-                        unscheduled_tasks.append(task)
-                        constraints_violated.append(f"Task {task.task_id} exceeds maintenance window")
+
+            # Sort tasks by priority score
+            prioritized_tasks = self._prioritize_tasks(tasks, resources)
+
+            # Schedule tasks greedily
+            current_time = kwargs.get('start_time', datetime.now())
+            resource_schedules: DefaultDict[str, List[Tuple[datetime, datetime, str]]] = defaultdict(list)  # Track when each resource is busy
+
+            for task in prioritized_tasks:
+                # Find best time slot for this task
+                best_start_time = self._find_best_time_slot(
+                    task, current_time, resource_schedules, resources
+                )
+
+                if best_start_time:
+                    # Schedule the task
+                    task.scheduled_start = best_start_time
+                    task.scheduled_end = best_start_time + task.duration_estimate
+
+                    # Update resource schedules
+                    for resource_id in task.required_resources:
+                        resource_schedules[resource_id].append(
+                            (task.scheduled_start, task.scheduled_end, task.task_id)
+                        )
+
+                    # Assign available resources
+                    task.assigned_resources = task.required_resources.copy()
+
                 else:
-                    unscheduled_tasks.append(task)
-                    constraints_violated.append(f"No suitable maintenance window for {task.task_id}")
-            else:
-                unscheduled_tasks.append(task)
-                constraints_violated.append(violation_reason)
+                    self.logger.warning(f"Could not schedule task {task.task_id}")
+
+                schedule.add_task(task)
+
+            # Set schedule end time
+            if schedule.tasks:
+                latest_end = max(
+                    task.scheduled_end for task in schedule.tasks
+                    if task.scheduled_end
+                )
+                schedule.schedule_end = latest_end
+
+            self.logger.info(f"Schedule created with {len(schedule.tasks)} tasks")
+            return schedule
+
+        except Exception as e:
+            self.logger.error(f"Schedule creation failed: {str(e)}")
+            raise
+
+    def optimize_schedule(
+        self,
+        schedule: MaintenanceSchedule,
+        objective: str = "cost_minimize",
+        **kwargs: Any
+    ) -> MaintenanceSchedule:
+        """Optimize existing maintenance schedule.
         
-        # Calculate optimization score
-        optimization_score = self._calculate_optimization_score(
-            scheduled_tasks, total_cost, total_downtime, constraints_violated
-        )
-        
-        return OptimizationResult(
-            total_cost=total_cost,
-            total_downtime=total_downtime,
-            scheduled_tasks=scheduled_tasks,
-            unscheduled_tasks=unscheduled_tasks,
-            optimization_score=optimization_score,
-            constraints_violated=constraints_violated
-        )
-    
-    def _priority_score(self, priority: MaintenancePriority) -> int:
-        """Convert priority to numeric score for sorting."""
-        priority_scores = {
-            MaintenancePriority.EMERGENCY: 5,
-            MaintenancePriority.CRITICAL: 4,
-            MaintenancePriority.HIGH: 3,
-            MaintenancePriority.MEDIUM: 2,
-            MaintenancePriority.LOW: 1
-        }
-        return priority_scores.get(priority, 1)
-    
-    def _can_schedule_task(self, 
-                          task: MaintenanceTask,
-                          scheduled_tasks: List[MaintenanceTask],
-                          resource_schedule: Dict[str, List[Tuple[datetime, datetime]]],
-                          constraints: Optional[Dict[str, Any]]) -> Tuple[bool, str]:
-        """Check if a task can be scheduled given current constraints."""
-        
-        # Check resource availability
-        for resource in task.required_resources:
-            if resource in resource_schedule:
-                task_start = task.scheduled_date
-                task_end = task_start + timedelta(hours=task.estimated_duration_hours)
-                
-                # Check for conflicts with existing resource bookings
-                for booking_start, booking_end in resource_schedule[resource]:
-                    if not (task_end <= booking_start or task_start >= booking_end):
-                        return False, f"Resource {resource} conflict"
-        
-        # Check maximum simultaneous tasks
-        concurrent_count = 0
-        task_start = task.scheduled_date
-        task_end = task_start + timedelta(hours=task.estimated_duration_hours)
-        
-        for scheduled_task in scheduled_tasks:
-            scheduled_start = scheduled_task.scheduled_date
-            scheduled_end = scheduled_start + timedelta(hours=scheduled_task.estimated_duration_hours)
+        Args:
+            schedule: Existing maintenance schedule
+            objective: Optimization objective
+            **kwargs: Additional optimization parameters
             
-            # Check for time overlap
-            if not (task_end <= scheduled_start or task_start >= scheduled_end):
-                concurrent_count += 1
-        
-        if concurrent_count >= self.max_simultaneous_tasks:
-            return False, f"Maximum concurrent tasks ({self.max_simultaneous_tasks}) exceeded"
-        
-        # Check custom constraints
-        if constraints:
-            blackout_periods = constraints.get('blackout_periods', [])
-            for blackout_start, blackout_end in blackout_periods:
-                if not (task_end <= blackout_start or task_start >= blackout_end):
-                    return False, "Task conflicts with blackout period"
-        
-        return True, "No constraints violated"
-    
-    def _find_best_maintenance_window(self, 
-                                    task: MaintenanceTask,
-                                    scheduled_tasks: List[MaintenanceTask]) -> Optional[MaintenanceWindow]:
-        """Find the best maintenance window for a task."""
-        suitable_windows = []
-        
-        for window in self.maintenance_windows:
-            # Check if window can accommodate task
-            if (window.end_time - window.start_time).total_seconds() / 3600 >= task.estimated_duration_hours:
-                # Check if task fits in downtime limit
-                if task.downtime_impact <= window.max_downtime_hours:
-                    # Check resource availability
-                    if all(resource in window.available_resources for resource in task.required_resources):
-                        suitable_windows.append(window)
-        
-        if not suitable_windows:
-            return None
-        
-        # Choose window closest to desired schedule date
-        best_window = min(suitable_windows, 
-                         key=lambda w: abs((w.start_time - task.scheduled_date).total_seconds()))
-        
-        return best_window
-    
-    def _update_resource_schedule(self, 
-                                task: MaintenanceTask,
-                                resource_schedule: Dict[str, List[Tuple[datetime, datetime]]]):
-        """Update resource schedule with new task."""
-        task_start = task.scheduled_date
-        task_end = task_start + timedelta(hours=task.estimated_duration_hours)
-        
-        for resource in task.required_resources:
-            if resource not in resource_schedule:
-                resource_schedule[resource] = []
-            
-            resource_schedule[resource].append((task_start, task_end))
-            resource_schedule[resource].sort(key=lambda x: x[0])  # Sort by start time
-    
-    def _calculate_optimization_score(self, 
-                                    scheduled_tasks: List[MaintenanceTask],
-                                    total_cost: float,
-                                    total_downtime: float,
-                                    constraints_violated: List[str]) -> float:
-        """Calculate optimization score (0-1, higher is better)."""
-        if not scheduled_tasks:
-            return 0.0
-        
-        # Normalize metrics
-        avg_cost_per_task = total_cost / len(scheduled_tasks) if scheduled_tasks else 0
-        avg_downtime_per_task = total_downtime / len(scheduled_tasks) if scheduled_tasks else 0
-        
-        # Cost score (lower cost is better)
-        cost_score = max(0, 1 - (avg_cost_per_task / 500))  # Normalize to $500 baseline
-        
-        # Downtime score (lower downtime is better)
-        downtime_score = max(0, 1 - (avg_downtime_per_task / 8))  # Normalize to 8 hours baseline
-        
-        # Constraint violation penalty
-        violation_penalty = len(constraints_violated) * 0.1
-        
-        # Task completion score
-        completion_score = len(scheduled_tasks) / (len(scheduled_tasks) + len(constraints_violated))
-        
-        # Weighted combination
-        optimization_score = (
-            self.optimization_weights['cost'] * cost_score +
-            self.optimization_weights['downtime'] * downtime_score +
-            self.optimization_weights['resource_utilization'] * completion_score
-        ) - violation_penalty
-        
-        return max(0.0, min(1.0, optimization_score))
-    
-    def get_maintenance_dashboard(self) -> Dict[str, Any]:
-        """Get maintenance dashboard data."""
-        now = datetime.now()
-        
-        # Upcoming tasks (next 7 days)
-        upcoming_tasks = [
-            task for task in self.scheduled_tasks
-            if now <= task.scheduled_date <= now + timedelta(days=7)
-        ]
-        
-        # Overdue tasks
-        overdue_tasks = [
-            task for task in self.scheduled_tasks
-            if task.scheduled_date < now and task.completed_at is None
-        ]
-        
-        # Tasks by priority
-        priority_counts = {}
-        for task in self.scheduled_tasks:
-            priority = task.priority.value
-            priority_counts[priority] = priority_counts.get(priority, 0) + 1
-        
-        # Component status summary
-        status_counts = {}
-        for status in self.component_status.values():
-            status_name = status.value
-            status_counts[status_name] = status_counts.get(status_name, 0) + 1
-        
-        # Cost and downtime projections
-        next_month_tasks = [
-            task for task in self.scheduled_tasks
-            if now <= task.scheduled_date <= now + timedelta(days=30)
-        ]
-        
-        projected_cost = sum(task.cost_estimate for task in next_month_tasks)
-        projected_downtime = sum(task.downtime_impact for task in next_month_tasks)
-        
-        return {
-            'current_time': now.isoformat(),
-            'upcoming_tasks': len(upcoming_tasks),
-            'overdue_tasks': len(overdue_tasks),
-            'total_scheduled_tasks': len(self.scheduled_tasks),
-            'completed_tasks': len(self.completed_tasks),
-            'tasks_by_priority': priority_counts,
-            'components_by_status': status_counts,
-            'next_30_days': {
-                'scheduled_tasks': len(next_month_tasks),
-                'projected_cost': projected_cost,
-                'projected_downtime_hours': projected_downtime
-            },
-            'maintenance_windows': len(self.maintenance_windows),
-            'emergency_tasks': len([t for t in self.scheduled_tasks if t.maintenance_type == MaintenanceType.EMERGENCY])
-        }
-    
-    def export_schedule(self, filepath: str, format: str = 'json'):
-        """Export maintenance schedule to file."""
-        schedule_data = {
-            'generated_at': datetime.now().isoformat(),
-            'planning_horizon_days': self.planning_horizon_days,
-            'scheduled_tasks': [],
-            'completed_tasks': [],
-            'component_status': {k: v.value for k, v in self.component_status.items()},
-            'maintenance_windows': [],
-            'dashboard_summary': self.get_maintenance_dashboard()
-        }
-        
-        # Convert tasks to serializable format
-        for task in self.scheduled_tasks:
-            task_dict = {
-                'task_id': task.task_id,
-                'component': task.component,
-                'maintenance_type': task.maintenance_type.value,
-                'priority': task.priority.value,
-                'scheduled_date': task.scheduled_date.isoformat(),
-                'estimated_duration_hours': task.estimated_duration_hours,
-                'description': task.description,
-                'required_resources': task.required_resources,
-                'cost_estimate': task.cost_estimate,
-                'downtime_impact': task.downtime_impact,
-                'related_patterns': task.related_patterns,
-                'completed_at': task.completed_at.isoformat() if task.completed_at else None
-            }
-            schedule_data['scheduled_tasks'].append(task_dict)
-        
-        for task in self.completed_tasks:
-            task_dict = {
-                'task_id': task.task_id,
-                'component': task.component,
-                'maintenance_type': task.maintenance_type.value,
-                'priority': task.priority.value,
-                'scheduled_date': task.scheduled_date.isoformat(),
-                'completed_at': task.completed_at.isoformat() if task.completed_at else None,
-                'description': task.description,
-                'cost_estimate': task.cost_estimate,
-                'notes': task.notes
-            }
-            schedule_data['completed_tasks'].append(task_dict)
-        
-        # Convert maintenance windows
-        for window in self.maintenance_windows:
-            window_dict = {
-                'start_time': window.start_time.isoformat(),
-                'end_time': window.end_time.isoformat(),
-                'max_downtime_hours': window.max_downtime_hours,
-                'available_resources': window.available_resources,
-                'restrictions': window.restrictions
-            }
-            schedule_data['maintenance_windows'].append(window_dict)
-        
-        # Export in specified format
-        if format.lower() == 'json':
-            with open(filepath, 'w') as f:
-                json.dump(schedule_data, f, indent=2, default=str)
-        elif format.lower() == 'csv':
-            # Export tasks as CSV
-            df = pd.DataFrame([
-                {
-                    'task_id': task.task_id,
-                    'component': task.component,
-                    'type': task.maintenance_type.value,
-                    'priority': task.priority.value,
-                    'scheduled_date': task.scheduled_date,
-                    'duration_hours': task.estimated_duration_hours,
-                    'cost': task.cost_estimate,
-                    'downtime': task.downtime_impact,
-                    'description': task.description
-                }
-                for task in self.scheduled_tasks
-            ])
-            df.to_csv(filepath, index=False)
-        
-        self.logger.info(f"Maintenance schedule exported to {filepath}")
-    
-    def complete_task(self, task_id: str, notes: str = ""):
-        """Mark a maintenance task as completed."""
-        for i, task in enumerate(self.scheduled_tasks):
-            if task.task_id == task_id:
-                task.completed_at = datetime.now()
-                task.notes = notes
-                
-                # Move to completed tasks
-                completed_task = self.scheduled_tasks.pop(i)
-                self.completed_tasks.append(completed_task)
-                
-                # Update component last maintenance date
-                self.component_last_maintenance[task.component] = task.completed_at
-                
-                self.logger.info(f"Task {task_id} completed for component {task.component}")
-                return True
-        
-        self.logger.warning(f"Task {task_id} not found in scheduled tasks")
-        return False
+        Returns:
+            Optimized maintenance schedule
+        """
+        try:
+            self.logger.info(f"Optimizing schedule with {len(schedule.tasks)} tasks")
+
+            # Create a copy for optimization
+            optimized_tasks = []
+            for task in schedule.tasks:
+                # Reset scheduling for re-optimization
+                optimized_task = MaintenanceTask(
+                    task_id=task.task_id,
+                    task_name=task.task_name,
+                    maintenance_type=task.maintenance_type,
+                    priority=task.priority,
+                    affected_component=task.affected_component,
+                    description=task.description,
+                    duration_estimate=task.duration_estimate,
+                    required_resources=task.required_resources,
+                    prerequisite_tasks=task.prerequisite_tasks,
+                    dependent_tasks=task.dependent_tasks,
+                    estimated_cost=task.estimated_cost,
+                    downtime_impact=task.downtime_impact,
+                    reliability_impact=task.reliability_impact,
+                    recurrence_interval=task.recurrence_interval,
+                    last_performed=task.last_performed,
+                    work_instructions=task.work_instructions,
+                    safety_requirements=task.safety_requirements
+                )
+                optimized_tasks.append(optimized_task)
+
+            # Create new optimized schedule
+            optimized_schedule = self.create_schedule(
+                optimized_tasks,
+                schedule.resources,
+                objective=objective,
+                **kwargs
+            )
+
+            # Update schedule metadata
+            optimized_schedule.schedule_id = schedule.schedule_id + "_optimized"
+            optimized_schedule.schedule_name = schedule.schedule_name + " (Optimized)"
+
+            self.logger.info("Schedule optimization completed")
+            return optimized_schedule
+
+        except Exception as e:
+            self.logger.error(f"Schedule optimization failed: {str(e)}")
+            return schedule  # Return original schedule if optimization fails
+
+    def _prioritize_tasks(
+        self,
+        tasks: List[MaintenanceTask],
+        resources: Optional[List[MaintenanceResource]] = None
+    ) -> List[MaintenanceTask]:
+        """Prioritize tasks based on multiple criteria."""
+        task_scores = []
+
+        for task in tasks:
+            score = self._calculate_priority_score(task, resources)
+            task_scores.append((score, task))
+
+        # Sort by score (descending) and then by priority level
+        task_scores.sort(key=lambda x: (x[0], x[1].priority.numeric_value), reverse=True)
+
+        return [task for score, task in task_scores]
+
+    def _calculate_priority_score(
+        self,
+        task: MaintenanceTask,
+        resources: Optional[List[MaintenanceResource]] = None
+    ) -> float:
+        """Calculate priority score for a task."""
+        score = 0.0
+
+        # Urgency factor (overdue tasks get higher scores)
+        urgency_score = task.priority.numeric_value / 5.0  # Normalize to 0-1
+        if task.is_overdue():
+            urgency_score *= 2.0  # Double score for overdue tasks
+        score += self.priority_weights['urgency'] * urgency_score
+
+        # Impact factor (reliability and downtime impact)
+        impact_score = (task.reliability_impact + task.downtime_impact / 24.0) / 2.0
+        score += self.priority_weights['impact'] * impact_score
+
+        # Cost efficiency factor (inverse of cost)
+        if task.estimated_cost > 0:
+            cost_efficiency = 1.0 / (1.0 + task.estimated_cost / 1000.0)  # Normalize
+        else:
+            cost_efficiency = 1.0
+        score += self.priority_weights['cost_efficiency'] * cost_efficiency
+
+        # Resource availability factor
+        if resources:
+            available_resources = sum(
+                1 for resource in resources
+                if resource.resource_id in task.required_resources and
+                resource.current_utilization < 0.8
+            )
+            total_required = len(task.required_resources)
+            availability_score = available_resources / max(total_required, 1)
+        else:
+            availability_score = 1.0
+        score += self.priority_weights['resource_availability'] * availability_score
+
+        return score
+
+    def _find_best_time_slot(
+        self,
+        task: MaintenanceTask,
+        earliest_start: datetime,
+        resource_schedules: Dict[str, List[Tuple[datetime, datetime, str]]],
+        resources: Optional[List[MaintenanceResource]] = None
+    ) -> Optional[datetime]:
+        """Find the best time slot for scheduling a task."""
+        # Check if task has prerequisites
+        latest_prereq_end = earliest_start
+
+        # Start search from the latest constraint
+        search_start = max(earliest_start, latest_prereq_end)
+
+        # Look for available time slot up to 30 days ahead
+        max_search_time = search_start + timedelta(days=30)
+        current_search_time = search_start
+
+        while current_search_time < max_search_time:
+            # Check if all required resources are available
+            if self._resources_available(
+                task, current_search_time,
+                current_search_time + task.duration_estimate,
+                resource_schedules, resources
+            ):
+                return current_search_time
+
+            # Try next hour
+            current_search_time += timedelta(hours=1)
+
+        # If no slot found, return None
+        return None
+
+    def _resources_available(
+        self,
+        task: MaintenanceTask,
+        start_time: datetime,
+        end_time: datetime,
+        resource_schedules: Dict[str, List[Tuple[datetime, datetime, str]]],
+        resources: Optional[List[MaintenanceResource]] = None
+    ) -> bool:
+        """Check if all required resources are available during time slot."""
+        for resource_id in task.required_resources:
+            # Check against existing schedule
+            if resource_id in resource_schedules:
+                for scheduled_start, scheduled_end, _ in resource_schedules[resource_id]:
+                    # Check for time overlap
+                    if start_time < scheduled_end and end_time > scheduled_start:
+                        return False
+
+            # Check resource availability schedule
+            if resources:
+                resource = next(
+                    (r for r in resources if r.resource_id == resource_id), None
+                )
+                if resource and not resource.is_available(start_time, end_time):
+                    return False
+
+        return True
+
+
+# Factory functions and utilities
+def create_greedy_scheduler(
+    buffer_time_hours: float = 1.0,
+    max_daily_tasks: int = 8,
+    **kwargs: Any
+) -> GreedyMaintenanceScheduler:
+    """Create a greedy maintenance scheduler."""
+    return GreedyMaintenanceScheduler(
+        default_buffer_time=timedelta(hours=buffer_time_hours),
+        max_daily_tasks=max_daily_tasks,
+        **kwargs
+    )
+
+
+def create_sample_maintenance_tasks() -> List[MaintenanceTask]:
+    """Create sample maintenance tasks for testing."""
+    tasks = []
+
+    # Routine biofilm cleaning
+    tasks.append(MaintenanceTask(
+        task_id="TASK_001",
+        task_name="Biofilm Cleaning",
+        maintenance_type=MaintenanceType.PREVENTIVE,
+        priority=MaintenancePriority.MEDIUM,
+        affected_component="Biofilm",
+        description="Clean biofilm from electrodes",
+        duration_estimate=timedelta(hours=2),
+        required_resources=["TECH_001", "EQUIPMENT_001"],
+        estimated_cost=150.0,
+        downtime_impact=2.0,
+        reliability_impact=0.1,
+        recurrence_interval=timedelta(days=7),
+        work_instructions=["Turn off system", "Remove electrodes", "Clean with solution"],
+        safety_requirements=["Wear protective gloves", "Ensure ventilation"]
+    ))
+
+    # Electrode inspection
+    tasks.append(MaintenanceTask(
+        task_id="TASK_002",
+        task_name="Electrode Inspection",
+        maintenance_type=MaintenanceType.ROUTINE_INSPECTION,
+        priority=MaintenancePriority.LOW,
+        affected_component="Electrodes",
+        description="Visual inspection of electrode condition",
+        duration_estimate=timedelta(hours=1),
+        required_resources=["TECH_001"],
+        estimated_cost=75.0,
+        downtime_impact=0.5,
+        reliability_impact=0.05,
+        recurrence_interval=timedelta(days=14),
+        work_instructions=["Visual inspection", "Check for corrosion", "Document findings"]
+    ))
+
+    # Emergency repair
+    tasks.append(MaintenanceTask(
+        task_id="TASK_003",
+        task_name="Emergency System Repair",
+        maintenance_type=MaintenanceType.EMERGENCY,
+        priority=MaintenancePriority.EMERGENCY,
+        affected_component="Control System",
+        description="Fix critical control system failure",
+        duration_estimate=timedelta(hours=4),
+        required_resources=["TECH_002", "EQUIPMENT_002", "SPARE_PARTS_001"],
+        estimated_cost=500.0,
+        downtime_impact=4.0,
+        reliability_impact=0.3,
+        work_instructions=["Diagnose issue", "Replace faulty components", "Test system"],
+        safety_requirements=["Lock-out tag-out procedure", "Use proper PPE"]
+    ))
+
+    return tasks
+
+
+def create_sample_resources() -> List[MaintenanceResource]:
+    """Create sample maintenance resources for testing."""
+    resources = []
+
+    # Technician 1
+    resources.append(MaintenanceResource(
+        resource_id="TECH_001",
+        resource_type=ResourceType.TECHNICIAN,
+        name="Senior Technician",
+        availability_schedule={
+            'monday': [(datetime.now().replace(hour=8, minute=0), datetime.now().replace(hour=17, minute=0))],
+            'tuesday': [(datetime.now().replace(hour=8, minute=0), datetime.now().replace(hour=17, minute=0))],
+            'wednesday': [(datetime.now().replace(hour=8, minute=0), datetime.now().replace(hour=17, minute=0))],
+            'thursday': [(datetime.now().replace(hour=8, minute=0), datetime.now().replace(hour=17, minute=0))],
+            'friday': [(datetime.now().replace(hour=8, minute=0), datetime.now().replace(hour=17, minute=0))]
+        },
+        cost_per_hour=50.0,
+        qualifications=["MFC maintenance", "Electrical systems", "Safety certified"]
+    ))
+
+    # Emergency technician
+    resources.append(MaintenanceResource(
+        resource_id="TECH_002",
+        resource_type=ResourceType.TECHNICIAN,
+        name="Emergency Technician",
+        cost_per_hour=75.0,
+        qualifications=["Emergency response", "MFC systems", "Control systems"]
+    ))
+
+    # Cleaning equipment
+    resources.append(MaintenanceResource(
+        resource_id="EQUIPMENT_001",
+        resource_type=ResourceType.EQUIPMENT,
+        name="Cleaning Equipment",
+        cost_per_use=25.0,
+        capacity=2
+    ))
+
+    return resources
+
+
+# Example usage and testing
+def run_example_maintenance_scheduling() -> None:
+    """Run example maintenance scheduling."""
+    # Create sample tasks and resources
+    tasks = create_sample_maintenance_tasks()
+    resources = create_sample_resources()
+
+    # Create scheduler
+    scheduler = create_greedy_scheduler(buffer_time_hours=0.5, max_daily_tasks=6)
+
+    # Create schedule
+    schedule = scheduler.create_schedule(
+        tasks=tasks,
+        resources=resources,
+        start_time=datetime.now()
+    )
+
+    print("Maintenance Schedule Results:")
+    print(f"Schedule ID: {schedule.schedule_id}")
+    print(f"Total Tasks: {len(schedule.tasks)}")
+    print(f"Total Estimated Cost: ${schedule.total_estimated_cost:.2f}")
+    print(f"Total Estimated Downtime: {schedule.total_estimated_downtime:.1f} hours")
+
+    print("\nScheduled Tasks:")
+    for task in schedule.tasks:
+        if task.scheduled_start and task.scheduled_end:
+            print(f"- {task.task_name} ({task.priority.name}): "
+                  f"{task.scheduled_start.strftime('%Y-%m-%d %H:%M')} - "
+                  f"{task.scheduled_end.strftime('%Y-%m-%d %H:%M')}")
+
+    # Validate schedule
+    validation = scheduler.validate_schedule(schedule)
+    print("\nSchedule Validation:")
+    print(f"Valid: {validation['is_valid']}")
+    if validation['warnings']:
+        print(f"Warnings: {len(validation['warnings'])}")
+    if validation['conflicts']:
+        print(f"Conflicts: {len(validation['conflicts'])}")
+
+    # Test optimization
+    optimized_schedule = scheduler.optimize_schedule(schedule, objective="cost_minimize")
+    print("\nOptimized Schedule:")
+    print(f"Original Cost: ${schedule.total_estimated_cost:.2f}")
+    print(f"Optimized Cost: ${optimized_schedule.total_estimated_cost:.2f}")
+
+
+if __name__ == "__main__":
+    run_example_maintenance_scheduling()

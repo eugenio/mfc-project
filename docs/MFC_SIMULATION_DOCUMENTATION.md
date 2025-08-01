@@ -1,3 +1,16 @@
+---
+title: "Microbial Fuel Cell (MFC) Simulation Documentation"
+type: "technical-spec"
+created_at: "2025-07-21"
+last_modified_at: "2025-07-31"
+version: "1.1"
+authors: ["MFC Simulation Project"]
+reviewers: ["Documentation Agent"]
+tags: ["mfc", "simulation", "q-learning", "electrochemical", "mojo"]
+status: "published"
+related_docs: ["GPU_ACCELERATION_GUIDE.md", "RUNNABLE_FILES_USAGE.md", "TEST_SUITE_DOCUMENTATION.md"]
+---
+
 # Microbial Fuel Cell (MFC) Simulation Documentation
 
 ## Overview

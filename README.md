@@ -100,11 +100,13 @@ mypy .
 ### Q-Learning Control System (`q-learning-mfcs/src/`)
 
 - **Mojo Implementations**: High-performance simulations leveraging GPU acceleration
+
   - `mfc_100h_gpu.mojo`, `mfc_100h_gpu_optimized.mojo`: GPU-accelerated 100-hour simulations
   - `mfc_qlearning.mojo`: Core Q-learning algorithm implementation
   - `odes.mojo`: Differential equation solvers
 
 - **Python Implementations**: Analysis and visualization tools
+
   - `mfc_unified_qlearning_control.py`: Unified control system with universal GPU acceleration
   - `mfc_qlearning_optimization.py`: Q-learning flow control with GPU support
   - `mfc_dynamic_substrate_control.py`: Dynamic substrate control with GPU acceleration
@@ -113,11 +115,13 @@ mypy .
   - `literature_validation_comparison_plots.py`: Validation against published data
 
 - **GPU Acceleration Module**: Universal GPU support
+
   - `gpu_acceleration.py`: Unified interface for NVIDIA CUDA and AMD ROCm
   - Automatic CPU fallback for systems without GPU
   - Comprehensive mathematical operations with hardware acceleration
 
 - **Stack Simulation**: Multi-cell MFC stack modeling
+
   - `mfc_stack_simulation.py`: Complete 5-cell stack simulation
   - `stack_physical_specs.py`: Physical specifications and parameters
 
@@ -139,7 +143,7 @@ mypy .
 ### Simulation Capabilities
 
 - **Multi-timescale Simulations**: 100-hour and 1000-hour continuous operation
-- **Universal GPU Acceleration**: 
+- **Universal GPU Acceleration**:
   - Support for both NVIDIA CUDA and AMD ROCm
   - Automatic backend detection and selection
   - CPU fallback for systems without GPU
@@ -164,28 +168,33 @@ mypy .
 ## Getting Started
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd mfc-project
    ```
 
-2. **Install dependencies**:
+1. **Install dependencies**:
+
    ```bash
    pixi install
    ```
 
-3. **Run a simulation**:
+1. **Run a simulation**:
+
    ```bash
    cd q-learning-mfcs/src
    python mfc_unified_qlearning_control.py
    ```
 
-4. **Generate analysis plots**:
+1. **Generate analysis plots**:
+
    ```bash
    python generate_all_figures.py
    ```
 
-5. **Run tests** (including GPU capability tests):
+1. **Run tests** (including GPU capability tests):
+
    ```bash
    python q-learning-mfcs/tests/run_tests.py
    # Or run specific test suites:

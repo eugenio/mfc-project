@@ -7,17 +7,20 @@ The GitLab integration enhances Claude Code hooks with automatic GitLab reposito
 ## Features
 
 ### 🚨 Automatic Issue Creation
+
 - **Hook Failures**: Creates GitLab issues when hooks encounter errors
 - **Detailed Reports**: Includes error messages, file paths, timestamps, and environment info
 - **Automatic Labeling**: Tags issues with `hook-failure`, `automation`, and `bug` labels
 
 ### 🔀 Smart Merge Request Management
+
 - **Multi-Commit Detection**: Automatically creates MRs when multiple commits accumulate on feature branches
 - **Threshold Configuration**: Configurable commit count threshold (default: 5 commits in 24 hours)
 - **Branch Protection**: Only creates MRs for non-main branches
 - **Duplicate Prevention**: Checks for existing MRs before creating new ones
 
 ### 📊 Project Integration
+
 - **Repository Information**: Access to project details, branches, and metadata
 - **Commit Analysis**: Integration with commit counting and branch management
 - **Status Updates**: Optional commit commenting and status reporting
@@ -69,8 +72,8 @@ Edit `.claude/settings.json`:
 ### 3. GitLab Token Setup
 
 1. Go to your GitLab instance
-2. Navigate to **User Settings > Access Tokens**
-3. Create a new token with these scopes:
+1. Navigate to **User Settings > Access Tokens**
+1. Create a new token with these scopes:
    - `api` (full API access)
    - `read_user` (read user information)
    - `read_repository` (read repository data)
@@ -146,20 +149,20 @@ print(f"Project: {project_info['name']}")
 ### Hook Failure Workflow
 
 1. **Hook Encounters Error**: Pre or post-tool hook fails
-2. **Issue Creation**: GitLab issue created automatically with:
+1. **Issue Creation**: GitLab issue created automatically with:
    - Descriptive title including hook name and branch
    - Detailed error message and stack trace
    - File path and timestamp information
    - Automatic labels for categorization
-3. **Notification**: Issue URL logged to stderr for visibility
+1. **Notification**: Issue URL logged to stderr for visibility
 
 ### Multi-Commit Workflow
 
 1. **Commit Detection**: Post-tool hook counts recent commits (24-hour window)
-2. **Threshold Check**: Compares count against configured threshold
-3. **Branch Validation**: Ensures current branch is not main/default
-4. **Duplicate Check**: Verifies no existing MR for the branch
-5. **MR Creation**: Creates merge request with:
+1. **Threshold Check**: Compares count against configured threshold
+1. **Branch Validation**: Ensures current branch is not main/default
+1. **Duplicate Check**: Verifies no existing MR for the branch
+1. **MR Creation**: Creates merge request with:
    - Descriptive title indicating commit count
    - Detailed description with timestamps
    - Automatic source/target branch configuration
@@ -167,10 +170,12 @@ print(f"Project: {project_info['name']}")
 ## Integration Points
 
 ### Pre-Tool Hook (`pre_tool_use.py`)
+
 - **Error Handling**: Creates GitLab issues for hook failures
 - **Configuration Loading**: Loads GitLab settings and validates connectivity
 
 ### Post-Tool Hook (`post_tool_use.py`)
+
 - **Success Tracking**: Logs successful operations
 - **Commit Monitoring**: Tracks commit counts and triggers MR creation
 - **Workflow Automation**: Orchestrates GitLab automation features
@@ -178,12 +183,14 @@ print(f"Project: {project_info['name']}")
 ## Error Handling
 
 ### Graceful Degradation
+
 - **Missing Dependencies**: Warns if python-gitlab not installed, continues without GitLab features
 - **Authentication Failures**: Logs authentication errors, doesn't block hook execution
 - **Network Issues**: Handles connection timeouts and API errors gracefully
 - **Configuration Errors**: Validates configuration, provides helpful error messages
 
 ### Debug Information
+
 ```bash
 # Enable verbose logging
 export GITLAB_DEBUG=1
@@ -195,12 +202,14 @@ python -c "from utils.gitlab_client import load_gitlab_config; print(load_gitlab
 ## Security Considerations
 
 ### Token Management
+
 - **Environment Variables**: Store tokens in environment variables, not config files
 - **Scope Limitation**: Use minimal required token scopes
 - **Rotation**: Regularly rotate access tokens
 - **Access Control**: Limit token access to necessary team members
 
 ### Repository Security
+
 - **Branch Protection**: Configure branch protection rules in GitLab
 - **MR Requirements**: Set up MR approval requirements
 - **Hook Validation**: Ensure hooks don't expose sensitive information
@@ -210,7 +219,9 @@ python -c "from utils.gitlab_client import load_gitlab_config; print(load_gitlab
 ### Common Issues
 
 #### "GitLab integration not properly configured"
+
 **Solution**: Verify token, URL, and project configuration
+
 ```bash
 # Check environment variables
 echo $GITLAB_TOKEN
@@ -221,19 +232,25 @@ python test_gitlab_integration.py
 ```
 
 #### "GitLab authentication failed"
+
 **Solutions**:
+
 - Verify token is valid and not expired
 - Check token scopes include required permissions
 - Ensure GitLab URL is accessible
 
 #### "GitLab project not accessible"
+
 **Solutions**:
+
 - Verify project ID is correct
 - Check token has access to the specific project
 - Ensure project exists and is not archived
 
 #### "python-gitlab library not available"
+
 **Solution**: Install dependencies
+
 ```bash
 pixi install
 # or
@@ -258,47 +275,58 @@ python -c "from utils.gitlab_client import get_current_branch; print(get_current
 ### Core Functions
 
 #### `get_gitlab_client() -> gitlab.Gitlab`
+
 Returns authenticated GitLab client instance.
 
 #### `get_current_project() -> gitlab.Project`
+
 Gets the current GitLab project based on configuration.
 
 #### `create_issue(title, description, labels=None, assignee=None) -> dict`
+
 Creates a GitLab issue with specified parameters.
 
 #### `create_merge_request(source_branch, target_branch=None, title=None, description=None) -> dict`
+
 Creates a merge request between branches.
 
 #### `test_gitlab_connection() -> bool`
+
 Tests GitLab API connection and configuration.
 
 ### Utility Functions
 
 #### `get_current_branch() -> str`
+
 Gets the current git branch name.
 
 #### `load_gitlab_config() -> dict`
+
 Loads GitLab configuration from settings and environment.
 
 #### `create_hook_failure_issue(hook_name, error_message, file_path=None) -> dict`
+
 Creates a standardized issue for hook failures.
 
 ## Best Practices
 
 ### Development Workflow
+
 1. **Feature Branches**: Work on feature branches, let auto-MR handle integration
-2. **Descriptive Commits**: Write clear commit messages for better MR descriptions
-3. **Regular Integration**: Monitor auto-created MRs and issues for workflow health
+1. **Descriptive Commits**: Write clear commit messages for better MR descriptions
+1. **Regular Integration**: Monitor auto-created MRs and issues for workflow health
 
 ### Configuration Management
+
 1. **Environment-Specific**: Use different tokens/projects for development/production
-2. **Feature Toggles**: Disable features not needed in specific environments
-3. **Threshold Tuning**: Adjust commit thresholds based on team size and velocity
+1. **Feature Toggles**: Disable features not needed in specific environments
+1. **Threshold Tuning**: Adjust commit thresholds based on team size and velocity
 
 ### Monitoring
+
 1. **Issue Tracking**: Monitor auto-created issues for hook health
-2. **MR Management**: Review auto-created MRs promptly
-3. **Token Rotation**: Set up alerts for token expiration
+1. **MR Management**: Review auto-created MRs promptly
+1. **Token Rotation**: Set up alerts for token expiration
 
 ## Examples
 
