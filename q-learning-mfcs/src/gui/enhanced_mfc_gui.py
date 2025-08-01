@@ -26,6 +26,10 @@ from datetime import datetime
 import sys
 import os
 from typing import Dict, Any
+import logging
+
+# Suppress JAX TPU initialization messages (not errors, just informational)
+logging.getLogger('jax._src.xla_bridge').setLevel(logging.WARNING)
 
 # Add src to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -44,6 +48,7 @@ from gui.parameter_input import ParameterInputComponent
 from gui.qtable_visualization import QTableVisualization
 from gui.live_monitoring_dashboard import LiveMonitoringDashboard
 from gui.alert_configuration_ui import render_alert_configuration
+from gui.electrode_configuration_ui import ElectrodeConfigurationUI
 from monitoring.alert_management import AlertManager
 
 # Import existing components and configs
@@ -161,8 +166,11 @@ class EnhancedMFCApp:
         # Initialize Q-table visualization component
         self.qtable_visualization = QTableVisualization()
 
-        # Initialize live monitoring dashboard
-        self.live_monitoring = LiveMonitoringDashboard()
+        # Initialize live monitoring dashboard with configured number of cells
+        self.live_monitoring = LiveMonitoringDashboard(n_cells=DEFAULT_QLEARNING_CONFIG.n_cells)
+
+        # Initialize electrode configuration UI
+        self.electrode_config_ui = ElectrodeConfigurationUI()
 
         # Initialize alert management system
         if 'alert_manager' not in st.session_state:
@@ -251,7 +259,7 @@ class EnhancedMFCApp:
             import jax
             # Check if JAX can use GPU
             devices = jax.devices()
-            gpu_devices = [d for d in devices if d.device_kind == 'gpu']
+            gpu_devices = [d for d in devices if d.platform == 'gpu']
             return len(gpu_devices) > 0
         except ImportError:
             # JAX not available
@@ -415,12 +423,30 @@ class EnhancedMFCApp:
                     gpu_available = self._check_gpu_availability()
                     gpu_status_text = "✅ GPU Available" if gpu_available else "⚠️ CPU Fallback"
 
-                    _ = st.checkbox(
+                    # Always allow the checkbox to be clickable, but show status
+                    gpu_enabled = st.checkbox(
                         f"Enable GPU Acceleration ({gpu_status_text})",
                         value=gpu_available,
-                        help="Use GPU for faster simulation (8400× speedup)" if gpu_available else "GPU not available, using CPU fallback",
-                        disabled=not gpu_available
+                        help="Use GPU for faster simulation (8400× speedup)" if gpu_available else "GPU not detected, but you can still try to enable it",
+                        key="gpu_acceleration_checkbox"
                     )
+                    
+                    # Show debug info about GPU detection
+                    if st.checkbox("🔧 Show GPU Debug Info", key="gpu_debug_info"):
+                        try:
+                            import jax
+                            devices = jax.devices()
+                            st.write(f"JAX devices: {devices}")
+                            gpu_devices = [d for d in devices if d.platform == 'gpu']
+                            st.write(f"GPU devices: {gpu_devices}")
+                            st.write(f"GPU available: {gpu_available}")
+                        except Exception as e:
+                            st.write(f"GPU detection error: {e}")
+                    
+                    # Manual GPU cleanup button
+                    if st.button("🧹 Clean GPU Memory", help="Manually clean up GPU memory and caches"):
+                        self._cleanup_gpu_resources()
+                        st.success("GPU cleanup completed")
 
                 with col_b:
                     save_interval = st.number_input(
@@ -474,20 +500,31 @@ class EnhancedMFCApp:
 
                 if st.button("⏹️ Stop Simulation", type="secondary"):
                     st.session_state.simulation_runner.stop_simulation()
+                    # Clean up GPU resources when stopping simulation
+                    self._cleanup_gpu_resources()
+                    st.success("Simulation stopped and GPU resources cleaned up")
                     st.rerun()
             else:
                 st.markdown("🔴 **Status**: Stopped")
 
                 if st.button("▶️ Start Enhanced Simulation", type="primary"):
+                    # Clean up any previous GPU state before starting new simulation
+                    self._cleanup_gpu_resources()
+                    
+                    # Reset simulation timing for live monitoring
+                    self.live_monitoring.reset_simulation_time()
+                    
                     # Start simulation with enhanced parameters
+                    # Use the actual refresh interval from live monitoring settings
+                    actual_refresh_interval = st.session_state.get('live_monitoring_refresh', 5)
                     success = st.session_state.simulation_runner.start_simulation(
                         config=DEFAULT_QLEARNING_CONFIG,
                         duration_hours=duration_hours,
-                        gui_refresh_interval=save_interval * 60
+                        gui_refresh_interval=actual_refresh_interval
                     )
 
                     if success:
-                        st.success("Simulation started successfully!")
+                        st.success(f"Simulation started successfully! GUI refresh: {actual_refresh_interval}s")
                         st.rerun()
                     else:
                         st.error("Failed to start simulation")
@@ -854,8 +891,9 @@ class EnhancedMFCApp:
         self.render_research_overview()
 
         # Main application tabs
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
             "⚙️ Parameters",
+            "⚡ Electrodes", 
             "🚀 Simulation",
             "🧠 Q-Learning",
             "📡 Monitoring",
@@ -868,21 +906,24 @@ class EnhancedMFCApp:
             self.render_scientific_parameter_interface()
 
         with tab2:
-            self.render_simulation_control()
+            self.render_electrode_configuration()
 
         with tab3:
-            self.render_qlearning_analysis()
+            self.render_simulation_control()
 
         with tab4:
-            self.render_real_time_monitoring()
+            self.render_qlearning_analysis()
 
         with tab5:
-            self.render_alert_management()
+            self.render_real_time_monitoring()
 
         with tab6:
-            self.render_data_export_center()
+            self.render_alert_management()
 
         with tab7:
+            self.render_data_export_center()
+
+        with tab8:
             self.render_research_insights()
 
 def main():
