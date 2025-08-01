@@ -8,7 +8,6 @@ Created: 2025-07-31
 Integration: BMAD Documentation Agent
 """
 
-import os
 import re
 import yaml
 import logging
@@ -402,14 +401,13 @@ class DocumentationTemplateEngine:
         # Replace template sections with existing content where applicable
         lines = template.split('\n')
         result_lines = []
-        current_section = None
         skip_template_content = False
         
         for line in lines:
             header_match = re.match(r'^(#{1,6})\s+(.+)$', line)
             
             if header_match:
-                level = len(header_match.group(1))
+                _ = len(header_match.group(1))  # Header level not used currently
                 section_name = header_match.group(2).strip()
                 normalized_section = section_name.lower()
                 
@@ -420,11 +418,11 @@ class DocumentationTemplateEngine:
                     result_lines.append(content_map[normalized_section])
                     result_lines.append('')    # Add blank line
                     skip_template_content = True
-                    current_section = section_name
+                    _ = section_name  # Current section tracking not used currently
                 else:
                     result_lines.append(line)
                     skip_template_content = False
-                    current_section = section_name
+                    _ = section_name  # Current section tracking not used currently
             else:
                 # Check if we should skip template content
                 if not skip_template_content:
