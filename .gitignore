@@ -167,3 +167,12 @@ q-learning-mfcs/ssl_certificates/private/mfc-monitoring.key
 q-learning-mfcs/examples/exports
 q-learning-mfcs/examples/simulation_outputs
 q-learning-mfcs/simulation_outputs
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# External project directories
+claude-code-hooks-multi-agent-observability/
+protein-models-4-mfc/ProteinDT/
