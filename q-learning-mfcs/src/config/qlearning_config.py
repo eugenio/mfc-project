@@ -4,7 +4,8 @@ Replaces hardcoded values in Q-learning controllers and optimization algorithms.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from .electrode_config import ElectrodeConfiguration, DEFAULT_GRAPHITE_PLATE_CONFIG
 
 
 @dataclass
@@ -169,9 +170,13 @@ class QLearningConfig:
     # MFC cell configuration
     n_cells: int = 5  # Number of MFC cells in the system
 
-    # Separate electrode areas for different functions
-    anode_area_per_cell: float = 1e-3  # Current-collecting anode area per cell (m²) - 10 cm² default
-    cathode_area_per_cell: float = 1e-3  # Cathode area per cell (m²) - 10 cm² default (can be different from anode)
+    # Electrode configurations (comprehensive material and geometry)
+    anode_config: ElectrodeConfiguration = field(default_factory=lambda: DEFAULT_GRAPHITE_PLATE_CONFIG)
+    cathode_config: Optional[ElectrodeConfiguration] = None  # If None, uses same as anode
+    
+    # Legacy electrode areas (calculated from configurations, for backward compatibility)
+    anode_area_per_cell: float = field(init=False)  # Calculated from anode_config
+    cathode_area_per_cell: float = field(init=False)  # Calculated from cathode_config
     total_anode_area: float = field(init=False)  # Total anode area (m²) - calculated
     total_cathode_area: float = field(init=False)  # Total cathode area (m²) - calculated
 
@@ -198,6 +203,14 @@ class QLearningConfig:
 
     def __post_init__(self):
         """Calculate derived parameters after initialization."""
+        # Calculate electrode areas from configurations
+        self.anode_area_per_cell = self.anode_config.calculate_effective_surface_area()
+        
+        # Use cathode config if provided, otherwise same as anode
+        cathode_config = self.cathode_config if self.cathode_config is not None else self.anode_config
+        self.cathode_area_per_cell = cathode_config.calculate_effective_surface_area()
+        
+        # Calculate total areas
         self.total_anode_area = self.anode_area_per_cell * self.n_cells
         self.total_cathode_area = self.cathode_area_per_cell * self.n_cells
 
