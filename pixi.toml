@@ -6,8 +6,28 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
+# Claude Code Hook Tasks
 pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
 post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
+notification-hook = "cd /home/uge/mfc-project/.claude/hooks && python notification.py"
+stop-hook = "cd /home/uge/mfc-project/.claude/hooks && python stop.py"
+subagent-stop-hook = "cd /home/uge/mfc-project/.claude/hooks && python subagent_stop.py"
+user-prompt-submit-hook = "cd /home/uge/mfc-project/.claude/hooks && python user_prompt_submit.py"
+send-event-hook = "cd /home/uge/mfc-project/.claude/hooks && python send_event.py"
+
+# Hook testing and debugging tasks
+test-hooks = "cd /home/uge/mfc-project/.claude/hooks && python test_hook_simple.py"
+test-chunking = "cd /home/uge/mfc-project/.claude/hooks && python test_chunking_system.py"
+test-gitlab-integration = "cd /home/uge/mfc-project/.claude/hooks && python test_gitlab_integration.py"
+test-edit-thresholds = "cd /home/uge/mfc-project/.claude/hooks && python test_edit_thresholds.py"
+test-file-creation-thresholds = "cd /home/uge/mfc-project/.claude/hooks && python test_file_creation_thresholds.py"
+monitor-live = "cd /home/uge/mfc-project/.claude/hooks && python test_monitor_live.py"
+trigger-test-monitoring = "cd /home/uge/mfc-project/.claude/hooks && python trigger_test_monitoring.py"
+
+# Hook setup and configuration
+setup-intelligent-automation = "cd /home/uge/mfc-project/.claude/hooks && python setup_intelligent_automation.py"
+
+# Other tasks
 parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
 
 # Test execution tasks
@@ -65,6 +85,8 @@ pyyaml = ">=6.0.2,<7"
 streamlit = ">=1.47.1,<2"
 plotly = ">=6.2.0,<7"
 altair = ">=5.5.0,<6"
+selenium = ">=4.34.2,<5"
+webdriver-manager = ">=4.0.2,<5"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -144,12 +166,24 @@ ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
 
 # GPU acceleration (optional features)
+# WARNING: JAX/JAXlib versions are frozen for compatibility between jax and jaxlib
+# AMD GPU environment uses exact versions (==0.4.38) to prevent compatibility issues
+# NVIDIA GPU environment uses minimum versions for flexibility
+# 
+# If updating these versions, run JAX tests to avoid regressions:
+#   AMD GPU:    pixi run -e amd-gpu pytest q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+#   NVIDIA GPU: pixi run -e nvidia-gpu pytest q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+# 
+# Known working combinations:
+#   AMD GPU (ROCm): jax==0.4.38 + jaxlib==0.4.38
+#   NVIDIA GPU (CUDA12): jax>=0.4.0 + jaxlib>=0.4.0
 [feature.amd-gpu.pypi-dependencies]
-jax = { version = "*", extras = ["rocm"] }
+jax = { version = "==0.4.38", extras = ["rocm"] }
+jaxlib = { version = "==0.4.38", extras = ["rocm"] }
 
 [feature.nvidia-gpu.pypi-dependencies]
-jax = {version = ">=0.4.0", extras = ["cuda12"]}
-jaxlib = {version = ">=0.4.0", extras = ["cuda12"]}
+jax = { version = ">=0.4.0", extras = ["cuda12"] }
+jaxlib = { version = ">=0.4.0", extras = ["cuda12"] }
 cupy-cuda12x = ">=12.0.0"
 torch = {version = ">=2.0.0", extras = ["cu121"]}
 nvidia-ml-py3 = ">=7.352.0"
@@ -185,6 +219,7 @@ api-server = ["api", "project"]
 mojo-dev = ["dev", "modular", "tools"]
 
 # GPU environments (optional, only when needed)
+# Note: JAX dependencies are version-frozen for compatibility - see feature definitions above
 amd-gpu = ["amd-gpu", "ml"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
