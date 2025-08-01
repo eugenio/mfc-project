@@ -173,6 +173,21 @@ q-learning-mfcs/simulation_outputs
 *.sqlite
 *.sqlite3
 
+# Temporary debug/test files
+check_*.py
+debug_*.py
+test_*.py
+*test*.py
+suppress_*.py
+verify_*.py
+*_bug_report.md
+*_backup.py
+
+# Phase integration files
+*phase*_*.json
+complete_phase*.py
+test_phase*.py
+
 # External project directories
 claude-code-hooks-multi-agent-observability/
 protein-models-4-mfc/ProteinDT/
