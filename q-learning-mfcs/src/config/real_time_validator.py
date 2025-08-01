@@ -233,17 +233,24 @@ class RealTimeValidator:
         scientific_reasoning = self._generate_scientific_reasoning(param, value, level)
 
         # Get suggested ranges
-        suggested_ranges = self._get_suggested_ranges(param, research_objective)
+        # Find parameter key by searching literature_db
+        parameter_key = None
+        for key, param_info in self.literature_db.parameters.items():
+            if param_info == param:
+                parameter_key = key
+                break
+        
+        suggested_ranges = self._get_suggested_ranges(param, research_objective, parameter_key)
 
         # Calculate confidence score and uncertainty bounds
         confidence_score = self._calculate_confidence_score(param, value, level)
         uncertainty_bounds = self._calculate_uncertainty_bounds(param, value, confidence_score)
 
         # Generate enhanced recommendations
-        recommendations = self._generate_enhanced_recommendations(param, value, level, research_objective)
+        recommendations = self._generate_enhanced_recommendations(param, value, level, research_objective, parameter_key)
 
         # Generate warnings for problematic combinations
-        warnings = self._generate_warnings(param, value, level)
+        warnings = self._generate_warnings(param, value, level, parameter_key)
 
         response_time = (time.time() - start_time) * 1000
 
@@ -301,7 +308,8 @@ class RealTimeValidator:
     def _get_suggested_ranges(
         self,
         param: ParameterInfo,
-        research_objective: Optional[str]
+        research_objective: Optional[str],
+        parameter_key: Optional[str] = None
     ) -> List[Tuple[float, float]]:
         """Get suggested parameter ranges based on research objective."""
 
@@ -313,8 +321,9 @@ class RealTimeValidator:
         # Add research objective specific range if available
         if research_objective and research_objective in self.research_objectives:
             objective = self.research_objectives[research_objective]
-            if param.name in objective.target_ranges:
-                ranges.append(objective.target_ranges[param.name])
+            # Use parameter key for matching, not display name
+            if parameter_key and parameter_key in objective.target_ranges:
+                ranges.append(objective.target_ranges[parameter_key])
 
         # Add typical operating range (slightly wider than recommended)
         typical_margin = 0.1  # 10% margin
@@ -351,8 +360,16 @@ class RealTimeValidator:
 
         base_score = base_scores.get(level, 0.0)
 
-        # Adjust based on literature support
-        literature_factor = min(len(param.references) / 3.0, 1.0)  # Normalize to max 3 references
+        # Adjust based on literature support  
+        # Give reasonable confidence even with single reference
+        if len(param.references) == 0:
+            literature_factor = 0.3
+        elif len(param.references) == 1:
+            literature_factor = 0.85  # Single reference still gives good confidence
+        elif len(param.references) == 2:
+            literature_factor = 0.9
+        else:
+            literature_factor = 1.0  # 3+ references = full confidence
 
         # Adjust based on how close to recommended range
         rec_min, rec_max = param.recommended_range
@@ -414,7 +431,8 @@ class RealTimeValidator:
         param: ParameterInfo,
         value: float,
         level: ValidationLevel,
-        research_objective: Optional[str]
+        research_objective: Optional[str],
+        parameter_key: Optional[str] = None
     ) -> List[str]:
         """Generate enhanced recommendations based on validation level and context."""
 
@@ -441,6 +459,13 @@ class RealTimeValidator:
             recommendations.append(f"❌ Use values between {param.min_value} and {param.max_value} {param.unit}")
             recommendations.append(f"📚 Based on {len(param.references)} peer-reviewed studies")
             recommendations.append(f"🔧 Start with typical value: {param.typical_value} {param.unit}")
+            
+            # Add research objective recommendations even for invalid values
+            if research_objective and parameter_key:
+                obj = self.research_objectives.get(research_objective)
+                if obj and parameter_key in obj.target_ranges:
+                    target_min, target_max = obj.target_ranges[parameter_key]
+                    recommendations.append(f"🎯 For maximum power, target range is {target_min}-{target_max} {param.unit}")
 
         # Add parameter-specific recommendations
         if param.category.value == "electrochemical":
@@ -456,7 +481,8 @@ class RealTimeValidator:
         self,
         param: ParameterInfo,
         value: float,
-        level: ValidationLevel
+        level: ValidationLevel,
+        parameter_key: Optional[str] = None
     ) -> List[str]:
         """Generate warnings for potentially problematic parameter values."""
 
@@ -467,11 +493,11 @@ class RealTimeValidator:
             warnings.append("🚨 Invalid parameter value may cause simulation failure")
 
             # Specific warnings based on parameter type
-            if param.name == "anode_potential" and value > 0:
+            if parameter_key == "anode_potential" and value > 0:
                 warnings.append("⚠️ Positive anode potential is thermodynamically unfavorable")
-            elif param.name == "max_current_density" and value > 20:
+            elif parameter_key == "max_current_density" and value > 20:
                 warnings.append("⚠️ Extremely high current density may damage biofilm")
-            elif param.name == "learning_rate" and value > 0.5:
+            elif parameter_key == "learning_rate" and value > 0.5:
                 warnings.append("⚠️ High learning rate may prevent Q-learning convergence")
 
         # Combination warnings (simplified for now)

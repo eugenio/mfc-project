@@ -326,6 +326,8 @@ class TestGPUCapability(unittest.TestCase):
 
         except ImportError:
             self.skipTest("PyTorch not available")
+        except unittest.SkipTest:
+            raise  # Re-raise skip test exceptions
         except Exception as e:
             self.fail(f"PyTorch CUDA available but failed test: {e}")
 
@@ -369,6 +371,8 @@ class TestGPUCapability(unittest.TestCase):
 
         except ImportError:
             self.skipTest("PyTorch not available")
+        except unittest.SkipTest:
+            raise  # Re-raise skip test exceptions
         except Exception as e:
             self.fail(f"PyTorch ROCm available but failed test: {e}")
 
@@ -432,7 +436,7 @@ class TestGPUCapability(unittest.TestCase):
                     backend = 'ROCm'
                 else:
                     backend = 'CUDA'
-            except:
+            except Exception:
                 backend = 'Unknown'
 
             # Test basic CuPy functionality
@@ -498,6 +502,8 @@ class TestGPUCapability(unittest.TestCase):
 
         except ImportError:
             self.skipTest("JAX not available")
+        except unittest.SkipTest:
+            raise  # Re-raise skip test exceptions
         except Exception as e:
             self.fail(f"JAX GPU available but failed test: {e}")
 
@@ -566,7 +572,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_np = np.random.rand(size, size).astype(np.float32)
 
                 start_time = time.time()
-                c_np = np.dot(a_np, b_np)
+                _ = np.dot(a_np, b_np)  # Result not used, just timing
                 np_time = time.time() - start_time
                 np_times.append(np_time)
 
@@ -579,7 +585,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_cp = cp.random.rand(size, size, dtype=cp.float32)
 
                 start_time = time.time()
-                c_cp = cp.dot(a_cp, b_cp)
+                _ = cp.dot(a_cp, b_cp)  # Result not used, just timing
                 cp.cuda.Stream.null.synchronize()  # Ensure GPU computation is complete
                 cp_time = time.time() - start_time
                 cp_times.append(cp_time)
@@ -630,7 +636,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b = cp.random.rand(size, dtype=cp.float32)
 
                 start_time = time.time()
-                c = a + b  # Simple element-wise operation
+                _ = a + b  # Simple element-wise operation, result not used
                 cp.cuda.Stream.null.synchronize()
                 elapsed_time = time.time() - start_time
                 times.append(elapsed_time)
@@ -676,7 +682,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_cpu = torch.randn(size, size, dtype=torch.float32)
 
                 start_time = time.time()
-                c_cpu = torch.mm(a_cpu, b_cpu)
+                _ = torch.mm(a_cpu, b_cpu)  # Result not used, just timing
                 cpu_time = time.time() - start_time
                 cpu_times.append(cpu_time)
 
@@ -691,7 +697,7 @@ class TestGPUPerformance(unittest.TestCase):
                 b_gpu = torch.randn(size, size, dtype=torch.float32, device=device)
 
                 start_time = time.time()
-                c_gpu = torch.mm(a_gpu, b_gpu)
+                _ = torch.mm(a_gpu, b_gpu)  # Result not used, just timing
                 torch.cuda.synchronize()  # Ensure GPU computation is complete
                 gpu_time = time.time() - start_time
                 gpu_times.append(gpu_time)
@@ -729,6 +735,8 @@ class TestGPUPerformance(unittest.TestCase):
 
         except ImportError:
             self.skipTest("PyTorch not available for performance test")
+        except unittest.SkipTest:
+            raise  # Re-raise skip test exceptions
         except Exception as e:
             self.fail(f"PyTorch performance test failed: {e}")
 
