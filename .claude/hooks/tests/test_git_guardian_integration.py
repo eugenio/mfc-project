@@ -187,15 +187,12 @@ class TestPreToolUseIntegration(unittest.TestCase):
         import pre_tool_use
         self.pre_tool_use = pre_tool_use
     
-    @patch('pre_tool_use.request_guardian_commit')
-    @patch('pre_tool_use.fallback_to_direct_commit')
-    @patch('subprocess.run')
+    @patch('pre_tool_use.secure_chunked_edit')
     @patch('sys.stderr')
-    def test_chunked_edit_with_guardian_success(self, mock_stderr, mock_run, mock_fallback, mock_guardian):
-        """Test chunked edit operation using git-commit-guardian."""
-        # Mock successful guardian commit
-        mock_guardian.return_value = True
-        mock_run.return_value = Mock(returncode=0)  # git add success
+    def test_chunked_edit_with_guardian_success(self, mock_stderr, mock_secure_edit):
+        """Test chunked edit operation using enhanced security guardian."""
+        # Mock successful secure chunked edit
+        mock_secure_edit.return_value = True
         
         # Create test config
         config = {
@@ -214,30 +211,27 @@ class TestPreToolUseIntegration(unittest.TestCase):
         
         try:
             # Perform chunked edit
-            self.pre_tool_use.perform_chunked_edit(
+            result = self.pre_tool_use.perform_chunked_edit(
                 test_file, old_content, new_content, config
             )
             
-            # Guardian should have been called
-            self.assertTrue(mock_guardian.called)
-            # Fallback should not have been called
-            self.assertFalse(mock_fallback.called)
+            # Should succeed and call enhanced security guardian
+            self.assertTrue(result)
+            self.assertTrue(mock_secure_edit.called)
             
         finally:
             # Cleanup
             if os.path.exists(test_file):
                 os.remove(test_file)
     
-    @patch('pre_tool_use.request_guardian_commit')
-    @patch('pre_tool_use.fallback_to_direct_commit')
-    @patch('subprocess.run')
+    @patch('pre_tool_use.secure_chunked_edit')
+    @patch('pre_tool_use._fallback_chunked_edit')
     @patch('sys.stderr')
-    def test_chunked_edit_with_guardian_failure_and_fallback(self, mock_stderr, mock_run, mock_fallback, mock_guardian):
-        """Test chunked edit with guardian failure triggering fallback."""
-        # Mock guardian failure and successful fallback
-        mock_guardian.return_value = False
+    def test_chunked_edit_with_guardian_failure_and_fallback(self, mock_stderr, mock_fallback, mock_secure_edit):
+        """Test chunked edit with security guardian failure triggering fallback."""
+        # Mock security guardian failure and successful fallback
+        mock_secure_edit.side_effect = Exception("Security validation failed")
         mock_fallback.return_value = True
-        mock_run.return_value = Mock(returncode=0)  # git add success
         
         config = {
             'commit_message_prefix': 'Auto-commit: ',
@@ -253,12 +247,13 @@ class TestPreToolUseIntegration(unittest.TestCase):
             f.write(old_content)
         
         try:
-            self.pre_tool_use.perform_chunked_edit(
+            result = self.pre_tool_use.perform_chunked_edit(
                 test_file, old_content, new_content, config
             )
             
-            # Both guardian and fallback should have been called
-            self.assertTrue(mock_guardian.called)
+            # Should succeed via fallback
+            self.assertTrue(result)
+            self.assertTrue(mock_secure_edit.called)
             self.assertTrue(mock_fallback.called)
             
         finally:
