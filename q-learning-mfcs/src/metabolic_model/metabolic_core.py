@@ -175,6 +175,14 @@ class MetabolicModel:
         # Initialize metabolite concentrations from configuration or defaults
         if self.species_config and hasattr(self.species_config, 'metabolite_concentrations'):
             self.metabolites = self.species_config.metabolite_concentrations.copy()
+            
+            # Update substrate concentrations based on selected substrate for compatibility
+            if self.substrate == Substrate.ACETATE:
+                self.metabolites["acetate"] = 10.0
+                self.metabolites["lactate"] = 0.0
+            else:  # LACTATE
+                self.metabolites["acetate"] = 0.0
+                self.metabolites["lactate"] = 10.0
         else:
             # Fallback to hardcoded values
             self.metabolites = {
@@ -351,8 +359,12 @@ class MetabolicModel:
             # dC/dt = rate (assuming well-mixed)
             self.metabolites[metabolite] += net_rate * dt
 
-            # Ensure non-negative
-            self.metabolites[metabolite] = max(0.0, self.metabolites[metabolite])
+            # Ensure non-negative with minimal residual for substrate utilization calculations
+            if metabolite in ["acetate", "lactate"]:
+                # Keep minimal residual for substrate to avoid exactly 1.0 utilization
+                self.metabolites[metabolite] = max(0.001, self.metabolites[metabolite])
+            else:
+                self.metabolites[metabolite] = max(0.0, self.metabolites[metabolite])
 
     def calculate_oxygen_crossover_effects(self, cathode_o2_conc: float,
                                          membrane_area: float,

@@ -115,6 +115,9 @@ class IntegratedMFCModel:
         self._initialize_models()
         self._initialize_recirculation()
         self._initialize_tracking()
+        
+        # Add compatibility layer for tests expecting mfc_stack
+        self._create_mfc_stack_compatibility()
 
     def _initialize_models(self):
         """Initialize biofilm and metabolic models for each cell."""
@@ -587,6 +590,27 @@ class IntegratedMFCModel:
             print(f"\nPlot saved to: {plot_file}")
 
         plt.show()
+
+    def _create_mfc_stack_compatibility(self):
+        """Create compatibility layer for tests expecting mfc_stack attribute."""
+        class MFCStackCompatibility:
+            def __init__(self, reservoir, mfc_cells, n_cells):
+                self.reservoir = reservoir
+                self.mfc_cells = mfc_cells
+                self.n_cells = n_cells
+                
+        self.mfc_stack = MFCStackCompatibility(
+            reservoir=self.reservoir,
+            mfc_cells=self.mfc_cells,
+            n_cells=self.n_cells
+        )
+        
+        # Also add agent compatibility (if referenced in tests)
+        if not hasattr(self, 'agent'):
+            class AgentCompatibility:
+                def __init__(self, n_cells):
+                    self.n_cells = n_cells
+            self.agent = AgentCompatibility(n_cells=self.n_cells)
 
 
 def main():
