@@ -9,13 +9,15 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
-from utils.gitlab_client import (
-    load_gitlab_config, 
-    create_hook_failure_issue, 
-    create_large_commit_mr,
-    get_current_branch,
-    test_gitlab_connection
-)
+# GitLab integration removed
+def get_current_branch():
+    """Get current git branch name."""
+    try:
+        result = subprocess.run(['git', 'branch', '--show-current'], 
+                              capture_output=True, text=True, check=True)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return "unknown"
 
 def count_recent_commits(branch: str = None, hours: int = 24) -> int:
     """
@@ -46,134 +48,38 @@ def count_recent_commits(branch: str = None, hours: int = 24) -> int:
         return 0
 
 def handle_gitlab_integrations(input_data: dict):
-    """
-    Handle GitLab integrations based on hook data and configuration.
-    
-    Args:
-        input_data: Hook input data from Claude Code
-    """
-    config = load_gitlab_config()
-    
-    if not config.get("enabled"):
-        return
-    
-    features = config.get("features", {})
-    tool_name = input_data.get("tool_name", "")
-    
-    # Handle hook failures
-    if features.get("auto_issue_on_hook_failure") and "error" in input_data:
-        handle_hook_failure(input_data)
-    
-    # Handle multiple commits triggering MR creation
-    if features.get("auto_mr_on_multiple_commits"):
-        handle_multiple_commits(features.get("commit_threshold_for_mr", 5))
-    
-    # Handle successful large edits
-    if tool_name in ["Edit", "MultiEdit", "Write"]:
-        handle_successful_edit(input_data)
+    """GitLab integrations disabled - no action taken."""
+    pass
 
 def handle_hook_failure(input_data: dict):
-    """
-    Create GitLab issue for hook failures.
-    
-    Args:
-        input_data: Hook data containing error information
-    """
-    try:
-        error_info = input_data.get("error", "Unknown error")
-        tool_name = input_data.get("tool_name", "Unknown tool")
-        file_path = input_data.get("tool_input", {}).get("file_path")
-        
-        issue = create_hook_failure_issue(
-            hook_name=f"post_tool_use ({tool_name})",
-            error_message=str(error_info),
-            file_path=file_path
-        )
-        
-        if issue:
-            print(f"Created GitLab issue for hook failure: {issue['web_url']}", file=sys.stderr)
-    
-    except Exception as e:
-        print(f"Failed to create hook failure issue: {e}", file=sys.stderr)
+    """GitLab issue creation disabled - logging only."""
+    error_info = input_data.get("error", "Unknown error")
+    tool_name = input_data.get("tool_name", "Unknown tool")
+    print(f"Hook failure detected for {tool_name}: {error_info}", file=sys.stderr)
 
 def handle_multiple_commits(threshold: int):
-    """
-    Create MR if multiple commits accumulate on a branch.
-    
-    Args:
-        threshold: Number of commits that trigger MR creation
-    """
-    try:
-        branch = get_current_branch()
-        
-        if not branch or branch == "main":
-            return
-        
-        # Count recent commits (last 24 hours)
+    """GitLab MR creation disabled - logging only."""
+    branch = get_current_branch()
+    if branch and branch != "main":
         recent_commits = count_recent_commits(branch, 24)
-        
         if recent_commits >= threshold:
-            # Check if MR already exists for this branch
-            if not mr_exists_for_branch(branch):
-                mr = create_large_commit_mr(recent_commits, branch)
-                
-                if mr:
-                    print(f"Created auto-MR for {recent_commits} commits: {mr['web_url']}", file=sys.stderr)
-    
-    except Exception as e:
-        print(f"Failed to handle multiple commits: {e}", file=sys.stderr)
+            print(f"Multiple commits detected ({recent_commits}) on branch {branch}", file=sys.stderr)
 
 def mr_exists_for_branch(branch: str) -> bool:
-    """
-    Check if a merge request already exists for the given branch.
-    
-    Args:
-        branch: Source branch name
-        
-    Returns:
-        bool: True if MR exists, False otherwise
-    """
-    try:
-        from utils.gitlab_client import get_current_project
-        
-        project = get_current_project()
-        if not project:
-            return False
-        
-        # Get open merge requests for this branch
-        mrs = project.mergerequests.list(
-            source_branch=branch,
-            state='opened'
-        )
-        
-        return len(mrs) > 0
-    
-    except Exception:
-        return False
+    """GitLab MR checking disabled - always returns False."""
+    return False
 
 def handle_successful_edit(input_data: dict):
-    """
-    Handle successful edit operations for GitLab integration.
-    
-    Args:
-        input_data: Tool input data
-    """
-    try:
-        tool_name = input_data.get("tool_name")
-        
-        # Log successful operations (could be extended for GitLab commit comments)
-        if tool_name in ["Edit", "MultiEdit"]:
-            file_path = input_data.get("tool_input", {}).get("file_path")
-            if file_path:
-                print(f"GitLab: Successful {tool_name} operation on {file_path}", file=sys.stderr)
-        
-        elif tool_name == "Write":
-            file_path = input_data.get("tool_input", {}).get("file_path")
-            if file_path:
-                print(f"GitLab: Successful file creation: {file_path}", file=sys.stderr)
-    
-    except Exception as e:
-        print(f"Failed to handle successful edit: {e}", file=sys.stderr)
+    """GitLab integration disabled - logging only."""
+    tool_name = input_data.get("tool_name")
+    if tool_name in ["Edit", "MultiEdit"]:
+        file_path = input_data.get("tool_input", {}).get("file_path")
+        if file_path:
+            print(f"Successful {tool_name} operation on {file_path}", file=sys.stderr)
+    elif tool_name == "Write":
+        file_path = input_data.get("tool_input", {}).get("file_path")
+        if file_path:
+            print(f"Successful file creation: {file_path}", file=sys.stderr)
 
 def main():
     try:
