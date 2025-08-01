@@ -529,9 +529,9 @@ class ExportManager:
     def __init__(self):
         """Initialize export manager."""
         self.supported_formats = {
-            'data': ['csv', 'json', 'xlsx', 'hdf5'],
-            'figures': ['png', 'pdf', 'svg', 'html'],
-            'reports': ['pdf', 'html', 'docx']
+            'data': ['csv', 'json', 'xlsx', 'hdf5', 'parquet', 'feather', 'pickle'],
+            'figures': ['png', 'jpg', 'pdf', 'svg', 'html', 'eps'],
+            'reports': ['pdf', 'html', 'docx', 'markdown']
         }
 
     def render_export_panel(
@@ -574,13 +574,25 @@ class ExportManager:
                 selected_datasets.append(dataset_name)
 
         if selected_datasets:
-            # Format selection
-            col1, col2 = st.columns(2)
+            # Advanced export options
+            st.markdown("#### Export Configuration")
+            
+            # Format selection with descriptions
+            col1, col2, col3 = st.columns(3)
 
             with col1:
                 export_format = st.selectbox(
                     "Export Format",
                     options=self.supported_formats['data'],
+                    format_func=lambda x: {
+                        'csv': 'CSV - Comma Separated Values',
+                        'json': 'JSON - JavaScript Object Notation', 
+                        'xlsx': 'Excel - Microsoft Excel Format',
+                        'hdf5': 'HDF5 - Hierarchical Data Format',
+                        'parquet': 'Parquet - High Performance Columnar',
+                        'feather': 'Feather - Fast Binary Format',
+                        'pickle': 'Pickle - Python Native Format'
+                    }.get(x, x),
                     key="data_export_format"
                 )
 
@@ -588,16 +600,57 @@ class ExportManager:
                 include_metadata = st.checkbox(
                     "Include Metadata",
                     value=True,
-                    key="include_metadata"
+                    key="include_metadata",
+                    help="Include dataset information and generation timestamps"
                 )
+
+            with col3:
+                compression_enabled = st.checkbox(
+                    "Enable Compression",
+                    value=export_format in ['parquet', 'hdf5'],
+                    key="enable_compression",
+                    help="Reduce file size (available for some formats)"
+                )
+
+            # Export format information
+            format_info = {
+                'csv': "📄 Best for: Excel compatibility, human-readable format",
+                'json': "🔧 Best for: Web applications, JavaScript integration",
+                'xlsx': "📊 Best for: Excel analysis, formatted spreadsheets",
+                'hdf5': "🗄️ Best for: Large datasets, scientific computing",
+                'parquet': "⚡ Best for: Big data analytics, high performance",
+                'feather': "🚀 Best for: Fast I/O between Python/R",
+                'pickle': "🐍 Best for: Python-only workflows, preserves types"
+            }
+            
+            if export_format in format_info:
+                st.info(format_info[export_format])
 
             # Export button
             if st.button("📥 Download Selected Data", key="download_data"):
                 self._export_data(
                     {name: data[name] for name in selected_datasets},
                     export_format,
-                    include_metadata
+                    include_metadata,
+                    compression_enabled
                 )
+
+            # Batch export option
+            st.markdown("#### Batch Export Options")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("📦 Export All Formats", key="export_all_formats"):
+                    self._batch_export_all_formats(
+                        {name: data[name] for name in selected_datasets},
+                        include_metadata
+                    )
+            
+            with col2:
+                if st.button("📋 Generate Export Summary", key="export_summary"):
+                    self._generate_export_summary(
+                        {name: data[name] for name in selected_datasets}
+                    )
 
     def _render_figure_export(self, figures: Optional[Dict[str, go.Figure]]):
         """Render figure export options."""
@@ -710,7 +763,8 @@ class ExportManager:
         self,
         datasets: Dict[str, pd.DataFrame],
         format: str,
-        include_metadata: bool
+        include_metadata: bool,
+        compression_enabled: bool = False
     ):
         """Export selected datasets."""
         try:
@@ -764,10 +818,307 @@ class ExportManager:
                     mime="application/json"
                 )
 
+            elif format == 'xlsx':
+                # Export as Excel file with multiple sheets
+                excel_buffer = io.BytesIO()
+                
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    for name, df in datasets.items():
+                        # Create metadata sheet if requested
+                        if include_metadata:
+                            metadata_df = pd.DataFrame({
+                                'Property': ['Dataset Name', 'Generated', 'Rows', 'Columns', 'Column Names'],
+                                'Value': [
+                                    name,
+                                    datetime.now().isoformat(),
+                                    len(df),
+                                    len(df.columns),
+                                    ', '.join(df.columns)
+                                ]
+                            })
+                            metadata_df.to_excel(writer, sheet_name=f'{name}_metadata', index=False)
+                        
+                        # Write data sheet
+                        df.to_excel(writer, sheet_name=name, index=False)
+                
+                st.download_button(
+                    label="📥 Download Excel File",
+                    data=excel_buffer.getvalue(),
+                    file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            elif format == 'hdf5':
+                # Export as HDF5 file
+                import tempfile
+                import os
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.h5') as tmp_file:
+                    tmp_path = tmp_file.name
+                
+                try:
+                    with pd.HDFStore(tmp_path, mode='w') as store:
+                        for name, df in datasets.items():
+                            # Store data
+                            store.put(f'data/{name}', df, format='table')
+                            
+                            # Store metadata if requested
+                            if include_metadata:
+                                metadata = pd.Series({
+                                    'dataset_name': name,
+                                    'generated': datetime.now().isoformat(),
+                                    'rows': len(df),
+                                    'columns': len(df.columns),
+                                    'column_names': ', '.join(df.columns)
+                                })
+                                store.put(f'metadata/{name}', pd.DataFrame([metadata]), format='table')
+                    
+                    # Read the file back for download
+                    with open(tmp_path, 'rb') as f:
+                        hdf5_data = f.read()
+                    
+                    st.download_button(
+                        label="📥 Download HDF5 File",
+                        data=hdf5_data,
+                        file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h5",
+                        mime="application/x-hdf"
+                    )
+                
+                finally:
+                    # Clean up temporary file
+                    if os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
+
+            elif format == 'parquet':
+                # Export as Parquet files (high performance columnar format)
+                import zipfile
+                zip_buffer = io.BytesIO()
+                
+                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                    for name, df in datasets.items():
+                        parquet_buffer = io.BytesIO()
+                        df.to_parquet(parquet_buffer, index=False)
+                        zip_file.writestr(f"{name}.parquet", parquet_buffer.getvalue())
+                        
+                        # Add metadata file if requested
+                        if include_metadata:
+                            metadata_content = f"""# Parquet Dataset Metadata
+Dataset: {name}
+Generated: {datetime.now().isoformat()}
+Rows: {len(df)}
+Columns: {len(df.columns)}
+Column Names: {', '.join(df.columns)}
+Column Types: {', '.join([f"{col}:{str(dtype)}" for col, dtype in df.dtypes.items()])}
+"""
+                            zip_file.writestr(f"{name}_metadata.txt", metadata_content)
+                
+                st.download_button(
+                    label="📥 Download Parquet Files",
+                    data=zip_buffer.getvalue(),
+                    file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_parquet.zip",
+                    mime="application/zip"
+                )
+
+            elif format == 'feather':
+                # Export as Feather files (fast binary format)
+                import zipfile
+                zip_buffer = io.BytesIO()
+                
+                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                    for name, df in datasets.items():
+                        feather_buffer = io.BytesIO()
+                        df.to_feather(feather_buffer)
+                        zip_file.writestr(f"{name}.feather", feather_buffer.getvalue())
+                        
+                        # Add metadata file if requested
+                        if include_metadata:
+                            metadata_content = f"""# Feather Dataset Metadata
+Dataset: {name}
+Generated: {datetime.now().isoformat()}
+Rows: {len(df)}
+Columns: {len(df.columns)}
+Column Names: {', '.join(df.columns)}
+Format: Apache Arrow Feather (fast binary)
+"""
+                            zip_file.writestr(f"{name}_metadata.txt", metadata_content)
+                
+                st.download_button(
+                    label="📥 Download Feather Files",
+                    data=zip_buffer.getvalue(),
+                    file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_feather.zip",
+                    mime="application/zip"
+                )
+
+            elif format == 'pickle':
+                # Export as Python pickle files (preserves exact data types)
+                import zipfile
+                import pickle
+                zip_buffer = io.BytesIO()
+                
+                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                    for name, df in datasets.items():
+                        pickle_buffer = io.BytesIO()
+                        pickle.dump(df, pickle_buffer)
+                        zip_file.writestr(f"{name}.pkl", pickle_buffer.getvalue())
+                        
+                        # Add metadata file if requested
+                        if include_metadata:
+                            metadata_dict = {
+                                'dataset_name': name,
+                                'generated': datetime.now().isoformat(),
+                                'rows': len(df),
+                                'columns': len(df.columns),
+                                'column_names': list(df.columns),
+                                'dtypes': df.dtypes.to_dict(),
+                                'format': 'Python Pickle (preserves exact data types)'
+                            }
+                            metadata_buffer = io.BytesIO()
+                            pickle.dump(metadata_dict, metadata_buffer)
+                            zip_file.writestr(f"{name}_metadata.pkl", metadata_buffer.getvalue())
+                
+                st.download_button(
+                    label="📥 Download Pickle Files",
+                    data=zip_buffer.getvalue(),
+                    file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_pickle.zip",
+                    mime="application/zip"
+                )
+
             st.success(f"Data exported successfully in {format.upper()} format!")
 
         except Exception as e:
             st.error(f"Export failed: {e}")
+
+    def _batch_export_all_formats(
+        self,
+        datasets: Dict[str, pd.DataFrame],
+        include_metadata: bool
+    ):
+        """Export datasets in all supported formats as a single package."""
+        try:
+            import zipfile
+            zip_buffer = io.BytesIO()
+            
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                # Export in each format
+                for format_name in ['csv', 'json', 'xlsx']:  # Most commonly used formats
+                    try:
+                        # Create subfolder for each format
+                        if format_name == 'csv':
+                            for name, df in datasets.items():
+                                csv_buffer = io.StringIO()
+                                if include_metadata:
+                                    csv_buffer.write(f"# Dataset: {name}\n")
+                                    csv_buffer.write(f"# Generated: {datetime.now().isoformat()}\n")
+                                    csv_buffer.write("#\n")
+                                df.to_csv(csv_buffer, index=False)
+                                zip_file.writestr(f"csv/{name}.csv", csv_buffer.getvalue())
+                        
+                        elif format_name == 'json':
+                            for name, df in datasets.items():
+                                export_data = {
+                                    'metadata': {
+                                        'dataset_name': name,
+                                        'generated': datetime.now().isoformat(),
+                                        'rows': len(df),
+                                        'columns': len(df.columns)
+                                    } if include_metadata else {},
+                                    'data': df.to_dict('records')
+                                }
+                                json_str = json.dumps(export_data, indent=2, default=str)
+                                zip_file.writestr(f"json/{name}.json", json_str)
+                        
+                        elif format_name == 'xlsx':
+                            # Create a single Excel file with multiple sheets
+                            excel_buffer = io.BytesIO()
+                            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                                for name, df in datasets.items():
+                                    df.to_excel(writer, sheet_name=name, index=False)
+                            zip_file.writestr("excel/mfc_data_all.xlsx", excel_buffer.getvalue())
+                    
+                    except Exception:
+                        # Continue with other formats if one fails
+                        pass
+                
+                # Add README file
+                readme_content = f"""# MFC Data Export Package
+Generated: {datetime.now().isoformat()}
+Datasets included: {', '.join(datasets.keys())}
+
+Format descriptions:
+- csv/: Comma-separated values (Excel compatible)
+- json/: JavaScript Object Notation (web applications)
+- excel/: Microsoft Excel format with multiple sheets
+
+Total files: {len(datasets) * 2 + 1}
+Metadata included: {'Yes' if include_metadata else 'No'}
+"""
+                zip_file.writestr("README.txt", readme_content)
+            
+            st.download_button(
+                label="📦 Download Complete Export Package",
+                data=zip_buffer.getvalue(),
+                file_name=f"mfc_complete_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                mime="application/zip"
+            )
+            
+            st.success("Complete export package generated with multiple formats!")
+            
+        except Exception as e:
+            st.error(f"Batch export failed: {e}")
+
+    def _generate_export_summary(self, datasets: Dict[str, pd.DataFrame]):
+        """Generate a summary of datasets for export planning."""
+        st.markdown("#### Export Summary")
+        
+        # Create summary DataFrame
+        summary_data = []
+        total_rows = 0
+        total_columns = 0
+        
+        for name, df in datasets.items():
+            summary_data.append({
+                'Dataset': name,
+                'Rows': len(df),
+                'Columns': len(df.columns),
+                'Memory (MB)': round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
+                'Data Types': len(df.dtypes.unique()),
+                'Null Values': df.isnull().sum().sum()
+            })
+            total_rows += len(df)
+            total_columns += len(df.columns)
+        
+        summary_df = pd.DataFrame(summary_data)
+        
+        # Display summary table
+        st.dataframe(summary_df, use_container_width=True)
+        
+        # Display totals
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Datasets", len(datasets))
+        with col2:
+            st.metric("Total Rows", f"{total_rows:,}")
+        with col3:
+            st.metric("Total Columns", total_columns)
+        with col4:
+            total_memory = summary_df['Memory (MB)'].sum()
+            st.metric("Total Memory", f"{total_memory:.1f} MB")
+        
+        # Estimated file sizes
+        st.markdown("#### Estimated Export File Sizes")
+        size_estimates = {
+            'CSV': f"{total_memory * 0.8:.1f} MB (compressed)",
+            'JSON': f"{total_memory * 1.2:.1f} MB", 
+            'Excel': f"{total_memory * 0.6:.1f} MB",
+            'Parquet': f"{total_memory * 0.3:.1f} MB",
+            'HDF5': f"{total_memory * 0.4:.1f} MB"
+        }
+        
+        size_df = pd.DataFrame([
+            {'Format': fmt, 'Estimated Size': size} 
+            for fmt, size in size_estimates.items()
+        ])
+        st.dataframe(size_df, use_container_width=True)
 
     def _export_figures(
         self,

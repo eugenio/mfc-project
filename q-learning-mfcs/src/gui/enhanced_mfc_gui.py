@@ -42,6 +42,9 @@ from gui.qlearning_viz import (
 )
 from gui.parameter_input import ParameterInputComponent
 from gui.qtable_visualization import QTableVisualization
+from gui.live_monitoring_dashboard import LiveMonitoringDashboard
+from gui.alert_configuration_ui import render_alert_configuration
+from monitoring.alert_management import AlertManager
 
 # Import existing components and configs
 from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
@@ -158,8 +161,89 @@ class EnhancedMFCApp:
         # Initialize Q-table visualization component
         self.qtable_visualization = QTableVisualization()
 
+        # Initialize live monitoring dashboard
+        self.live_monitoring = LiveMonitoringDashboard()
+
+        # Initialize alert management system
+        if 'alert_manager' not in st.session_state:
+            # Example email configuration (would typically come from settings)
+            email_config = {
+                'server': 'smtp.gmail.com',
+                'port': 587,
+                'username': '',  # To be configured by user
+                'password': '',  # To be configured by user
+                'from_email': 'mfc-alerts@system.local',
+                'use_tls': True
+            }
+            st.session_state.alert_manager = AlertManager(
+                db_path="mfc_alerts.db",
+                email_config=email_config if email_config['username'] else None
+            )
+            
+            # Set up default thresholds for MFC parameters
+            self._setup_default_thresholds()
+
         # Store configuration in session state
         st.session_state.ui_config = sidebar_config
+
+    def _setup_default_thresholds(self):
+        """Set up default alert thresholds for MFC parameters."""
+        alert_manager = st.session_state.alert_manager
+        
+        # Power density thresholds
+        alert_manager.set_threshold(
+            "power_density",
+            min_value=0.5,
+            max_value=2.0,
+            critical_min=0.2,
+            critical_max=2.5,
+            unit="W/m²",
+            enabled=True
+        )
+        
+        # Substrate concentration thresholds
+        alert_manager.set_threshold(
+            "substrate_concentration",
+            min_value=5.0,
+            max_value=50.0,
+            critical_min=2.0,
+            critical_max=70.0,
+            unit="mM",
+            enabled=True
+        )
+        
+        # pH thresholds
+        alert_manager.set_threshold(
+            "pH",
+            min_value=6.5,
+            max_value=7.5,
+            critical_min=6.0,
+            critical_max=8.5,
+            unit="",
+            enabled=True
+        )
+        
+        # Temperature thresholds
+        alert_manager.set_threshold(
+            "temperature",
+            min_value=25.0,
+            max_value=35.0,
+            critical_min=20.0,
+            critical_max=40.0,
+            unit="°C",
+            enabled=True
+        )
+        
+        # Biofilm thickness thresholds
+        alert_manager.set_threshold(
+            "biofilm_thickness",
+            min_value=50.0,
+            max_value=200.0,
+            critical_min=20.0,
+            critical_max=300.0,
+            unit="μm",
+            enabled=True
+        )
 
     def _check_gpu_availability(self) -> bool:
         """Check if GPU acceleration is available."""
@@ -183,11 +267,35 @@ class EnhancedMFCApp:
 
     def render_main_header(self):
         """Render the main application header."""
-        st.markdown("""
+        # Get active alerts count for header indicator
+        active_alerts_count = 0
+        if 'alert_manager' in st.session_state:
+            active_alerts = st.session_state.alert_manager.get_active_alerts()
+            active_alerts_count = len(active_alerts)
+            critical_count = sum(1 for a in active_alerts if a.severity == "critical")
+        
+        # Create alert indicator
+        alert_indicator = ""
+        if active_alerts_count > 0:
+            if critical_count > 0:
+                alert_indicator = f"""
+                <div style="background: #ff4444; color: white; padding: 0.5rem; border-radius: 5px; margin: 0.5rem 0; text-align: center;">
+                    🚨 {critical_count} Critical Alert{"s" if critical_count != 1 else ""} | {active_alerts_count} Total Active
+                </div>
+                """
+            else:
+                alert_indicator = f"""
+                <div style="background: #ffa500; color: white; padding: 0.5rem; border-radius: 5px; margin: 0.5rem 0; text-align: center;">
+                    ⚠️ {active_alerts_count} Active Alert{"s" if active_alerts_count != 1 else ""}
+                </div>
+                """
+        
+        st.markdown(f"""
         <div class="main-header">
             <h1>🔬 Enhanced MFC Research Platform</h1>
             <p>Advanced Microbial Fuel Cell Analysis & Q-Learning Optimization</p>
             <p><em>Designed for Scientific Community Engagement</em></p>
+            {alert_indicator}
         </div>
         """, unsafe_allow_html=True)
 
@@ -558,42 +666,15 @@ class EnhancedMFCApp:
                 st.info("Use the Interactive Q-Table Analysis tab to unlock enhanced analysis features")
 
     def render_real_time_monitoring(self):
-        """Render real-time monitoring dashboard."""
-        st.markdown("## 📡 Real-Time Monitoring")
+        """Render enhanced live monitoring dashboard with real-time updates."""
+        self.live_monitoring.render_dashboard()
 
-        # Mock data stream function
-        def mock_data_stream():
-            return {
-                'substrate_concentration': np.random.normal(25, 2),
-                'power_output': np.random.normal(0.5, 0.1),
-                'current_density': np.random.normal(1.2, 0.2),
-                'voltage': np.random.normal(0.6, 0.05),
-                'biofilm_thickness': np.random.normal(50, 5)
-            }
-
-        # Render real-time monitoring component
-        self.components['visualization'].render_real_time_monitor(
-            data_stream=mock_data_stream,
-            refresh_interval=5,
-            max_points=100
-        )
-
-        # Additional monitoring controls
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("### 🎯 Performance Targets")
-            st.metric("Substrate Target", "25 mM", "±2 mM tolerance")
-            st.metric("Power Target", "0.5 W/m²", "±0.1 W/m²")
-            st.metric("Control Accuracy", "54%", "+8% improvement")
-
-        with col2:
-            st.markdown("### ⚠️ Alert Thresholds")
-            st.slider("Substrate Alert (mM)", 20, 30, (23, 27))
-            st.slider("Power Alert (W/m²)", 0.1, 1.0, (0.4, 0.6))
-
-            if st.button("📧 Configure Alerts"):
-                st.info("Alert configuration saved")
+    def render_alert_management(self):
+        """Render the alert management interface."""
+        if 'alert_manager' in st.session_state:
+            render_alert_configuration(st.session_state.alert_manager)
+        else:
+            st.error("Alert management system not initialized. Please restart the application.")
 
     def render_data_export_center(self):
         """Render comprehensive data export center."""
@@ -613,6 +694,96 @@ class EnhancedMFCApp:
         # Add training history if available
         if st.session_state.training_history is not None:
             export_data['training_history'] = pd.DataFrame(st.session_state.training_history)
+
+        # Add alert data if available
+        if 'alert_manager' in st.session_state:
+            try:
+                # Export active alerts
+                active_alerts = st.session_state.alert_manager.get_active_alerts()
+                if active_alerts:
+                    alert_records = []
+                    for alert in active_alerts:
+                        alert_records.append({
+                            'timestamp': alert.timestamp,
+                            'parameter': alert.parameter,
+                            'value': alert.value,
+                            'severity': alert.severity,
+                            'message': alert.message,
+                            'threshold_violated': alert.threshold_violated,
+                            'acknowledged': alert.acknowledged,
+                            'escalated': alert.escalated
+                        })
+                    export_data['active_alerts'] = pd.DataFrame(alert_records)
+                
+                # Export alert history
+                alert_history = st.session_state.alert_manager.get_alert_history(hours=168)  # Last week
+                if alert_history:
+                    history_records = []
+                    for alert in alert_history:
+                        history_records.append({
+                            'timestamp': alert.timestamp,
+                            'parameter': alert.parameter,
+                            'value': alert.value,
+                            'severity': alert.severity,
+                            'message': alert.message,
+                            'acknowledged': alert.acknowledged,
+                            'acknowledged_by': alert.acknowledged_by,
+                            'escalated': alert.escalated
+                        })
+                    export_data['alert_history'] = pd.DataFrame(history_records)
+                
+                # Export threshold configurations
+                threshold_records = []
+                for param, threshold in st.session_state.alert_manager.thresholds.items():
+                    threshold_records.append({
+                        'parameter': threshold.parameter,
+                        'min_value': threshold.min_value,
+                        'max_value': threshold.max_value,
+                        'critical_min': threshold.critical_min,
+                        'critical_max': threshold.critical_max,
+                        'unit': threshold.unit,
+                        'enabled': threshold.enabled
+                    })
+                if threshold_records:
+                    export_data['alert_thresholds'] = pd.DataFrame(threshold_records)
+                    
+            except Exception:
+                # Continue if alert data unavailable
+                pass
+
+        # Add parameter configuration data if available
+        if hasattr(st.session_state, 'selected_parameters') and st.session_state.selected_parameters:
+            param_records = []
+            for param, value in st.session_state.selected_parameters.items():
+                param_records.append({
+                    'parameter': param,
+                    'value': value,
+                    'timestamp': datetime.now()
+                })
+            export_data['parameter_settings'] = pd.DataFrame(param_records)
+
+        # Add Q-table analysis results if available
+        if hasattr(st.session_state, 'qtable_analysis_results'):
+            try:
+                analysis_results = st.session_state.qtable_analysis_results
+                if analysis_results and 'analysis_cache' in analysis_results:
+                    # Export convergence metrics
+                    convergence_data = []
+                    for qtable_id, cache in analysis_results['analysis_cache'].items():
+                        if 'convergence_metrics' in cache:
+                            metrics = cache['convergence_metrics']
+                            convergence_data.append({
+                                'qtable_id': qtable_id,
+                                'converged': metrics.get('converged', False),
+                                'convergence_episodes': metrics.get('convergence_episodes', 0),
+                                'final_epsilon': metrics.get('final_epsilon', 0),
+                                'policy_stability': metrics.get('policy_stability', 0)
+                            })
+                    if convergence_data:
+                        export_data['qtable_convergence'] = pd.DataFrame(convergence_data)
+            except Exception:
+                # Continue if analysis data unavailable
+                pass
 
         # Render export panel
         self.components['export_manager'].render_export_panel(
@@ -683,11 +854,12 @@ class EnhancedMFCApp:
         self.render_research_overview()
 
         # Main application tabs
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
             "⚙️ Parameters",
             "🚀 Simulation",
             "🧠 Q-Learning",
             "📡 Monitoring",
+            "🚨 Alerts",
             "📤 Export",
             "💡 Insights"
         ])
@@ -705,9 +877,12 @@ class EnhancedMFCApp:
             self.render_real_time_monitoring()
 
         with tab5:
-            self.render_data_export_center()
+            self.render_alert_management()
 
         with tab6:
+            self.render_data_export_center()
+
+        with tab7:
             self.render_research_insights()
 
 def main():
