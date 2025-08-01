@@ -7,12 +7,10 @@ Created: 2025-07-31
 Integration: BMAD Documentation Agent, git-commit-guardian
 """
 
-import os
 import sys
-import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from pathlib import Path
 
 # Add project root to path for imports
@@ -114,7 +112,7 @@ class DocumentationGitLabManager:
             )
             
             # Add comment to issue
-            comment = self.gitlab_client.add_issue_comment(
+            self.gitlab_client.add_issue_comment(
                 project_id=self.project_id,
                 issue_iid=issue_iid,
                 body=update_message
