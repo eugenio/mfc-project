@@ -11,6 +11,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
+from utils.git_guardian import request_guardian_commit, fallback_to_direct_commit
 # GitLab integration removed
 
 def analyze_code_content(content, file_path=""):
@@ -543,7 +544,7 @@ def check_file_creation_thresholds(tool_name, tool_input):
     new_lines = len(content.splitlines()) if content else 0
     max_lines = config.get('max_new_file_lines', 100)
     
-    # Check session file count threshold
+    # Check session file count threshold  
     current_file_count = get_session_file_count()
     max_files = config.get('max_files_per_session', 5)
     
@@ -557,61 +558,11 @@ def check_file_creation_thresholds(tool_name, tool_input):
         print(f"  File: {file_path}", file=sys.stderr)
         print(f"  Lines in new file: {new_lines} (max: {max_lines})", file=sys.stderr)
         print(f"  Files created this session: {current_file_count} (max: {max_files})", file=sys.stderr)
-        
-        if config.get('auto_commit', True):
-            print("AUTO-COMMIT: Will commit new file creation", file=sys.stderr)
-            
-            # Log the file creation
-            log_file_creation(file_path)
-            
-            # Try to commit any existing staged changes first
-            try:
-                result = subprocess.run(['git', 'status', '--porcelain'], 
-                                      capture_output=True, text=True, cwd=os.getcwd())
-                
-                if result.stdout.strip():
-                    # Generate meaningful commit message for file creation
-                    meaningful_commit_msg = generate_meaningful_commit_message(
-                        "create", file_path, "", content, 
-                        config.get('commit_message_prefix', 'Auto-commit: New file created - ')
-                    )
-                    
-                    print(f"AUTO-COMMIT: Staging changes for commit", file=sys.stderr)
-                    subprocess.run(['git', 'add', '.'], cwd=os.getcwd(), capture_output=True)
-                    
-                    print(f"AUTO-COMMIT: Creating commit: {meaningful_commit_msg}", file=sys.stderr)
-                    subprocess.run(['git', 'commit', '-m', meaningful_commit_msg], 
-                                 cwd=os.getcwd(), capture_output=True)
-                    
-                    print("AUTO-COMMIT: Commit completed successfully", file=sys.stderr)
-                    
-            except Exception as e:
-                print(f"AUTO-COMMIT: Error during commit: {e}", file=sys.stderr)
-        
         return True
     
     # If not exceeding thresholds, still log the file creation
     log_file_creation(file_path)
     return False
-
-def count_file_lines(file_path):
-    """
-    Count the number of lines in a file.
-    
-    Args:
-        file_path: Path to the file
-        
-    Returns:
-        int: Number of lines in the file, 0 if file doesn't exist
-    """
-    try:
-        if not os.path.exists(file_path):
-            return 0
-        
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            return len(f.readlines())
-    except Exception:
-        return 0
 
 def estimate_edit_changes(tool_name, tool_input):
     """
@@ -674,7 +625,14 @@ def estimate_edit_changes(tool_name, tool_input):
             return None
             
         # For Write operations, count existing lines vs new lines
-        existing_lines = count_file_lines(file_path)
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    existing_lines = len(f.readlines())
+            else:
+                existing_lines = 0
+        except Exception:
+            existing_lines = 0
         new_lines = len(content.splitlines()) if content else 0
         
         if existing_lines == 0:
@@ -686,48 +644,7 @@ def estimate_edit_changes(tool_name, tool_input):
     
     return None
 
-def perform_auto_commit(file_path, config, changes_summary):
-    """
-    Perform automatic git commit for large file changes.
-    
-    Args:
-        file_path: Path to the file being modified
-        config: Edit threshold configuration
-        changes_summary: Summary of changes (lines_added, lines_removed)
-    """
-    try:
-        # Change to the repository root directory
-        repo_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], 
-                                          cwd=os.path.dirname(file_path), 
-                                          stderr=subprocess.DEVNULL).decode().strip()
-        
-        # Add the specific file
-        subprocess.run(['git', 'add', file_path], 
-                      cwd=repo_root, 
-                      check=True, 
-                      capture_output=True)
-        
-        # Create commit message
-        lines_added, lines_removed = changes_summary
-        commit_msg = (f"{config['commit_message_prefix']}"
-                     f"+{lines_added}/-{lines_removed} lines in {os.path.basename(file_path)}")
-        
-        # Commit the changes
-        subprocess.run(['git', 'commit', '-m', commit_msg], 
-                      cwd=repo_root, 
-                      check=True, 
-                      capture_output=True)
-        
-        print(f"AUTO-COMMIT: Committed changes to {file_path} (+{lines_added}/-{lines_removed} lines)", 
-              file=sys.stderr)
-        return True
-        
-    except subprocess.CalledProcessError:
-        print(f"WARNING: Auto-commit failed for {file_path}", file=sys.stderr)
-        return False
-    except Exception as e:
-        print(f"WARNING: Auto-commit error for {file_path}: {e}", file=sys.stderr)
-        return False
+
 
 def split_text_into_chunks(text, chunk_size):
     """
@@ -762,7 +679,6 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     Returns:
         bool: True if successful, False otherwise
     """
-    import difflib
     import traceback
     
     print(f"DEBUG: Starting chunked edit for {file_path}", file=sys.stderr)
@@ -770,11 +686,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     print(f"DEBUG: Old string length: {len(old_string)} chars, {len(old_string.splitlines())} lines", file=sys.stderr)
     print(f"DEBUG: New string length: {len(new_string)} chars, {len(new_string.splitlines())} lines", file=sys.stderr)
     
-    old_lines = old_string.splitlines(keepends=True)
-    new_lines = new_string.splitlines(keepends=True)
-    
-    # Generate unified diff
-    diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=''))
+    # Note: Line splitting for diff analysis could be added here if needed for debugging
     
     max_lines = min(config.get('max_lines_added', 25), config.get('max_lines_removed', 25))
     print(f"DEBUG: Max lines per chunk: {max_lines}", file=sys.stderr)
@@ -815,7 +727,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     
     # If we're removing more than adding, process removals first
     if len(old_chunks) > len(new_chunks):
-        print(f"DEBUG: Removing content mode (more old chunks than new)", file=sys.stderr)
+        print("DEBUG: Removing content mode (more old chunks than new)", file=sys.stderr)
         # Remove chunks from the end to the beginning
         for i in range(len(old_chunks) - 1, -1, -1):
             try:
@@ -838,7 +750,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                     # Write the change
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(new_content)
-                    print(f"DEBUG: File written successfully", file=sys.stderr)
+                    print("DEBUG: File written successfully", file=sys.stderr)
                     
                     # Commit this chunk
                     result = subprocess.run(['git', 'add', file_path], capture_output=True, text=True)
@@ -852,14 +764,26 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                         f"{config['commit_message_prefix']}chunk {i+1}/{len(old_chunks)} - "
                     )
                     
-                    result = subprocess.run(['git', 'commit', '-m', meaningful_msg], capture_output=True, text=True)
-                    if result.returncode != 0:
-                        print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+                    # Use git-commit-guardian for secure, validated commits
+                    commit_success = request_guardian_commit(
+                        files=[file_path],
+                        commit_message=meaningful_msg,
+                        change_type="edit",
+                        auto_generated=True
+                    )
+                    
+                    if not commit_success:
+                        print("🛡️  Git-commit-guardian failed, attempting fallback", file=sys.stderr)
+                        # Fallback to direct commit if guardian fails
+                        commit_success = fallback_to_direct_commit([file_path], meaningful_msg)
+                    
+                    if not commit_success:
+                        print(f"ERROR: Failed to commit chunk {i+1}", file=sys.stderr)
                         return False
                         
                     print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(old_chunks)} - {meaningful_msg}", file=sys.stderr)
                 else:
-                    print(f"WARNING: Chunk not found in current content", file=sys.stderr)
+                    print("WARNING: Chunk not found in current content", file=sys.stderr)
                 
             except Exception as e:
                 print(f"ERROR: Failed to process chunk {i+1}: {e}", file=sys.stderr)
@@ -867,7 +791,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 return False
     
     else:
-        print(f"DEBUG: Adding content mode (more new chunks than old)", file=sys.stderr)
+        print("DEBUG: Adding content mode (more new chunks than old)", file=sys.stderr)
         # Adding more than removing - do a direct chunked replacement
         # Start by replacing with empty content, then add chunks
         try:
@@ -890,13 +814,24 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 f"{config['commit_message_prefix']}"
             )
                 
-            result = subprocess.run(['git', 'commit', '-m', removal_msg], 
-                         capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+            # Use git-commit-guardian for secure, validated commits
+            commit_success = request_guardian_commit(
+                files=[file_path],
+                commit_message=removal_msg,
+                change_type="edit",
+                auto_generated=True
+            )
+            
+            if not commit_success:
+                print("🛡️  Git-commit-guardian failed, attempting fallback", file=sys.stderr)
+                # Fallback to direct commit if guardian fails
+                commit_success = fallback_to_direct_commit([file_path], removal_msg)
+            
+            if not commit_success:
+                print("ERROR: Failed to commit removal", file=sys.stderr)
                 return False
             
-            print(f"DEBUG: Removed old content", file=sys.stderr)
+            print("DEBUG: Removed old content", file=sys.stderr)
             
             # Now add new content in chunks
             insertion_point = current_content.index(old_string)
@@ -925,9 +860,21 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                     f"{config['commit_message_prefix']}chunk {i+1}/{len(new_chunks)} - "
                 )
                     
-                result = subprocess.run(['git', 'commit', '-m', chunk_addition_msg], capture_output=True, text=True)
-                if result.returncode != 0:
-                    print(f"ERROR: git commit failed: {result.stderr}", file=sys.stderr)
+                # Use git-commit-guardian for secure, validated commits
+                commit_success = request_guardian_commit(
+                    files=[file_path],
+                    commit_message=chunk_addition_msg,
+                    change_type="create",
+                    auto_generated=True
+                )
+                
+                if not commit_success:
+                    print("🛡️  Git-commit-guardian failed, attempting fallback", file=sys.stderr)
+                    # Fallback to direct commit if guardian fails
+                    commit_success = fallback_to_direct_commit([file_path], chunk_addition_msg)
+                
+                if not commit_success:
+                    print(f"ERROR: Failed to commit chunk addition {i+1}", file=sys.stderr)
                     return False
                     
                 print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)} - {chunk_addition_msg}", file=sys.stderr)
@@ -937,7 +884,7 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
             traceback.print_exc(file=sys.stderr)
             return False
     
-    print(f"DEBUG: Chunked edit completed successfully", file=sys.stderr)
+    print("DEBUG: Chunked edit completed successfully", file=sys.stderr)
     return True
 
 def check_edit_thresholds(tool_name, tool_input):
@@ -1021,7 +968,7 @@ def main():
     try:
         with open('/tmp/hook_debug.log', 'a') as f:
             f.write(f"Hook called at {datetime.now()}\n")
-    except:
+    except Exception:
         pass
     
     try:

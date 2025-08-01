@@ -6,8 +6,6 @@
 import json
 import sys
 import subprocess
-from datetime import datetime
-from pathlib import Path
 from utils.constants import ensure_session_log_dir
 # GitLab integration removed
 def get_current_branch():
@@ -19,7 +17,7 @@ def get_current_branch():
     except (subprocess.CalledProcessError, Exception):
         return "unknown"
 
-def count_recent_commits(branch: str = None, hours: int = 24) -> int:
+def count_recent_commits(branch: str | None = None, hours: int = 24) -> int:
     """
     Count commits made in the last N hours on a branch.
     
