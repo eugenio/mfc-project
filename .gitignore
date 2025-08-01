@@ -176,3 +176,4 @@ q-learning-mfcs/simulation_outputs
 # External project directories
 claude-code-hooks-multi-agent-observability/
 protein-models-4-mfc/ProteinDT/
+KEGG-MCP-Server/
