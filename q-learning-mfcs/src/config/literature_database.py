@@ -301,7 +301,7 @@ class LiteratureDatabase:
             typical_value=0.1,
             min_value=0.001,
             max_value=1.0,
-            recommended_range=(0.01, 0.3),
+            recommended_range=(0.05, 0.2),
             category=ParameterCategory.QLEARNING,
             references=[sutton_2018],
             notes="Balance between stability and adaptation speed"

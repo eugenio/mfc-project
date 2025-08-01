@@ -15,15 +15,15 @@ import sys
 import os
 import warnings
 
-# Suppress matplotlib backend warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
-import matplotlib
-matplotlib.use('Agg')  # Non-interactive backend
-
-# Add source path
+# Add source path first
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
+import matplotlib
 from biofilm_kinetics import BiofilmKineticsModel, SpeciesParameters, SubstrateParameters
+
+# Configure matplotlib after imports
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
+matplotlib.use('Agg')  # Non-interactive backend
 
 
 class TestSpeciesParameters(unittest.TestCase):
@@ -324,7 +324,6 @@ class TestBiofilmKineticsModel(unittest.TestCase):
     def test_biofilm_dynamics_step(self):
         """Test complete biofilm dynamics time step."""
         model = self.models['shewanella_lactate']
-        initial_state = model.get_model_parameters()
 
         # Run one time step
         result = model.step_biofilm_dynamics(
