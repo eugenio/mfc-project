@@ -1,1 +1,142 @@
-{"hooks": {"PreToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run pre-tool-hook"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type PreToolUse --summarize"}]}], "PostToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run post-tool-hook"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type PostToolUse --summarize"}]}], "Notification": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run notification-hook --notify"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type Notification --summarize"}]}], "Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run stop-hook --chat"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type Stop --add-chat"}]}], "SubagentStop": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run subagent-stop-hook"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type SubagentStop"}]}], "PreCompact": [{"matcher": "", "hooks": [{"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type PreCompact"}]}], "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "pixi run user-prompt-submit-hook --log-only"}, {"type": "command", "command": "pixi run send-event-hook --source-app mfc-project --event-type UserPromptSubmit --summarize"}]}]}, "edit_thresholds": {"max_lines_added": 25, "max_lines_removed": 25, "max_total_changes": 50, "enabled": true, "auto_commit": true, "commit_message_prefix": "Auto-commit: Large file changes detected - "}, "file_creation_thresholds": {"max_new_file_lines": 20, "max_files_per_session": 5, "enabled": true, "auto_commit": true, "commit_message_prefix": "Auto-commit: New file created - ", "exclude_patterns": ["*.tmp", "*.log", "*.cache", ".DS_Store", "Thumbs.db"], "include_patterns": ["*.py", "*.md", "*.yaml", "*.yml", "*.json", "*.toml", "*.txt"]}, "gitlab": {"enabled": true, "url": "https://gitlab-runner.tail301d0a.ts.net", "project_id": "4", "default_branch": "main", "features": {"auto_issue_on_hook_failure": true, "auto_mr_on_multiple_commits": true, "commit_comments": false, "commit_threshold_for_mr": 5}}}
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run pre-tool-hook"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type PreToolUse --summarize"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run post-tool-hook"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type PostToolUse --summarize"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run notification-hook --notify"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type Notification --summarize"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run stop-hook --chat"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type Stop --add-chat"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run subagent-stop-hook"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type SubagentStop"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type PreCompact"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pixi run user-prompt-submit-hook --log-only"
+          },
+          {
+            "type": "command",
+            "command": "pixi run send-event-hook --source-app mfc-project --event-type UserPromptSubmit --summarize"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "kegg-server": {
+      "command": "/home/uge/.nvm/versions/node/v22.13.1/bin/node",
+      "args": ["/home/uge/mfc-project/KEGG-MCP-Server/build/index.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  },
+  "edit_thresholds": {
+    "max_lines_added": 25,
+    "max_lines_removed": 25,
+    "max_total_changes": 50,
+    "enabled": true,
+    "auto_commit": true,
+    "commit_message_prefix": "Auto-commit: Large file changes detected - "
+  },
+  "file_creation_thresholds": {
+    "max_new_file_lines": 20,
+    "max_files_per_session": 5,
+    "enabled": true,
+    "auto_commit": true,
+    "commit_message_prefix": "Auto-commit: New file created - ",
+    "exclude_patterns": ["*.tmp", "*.log", "*.cache", ".DS_Store", "Thumbs.db"],
+    "include_patterns": ["*.py", "*.md", "*.yaml", "*.yml", "*.json", "*.toml", "*.txt"]
+  },
+  "gitlab": {
+    "enabled": true,
+    "url": "https://gitlab-runner.tail301d0a.ts.net",
+    "project_id": "4",
+    "default_branch": "main",
+    "features": {
+      "auto_issue_on_hook_failure": true,
+      "auto_mr_on_multiple_commits": true,
+      "commit_comments": false,
+      "commit_threshold_for_mr": 5
+    }
+  }
+}

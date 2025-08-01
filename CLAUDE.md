@@ -35,3 +35,6 @@
 - Use standardized commit message formats for documentation
 - Update related GitLab issues with documentation progress
 - Trigger automated validation and quality checks
+
+## Environment Management
+- To enter an environment use eval "$(pixi shell-hook -e <environment-name>)"
