@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from utils.constants import ensure_session_log_dir
 from utils.git_guardian import request_guardian_commit, fallback_to_direct_commit
+from utils.enhanced_security_guardian import secure_chunked_edit
 # GitLab integration removed
 
 def analyze_code_content(content, file_path=""):
@@ -668,7 +669,7 @@ def split_text_into_chunks(text, chunk_size):
 
 def perform_chunked_edit(file_path, old_string, new_string, config):
     """
-    Perform a large edit by splitting it into smaller chunks and committing each.
+    Perform a large edit using enhanced security guardian with cross-fragment validation.
     
     Args:
         file_path: Path to the file being edited
@@ -679,9 +680,66 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
     Returns:
         bool: True if successful, False otherwise
     """
+    print(f"DEBUG: Starting enhanced secure chunked edit for {file_path}", file=sys.stderr)
+    
+    # Make file path absolute if relative
+    if not os.path.isabs(file_path):
+        project_root = "/home/uge/mfc-project"
+        abs_file_path = os.path.join(project_root, file_path)
+        if os.path.exists(abs_file_path):
+            file_path = abs_file_path
+        else:
+            print(f"ERROR: File not found at {file_path} or {abs_file_path}", file=sys.stderr)
+            return False
+    
+    # Read current file content to validate old_string exists
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            current_content = f.read()
+    except Exception as e:
+        print(f"ERROR: Failed to read file {file_path}: {e}", file=sys.stderr)
+        return False
+    
+    if old_string not in current_content:
+        print(f"ERROR: Old string not found in {file_path}", file=sys.stderr)
+        return False
+    
+    # Use enhanced security guardian for secure chunked edit
+    try:
+        success = secure_chunked_edit(file_path, old_string, new_string, config)
+        if success:
+            print("✅ Enhanced secure chunked edit completed successfully", file=sys.stderr)
+        else:
+            print("❌ Enhanced secure chunked edit failed security validation", file=sys.stderr)
+        return success
+        
+    except Exception as e:
+        print(f"ERROR: Enhanced security guardian failed: {e}", file=sys.stderr)
+        # Fallback to original implementation for emergency cases
+        print("⚠️  Falling back to original chunked edit implementation", file=sys.stderr)
+        return _fallback_chunked_edit(file_path, old_string, new_string, config)
+
+
+def _fallback_chunked_edit(file_path, old_string, new_string, config):
+    """Fallback chunked edit implementation for emergency cases."""
+    print(f"DEBUG: Using fallback chunked edit for {file_path}", file=sys.stderr)
+    # Simple fallback: just use basic guardian commits
+    try:
+        success = request_guardian_commit(
+            files=[file_path],
+            commit_message=f"{config.get('commit_message_prefix', 'Auto-commit: ')}edit {file_path}",
+            change_type="edit",
+            auto_generated=True
+        )
+        if not success:
+            success = fallback_to_direct_commit([file_path], f"Fallback edit: {file_path}")
+        return success
+    except Exception as e:
+        print(f"ERROR: Fallback chunked edit failed: {e}", file=sys.stderr)
+        return False
     import traceback
     
-    print(f"DEBUG: Starting chunked edit for {file_path}", file=sys.stderr)
+    print(f"DEBUG: Starting enhanced secure chunked edit for {file_path}", file=sys.stderr)
     print(f"DEBUG: Current working directory: {os.getcwd()}", file=sys.stderr)
     print(f"DEBUG: Old string length: {len(old_string)} chars, {len(old_string.splitlines())} lines", file=sys.stderr)
     print(f"DEBUG: New string length: {len(new_string)} chars, {len(new_string.splitlines())} lines", file=sys.stderr)
@@ -869,23 +927,20 @@ def perform_chunked_edit(file_path, old_string, new_string, config):
                 )
                 
                 if not commit_success:
-                    print("🛡️  Git-commit-guardian failed, attempting fallback", file=sys.stderr)
-                    # Fallback to direct commit if guardian fails
+                    print("🛡️  Git-commit-guardian failed, attempting fallback", file=sys.stderr) 
                     commit_success = fallback_to_direct_commit([file_path], chunk_addition_msg)
                 
                 if not commit_success:
-                    print(f"ERROR: Failed to commit chunk addition {i+1}", file=sys.stderr)
+                    print(f"ERROR: Failed to commit chunk {i+1}", file=sys.stderr)
                     return False
                     
-                print(f"CHUNKED EDIT: Committed chunk {i+1}/{len(new_chunks)} - {chunk_addition_msg}", file=sys.stderr)
-                
+            print("DEBUG: Successfully added all chunks", file=sys.stderr)
+            return True
+            
         except Exception as e:
-            print(f"ERROR: Failed during chunked addition: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
+            print(f"ERROR: Exception during chunked edit: {e}", file=sys.stderr)
             return False
-    
-    print("DEBUG: Chunked edit completed successfully", file=sys.stderr)
-    return True
+
 
 def check_edit_thresholds(tool_name, tool_input):
     """
