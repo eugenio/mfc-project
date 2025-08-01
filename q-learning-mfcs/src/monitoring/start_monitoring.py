@@ -1,328 +1,534 @@
+#!/usr/bin/env python3
 """
-MFC Real-time Monitoring System Startup Script
+MFC Monitoring System Startup Script with HTTPS Support
+Orchestrates the secure startup of all monitoring components.
+"""
 
-Starts all monitoring system components:
-- Dashboard API server
-- Real-time data streaming service  
-- Safety monitoring system
-- Frontend dashboard
-"""
-import subprocess
 import sys
 import time
 import signal
 import logging
+import subprocess
+import threading
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, List, Optional
+from datetime import datetime
+import argparse
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
+try:
+    from ssl_config import (
+        SSLConfig, load_ssl_config, initialize_ssl_infrastructure,
+        test_ssl_connection, save_ssl_config
+    )
+except ImportError as e:
+    print(f"❌ Failed to import SSL configuration: {e}")
+    print("Please ensure ssl_config.py is in the correct location")
+    sys.exit(1)
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('/tmp/mfc-monitoring.log')
+    ]
+)
 logger = logging.getLogger(__name__)
 
-MONITORING_DIR = Path(__file__).parent
-SRC_DIR = MONITORING_DIR.parent
-PROJECT_DIR = SRC_DIR.parent
-class MonitoringSystemManager:
-    """Manager for MFC monitoring system components"""
-    
-    def __init__(self):
-        self.processes: Dict[str, subprocess.Popen] = {}
+class MonitoringService:
+    """Represents a monitoring service process"""
+
+    def __init__(self, name: str, command: List[str], port: int,
+                 check_url: Optional[str] = None, ssl_required: bool = False):
+        self.name = name
+        self.command = command
+        self.port = port
+        self.check_url = check_url
+        self.ssl_required = ssl_required
+        self.process: Optional[subprocess.Popen] = None
         self.is_running = False
-        
-    def start_dashboard_api(self) -> subprocess.Popen:
-        """Start the dashboard API server"""
-        logger.info("Starting Dashboard API server...")
-        
-        cmd = [
-            sys.executable, "-m", "uvicorn",
-            "monitoring.dashboard_api:app",
-            "--host", "0.0.0.0",
-            "--port", "8000",
-            "--reload",
-            "--log-level", "info"
-        ]
-        
-        process = subprocess.Popen(
-            cmd,
-            cwd=SRC_DIR,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        return process
-    
-    def start_realtime_streamer(self) -> subprocess.Popen:
-        """Start the real-time streaming service"""
-        logger.info("Starting Real-time Streaming service...")
-        
-        cmd = [
-            sys.executable, "-m",
-            "monitoring.realtime_streamer"
-        ]
-        
-        process = subprocess.Popen(
-            cmd,
-            cwd=SRC_DIR,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        return process
-    
-    def start_frontend_dashboard(self) -> subprocess.Popen:
-        """Start the Streamlit frontend dashboard"""
-        logger.info("Starting Frontend Dashboard...")
-        
-        cmd = [
-            sys.executable, "-m", "streamlit", "run",
-            str(MONITORING_DIR / "dashboard_frontend.py"),
-            "--server.port", "8501",
-            "--server.address", "0.0.0.0",
-            "--server.headless", "true"
-        ]
-        
-        process = subprocess.Popen(
-            cmd,
-            cwd=SRC_DIR,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        return process
-    
-    def check_dependencies(self) -> bool:
-        """Check if all required dependencies are installed"""
-        required_packages = [
-            "fastapi", "uvicorn", "streamlit", "plotly",
-            "websockets", "pandas", "numpy"
-        ]
-        
-        missing_packages = []
-        
-        for package in required_packages:
-            try:
-                __import__(package)
-            except ImportError:
-                missing_packages.append(package)
-        
-        if missing_packages:
-            logger.error(f"Missing required packages: {missing_packages}")
-            logger.info("Install with: pip install " + " ".join(missing_packages))
-            return False
-        
-        return True
-    
-    def wait_for_service(self, url: str, timeout: int = 30) -> bool:
-        """Wait for a service to become available"""
-        import requests
-        
-        start_time = time.time()
-        
-        while time.time() - start_time < timeout:
-            try:
-                response = requests.get(url, timeout=2)
-                if response.status_code == 200:
-                    return True
-            except requests.exceptions.RequestException:
-                pass
-            
-            time.sleep(1)
-        
-        return False
-    
-    def start_all_services(self):
-        """Start all monitoring services"""
-        if not self.check_dependencies():
-            logger.error("Cannot start services due to missing dependencies")
-            return False
-        
-        try:
-            # Start Dashboard API
-            self.processes["dashboard_api"] = self.start_dashboard_api()
-            time.sleep(2)  # Give it time to start
-            
-            # Start Real-time Streamer
-            self.processes["realtime_streamer"] = self.start_realtime_streamer()
-            time.sleep(2)
-            
-            # Start Frontend Dashboard
-            self.processes["frontend_dashboard"] = self.start_frontend_dashboard()
-            time.sleep(3)
-            
-            self.is_running = True
-            
-            # Check if services are running
-            if not self.wait_for_service("http://localhost:8000/api/health"):
-                logger.warning("Dashboard API may not have started properly")
-            else:
-                logger.info("✅ Dashboard API is running on http://localhost:8000")
-            
-            if not self.wait_for_service("http://localhost:8501"):
-                logger.warning("Frontend Dashboard may not have started properly")
-            else:
-                logger.info("✅ Frontend Dashboard is running on http://localhost:8501")
-            
-            logger.info("✅ Real-time Streamer is running on ws://localhost:8001")
-            
-            logger.info("\n🎉 MFC Monitoring System is fully operational!")
-            logger.info("\n📊 Access points:")
-            logger.info("   • Dashboard UI: http://localhost:8501")
-            logger.info("   • API Documentation: http://localhost:8000/api/docs")
-            logger.info("   • WebSocket Stream: ws://localhost:8001/ws")
-            logger.info("   • Health Check: http://localhost:8000/api/health")
-            
+        self.start_time: Optional[datetime] = None
+        self.restart_count = 0
+
+    def start(self) -> bool:
+        """Start the service"""
+        if self.is_running:
+            logger.warning(f"{self.name} is already running")
             return True
-            
+
+        try:
+            logger.info(f"Starting {self.name}...")
+            logger.debug(f"Command: {' '.join(self.command)}")
+
+            # Start process
+            self.process = subprocess.Popen(
+                self.command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            self.is_running = True
+            self.start_time = datetime.now()
+
+            logger.info(f"✅ {self.name} started (PID: {self.process.pid})")
+            return True
+
         except Exception as e:
-            logger.error(f"Error starting services: {e}")
-            self.stop_all_services()
+            logger.error(f"❌ Failed to start {self.name}: {e}")
             return False
-    
+
+    def check_health(self) -> bool:
+        """Check if service is healthy"""
+        if not self.is_running or not self.process:
+            return False
+
+        # Check if process is still running
+        if self.process.poll() is not None:
+            self.is_running = False
+            logger.error(f"{self.name} process has stopped (exit code: {self.process.returncode})")
+            return False
+
+        # Check URL if provided
+        if self.check_url:
+            try:
+                import requests
+                response = requests.get(self.check_url, timeout=5, verify=False)
+                return response.status_code == 200
+            except Exception:
+                return False
+
+        return True
+
+    def stop(self) -> bool:
+        """Stop the service"""
+        if not self.is_running or not self.process:
+            return True
+
+        try:
+            logger.info(f"Stopping {self.name}...")
+
+            # Send SIGTERM first
+            self.process.terminate()
+
+            # Wait for graceful shutdown
+            try:
+                self.process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                # Force kill if necessary
+                logger.warning(f"Force killing {self.name}...")
+                self.process.kill()
+                self.process.wait()
+
+            self.is_running = False
+            self.process = None
+
+            logger.info(f"✅ {self.name} stopped")
+            return True
+
+        except Exception as e:
+            logger.error(f"❌ Failed to stop {self.name}: {e}")
+            return False
+
+    def restart(self) -> bool:
+        """Restart the service"""
+        logger.info(f"Restarting {self.name}...")
+        self.restart_count += 1
+
+        if self.stop():
+            time.sleep(2)  # Wait before restart
+            return self.start()
+
+        return False
+
+    def get_status(self) -> Dict:
+        """Get service status information"""
+        uptime = None
+        if self.start_time and self.is_running:
+            uptime = (datetime.now() - self.start_time).total_seconds()
+
+        return {
+            "name": self.name,
+            "running": self.is_running,
+            "port": self.port,
+            "pid": self.process.pid if self.process else None,
+            "uptime_seconds": uptime,
+            "restart_count": self.restart_count,
+            "ssl_required": self.ssl_required
+        }
+
+class MonitoringOrchestrator:
+    """Orchestrates all monitoring services with HTTPS support"""
+
+    ssl_config: Optional[SSLConfig]
+
+    def __init__(self, ssl_config: Optional[SSLConfig] = None):
+        self.ssl_config = ssl_config or load_ssl_config()
+        self.services: List[MonitoringService] = []
+        self.shutdown_requested = False
+        self.health_check_interval = 30  # seconds
+        self.health_check_thread: Optional[threading.Thread] = None
+
+        # Setup signal handlers
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+        self._initialize_services()
+
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals"""
+        logger.info(f"Received signal {signum}, initiating shutdown...")
+        self.shutdown_requested = True
+
+    def _initialize_services(self):
+        """Initialize all monitoring services"""
+        current_dir = Path(__file__).parent
+
+        # FastAPI Dashboard API (HTTPS)
+        api_command = [
+            sys.executable, str(current_dir / "dashboard_api.py"),
+            "--host", "0.0.0.0"
+        ]
+        if self.ssl_config:
+            api_command.extend(["--port", str(self.ssl_config.https_port_api)])
+
+        api_service = MonitoringService(
+            name="Dashboard API",
+            command=api_command,
+            port=self.ssl_config.https_port_api if self.ssl_config else 8000,
+            check_url=f"{'https' if self.ssl_config else 'http'}://{self.ssl_config.domain if self.ssl_config else 'localhost'}:{self.ssl_config.https_port_api if self.ssl_config else 8000}/health",
+            ssl_required=bool(self.ssl_config)
+        )
+        self.services.append(api_service)
+
+        # Streamlit Frontend (HTTPS)
+        frontend_command = [
+            sys.executable, str(current_dir / "dashboard_frontend.py"),
+            "run_https"
+        ]
+        if self.ssl_config:
+            frontend_command.append(str(self.ssl_config.https_port_frontend))
+
+        frontend_service = MonitoringService(
+            name="Dashboard Frontend",
+            command=frontend_command,
+            port=self.ssl_config.https_port_frontend if self.ssl_config else 8501,
+            ssl_required=bool(self.ssl_config)
+        )
+        self.services.append(frontend_service)
+
+        # WebSocket Streamer (WSS)
+        ws_command = [
+            sys.executable, str(current_dir / "realtime_streamer.py"),
+            "--host", "0.0.0.0"
+        ]
+        if self.ssl_config:
+            ws_command.extend(["--port", str(self.ssl_config.wss_port_streaming)])
+
+        ws_service = MonitoringService(
+            name="WebSocket Streamer",
+            command=ws_command,
+            port=self.ssl_config.wss_port_streaming if self.ssl_config else 8001,
+            ssl_required=bool(self.ssl_config)
+        )
+        self.services.append(ws_service)
+
+    def check_ssl_infrastructure(self) -> bool:
+        """Check SSL infrastructure before starting services"""
+        if not self.ssl_config:
+            logger.warning("No SSL configuration found - running in HTTP mode")
+            return True
+
+        logger.info("Checking SSL infrastructure...")
+
+        # Check certificate files
+        cert_path = Path(self.ssl_config.cert_file)
+        key_path = Path(self.ssl_config.key_file)
+
+        if not cert_path.exists() or not key_path.exists():
+            logger.warning("SSL certificates not found, attempting to initialize...")
+            success, updated_config = initialize_ssl_infrastructure(self.ssl_config)
+
+            if success:
+                self.ssl_config = updated_config
+                logger.info("✅ SSL infrastructure initialized")
+                return True
+            else:
+                logger.error("❌ Failed to initialize SSL infrastructure")
+                logger.info("Falling back to HTTP mode")
+                self.ssl_config = None
+                self._initialize_services()  # Reinitialize without SSL
+                return True
+
+        logger.info("✅ SSL certificates found")
+        return True
+
+    def start_all_services(self) -> bool:
+        """Start all monitoring services"""
+        logger.info("=== Starting MFC Monitoring System ===")
+
+        # Check SSL infrastructure first
+        if not self.check_ssl_infrastructure():
+            return False
+
+        # Display configuration
+        self.print_configuration()
+
+        success_count = 0
+
+        for service in self.services:
+            if service.start():
+                success_count += 1
+                # Give service time to start
+                time.sleep(2)
+            else:
+                logger.error(f"Failed to start {service.name}")
+
+        if success_count == len(self.services):
+            logger.info("✅ All services started successfully")
+            self.start_health_monitoring()
+            return True
+        else:
+            logger.error(f"❌ Only {success_count}/{len(self.services)} services started")
+            return False
+
     def stop_all_services(self):
         """Stop all monitoring services"""
-        logger.info("Stopping all monitoring services...")
-        
-        for service_name, process in self.processes.items():
-            try:
-                logger.info(f"Stopping {service_name}...")
-                process.terminate()
-                
-                # Wait for graceful shutdown
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    logger.warning(f"Force killing {service_name}...")
-                    process.kill()
-                    process.wait()
-                
-                logger.info(f"✅ {service_name} stopped")
-                
-            except Exception as e:
-                logger.error(f"Error stopping {service_name}: {e}")
-        
-        self.processes.clear()
-        self.is_running = False
-        logger.info("🛑 All services stopped")
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get status of all services"""
-        status = {
-            "is_running": self.is_running,
-            "services": {}
-        }
-        
-        for service_name, process in self.processes.items():
-            if process.poll() is None:
-                status["services"][service_name] = "running"
-            else:
-                status["services"][service_name] = "stopped"
-        
-        return status
-    
-    def restart_service(self, service_name: str) -> bool:
-        """Restart a specific service"""
-        if service_name not in self.processes:
-            logger.error(f"Unknown service: {service_name}")
-            return False
-        
-        logger.info(f"Restarting {service_name}...")
-        
-        # Stop the service
-        process = self.processes[service_name]
-        process.terminate()
-        
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait()
-        
-        # Start the service again
-        try:
-            if service_name == "dashboard_api":
-                self.processes[service_name] = self.start_dashboard_api()
-            elif service_name == "realtime_streamer":
-                self.processes[service_name] = self.start_realtime_streamer()
-            elif service_name == "frontend_dashboard":
-                self.processes[service_name] = self.start_frontend_dashboard()
-            
-            logger.info(f"✅ {service_name} restarted")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error restarting {service_name}: {e}")
-            return False
-def signal_handler(signum, frame):
-    """Handle shutdown signals"""
-    logger.info(f"Received signal {signum}, shutting down...")
-    if 'manager' in globals():
-        manager.stop_all_services()
-    sys.exit(0)
-def main():
-    """Main function"""
-    global manager
-    
-    # Set up signal handling
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    # Create manager
-    manager = MonitoringSystemManager()
-    
-    # Parse command line arguments
-    if len(sys.argv) > 1:
-        command = sys.argv[1].lower()
-        
-        if command == "start":
-            success = manager.start_all_services()
-            if success:
-                # Keep running until interrupted
-                try:
-                    while manager.is_running:
-                        time.sleep(1)
-                except KeyboardInterrupt:
-                    pass
-                finally:
-                    manager.stop_all_services()
-            else:
-                sys.exit(1)
-        
-        elif command == "stop":
-            manager.stop_all_services()
-        
-        elif command == "status":
-            status = manager.get_status()
-            print(f"System running: {status['is_running']}")
-            for service, state in status['services'].items():
-                print(f"  {service}: {state}")
-        
-        elif command == "restart":
-            if len(sys.argv) > 2:
-                service_name = sys.argv[2]
-                manager.restart_service(service_name)
-            else:
-                manager.stop_all_services()
-                time.sleep(2)
-                manager.start_all_services()
-        
+        logger.info("=== Stopping MFC Monitoring System ===")
+
+        # Stop health monitoring
+        if self.health_check_thread:
+            self.shutdown_requested = True
+            self.health_check_thread.join(timeout=5)
+
+        # Stop services in reverse order
+        for service in reversed(self.services):
+            service.stop()
+
+        logger.info("✅ All services stopped")
+
+    def start_health_monitoring(self):
+        """Start health monitoring thread"""
+        self.health_check_thread = threading.Thread(
+            target=self._health_check_loop,
+            daemon=True
+        )
+        self.health_check_thread.start()
+        logger.info("Health monitoring started")
+
+    def _health_check_loop(self):
+        """Continuous health checking loop"""
+        consecutive_failures = {service.name: 0 for service in self.services}
+        max_failures = 3
+
+        while not self.shutdown_requested:
+            for service in self.services:
+                if not service.check_health():
+                    consecutive_failures[service.name] += 1
+                    logger.warning(f"{service.name} health check failed ({consecutive_failures[service.name]}/{max_failures})")
+
+                    if consecutive_failures[service.name] >= max_failures:
+                        logger.error(f"{service.name} has failed {max_failures} consecutive health checks, restarting...")
+                        if service.restart():
+                            consecutive_failures[service.name] = 0
+                        else:
+                            logger.error(f"Failed to restart {service.name}")
+                else:
+                    consecutive_failures[service.name] = 0
+
+            # Wait before next health check
+            for _ in range(self.health_check_interval):
+                if self.shutdown_requested:
+                    break
+                time.sleep(1)
+
+    def print_configuration(self):
+        """Print current configuration"""
+        logger.info("=== Configuration ===")
+
+        if self.ssl_config:
+            logger.info("SSL Mode: HTTPS/WSS")
+            logger.info(f"Domain: {self.ssl_config.domain}")
+            logger.info(f"Certificate: {self.ssl_config.cert_file}")
+            logger.info("Ports:")
+            logger.info(f"  - Dashboard API: {self.ssl_config.https_port_api} (HTTPS)")
+            logger.info(f"  - Dashboard Frontend: {self.ssl_config.https_port_frontend} (HTTPS)")
+            logger.info(f"  - WebSocket Streamer: {self.ssl_config.wss_port_streaming} (WSS)")
         else:
-            print(f"Unknown command: {command}")
-            print("Usage: python start_monitoring.py [start|stop|status|restart [service_name]]")
-            sys.exit(1)
-    
-    else:
-        # Default: start all services
-        success = manager.start_all_services()
+            logger.info("SSL Mode: HTTP/WS (Development)")
+            logger.info("Ports:")
+            logger.info("  - Dashboard API: 8000 (HTTP)")
+            logger.info("  - Dashboard Frontend: 8501 (HTTP)")
+            logger.info("  - WebSocket Streamer: 8001 (WS)")
+
+        logger.info("===================")
+
+    def print_status(self):
+        """Print status of all services"""
+        print("\n=== MFC Monitoring System Status ===")
+
+        for service in self.services:
+            status = service.get_status()
+            status_icon = "🟢" if status["running"] else "🔴"
+            ssl_icon = "🔒" if status["ssl_required"] else "🔓"
+
+            print(f"{status_icon} {ssl_icon} {status['name']}")
+            print(f"   Port: {status['port']}")
+
+            if status["running"]:
+                print(f"   PID: {status['pid']}")
+                if status["uptime_seconds"]:
+                    uptime_hours = status["uptime_seconds"] / 3600
+                    print(f"   Uptime: {uptime_hours:.2f} hours")
+                if status["restart_count"] > 0:
+                    print(f"   Restarts: {status['restart_count']}")
+            else:
+                print("   Status: Stopped")
+
+            print()
+
+        print("=====================================\n")
+
+    def run_interactive_mode(self):
+        """Run in interactive mode with status monitoring"""
+        try:
+            while not self.shutdown_requested:
+                # Print status every 30 seconds
+                self.print_status()
+
+                # Wait with interrupt checking
+                for _ in range(30):
+                    if self.shutdown_requested:
+                        break
+                    time.sleep(1)
+
+        except KeyboardInterrupt:
+            logger.info("Interactive mode interrupted")
+        finally:
+            self.stop_all_services()
+
+def create_ssl_config_interactive() -> SSLConfig:
+    """Create SSL configuration interactively"""
+    print("=== SSL Configuration Setup ===")
+
+    domain = input("Domain name (default: localhost): ").strip() or "localhost"
+    email = input("Email for Let's Encrypt (default: admin@example.com): ").strip() or "admin@example.com"
+
+    use_letsencrypt = domain != "localhost"
+    if domain != "localhost":
+        use_le = input("Use Let's Encrypt for certificates? (y/N): ").strip().lower()
+        use_letsencrypt = use_le in ['y', 'yes']
+
+    staging = False
+    if use_letsencrypt:
+        staging_input = input("Use Let's Encrypt staging (for testing)? (y/N): ").strip().lower()
+        staging = staging_input in ['y', 'yes']
+
+    config = SSLConfig(
+        domain=domain,
+        email=email,
+        use_letsencrypt=use_letsencrypt,
+        staging=staging
+    )
+
+    print("\nConfiguration created:")
+    print(f"  Domain: {config.domain}")
+    print(f"  Let's Encrypt: {config.use_letsencrypt}")
+    print(f"  Staging: {config.staging}")
+    print(f"  API Port: {config.https_port_api}")
+    print(f"  Frontend Port: {config.https_port_frontend}")
+    print(f"  WebSocket Port: {config.wss_port_streaming}")
+
+    return config
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description="MFC Monitoring System with HTTPS Support")
+    parser.add_argument("--init-ssl", action="store_true", help="Initialize SSL infrastructure")
+    parser.add_argument("--config-ssl", action="store_true", help="Configure SSL interactively")
+    parser.add_argument("--test-ssl", action="store_true", help="Test SSL connections")
+    parser.add_argument("--status", action="store_true", help="Show service status and exit")
+    parser.add_argument("--stop", action="store_true", help="Stop all services")
+    parser.add_argument("--no-ssl", action="store_true", help="Disable SSL (HTTP mode)")
+    parser.add_argument("--daemon", action="store_true", help="Run as daemon (non-interactive)")
+
+    args = parser.parse_args()
+
+    if args.config_ssl:
+        config = create_ssl_config_interactive()
+        if save_ssl_config(config):
+            print("✅ SSL configuration saved")
+        else:
+            print("❌ Failed to save SSL configuration")
+        return
+
+    if args.init_ssl:
+        logger.info("Initializing SSL infrastructure...")
+        success, config = initialize_ssl_infrastructure()
         if success:
+            print("✅ SSL infrastructure initialized successfully")
+            print(f"Domain: {config.domain}")
+            print(f"Certificate: {config.cert_file}")
+            print(f"Key: {config.key_file}")
+        else:
+            print("❌ SSL initialization failed")
+            sys.exit(1)
+        return
+
+    if args.test_ssl:
+        ssl_config = load_ssl_config()
+        if not ssl_config:
+            print("❌ No SSL configuration found")
+            sys.exit(1)
+
+        ports = [ssl_config.https_port_api, ssl_config.https_port_frontend, ssl_config.wss_port_streaming]
+        all_passed = True
+
+        for service, port in zip(["API", "Frontend", "WebSocket"], ports):
+            if test_ssl_connection(ssl_config.domain, port, timeout=5):
+                print(f"✅ {service} SSL test passed (port {port})")
+            else:
+                print(f"❌ {service} SSL test failed (port {port})")
+                all_passed = False
+
+        sys.exit(0 if all_passed else 1)
+
+    # Load SSL configuration (unless disabled)
+    ssl_config = None if args.no_ssl else load_ssl_config()
+
+    # Create orchestrator
+    orchestrator = MonitoringOrchestrator(ssl_config)
+
+    if args.status:
+        orchestrator.print_status()
+        return
+
+    if args.stop:
+        orchestrator.stop_all_services()
+        return
+
+    # Start all services
+    if orchestrator.start_all_services():
+        if args.daemon:
+            logger.info("Running in daemon mode. Use SIGTERM to stop.")
             try:
-                while manager.is_running:
+                while not orchestrator.shutdown_requested:
                     time.sleep(1)
             except KeyboardInterrupt:
                 pass
-            finally:
-                manager.stop_all_services()
         else:
-            sys.exit(1)
+            logger.info("Running in interactive mode. Press Ctrl+C to stop.")
+            orchestrator.run_interactive_mode()
+    else:
+        logger.error("Failed to start monitoring system")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

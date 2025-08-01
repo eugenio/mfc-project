@@ -1,0 +1,25 @@
+# Additional test tasks for pixi.toml
+# Add these tasks to the main pixi.toml file
+
+[tasks]
+# Integrated Test Suite - Main Entry Points
+test-integrated = "python run_integrated_tests.py --all"
+test-integrated-fast = "python run_integrated_tests.py --all --fast"
+test-integrated-verbose = "python run_integrated_tests.py --all --verbose"
+
+# Component-Specific Tests
+test-hooks = "python run_integrated_tests.py --hooks"
+test-security = "python run_integrated_tests.py --security"
+test-mfc = "python run_integrated_tests.py --mfc"
+test-integration = "python run_integrated_tests.py --integration"
+
+# Quality Analysis
+test-coverage = "python run_integrated_tests.py --coverage"
+test-lint = "python run_integrated_tests.py --lint"
+test-typing = "python run_integrated_tests.py --typing"
+
+# CI-friendly test (with XML output and JSON report)
+test-ci = "python run_integrated_tests.py --all --format json"
+
+# Update existing test-all to use integrated runner
+# test-all = "python run_integrated_tests.py --all"

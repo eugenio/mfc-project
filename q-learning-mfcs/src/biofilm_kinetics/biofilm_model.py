@@ -21,7 +21,7 @@ from .substrate_params import SubstrateParameters
 # Import biological configuration
 try:
     from config.biological_config import (
-        SpeciesMetabolicConfig, BiofilmKineticsConfig, BacterialSpecies,
+        SpeciesMetabolicConfig, BiofilmKineticsConfig,
         get_geobacter_config, get_shewanella_config, get_default_biofilm_config
     )
     from config.substrate_config import (
@@ -49,7 +49,7 @@ class BiofilmKineticsModel:
     - GPU acceleration support
     - Real-time parameter adaptation
     """
-    
+
     def __init__(self, species: str = 'mixed', substrate: str = 'lactate',
                  use_gpu: bool = True, temperature: float = 303.0, ph: float = 7.0,
                  species_config: Optional[SpeciesMetabolicConfig] = None,
@@ -72,12 +72,12 @@ class BiofilmKineticsModel:
         self.substrate = substrate
         self.temperature = temperature
         self.ph = ph
-        
+
         # Store configuration objects
         self.species_config = species_config
         self.biofilm_config = biofilm_config
         self.substrate_config = substrate_config
-        
+
         # Load default configurations if not provided
         if SpeciesMetabolicConfig and self.species_config is None:
             if species == "geobacter":
@@ -85,38 +85,39 @@ class BiofilmKineticsModel:
             elif species == "shewanella":
                 self.species_config = get_shewanella_config()
             # For "mixed" or other cases, could use default or blend configs
-        
+
         if BiofilmKineticsConfig and self.biofilm_config is None:
             self.biofilm_config = get_default_biofilm_config()
-            
+
         if ComprehensiveSubstrateConfig and self.substrate_config is None:
             substrate_type = SubstrateType.ACETATE if substrate == "acetate" else SubstrateType.LACTATE
             self.substrate_config = DEFAULT_SUBSTRATE_CONFIGS.get(substrate_type)
-        
+
         # Validate configurations if available
         if self.species_config and validate_species_metabolic_config:
             validate_species_metabolic_config(self.species_config)
         if self.biofilm_config and validate_biofilm_kinetics_config:
             validate_biofilm_kinetics_config(self.biofilm_config)
-        
+
         # Initialize parameter databases (fallback)
         self.species_db = SpeciesParameters()
         self.substrate_db = SubstrateParameters()
-        
+
         # GPU acceleration setup
         self.use_gpu = use_gpu
         self.gpu_acc = get_gpu_accelerator() if use_gpu else None
         self.gpu_available = self.gpu_acc.is_gpu_available() if self.gpu_acc else False
-        
+
+        # Initialize fallback parameter objects to ensure they always exist
+        self.kinetic_params = self.species_db.get_parameters(self.species)
+        self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
+
         # Load and compensate parameters
         self._load_parameters()
-        
-        # Ensure required attributes exist for tests
-        self._ensure_test_compatibility()
-        
+
         # Initialize state variables
         self.reset_state()
-    
+
     def _load_parameters(self):
         """Load and apply environmental compensation to parameters."""
         # Get base parameters from configuration or fallback
@@ -131,9 +132,19 @@ class BiofilmKineticsModel:
             self.E_an = -0.5  # Typical anode potential
             self.attachment_prob = self.species_config.attachment_rate
             self.biofilm_thickness_max = self.species_config.max_biofilm_thickness
+            
+            # Update kinetic_params object attributes for backward compatibility
+            self.kinetic_params.mu_max = self.mu_max
+            self.kinetic_params.K_s = self.K_s
+            self.kinetic_params.Y_xs = self.Y_xs
+            self.kinetic_params.j_max = self.j_max
+            self.kinetic_params.sigma_biofilm = self.sigma_biofilm
+            self.kinetic_params.E_ka = self.E_ka
+            self.kinetic_params.E_an = self.E_an
+            self.kinetic_params.attachment_prob = self.attachment_prob
+            self.kinetic_params.biofilm_thickness_max = self.biofilm_thickness_max
         else:
-            # Fallback to legacy parameter database
-            self.kinetic_params = self.species_db.get_parameters(self.species)
+            # Use fallback parameter database values
             self.mu_max = getattr(self.kinetic_params, 'mu_max', 0.3)
             self.K_s = getattr(self.kinetic_params, 'K_s', 0.5)
             self.Y_xs = getattr(self.kinetic_params, 'Y_xs', 0.1)
@@ -143,42 +154,35 @@ class BiofilmKineticsModel:
             self.E_an = getattr(self.kinetic_params, 'E_an', -0.5)
             self.attachment_prob = getattr(self.kinetic_params, 'attachment_prob', 0.1)
             self.biofilm_thickness_max = getattr(self.kinetic_params, 'biofilm_thickness_max', 100.0)
-        
+
         # Get substrate properties
         if self.substrate_config:
             self.substrate_molecular_weight = self.substrate_config.molecular_weight
+            # Update substrate_props object for backward compatibility
+            self.substrate_props.molecular_weight = self.substrate_molecular_weight
         else:
-            self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
             self.substrate_molecular_weight = getattr(self.substrate_props, 'molecular_weight', 90.08)
-        
-        # Store base parameters for environmental corrections
-        self.mu_max_base = self.mu_max
-        self.E_ka_base = self.E_ka
-        
+
         # Apply temperature compensation (Arrhenius equation)
-        temp_factor = float(np.exp(-50000 / 8.314 * (1/self.temperature - 1/303.0)))  # Ea = 50 kJ/mol
-        self.mu_max = self.mu_max_base * temp_factor
-        
-        # Apply pH compensation
-        ph_optimal = 7.0
-        ph_factor = float(np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2))
-        self.mu_max *= ph_factor
-        
-        # pH affects electrochemical potential (Nernst equation effect)
-        # E_ka shifts by ~59 mV per pH unit at 25°C
-        RT_F = 8.314 * self.temperature / 96485  # RT/F
-        self.E_ka = self.E_ka_base - 2.3 * RT_F * (self.ph - 7.0)  # Assuming 1 electron transfer
-    
-    def _ensure_test_compatibility(self):
-        """Ensure attributes exist for test compatibility."""
-        # Always create kinetic_params attribute if it doesn't exist
-        if not hasattr(self, 'kinetic_params'):
-            self.kinetic_params = self.species_db.get_parameters(self.species)
-        
-        # Always create substrate_props attribute if it doesn't exist  
-        if not hasattr(self, 'substrate_props'):
-            self.substrate_props = self.substrate_db.get_substrate_properties(self.substrate)
-    
+        if self.temperature != 303.0:  # Reference temperature
+            temp_factor = np.exp(-50000 / 8.314 * (1/self.temperature - 1/303.0))  # Ea = 50 kJ/mol
+            self.mu_max *= temp_factor
+
+        # Apply pH compensation (simple Gaussian)
+        if self.ph != 7.0:  # Reference pH
+            ph_optimal = 7.0
+            ph_factor = np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2)
+            self.mu_max *= ph_factor
+            
+            # pH also affects electrochemical parameters (Nernst equation influence)
+            # E_ka shifts with pH: dE/dpH ≈ -0.059 V/pH unit for typical bioelectrochemical systems
+            ph_shift = (self.ph - ph_optimal) * (-0.059)  # V/pH unit
+            self.E_ka += ph_shift
+
+        # Update kinetic_params with compensated values for backward compatibility
+        self.kinetic_params.mu_max = self.mu_max
+        self.kinetic_params.E_ka = self.E_ka
+
     def reset_state(self):
         """Reset biofilm state variables."""
         self.biofilm_thickness = 0.1  # μm - initial thickness
@@ -187,8 +191,8 @@ class BiofilmKineticsModel:
         self.attached_fraction = 0.0  # Fraction of cells attached
         self.current_density = 0.0    # A/m² - current output
         self.time = 0.0              # h - simulation time
-    
-    def calculate_nernst_monod_growth_rate(self, substrate_conc: float, 
+
+    def calculate_nernst_monod_growth_rate(self, substrate_conc: float,
                                          anode_potential: float) -> float:
         """
         Calculate growth rate using Nernst-Monod kinetics.
@@ -201,25 +205,25 @@ class BiofilmKineticsModel:
             Specific growth rate (1/h)
         """
         # Nernst-Monod model: μ = μ_max * (S/(K_s + S)) * (E_a - E_ka)/(E_ka - E_an)
-        
+
         # Substrate limitation term
         substrate_term = substrate_conc / (self.K_s + substrate_conc)
-        
+
         # Electrochemical limitation term
         potential_numerator = anode_potential - self.E_ka
         potential_denominator = self.E_ka - self.E_an
-        
+
         # Avoid division by zero
         if abs(potential_denominator) < 1e-6:
             electrochemical_term = 1.0
         else:
             electrochemical_term = max(0.0, potential_numerator / potential_denominator)
-        
+
         growth_rate = (self.mu_max * substrate_term * electrochemical_term)
-        
+
         return max(0.0, growth_rate)
-    
-    def calculate_stochastic_attachment(self, cell_density: float, 
+
+    def calculate_stochastic_attachment(self, cell_density: float,
                                       surface_area: float) -> float:
         """
         Calculate stochastic cell attachment using probability matrix.
@@ -233,7 +237,7 @@ class BiofilmKineticsModel:
         """
         # Base attachment probability from configuration
         base_prob = self.attachment_prob
-        
+
         # Environmental corrections
         if hasattr(self, 'substrate_db'):
             ph_correction = self.substrate_db.apply_ph_correction(
@@ -241,18 +245,18 @@ class BiofilmKineticsModel:
             )
         else:
             # Simple pH correction
-            ph_correction = float(np.exp(-0.5 * ((self.ph - 7.0) / 1.0)**2))
-        
+            ph_correction = np.exp(-0.5 * ((self.ph - 7.0) / 1.0)**2)
+
         # Surface coverage effect (reduced attachment as biofilm grows)
         coverage_factor = 1.0 - (self.biofilm_thickness / self.biofilm_thickness_max)
         coverage_factor = max(0.1, coverage_factor)  # Minimum 10% attachment rate
-        
+
         # Calculate attachment rate
         attachment_rate = (base_prob * ph_correction * coverage_factor * cell_density)
-        
+
         return attachment_rate
-    
-    def calculate_biofilm_current_density(self, thickness: float, 
+
+    def calculate_biofilm_current_density(self, thickness: float,
                                         biomass_density: float) -> float:
         """
         Calculate current density from biofilm parameters.
@@ -266,22 +270,22 @@ class BiofilmKineticsModel:
         """
         # Convert thickness to meters
         thickness_m = thickness * 1e-6
-        
+
         # Current density with biofilm resistance effects
         # j = j_max * (biomass/max_biomass) * (1 - R_biofilm * thickness)
-        
+
         max_biomass = 50.0  # kg/m³ typical maximum
         biomass_factor = min(1.0, biomass_density / max_biomass)
-        
+
         # Biofilm resistance effect using configuration parameters
         resistance_factor = 1.0 / (1.0 + thickness_m / (self.sigma_biofilm * 1e-3))
-        
+
         # Calculate current density (convert from mA/cm² to A/m²)
         current_density = (self.j_max * 1e-3 * 1e4 * biomass_factor * resistance_factor)
-        
+
         return current_density
-    
-    def calculate_substrate_consumption(self, growth_rate: float, 
+
+    def calculate_substrate_consumption(self, growth_rate: float,
                                       biomass: float) -> float:
         """
         Calculate substrate consumption rate.
@@ -295,13 +299,13 @@ class BiofilmKineticsModel:
         """
         # Consumption = growth_rate * biomass / yield_coefficient
         consumption_rate = growth_rate * biomass / self.Y_xs
-        
+
         # Convert to mmol/(L·h) using molecular weight from configuration
         consumption_mmol = consumption_rate * 1000 / self.substrate_molecular_weight  # mmol/(L·h)
-        
+
         return consumption_mmol
-    
-    def calculate_mixed_culture_synergy(self, geobacter_current: float, 
+
+    def calculate_mixed_culture_synergy(self, geobacter_current: float,
                                       shewanella_current: float) -> float:
         """
         Calculate synergy effect in mixed cultures.
@@ -315,23 +319,23 @@ class BiofilmKineticsModel:
         """
         if self.species != 'mixed':
             return geobacter_current + shewanella_current
-        
+
         # Mixed culture synergy: j_mixed = j_Gs + α * j_So * f_synergy
         alpha = self.species_db.get_synergy_coefficient('geobacter', 'shewanella')
-        
+
         # Synergy efficiency factor (depends on species ratio and conditions)
         ph_factor = self.substrate_db.apply_ph_correction(self.substrate, 1.0, self.ph)
         temp_factor = max(1.0, min(1.5, self.temperature / 303.0))  # Temperature enhancement
-        
+
         synergy_efficiency = ph_factor * temp_factor
-        
+
         # Use total current with synergy enhancement
         total_individual = geobacter_current + shewanella_current
         enhanced_current = total_individual * alpha * synergy_efficiency
-        
+
         return enhanced_current
-    
-    def step_biofilm_dynamics(self, dt: float, anode_potential: float, 
+
+    def step_biofilm_dynamics(self, dt: float, anode_potential: float,
                             substrate_supply: float = 0.0) -> Dict[str, float]:
         """
         Step biofilm dynamics forward by time dt.
@@ -347,53 +351,54 @@ class BiofilmKineticsModel:
         # Use GPU arrays if available
         if self.gpu_available:
             # Convert to GPU arrays for computation
-            self.gpu_acc.array([self.biofilm_thickness])
-            self.gpu_acc.array([self.biomass_density])
-            self.gpu_acc.array([self.substrate_concentration])
-        
+            # Note: GPU arrays prepared for future GPU-accelerated calculations
+            _ = self.gpu_acc.array([self.biofilm_thickness])
+            _ = self.gpu_acc.array([self.biomass_density])
+            _ = self.gpu_acc.array([self.substrate_concentration])
+
         # Calculate growth rate
         growth_rate = self.calculate_nernst_monod_growth_rate(
             self.substrate_concentration, anode_potential
         )
-        
+
         # Calculate current density
         self.current_density = self.calculate_biofilm_current_density(
             self.biofilm_thickness, self.biomass_density
         )
-        
+
         # Calculate substrate consumption
         consumption_rate = self.calculate_substrate_consumption(
             growth_rate, self.biomass_density
         )
-        
+
         # Update substrate concentration
         dC_substrate_dt = substrate_supply - consumption_rate
         self.substrate_concentration += dC_substrate_dt * dt
         self.substrate_concentration = max(0.01, self.substrate_concentration)  # Minimum
-        
+
         # Update biomass density
         # dX/dt = μ * X - k_death * X
         death_rate = 0.01  # 1/h typical death rate
         dX_dt = growth_rate * self.biomass_density - death_rate * self.biomass_density
         self.biomass_density += dX_dt * dt
         self.biomass_density = max(0.001, self.biomass_density)  # Minimum
-        
+
         # Update biofilm thickness
         # Thickness growth proportional to biomass growth and attachment
-        self.calculate_stochastic_attachment(
+        _ = self.calculate_stochastic_attachment(
             cell_density=1e12,  # cells/m³ typical planktonic density
             surface_area=1.0    # m² reference area
         )
-        
+
         # More conservative thickness growth to avoid runaway growth
         thickness_growth_rate = min(0.05 * growth_rate, 0.5)  # μm/h with cap
-        if self.biomass_density > 0.005:  # Very low threshold for initial growth
+        if self.biomass_density > 1.0:  # Only grow when sufficient biomass
             self.biofilm_thickness += thickness_growth_rate * dt
         self.biofilm_thickness = min(self.biofilm_thickness, self.biofilm_thickness_max)
-        
+
         # Update time
         self.time += dt
-        
+
         # Return current state
         return {
             'time': self.time,
@@ -405,25 +410,21 @@ class BiofilmKineticsModel:
             'consumption_rate': consumption_rate,
             'anode_potential': anode_potential
         }
-    
+
     def get_model_parameters(self) -> Dict[str, Any]:
         """Get current model parameters for inspection."""
-        # Create a copy of kinetic_params dict with current values
-        kinetic_params_dict = self.kinetic_params.__dict__.copy()
-        kinetic_params_dict['mu_max'] = self.mu_max  # Use current temperature/pH compensated value
-        kinetic_params_dict['E_ka'] = self.E_ka    # Use current pH compensated value
-        
+        import copy
         return {
             'species': self.species,
             'substrate': self.substrate,
             'temperature': self.temperature,
             'ph': self.ph,
-            'kinetic_params': kinetic_params_dict,
-            'substrate_props': self.substrate_props.__dict__,
+            'kinetic_params': copy.deepcopy(self.kinetic_params.__dict__),
+            'substrate_props': copy.deepcopy(self.substrate_props.__dict__),
             'gpu_available': self.gpu_available
         }
-    
-    def set_environmental_conditions(self, temperature: Optional[float] = None, 
+
+    def set_environmental_conditions(self, temperature: Optional[float] = None,
                                    ph: Optional[float] = None):
         """
         Update environmental conditions and recompute parameters.
@@ -436,10 +437,10 @@ class BiofilmKineticsModel:
             self.temperature = temperature
         if ph is not None:
             self.ph = ph
-        
+
         # Reload parameters with new conditions
         self._load_parameters()
-    
+
     def calculate_theoretical_maximum_current(self) -> float:
         """
         Calculate theoretical maximum current density.
@@ -450,13 +451,13 @@ class BiofilmKineticsModel:
         # Theoretical current from substrate consumption at maximum rate
         max_consumption = (self.kinetic_params.mu_max * 50.0 /  # max biomass
                          self.kinetic_params.Y_xs)
-        
+
         theoretical_current = self.substrate_db.calculate_theoretical_current(
             self.substrate, max_consumption
         )
-        
+
         return theoretical_current
-    
+
     def get_mass_balance_equations(self) -> Dict[str, str]:
         """Get mass balance equations for current configuration."""
         return {

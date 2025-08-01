@@ -1,3 +1,6 @@
-[submodule "claude-code-hooks-multi-agent-observability"]
-	path = claude-code-hooks-multi-agent-observability
-	url = git@github.com:eugenio/claude-code-hooks-multi-agent-observability.git
+[submodule "BMAD-METHOD"]
+	path = BMAD-METHOD
+	url = https://github.com/bmadcode/BMAD-METHOD.git
+[submodule "KEGG-MCP-Server"]
+	path = KEGG-MCP-Server
+	url = https://github.com/Augmented-Nature/KEGG-MCP-Server.git

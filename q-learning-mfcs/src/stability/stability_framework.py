@@ -1,829 +1,711 @@
+#!/usr/bin/env python3
 """
-Long-term Stability Study Framework for MFC Systems
+Stability Analysis Framework for MFC Systems
 
-Comprehensive framework for analyzing long-term system reliability, detecting
-degradation patterns, and predicting maintenance requirements.
+This module provides a comprehensive framework for analyzing the stability
+of Microbial Fuel Cell (MFC) systems, including power output stability,
+biofilm health monitoring, and system performance degradation analysis.
 
-Features:
-- Multi-scale stability analysis (hours to years)
-- Component degradation tracking
-- Failure prediction algorithms
-- Maintenance scheduling optimization
-- Performance drift detection
-- Reliability metrics calculation
-
-Author: MFC Development Team
-Date: 2025-07-28
+Author: MFC Analysis Team
+Created: 2025-07-31
+Last Modified: 2025-07-31
 """
+
+from __future__ import annotations
+
+import logging
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from datetime import datetime, timedelta
+from enum import Enum, auto
 from pathlib import Path
-import json
-import logging
+from typing import (
+    Any, Dict, List, Optional, Tuple, Union, Protocol,
+    TypeVar, Sequence
+)
 
-from config.statistical_analysis import StatisticalAnalyzer
+# Configure logging
+logger = logging.getLogger(__name__)
 
-class StabilityTimeScale(Enum):
-    """Time scales for stability analysis."""
-    SHORT_TERM = "short_term"      # Hours to days
-    MEDIUM_TERM = "medium_term"    # Days to weeks
-    LONG_TERM = "long_term"        # Weeks to months
-    ULTRA_LONG = "ultra_long"      # Months to years
-class ComponentType(Enum):
-    """MFC system components."""
-    MEMBRANE = "membrane"
-    ANODE = "anode"
-    CATHODE = "cathode"
-    BIOFILM = "biofilm"
-    ELECTRONICS = "electronics"
-    PUMPS = "pumps"
-    SENSORS = "sensors"
-    OVERALL = "overall"
+# Type aliases for better readability
+TimeSeriesData = Union[pd.Series, np.ndarray, List[float]]
+Timestamp = Union[datetime, pd.Timestamp, float]
+MetricValue = Union[float, int, np.floating, np.integer]
+ParameterDict = Dict[str, Any]
 
-class DegradationMode(Enum):
-    """Types of component degradation."""
-    FOULING = "fouling"
-    CORROSION = "corrosion"
-    MECHANICAL_WEAR = "mechanical_wear"
-    THERMAL_STRESS = "thermal_stress"
-    CHEMICAL_ATTACK = "chemical_attack"
-    BIOLOGICAL_DAMAGE = "biological_damage"
-    ELECTRICAL_AGING = "electrical_aging"
+# Generic types
+T = TypeVar('T')
+StabilityMetricType = TypeVar('StabilityMetricType', bound='StabilityMetrics')
+
+
+class StabilityLevel(Enum):
+    """Enumeration of stability levels for MFC systems."""
+    CRITICAL = auto()
+    POOR = auto()
+    FAIR = auto()
+    GOOD = auto()
+    EXCELLENT = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower()
+
+    @property
+    def numeric_value(self) -> float:
+        """Return numeric representation of stability level."""
+        return {
+            StabilityLevel.CRITICAL: 0.0,
+            StabilityLevel.POOR: 0.25,
+            StabilityLevel.FAIR: 0.5,
+            StabilityLevel.GOOD: 0.75,
+            StabilityLevel.EXCELLENT: 1.0
+        }[self]
+
+
+class AnalysisMethod(Enum):
+    """Enumeration of stability analysis methods."""
+    STATISTICAL = auto()
+    SPECTRAL = auto()
+    TREND_ANALYSIS = auto()
+    WAVELET = auto()
+    MACHINE_LEARNING = auto()
+
+
+@dataclass(frozen=True)
+class StabilityThresholds:
+    """Thresholds for stability assessment."""
+    power_variation_threshold: float = 0.05  # 5% variation threshold
+    efficiency_degradation_threshold: float = 0.10  # 10% degradation threshold
+    biofilm_health_threshold: float = 0.70  # 70% health threshold
+    system_reliability_threshold: float = 0.95  # 95% reliability threshold
+    temperature_stability_threshold: float = 2.0  # ±2°C temperature variation
+    ph_stability_threshold: float = 0.5  # ±0.5 pH variation
+
+    def __post_init__(self) -> None:
+        """Validate threshold values."""
+        if not (0.0 <= self.power_variation_threshold <= 1.0):
+            raise ValueError("Power variation threshold must be between 0 and 1")
+        if not (0.0 <= self.efficiency_degradation_threshold <= 1.0):
+            raise ValueError("Efficiency degradation threshold must be between 0 and 1")
+
+
 @dataclass
 class StabilityMetrics:
-    """Container for stability analysis results."""
-    
-    # Performance metrics
-    power_stability: float          # Coefficient of variation
-    efficiency_drift: float         # %/day change
-    voltage_degradation: float      # V/day
-    current_fluctuation: float      # Coefficient of variation
-    
-    # Reliability metrics  
-    mtbf_hours: float              # Mean time between failures
-    availability: float            # Fraction of uptime
-    failure_rate: float            # Failures per hour
-    
-    # Degradation metrics
-    membrane_resistance_increase: float    # %/day
-    biofilm_thickness_rate: float         # μm/day
-    electrode_degradation: float          # %/day
-    
-    # Maintenance metrics
-    cleaning_frequency_days: float
-    component_lifetime_days: float
-    maintenance_cost_per_day: float
-    
-    # Statistical measures
-    performance_variance: float
-    trend_slope: float
-    seasonal_component: float
-    residual_variance: float
-@dataclass
-class ComponentHealth:
-    """Health status of individual components."""
-    
-    component: ComponentType
-    health_score: float             # 0-100 scale
-    remaining_lifetime: float       # Days
-    degradation_rate: float         # %/day
-    last_maintenance: datetime
-    next_maintenance: datetime
-    failure_probability: float      # 0-1 probability in next 30 days
-    degradation_modes: List[DegradationMode]
-    performance_history: List[float] = field(default_factory=list)
-    
-class StabilityAnalyzer:
-    """
-    Core stability analysis engine for MFC systems.
-    
-    Provides comprehensive long-term stability analysis including:
-    - Performance drift detection
-    - Component degradation tracking
-    - Failure prediction
-    - Maintenance optimization
-    - Reliability metrics calculation
-    """
-    
-    def __init__(self, data_directory: Optional[Path] = None):
-        """
-        Initialize stability analyzer.
+    """Comprehensive stability metrics for MFC systems."""
+
+    # Power stability metrics
+    power_stability_coefficient: float = 0.0
+    power_variation: float = 0.0
+    power_trend_slope: float = 0.0
+    power_autocorrelation: float = 0.0
+
+    # Efficiency metrics
+    efficiency_stability: float = 0.0
+    efficiency_degradation_rate: float = 0.0
+    efficiency_recovery_factor: float = 0.0
+
+    # Biofilm stability metrics
+    biofilm_health_index: float = 0.0
+    biofilm_thickness_stability: float = 0.0
+    biofilm_conductivity_stability: float = 0.0
+
+    # System-wide metrics
+    overall_stability_score: float = 0.0
+    stability_level: StabilityLevel = StabilityLevel.FAIR
+    confidence_interval: Tuple[float, float] = (0.0, 0.0)
+
+    # Temporal metrics
+    analysis_timestamp: datetime = field(default_factory=datetime.now)
+    analysis_duration: timedelta = field(default=timedelta(hours=1))
+
+    # Metadata
+    data_quality_score: float = 1.0
+    analysis_method: AnalysisMethod = AnalysisMethod.STATISTICAL
+    sample_size: int = 0
+
+    def __post_init__(self) -> None:
+        """Validate and compute derived metrics."""
+        self._validate_metrics()
+        self._compute_overall_stability()
+
+    def _validate_metrics(self) -> None:
+        """Validate metric values are within expected ranges."""
+        metrics_to_validate = [
+            ('power_stability_coefficient', 0.0, 1.0),
+            ('efficiency_stability', 0.0, 1.0),
+            ('biofilm_health_index', 0.0, 1.0),
+            ('data_quality_score', 0.0, 1.0),
+        ]
+
+        for metric_name, min_val, max_val in metrics_to_validate:
+            value = getattr(self, metric_name)
+            if not (min_val <= value <= max_val):
+                logger.warning(
+                    f"Metric {metric_name} value {value} outside expected range "
+                    f"[{min_val}, {max_val}]"
+                )
+
+    def _compute_overall_stability(self) -> None:
+        """Compute overall stability score from individual metrics."""
+        weights = {
+            'power_stability_coefficient': 0.30,
+            'efficiency_stability': 0.25,
+            'biofilm_health_index': 0.20,
+            'power_autocorrelation': 0.15,
+            'biofilm_thickness_stability': 0.10
+        }
+
+        score = sum(
+            getattr(self, metric) * weight
+            for metric, weight in weights.items()
+        )
+
+        self.overall_stability_score = max(0.0, min(1.0, score))
+        self.stability_level = self._determine_stability_level(score)
+
+    def _determine_stability_level(self, score: float) -> StabilityLevel:
+        """Determine stability level based on overall score."""
+        if score >= 0.9:
+            return StabilityLevel.EXCELLENT
+        elif score >= 0.75:
+            return StabilityLevel.GOOD
+        elif score >= 0.5:
+            return StabilityLevel.FAIR
+        elif score >= 0.25:
+            return StabilityLevel.POOR
+        else:
+            return StabilityLevel.CRITICAL
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert metrics to dictionary format."""
+        return {
+            'power_stability_coefficient': self.power_stability_coefficient,
+            'power_variation': self.power_variation,
+            'power_trend_slope': self.power_trend_slope,
+            'power_autocorrelation': self.power_autocorrelation,
+            'efficiency_stability': self.efficiency_stability,
+            'efficiency_degradation_rate': self.efficiency_degradation_rate,
+            'efficiency_recovery_factor': self.efficiency_recovery_factor,
+            'biofilm_health_index': self.biofilm_health_index,
+            'biofilm_thickness_stability': self.biofilm_thickness_stability,
+            'biofilm_conductivity_stability': self.biofilm_conductivity_stability,
+            'overall_stability_score': self.overall_stability_score,
+            'stability_level': self.stability_level.name,
+            'confidence_interval': self.confidence_interval,
+            'analysis_timestamp': self.analysis_timestamp.isoformat(),
+            'analysis_duration': self.analysis_duration.total_seconds(),
+            'data_quality_score': self.data_quality_score,
+            'analysis_method': self.analysis_method.name,
+            'sample_size': self.sample_size
+        }
+
+
+class StabilityAnalyzer(Protocol):
+    """Protocol for stability analyzer implementations."""
+
+    def analyze(
+        self,
+        data: TimeSeriesData,
+        timestamps: Optional[Sequence[Timestamp]] = None,
+        **kwargs: Any
+    ) -> StabilityMetrics:
+        """Analyze stability of time series data."""
+        ...
+
+    def validate_data(self, data: TimeSeriesData) -> bool:
+        """Validate input data quality."""
+        ...
+
+
+class BaseStabilityAnalyzer(ABC):
+    """Base class for stability analyzers."""
+
+    def __init__(
+        self,
+        thresholds: Optional[StabilityThresholds] = None,
+        min_data_points: int = 10,
+        confidence_level: float = 0.95
+    ) -> None:
+        """Initialize the stability analyzer.
         
         Args:
-            data_directory: Directory for storing analysis results
+            thresholds: Custom stability thresholds
+            min_data_points: Minimum number of data points required
+            confidence_level: Confidence level for statistical analysis
         """
-        self.data_dir = data_directory or Path("stability_analysis")
-        self.data_dir.mkdir(exist_ok=True)
+        self.thresholds = thresholds or StabilityThresholds()
+        self.min_data_points = min_data_points
+        self.confidence_level = confidence_level
+        self._setup_logging()
+
+    def _setup_logging(self) -> None:
+        """Setup logging for the analyzer."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    @abstractmethod
+    def analyze(
+        self,
+        data: TimeSeriesData,
+        timestamps: Optional[Sequence[Timestamp]] = None,
+        **kwargs: Any
+    ) -> StabilityMetrics:
+        """Analyze stability of time series data."""
+        pass
+
+    def validate_data(self, data: TimeSeriesData) -> bool:
+        """Validate input data quality.
         
-        # Analysis history
-        self.stability_history: List[StabilityMetrics] = []
-        self.component_health: Dict[ComponentType, ComponentHealth] = {}
+        Args:
+            data: Time series data to validate
+            
+        Returns:
+            True if data is valid, False otherwise
+        """
+        try:
+            # Convert data to numpy array for validation
+            data_array = np.asarray(data)
+
+            # Check for minimum data points
+            if len(data_array) < self.min_data_points:
+                self.logger.warning(
+                    f"Insufficient data points: {len(data_array)} < {self.min_data_points}"
+                )
+                return False
+
+            # Check for NaN or infinite values
+            if np.any(np.isnan(data_array)) or np.any(np.isinf(data_array)):
+                self.logger.warning("Data contains NaN or infinite values")
+                return False
+
+            # Check for constant data (no variation)
+            if np.all(data_array == data_array[0]):
+                self.logger.warning("Data has no variation (all values identical)")
+                return False
+
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Data validation error: {str(e)}")
+            return False
+
+    def _calculate_confidence_interval(
+        self,
+        values: np.ndarray,
+        confidence_level: Optional[float] = None
+    ) -> Tuple[float, float]:
+        """Calculate confidence interval for values.
         
-        # Configuration
-        self.analysis_config = {
-            "sampling_interval_hours": 1.0,
-            "stability_window_hours": 168,  # 1 week
-            "degradation_threshold": 0.05,   # 5% performance loss
-            "failure_threshold": 0.8,        # 80% degradation
-            "maintenance_buffer_days": 7,    # Schedule maintenance 7 days early
-        }
+        Args:
+            values: Array of values
+            confidence_level: Confidence level (defaults to instance level)
+            
+        Returns:
+            Tuple of (lower_bound, upper_bound)
+        """
+        if confidence_level is None:
+            confidence_level = self.confidence_level
+
+        mean_val = np.mean(values)
+        std_err = np.std(values) / np.sqrt(len(values))
+
+        # Use t-distribution for small samples
+        from scipy import stats
+        df = len(values) - 1
+        t_critical = stats.t.ppf((1 + confidence_level) / 2, df)
+
+        margin_error = t_critical * std_err
+        return (mean_val - margin_error, mean_val + margin_error)
+
+
+class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
+    """Statistical stability analyzer using traditional statistical methods."""
+
+    def __init__(
+        self,
+        thresholds: Optional[StabilityThresholds] = None,
+        min_data_points: int = 30,
+        confidence_level: float = 0.95,
+        window_size: Optional[int] = None
+    ) -> None:
+        """Initialize statistical analyzer.
         
-        # Initialize statistical analyzer
-        self.stats_analyzer = StatisticalAnalyzer()
+        Args:
+            thresholds: Custom stability thresholds
+            min_data_points: Minimum number of data points
+            confidence_level: Confidence level for analysis
+            window_size: Rolling window size for analysis
+        """
+        super().__init__(thresholds, min_data_points, confidence_level)
+        self.window_size = window_size or max(10, min_data_points // 3)
+
+    def analyze(
+        self,
+        data: TimeSeriesData,
+        timestamps: Optional[Sequence[Timestamp]] = None,
+        **kwargs: Any
+    ) -> StabilityMetrics:
+        """Perform statistical stability analysis.
         
-        # Initialize component health tracking
-        self._initialize_component_health()
+        Args:
+            data: Time series data to analyze
+            timestamps: Optional timestamps for data points
+            **kwargs: Additional analysis parameters
+            
+        Returns:
+            StabilityMetrics with computed stability measures
+        """
+        if not self.validate_data(data):
+            raise ValueError("Invalid input data for stability analysis")
+
+        data_array = np.asarray(data, dtype=np.float64)
+        n_samples = len(data_array)
+
+        # Calculate basic stability metrics
+        power_stability = self._calculate_power_stability(data_array)
+        power_variation = self._calculate_power_variation(data_array)
+        power_trend = self._calculate_trend_slope(data_array)
+        power_autocorr = self._calculate_autocorrelation(data_array)
+
+        # Calculate efficiency metrics (assuming data represents power output)
+        efficiency_stability = self._calculate_efficiency_stability(data_array)
+        efficiency_degradation = self._calculate_degradation_rate(data_array)
+        efficiency_recovery = self._calculate_recovery_factor(data_array)
+
+        # Calculate biofilm metrics (synthetic for now)
+        biofilm_health = self._estimate_biofilm_health(data_array)
+        biofilm_thickness_stability = self._calculate_biofilm_thickness_stability(data_array)
+        biofilm_conductivity_stability = self._calculate_biofilm_conductivity_stability(data_array)
+
+        # Calculate confidence interval
+        confidence_interval = self._calculate_confidence_interval(data_array)
+
+        # Data quality assessment
+        data_quality = self._assess_data_quality(data_array)
+
+        return StabilityMetrics(
+            power_stability_coefficient=power_stability,
+            power_variation=power_variation,
+            power_trend_slope=power_trend,
+            power_autocorrelation=power_autocorr,
+            efficiency_stability=efficiency_stability,
+            efficiency_degradation_rate=efficiency_degradation,
+            efficiency_recovery_factor=efficiency_recovery,
+            biofilm_health_index=biofilm_health,
+            biofilm_thickness_stability=biofilm_thickness_stability,
+            biofilm_conductivity_stability=biofilm_conductivity_stability,
+            confidence_interval=confidence_interval,
+            analysis_timestamp=datetime.now(),
+            analysis_duration=timedelta(seconds=1),  # Placeholder
+            data_quality_score=data_quality,
+            analysis_method=AnalysisMethod.STATISTICAL,
+            sample_size=n_samples
+        )
+
+    def _calculate_power_stability(self, data: np.ndarray) -> float:
+        """Calculate power stability coefficient."""
+        mean_power = np.mean(data)
+        std_power = np.std(data)
+
+        if mean_power == 0:
+            return 0.0
+
+        # Stability coefficient: inverse of coefficient of variation
+        cv = std_power / mean_power
+        return max(0.0, 1.0 - cv)
+
+    def _calculate_power_variation(self, data: np.ndarray) -> float:
+        """Calculate power variation metric."""
+        return float(np.std(data) / np.mean(data)) if np.mean(data) != 0 else 0.0
+
+    def _calculate_trend_slope(self, data: np.ndarray) -> float:
+        """Calculate trend slope using linear regression."""
+        x = np.arange(len(data))
+        slope = float(np.polyfit(x, data, 1)[0])
+        return slope
+
+    def _calculate_autocorrelation(self, data: np.ndarray, lag: int = 1) -> float:
+        """Calculate autocorrelation at specified lag."""
+        if len(data) <= lag:
+            return 0.0
+
+        return float(np.corrcoef(data[:-lag], data[lag:])[0, 1])
+
+    def _calculate_efficiency_stability(self, data: np.ndarray) -> float:
+        """Calculate efficiency stability (simplified)."""
+        # Rolling efficiency calculation
+        rolling_mean = pd.Series(data).rolling(window=self.window_size).mean()
+        rolling_std = pd.Series(data).rolling(window=self.window_size).std()
+
+        efficiency_cv = rolling_std / rolling_mean
+        mean_efficiency_cv = efficiency_cv.dropna().mean()
+
+        return max(0.0, 1.0 - mean_efficiency_cv)
+
+    def _calculate_degradation_rate(self, data: np.ndarray) -> float:
+        """Calculate degradation rate."""
+        if len(data) < 2:
+            return 0.0
+
+        # Linear trend as degradation indicator
+        slope = self._calculate_trend_slope(data)
+        mean_value = np.mean(data)
+
+        if mean_value == 0:
+            return 0.0
+
+        # Normalize slope by mean value
+        degradation_rate = -slope / mean_value if slope < 0 else 0.0
+        return float(np.clip(degradation_rate, 0.0, 1.0))
+
+    def _calculate_recovery_factor(self, data: np.ndarray) -> float:
+        """Calculate recovery factor from dips in performance."""
+        # Find local minima and measure recovery
+        from scipy.signal import argrelextrema
+
+        if len(data) < 5:
+            return 1.0
+
+        minima_indices = argrelextrema(data, np.less, order=2)[0]
+
+        if len(minima_indices) == 0:
+            return 1.0
+
+        recovery_factors = []
+        for min_idx in minima_indices:
+            if min_idx + 5 < len(data):  # Ensure enough data for recovery analysis
+                min_value = data[min_idx]
+                recovery_window = data[min_idx:min_idx + 5]
+                max_recovery = np.max(recovery_window)
+
+                recovery_factor = (max_recovery - min_value) / min_value if min_value != 0 else 1.0
+                recovery_factors.append(recovery_factor)
+
+        return float(np.mean(recovery_factors)) if recovery_factors else 1.0
+
+    def _estimate_biofilm_health(self, data: np.ndarray) -> float:
+        """Estimate biofilm health from power data (correlation-based)."""
+        # Simplified biofilm health estimation based on power stability
+        stability = self._calculate_power_stability(data)
+        variability = np.std(data) / np.mean(data) if np.mean(data) != 0 else 1.0
+
+        # Biofilm health correlates with stable power and low variability
+        health_score = stability * (1.0 - min(variability, 1.0))
+        return float(np.clip(health_score, 0.0, 1.0))
+
+    def _calculate_biofilm_thickness_stability(self, data: np.ndarray) -> float:
+        """Calculate biofilm thickness stability (synthetic)."""
+        # Synthetic calculation based on power data characteristics
+        trend_magnitude = abs(self._calculate_trend_slope(data))
+        max_power = np.max(data)
+        normalized_trend = trend_magnitude / max_power if max_power != 0 else 0.0
+
+        thickness_stability = 1.0 - min(normalized_trend, 1.0)
+        return float(thickness_stability)
+
+    def _calculate_biofilm_conductivity_stability(self, data: np.ndarray) -> float:
+        """Calculate biofilm conductivity stability (synthetic)."""
+        # Synthetic calculation based on autocorrelation and variance
+        autocorr = abs(self._calculate_autocorrelation(data))
+        stability = self._calculate_power_stability(data)
+
+        conductivity_stability = (autocorr + stability) / 2.0
+        return float(np.clip(conductivity_stability, 0.0, 1.0))
+
+    def _assess_data_quality(self, data: np.ndarray) -> float:
+        """Assess overall data quality."""
+        quality_factors = []
+
+        # Check for completeness (no NaN values)
+        completeness = 1.0 - (np.sum(np.isnan(data)) / len(data))
+        quality_factors.append(completeness)
+
+        # Check for reasonable value range (no extreme outliers)
+        q1, q3 = np.percentile(data, [25, 75])
+        iqr = q3 - q1
+        outliers = np.sum((data < q1 - 3 * iqr) | (data > q3 + 3 * iqr))
+        outlier_ratio = outliers / len(data)
+        outlier_quality = 1.0 - min(outlier_ratio, 1.0)
+        quality_factors.append(outlier_quality)
+
+        # Check for temporal consistency (smooth transitions)
+        diff_data = np.abs(np.diff(data))
+        mean_diff = np.mean(diff_data)
+        std_diff = np.std(diff_data)
+        smoothness = 1.0 - min(std_diff / mean_diff if mean_diff != 0 else 1.0, 1.0)
+        quality_factors.append(smoothness)
+
+        return float(np.mean(quality_factors))
+
+
+class StabilityFramework:
+    """Main framework class for MFC stability analysis."""
+
+    def __init__(
+        self,
+        analyzer: Optional[BaseStabilityAnalyzer] = None,
+        thresholds: Optional[StabilityThresholds] = None
+    ) -> None:
+        """Initialize the stability framework.
         
-        # Logger
-        self.logger = logging.getLogger(__name__)
+        Args:
+            analyzer: Custom stability analyzer
+            thresholds: Custom stability thresholds
+        """
+        self.thresholds = thresholds or StabilityThresholds()
+        self.analyzer = analyzer or StatisticalStabilityAnalyzer(self.thresholds)
+        self.analysis_history: List[StabilityMetrics] = []
+        self._setup_logging()
+
+    def _setup_logging(self) -> None:
+        """Setup logging for the framework."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def analyze_stability(
+        self,
+        data: TimeSeriesData,
+        timestamps: Optional[Sequence[Timestamp]] = None,
+        **kwargs: Any
+    ) -> StabilityMetrics:
+        """Perform comprehensive stability analysis.
         
-    def _initialize_component_health(self):
-        """Initialize component health tracking."""
-        for component in ComponentType:
-            self.component_health[component] = ComponentHealth(
-                component=component,
-                health_score=100.0,
-                remaining_lifetime=365.0,  # 1 year default
-                degradation_rate=0.0,
-                last_maintenance=datetime.now(),
-                next_maintenance=datetime.now() + timedelta(days=30),
-                failure_probability=0.0,
-                degradation_modes=[]
+        Args:
+            data: Time series data to analyze
+            timestamps: Optional timestamps for data points
+            **kwargs: Additional analysis parameters
+            
+        Returns:
+            StabilityMetrics with computed stability measures
+        """
+        try:
+            self.logger.info("Starting stability analysis...")
+
+            # Perform analysis using configured analyzer
+            metrics = self.analyzer.analyze(data, timestamps, **kwargs)
+
+            # Store analysis in history
+            self.analysis_history.append(metrics)
+
+            # Log results
+            self.logger.info(
+                f"Stability analysis complete. Overall score: {metrics.overall_stability_score:.3f}, "
+                f"Level: {metrics.stability_level}"
             )
-    
-    def analyze_stability(self, simulation_data: Dict[str, Any], 
-                         time_scale: StabilityTimeScale = StabilityTimeScale.LONG_TERM) -> StabilityMetrics:
-        """
-        Perform comprehensive stability analysis.
+
+            return metrics
+
+        except Exception as e:
+            self.logger.error(f"Stability analysis failed: {str(e)}")
+            raise
+
+    def get_stability_trends(
+        self,
+        window_size: int = 10
+    ) -> Optional[Dict[str, List[float]]]:
+        """Get stability trends from analysis history.
         
         Args:
-            simulation_data: Time series data from MFC simulation
-            time_scale: Analysis time scale
+            window_size: Size of rolling window for trend analysis
             
         Returns:
-            StabilityMetrics object with analysis results
+            Dictionary with trend data or None if insufficient history
         """
-        self.logger.info(f"Starting stability analysis for {time_scale.value} time scale")
-        
-        # Extract time series data
-        time_points = simulation_data.get('time', [])
-        power_data = simulation_data.get('power', [])
-        voltage_data = simulation_data.get('voltage', [])
-        current_data = simulation_data.get('current', [])
-        efficiency_data = simulation_data.get('efficiency', [])
-        
-        # Calculate performance stability metrics
-        power_stability = np.std(power_data) / np.mean(power_data) if power_data else 0.0
-        current_fluctuation = np.std(current_data) / np.mean(current_data) if current_data else 0.0
-        
-        # Calculate degradation trends
-        efficiency_drift = self._calculate_drift_rate(time_points, efficiency_data)
-        voltage_degradation = self._calculate_drift_rate(time_points, voltage_data)
-        
-        # Calculate reliability metrics
-        failure_times = self._detect_failures(simulation_data)
-        mtbf_hours = self._calculate_mtbf(failure_times, max(time_points) if time_points else 1.0)
-        availability = self._calculate_availability(simulation_data)
-        failure_rate = len(failure_times) / max(time_points) if time_points else 0.0
-        
-        # Calculate component-specific degradation
-        membrane_resistance_increase = self._calculate_membrane_degradation(simulation_data)
-        biofilm_thickness_rate = self._calculate_biofilm_growth_rate(simulation_data)
-        electrode_degradation = self._calculate_electrode_degradation(simulation_data)
-        
-        # Calculate maintenance metrics
-        cleaning_frequency = self._estimate_cleaning_frequency(simulation_data)
-        component_lifetime = self._estimate_component_lifetime(simulation_data)
-        maintenance_cost = self._estimate_maintenance_cost(simulation_data)
-        
-        # Statistical analysis
-        performance_variance = np.var(power_data) if power_data else 0.0
-        trend_slope = efficiency_drift
-        seasonal_component = self._detect_seasonal_patterns(time_points, power_data)
-        residual_variance = self._calculate_residual_variance(time_points, power_data)
-        
-        # Create stability metrics object
-        metrics = StabilityMetrics(
-            power_stability=power_stability,
-            efficiency_drift=efficiency_drift,
-            voltage_degradation=voltage_degradation,
-            current_fluctuation=current_fluctuation,
-            mtbf_hours=mtbf_hours,
-            availability=availability,
-            failure_rate=failure_rate,
-            membrane_resistance_increase=membrane_resistance_increase,
-            biofilm_thickness_rate=biofilm_thickness_rate,
-            electrode_degradation=electrode_degradation,
-            cleaning_frequency_days=cleaning_frequency,
-            component_lifetime_days=component_lifetime,
-            maintenance_cost_per_day=maintenance_cost,
-            performance_variance=performance_variance,
-            trend_slope=trend_slope,
-            seasonal_component=seasonal_component,
-            residual_variance=residual_variance
-        )
-        
-        # Store results
-        self.stability_history.append(metrics)
-        
-        # Update component health
-        self._update_component_health(simulation_data, metrics)
-        
-        self.logger.info("Stability analysis completed")
-        return metrics
-    
-    def _calculate_drift_rate(self, time_points: List[float], 
-                             values: List[float]) -> float:
-        """Calculate performance drift rate."""
-        if len(time_points) < 2 or len(values) < 2:
-            return 0.0
-        
-        try:
-            # Linear regression to find trend
-            coefficients = np.polyfit(time_points, values, 1)
-            drift_rate = coefficients[0]  # Slope
-            
-            # Convert to percentage per day
-            if len(time_points) > 0:
-                time_span_hours = max(time_points) - min(time_points)
-                time_span_days = time_span_hours / 24.0
-                mean_value = np.mean(values)
-                
-                if mean_value != 0 and time_span_days > 0:
-                    drift_rate_pct_per_day = (drift_rate / mean_value) * 100 / time_span_days
-                    return drift_rate_pct_per_day
-            
-            return 0.0
-        except Exception as e:
-            self.logger.warning(f"Error calculating drift rate: {e}")
-            return 0.0
-    
-    def _detect_failures(self, simulation_data: Dict[str, Any]) -> List[float]:
-        """Detect system failures in time series data."""
-        failures = []
-        
-        # Define failure criteria
-        power_data = simulation_data.get('power', [])
-        voltage_data = simulation_data.get('voltage', [])
-        time_points = simulation_data.get('time', [])
-        
-        if not power_data or not time_points:
-            return failures
-        
-        # Calculate thresholds
-        mean_power = np.mean(power_data)
-        min_power_threshold = mean_power * 0.1  # 10% of mean power
-        min_voltage_threshold = 0.05  # 50 mV minimum voltage
-        
-        # Detect failures
-        for i, (time, power, voltage) in enumerate(zip(time_points, power_data, 
-                                                      voltage_data if voltage_data else [0]*len(power_data))):
-            if power < min_power_threshold or voltage < min_voltage_threshold:
-                failures.append(time)
-        
-        return failures
-    
-    def _calculate_mtbf(self, failure_times: List[float], total_time: float) -> float:
-        """Calculate Mean Time Between Failures."""
-        if len(failure_times) <= 1:
-            return total_time  # No failures or only one failure
-        
-        # Calculate intervals between failures
-        intervals = []
-        for i in range(1, len(failure_times)):
-            intervals.append(failure_times[i] - failure_times[i-1])
-        
-        return np.mean(intervals) if intervals else total_time
-    
-    def _calculate_availability(self, simulation_data: Dict[str, Any]) -> float:
-        """Calculate system availability (uptime fraction)."""
-        # Simplified availability calculation
-        failure_times = self._detect_failures(simulation_data)
-        time_points = simulation_data.get('time', [])
-        
-        if not time_points:
-            return 1.0
-        
-        total_time = max(time_points) - min(time_points)
-        downtime = len(failure_times) * 1.0  # Assume 1 hour downtime per failure
-        
-        if total_time <= 0:
-            return 1.0
-        
-        availability = max(0.0, (total_time - downtime) / total_time)
-        return min(1.0, availability)
-    
-    def _calculate_membrane_degradation(self, simulation_data: Dict[str, Any]) -> float:
-        """Calculate membrane resistance increase rate."""
-        # Simplified membrane degradation model
-        time_points = simulation_data.get('time', [])
-        
-        if not time_points:
-            return 0.0
-        
-        # Assume resistance increases with fouling over time
-        time_span_days = (max(time_points) - min(time_points)) / 24.0
-        
-        if time_span_days <= 0:
-            return 0.0
-        
-        # Typical membrane resistance increase: 1-5% per day
-        base_degradation_rate = 0.02  # 2% per day baseline
-        
-        # Modulate based on operating conditions
-        # TODO: Use actual membrane model data when available
-        
-        return base_degradation_rate
-    
-    def _calculate_biofilm_growth_rate(self, simulation_data: Dict[str, Any]) -> float:
-        """Calculate biofilm thickness growth rate."""
-        biofilm_data = simulation_data.get('biofilm_thickness', [])
-        time_points = simulation_data.get('time', [])
-        
-        if len(biofilm_data) < 2 or len(time_points) < 2:
-            return 0.1  # Default 0.1 μm/day
-        
-        # Calculate growth rate from data
-        thickness_change = max(biofilm_data) - min(biofilm_data)
-        time_span_days = (max(time_points) - min(time_points)) / 24.0
-        
-        if time_span_days <= 0:
-            return 0.1
-        
-        growth_rate = thickness_change / time_span_days
-        return max(0.0, growth_rate)  # Ensure non-negative
-    
-    def _calculate_electrode_degradation(self, simulation_data: Dict[str, Any]) -> float:
-        """Calculate electrode degradation rate."""
-        # Simplified electrode degradation model
-        # Based on current density and operating time
-        
-        current_data = simulation_data.get('current', [])
-        time_points = simulation_data.get('time', [])
-        
-        if not current_data or not time_points:
-            return 0.01  # Default 1% per day
-        
-        # Higher current densities lead to faster degradation
-        mean_current = np.mean(current_data)
-        time_span_days = (max(time_points) - min(time_points)) / 24.0
-        
-        if time_span_days <= 0:
-            return 0.01
-        
-        # Empirical degradation model
-        base_rate = 0.005  # 0.5% per day baseline
-        current_factor = mean_current / 5.0  # Normalize to typical 5 A/m²
-        
-        degradation_rate = base_rate * (1 + current_factor)
-        return min(0.1, degradation_rate)  # Cap at 10% per day
-    
-    def _estimate_cleaning_frequency(self, simulation_data: Dict[str, Any]) -> float:
-        """Estimate required cleaning frequency."""
-        # Based on fouling rate and performance degradation
-        membrane_degradation = self._calculate_membrane_degradation(simulation_data)
-        _ = self._calculate_biofilm_growth_rate(simulation_data)  # Used for side effects
-        
-        # When degradation reaches 5%, cleaning is needed
-        degradation_threshold = 0.05  # 5%
-        
-        cleaning_frequency = degradation_threshold / max(0.001, membrane_degradation)
-        return max(1.0, min(365.0, cleaning_frequency))  # Between 1 day and 1 year
-    
-    def _estimate_component_lifetime(self, simulation_data: Dict[str, Any]) -> float:
-        """Estimate component lifetime until replacement."""
-        # Based on degradation rates and failure threshold
-        electrode_degradation = self._calculate_electrode_degradation(simulation_data)
-        membrane_degradation = self._calculate_membrane_degradation(simulation_data)
-        
-        # Component fails when degradation reaches 80%
-        failure_threshold = 0.8  # 80%
-        
-        # Estimate time to failure for critical components
-        electrode_lifetime = failure_threshold / max(0.001, electrode_degradation)
-        membrane_lifetime = failure_threshold / max(0.001, membrane_degradation)
-        
-        # System lifetime is limited by shortest component lifetime
-        system_lifetime = min(electrode_lifetime, membrane_lifetime)
-        return max(30.0, min(3650.0, system_lifetime))  # Between 30 days and 10 years
-    
-    def _estimate_maintenance_cost(self, simulation_data: Dict[str, Any]) -> float:
-        """Estimate daily maintenance cost."""
-        # Simplified cost model
-        cleaning_frequency = self._estimate_cleaning_frequency(simulation_data)
-        component_lifetime = self._estimate_component_lifetime(simulation_data)
-        
-        # Cost estimates (example values)
-        cleaning_cost = 100.0  # $100 per cleaning
-        component_replacement_cost = 1000.0  # $1000 per component set
-        
-        daily_cleaning_cost = cleaning_cost / cleaning_frequency
-        daily_replacement_cost = component_replacement_cost / component_lifetime
-        
-        total_daily_cost = daily_cleaning_cost + daily_replacement_cost
-        return max(0.1, total_daily_cost)
-    
-    def _detect_seasonal_patterns(self, time_points: List[float], 
-                                 values: List[float]) -> float:
-        """Detect seasonal patterns in performance data."""
-        if len(time_points) < 24 or len(values) < 24:  # Need at least 24 hours
-            return 0.0
-        
-        try:
-            # Convert to hourly sampling if needed
-            df = pd.DataFrame({'time': time_points, 'value': values})
-            df = df.set_index('time').resample('1H').mean().dropna()
-            
-            if len(df) < 24:
-                return 0.0
-            
-            # Calculate seasonal component (simplified)
-            values_array = df['value'].values
-            
-            # Detect daily patterns
-            if len(values_array) >= 24:
-                daily_pattern = np.zeros(24)
-                for hour in range(24):
-                    hour_values = values_array[hour::24]
-                    if len(hour_values) > 0:
-                        daily_pattern[hour] = np.mean(hour_values)
-                
-                seasonal_strength = np.std(daily_pattern) / np.mean(values_array)
-                return min(1.0, seasonal_strength)
-            
-            return 0.0
-        except Exception as e:
-            self.logger.warning(f"Error detecting seasonal patterns: {e}")
-            return 0.0
-    
-    def _calculate_residual_variance(self, time_points: List[float], 
-                                   values: List[float]) -> float:
-        """Calculate residual variance after removing trend."""
-        if len(time_points) < 3 or len(values) < 3:
-            return 0.0
-        
-        try:
-            # Remove linear trend
-            coefficients = np.polyfit(time_points, values, 1)
-            trend = np.polyval(coefficients, time_points)
-            residuals = np.array(values) - trend
-            
-            return np.var(residuals)
-        except Exception as e:
-            self.logger.warning(f"Error calculating residual variance: {e}")
-            return np.var(values) if values else 0.0
-    
-    def _update_component_health(self, simulation_data: Dict[str, Any], 
-                               metrics: StabilityMetrics):
-        """Update component health status based on analysis."""
-        
-        # Update membrane health
-        membrane_health = self.component_health[ComponentType.MEMBRANE]
-        membrane_health.degradation_rate = metrics.membrane_resistance_increase
-        membrane_health.health_score = max(0, 100 - (metrics.membrane_resistance_increase * 100))
-        membrane_health.remaining_lifetime = metrics.cleaning_frequency_days
-        
-        # Update biofilm health
-        biofilm_health = self.component_health[ComponentType.BIOFILM]
-        biofilm_health.degradation_rate = metrics.biofilm_thickness_rate
-        biofilm_health.health_score = max(0, 100 - (metrics.biofilm_thickness_rate * 10))
-        
-        # Update electrode health
-        electrode_health = self.component_health[ComponentType.ANODE]
-        electrode_health.degradation_rate = metrics.electrode_degradation
-        electrode_health.health_score = max(0, 100 - (metrics.electrode_degradation * 100))
-        electrode_health.remaining_lifetime = metrics.component_lifetime_days
-        
-        # Update overall system health
-        overall_health = self.component_health[ComponentType.OVERALL]
-        overall_health.health_score = min(
-            membrane_health.health_score,
-            biofilm_health.health_score,
-            electrode_health.health_score
-        )
-        overall_health.remaining_lifetime = min(
-            membrane_health.remaining_lifetime,
-            electrode_health.remaining_lifetime
-        )
-        
-    def generate_stability_report(self, metrics: StabilityMetrics, 
-                                output_file: Optional[Path] = None) -> str:
-        """Generate comprehensive stability analysis report."""
-        
-        report_lines = []
-        report_lines.append("# MFC Long-term Stability Analysis Report")
-        report_lines.append(f"Generated: {datetime.now().isoformat()}")
-        report_lines.append("")
-        
-        # Executive summary
-        report_lines.append("## Executive Summary")
-        report_lines.append(f"- System Availability: **{metrics.availability*100:.1f}%**")
-        report_lines.append(f"- Mean Time Between Failures: **{metrics.mtbf_hours:.1f} hours**")
-        report_lines.append(f"- Power Stability: **{metrics.power_stability*100:.2f}% variation**")
-        report_lines.append(f"- Estimated Component Lifetime: **{metrics.component_lifetime_days:.0f} days**")
-        report_lines.append("")
-        
-        # Performance metrics
-        report_lines.append("## Performance Stability")
-        report_lines.append(f"- Power Output Stability: {metrics.power_stability*100:.2f}% coefficient of variation")
-        report_lines.append(f"- Efficiency Drift: {metrics.efficiency_drift:.3f}%/day")
-        report_lines.append(f"- Voltage Degradation: {metrics.voltage_degradation*1000:.2f} mV/day")
-        report_lines.append(f"- Current Fluctuation: {metrics.current_fluctuation*100:.2f}% coefficient of variation")
-        report_lines.append("")
-        
-        # Reliability metrics
-        report_lines.append("## Reliability Analysis")
-        report_lines.append(f"- Mean Time Between Failures: {metrics.mtbf_hours:.1f} hours")
-        report_lines.append(f"- System Availability: {metrics.availability*100:.1f}%")
-        report_lines.append(f"- Failure Rate: {metrics.failure_rate*1000:.2f} failures per 1000 hours")
-        report_lines.append("")
-        
-        # Component degradation
-        report_lines.append("## Component Degradation")
-        report_lines.append(f"- Membrane Resistance Increase: {metrics.membrane_resistance_increase*100:.2f}%/day")
-        report_lines.append(f"- Biofilm Growth Rate: {metrics.biofilm_thickness_rate:.2f} μm/day")
-        report_lines.append(f"- Electrode Degradation: {metrics.electrode_degradation*100:.2f}%/day")
-        report_lines.append("")
-        
-        # Maintenance schedule
-        report_lines.append("## Maintenance Requirements")
-        report_lines.append(f"- Cleaning Frequency: Every {metrics.cleaning_frequency_days:.1f} days")
-        report_lines.append(f"- Component Replacement: Every {metrics.component_lifetime_days:.0f} days")
-        report_lines.append(f"- Daily Maintenance Cost: ${metrics.maintenance_cost_per_day:.2f}")
-        report_lines.append("")
-        
-        # Component health summary
-        report_lines.append("## Component Health Status")
-        for component_type, health in self.component_health.items():
-            report_lines.append(f"- **{component_type.value.title()}**: {health.health_score:.1f}% health, "
-                              f"{health.remaining_lifetime:.0f} days remaining")
-        report_lines.append("")
-        
-        # Recommendations
-        report_lines.append("## Recommendations")
-        
-        if metrics.power_stability > 0.1:
-            report_lines.append("- ⚠️ High power variability detected - check control system stability")
-        
-        if metrics.efficiency_drift < -0.01:
-            report_lines.append("- ⚠️ Efficiency declining - consider system cleaning or optimization")
-        
-        if metrics.availability < 0.95:
-            report_lines.append("- ⚠️ Low availability - investigate failure causes and improve reliability")
-        
-        if metrics.cleaning_frequency_days < 7:
-            report_lines.append("- ⚠️ Frequent cleaning required - consider pretreatment or operating condition optimization")
-        
-        if not any(metrics.power_stability > 0.1 or metrics.efficiency_drift < -0.01 or 
-                  metrics.availability < 0.95 or metrics.cleaning_frequency_days < 7):
-            report_lines.append("- ✅ System operating within acceptable stability parameters")
-        report_lines.append("")
-        
-        report_text = "\n".join(report_lines)
-        
-        # Save to file if specified
-        if output_file:
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_file, 'w') as f:
-                f.write(report_text)
-            self.logger.info(f"Stability report saved to {output_file}")
-        
-        return report_text
-    
-    def predict_failures(self, horizon_days: int = 30) -> Dict[ComponentType, float]:
-        """
-        Predict component failure probabilities.
-        
-        Args:
-            horizon_days: Prediction horizon in days
-            
-        Returns:
-            Dictionary mapping components to failure probabilities
-        """
-        predictions = {}
-        
-        for component_type, health in self.component_health.items():
-            # Simple failure prediction based on degradation rate and current health
-            current_health = health.health_score / 100.0  # Convert to 0-1 scale
-            degradation_rate = health.degradation_rate
-            
-            # Predict health after horizon_days
-            future_health = current_health - (degradation_rate * horizon_days / 100.0)
-            
-            # Convert to failure probability (sigmoid function)
-            failure_threshold = 0.2  # 20% health remaining
-            if future_health <= failure_threshold:
-                failure_prob = 1.0
-            else:
-                # Sigmoid curve for failure probability
-                x = (future_health - failure_threshold) * 10
-                failure_prob = max(0.0, min(1.0, 1.0 / (1.0 + np.exp(x))))
-            
-            predictions[component_type] = failure_prob
-        
-        return predictions
-    
-    def get_maintenance_schedule(self, horizon_days: int = 90) -> List[Dict[str, Any]]:
-        """
-        Generate optimized maintenance schedule.
-        
-        Args:
-            horizon_days: Planning horizon in days
-            
-        Returns:
-            List of maintenance tasks with dates and priorities
-        """
-        schedule = []
-        current_date = datetime.now()
-        
-        # Get failure predictions
-        failure_predictions = self.predict_failures(horizon_days)
-        
-        for component_type, health in self.component_health.items():
-            if component_type == ComponentType.OVERALL:
-                continue
-            
-            # Schedule based on remaining lifetime and failure probability
-            failure_prob = failure_predictions.get(component_type, 0.0)
-            
-            if failure_prob > 0.7:  # High failure risk
-                # Schedule immediate maintenance
-                maintenance_date = current_date + timedelta(days=1)
-                priority = "Critical"
-            elif failure_prob > 0.3:  # Medium failure risk
-                # Schedule within a week
-                maintenance_date = current_date + timedelta(days=7)
-                priority = "High"
-            elif health.remaining_lifetime < 30:  # Low remaining lifetime
-                # Schedule preventive maintenance
-                maintenance_date = current_date + timedelta(days=max(1, health.remaining_lifetime * 0.8))
-                priority = "Medium"
-            else:
-                # Schedule routine maintenance
-                maintenance_date = health.next_maintenance
-                priority = "Low"
-            
-            # Only include if within planning horizon
-            if (maintenance_date - current_date).days <= horizon_days:
-                schedule.append({
-                    "component": component_type.value,
-                    "date": maintenance_date.isoformat(),
-                    "priority": priority,
-                    "failure_probability": failure_prob,
-                    "health_score": health.health_score,
-                    "task_type": "inspection" if priority == "Low" else "maintenance",
-                    "estimated_duration_hours": 2 if priority == "Low" else 8,
-                    "estimated_cost": 50 if priority == "Low" else 200
-                })
-        
-        # Sort by date and priority
-        priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
-        schedule.sort(key=lambda x: (x["date"], priority_order.get(x["priority"], 4)))
-        
-        return schedule
-    
-    def export_analysis_data(self, output_file: Path):
-        """Export stability analysis data for external analysis."""
-        
-        export_data = {
-            "analysis_metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "analysis_config": self.analysis_config,
-                "total_analyses": len(self.stability_history)
-            },
-            "stability_history": [
-                {
-                    "timestamp": datetime.now().isoformat(),  # Would need actual timestamps
-                    "metrics": {
-                        "power_stability": metrics.power_stability,
-                        "efficiency_drift": metrics.efficiency_drift,
-                        "voltage_degradation": metrics.voltage_degradation,
-                        "current_fluctuation": metrics.current_fluctuation,
-                        "mtbf_hours": metrics.mtbf_hours,
-                        "availability": metrics.availability,
-                        "failure_rate": metrics.failure_rate,
-                        "membrane_resistance_increase": metrics.membrane_resistance_increase,
-                        "biofilm_thickness_rate": metrics.biofilm_thickness_rate,
-                        "electrode_degradation": metrics.electrode_degradation,
-                        "cleaning_frequency_days": metrics.cleaning_frequency_days,
-                        "component_lifetime_days": metrics.component_lifetime_days,
-                        "maintenance_cost_per_day": metrics.maintenance_cost_per_day
-                    }
-                }
-                for metrics in self.stability_history[-10:]  # Last 10 analyses
-            ],
-            "component_health": {
-                component.value: {
-                    "health_score": health.health_score,
-                    "remaining_lifetime": health.remaining_lifetime,
-                    "degradation_rate": health.degradation_rate,
-                    "last_maintenance": health.last_maintenance.isoformat(),
-                    "next_maintenance": health.next_maintenance.isoformat(),
-                    "failure_probability": health.failure_probability,
-                    "degradation_modes": [mode.value for mode in health.degradation_modes]
-                }
-                for component, health in self.component_health.items()
-            },
-            "maintenance_schedule": self.get_maintenance_schedule()
+        if len(self.analysis_history) < 2:
+            return None
+
+        trends = {
+            'timestamps': [m.analysis_timestamp.timestamp() for m in self.analysis_history],
+            'overall_stability': [m.overall_stability_score for m in self.analysis_history],
+            'power_stability': [m.power_stability_coefficient for m in self.analysis_history],
+            'efficiency_stability': [m.efficiency_stability for m in self.analysis_history],
+            'biofilm_health': [m.biofilm_health_index for m in self.analysis_history]
         }
+
+        return trends
+
+    def export_analysis_results(
+        self,
+        filepath: Union[str, Path],
+        format_type: str = 'json'
+    ) -> None:
+        """Export analysis results to file.
         
-        # Save to JSON file
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
-            json.dump(export_data, f, indent=2, default=str)
-        
-        self.logger.info(f"Analysis data exported to {output_file}")
-def run_long_term_stability_study(simulation_hours: int = 8760,  # 1 year
-                                 output_dir: Optional[Path] = None) -> StabilityAnalyzer:
-    """
-    Run a comprehensive long-term stability study.
-    
-    Args:
-        simulation_hours: Duration of stability study in hours
-        output_dir: Directory for outputs
-        
-    Returns:
-        StabilityAnalyzer with completed analysis
-    """
-    output_dir = output_dir or Path("stability_study_results")
-    output_dir.mkdir(exist_ok=True)
-    
-    logger = logging.getLogger(__name__)
-    logger.info(f"Starting {simulation_hours}-hour stability study")
-    
-    # Initialize stability analyzer
-    analyzer = StabilityAnalyzer(output_dir)
-    
-    # Run simulation (simplified - would use actual MFC model)
-    # Generate synthetic data for demonstration
-    time_points = np.linspace(0, simulation_hours, simulation_hours)
-    
-    # Simulate gradual degradation
-    baseline_power = 5.0  # W
-    degradation_rate = 0.0001  # Per hour
-    noise_level = 0.1
-    
-    power_data = []
-    voltage_data = []
-    current_data = []
-    efficiency_data = []
-    
-    for t in time_points:
-        # Add degradation and noise
-        degradation_factor = 1.0 - (degradation_rate * t)
-        noise = np.random.normal(0, noise_level)
-        
-        power = baseline_power * degradation_factor * (1 + noise)
-        voltage = 0.7 * degradation_factor * (1 + noise * 0.5)
-        current = power / voltage if voltage > 0 else 0
-        efficiency = 0.8 * degradation_factor * (1 + noise * 0.3)
-        
-        power_data.append(max(0, power))
-        voltage_data.append(max(0, voltage))
-        current_data.append(max(0, current))
-        efficiency_data.append(max(0, min(1.0, efficiency)))
-    
-    # Create simulation data dictionary
-    simulation_data = {
-        'time': time_points.tolist(),
-        'power': power_data,
-        'voltage': voltage_data,
-        'current': current_data,
-        'efficiency': efficiency_data,
-        'biofilm_thickness': (np.cumsum(np.random.exponential(0.01, len(time_points))) * 0.1).tolist()
-    }
-    
-    # Perform stability analysis
-    metrics = analyzer.analyze_stability(simulation_data, StabilityTimeScale.ULTRA_LONG)
-    
-    # Generate report
-    report_file = output_dir / f"stability_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    analyzer.generate_stability_report(metrics, report_file)
-    
-    # Export analysis data
-    data_file = output_dir / f"stability_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    analyzer.export_analysis_data(data_file)
-    
-    # Get maintenance schedule
-    maintenance_schedule = analyzer.get_maintenance_schedule()
-    
-    logger.info(f"Stability study completed. Results saved to {output_dir}")
-    logger.info(f"System availability: {metrics.availability*100:.1f}%")
-    logger.info(f"MTBF: {metrics.mtbf_hours:.1f} hours")
-    logger.info(f"Upcoming maintenance tasks: {len(maintenance_schedule)}")
-    
-    return analyzer
+        Args:
+            filepath: Output file path
+            format_type: Export format ('json' or 'csv')
+        """
+        if not self.analysis_history:
+            raise ValueError("No analysis results to export")
+
+        filepath = Path(filepath)
+
+        if format_type.lower() == 'json':
+            import json
+            data = [metrics.to_dict() for metrics in self.analysis_history]
+            with open(filepath, 'w') as f:
+                json.dump(data, f, indent=2, default=str)
+
+        elif format_type.lower() == 'csv':
+            data = [metrics.to_dict() for metrics in self.analysis_history]
+            df = pd.DataFrame(data)
+            df.to_csv(filepath, index=False)
+
+        else:
+            raise ValueError(f"Unsupported export format: {format_type}")
+
+        self.logger.info(f"Analysis results exported to {filepath}")
+
+
+# Factory functions for creating analyzers
+def create_statistical_analyzer(
+    thresholds: Optional[StabilityThresholds] = None,
+    **kwargs: Any
+) -> StatisticalStabilityAnalyzer:
+    """Create a statistical stability analyzer."""
+    return StatisticalStabilityAnalyzer(thresholds, **kwargs)
+
+
+def create_default_framework(
+    analyzer_type: str = 'statistical',
+    **kwargs: Any
+) -> StabilityFramework:
+    """Create a default stability framework."""
+    thresholds = StabilityThresholds()
+
+    if analyzer_type == 'statistical':
+        analyzer = create_statistical_analyzer(thresholds, **kwargs)
+    else:
+        raise ValueError(f"Unknown analyzer type: {analyzer_type}")
+
+    return StabilityFramework(analyzer, thresholds)
+
+
+# Example usage and testing functions
+def run_example_analysis() -> None:
+    """Run example stability analysis."""
+    # Generate synthetic MFC power data
+    np.random.seed(42)
+    time_points = np.linspace(0, 24, 1000)  # 24 hours of data
+    base_power = 20.0
+
+    # Add realistic variations
+    seasonal_variation = 2.0 * np.sin(2 * np.pi * time_points / 24)  # Daily cycle
+    random_noise = np.random.normal(0, 0.5, len(time_points))
+    degradation_trend = -0.1 * time_points / 24  # Slight degradation
+
+    synthetic_data = base_power + seasonal_variation + random_noise + degradation_trend
+
+    # Create framework and analyze
+    framework = create_default_framework()
+    metrics = framework.analyze_stability(synthetic_data)
+
+    print("Stability Analysis Results:")
+    print(f"Overall Stability Score: {metrics.overall_stability_score:.3f}")
+    print(f"Stability Level: {metrics.stability_level}")
+    print(f"Power Stability Coefficient: {metrics.power_stability_coefficient:.3f}")
+    print(f"Biofilm Health Index: {metrics.biofilm_health_index:.3f}")
+    print(f"Data Quality Score: {metrics.data_quality_score:.3f}")
+
 
 if __name__ == "__main__":
-    # Run example stability study
-    analyzer = run_long_term_stability_study(
-        simulation_hours=8760,  # 1 year
-        output_dir=Path("stability_analysis_results")
-    )
-    
-    print("Long-term stability study completed!")
-    print("Results available in: stability_analysis_results/")
+    run_example_analysis()

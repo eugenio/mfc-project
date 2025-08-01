@@ -1,826 +1,1208 @@
+#!/usr/bin/env python3
 """
-Long-term Data Storage and Analysis for MFC Stability Studies
+Data Manager Module for MFC Stability Analysis
 
-Comprehensive data management system for storing, indexing, and analyzing
-long-term MFC operational data. Provides efficient storage, querying, and
-analysis capabilities for stability studies and degradation tracking.
+This module provides comprehensive data management capabilities for MFC stability
+analysis, including data collection, validation, storage, retrieval, preprocessing,
+and quality assessment for stability monitoring systems.
 
-Created: 2025-07-28
+Author: MFC Analysis Team
+Created: 2025-07-31
+Last Modified: 2025-07-31
 """
+
+from __future__ import annotations
+
+import logging
 import numpy as np
 import pandas as pd
-import sqlite3
-import h5py
-import json
-import gzip
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import field
-from enum import Enum
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from enum import Enum, auto
 from pathlib import Path
-import logging
-import threading
-from scipy import stats
+from typing import (
+    Any, Dict, List, Optional, Tuple, Union, Protocol,
+    TypeVar, Type, Iterator
+)
+import sqlite3
+import json
+from contextlib import contextmanager
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Type aliases
+DataValue = Union[float, int, str, bool, datetime, np.number]
+TimestampType = Union[datetime, pd.Timestamp, float, int]
+DataRecord = Dict[str, DataValue]
+QueryResult = Union[pd.DataFrame, List[DataRecord], Dict[str, Any]]
+
+# Generic types
+T = TypeVar('T')
+DataStorageType = TypeVar('DataStorageType', bound='DataStorage')
 
 
 class DataType(Enum):
-    """Types of data stored in the system."""
-    SENSOR_DATA = "sensor_data"
-    SYSTEM_METRICS = "system_metrics"
-    PERFORMANCE_DATA = "performance_data"
-    DEGRADATION_PATTERNS = "degradation_patterns"
-    MAINTENANCE_RECORDS = "maintenance_records"
-    RELIABILITY_METRICS = "reliability_metrics"
-    ENVIRONMENTAL_DATA = "environmental_data"
-    OPERATIONAL_LOGS = "operational_logs"
+    """Types of data in MFC systems."""
+    SENSOR_READING = auto()
+    PERFORMANCE_METRIC = auto()
+    MAINTENANCE_LOG = auto()
+    ENVIRONMENTAL_DATA = auto()
+    CONTROL_PARAMETER = auto()
+    ALARM_EVENT = auto()
+    ANALYSIS_RESULT = auto()
+    CONFIGURATION_DATA = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower().replace('_', ' ')
+
+
+class DataQuality(Enum):
+    """Data quality levels."""
+    EXCELLENT = auto()
+    GOOD = auto()
+    ACCEPTABLE = auto()
+    POOR = auto()
+    INVALID = auto()
+
+    @property
+    def numeric_value(self) -> float:
+        """Return numeric representation of quality level."""
+        return {
+            DataQuality.EXCELLENT: 1.0,
+            DataQuality.GOOD: 0.8,
+            DataQuality.ACCEPTABLE: 0.6,
+            DataQuality.POOR: 0.4,
+            DataQuality.INVALID: 0.0
+        }[self]
+
 
 class StorageFormat(Enum):
-    """Storage formats for different data types."""
-    HDF5 = "hdf5"
-    SQLITE = "sqlite"
-    CSV = "csv"
-    JSON = "json"
-    PARQUET = "parquet"
+    """Data storage formats."""
+    CSV = auto()
+    JSON = auto()
+    PARQUET = auto()
+    HDF5 = auto()
+    SQLITE = auto()
+    PICKLE = auto()
+
+    @property
+    def file_extension(self) -> str:
+        """Return file extension for format."""
+        return {
+            StorageFormat.CSV: '.csv',
+            StorageFormat.JSON: '.json',
+            StorageFormat.PARQUET: '.parquet',
+            StorageFormat.HDF5: '.h5',
+            StorageFormat.SQLITE: '.db',
+            StorageFormat.PICKLE: '.pkl'
+        }[self]
 
 
-class DataQuery:
-    """Query parameters for data retrieval."""
-    data_types: List[DataType]
-    start_time: datetime
-    end_time: datetime
-    components: Optional[List[str]] = None
-    metrics: Optional[List[str]] = None
-    sampling_rate: Optional[str] = None  # '1H', '1D', etc.
-    filters: Dict[str, Any] = field(default_factory=dict)
-    aggregation: Optional[str] = None  # 'mean', 'max', 'min', 'std'
+@dataclass(frozen=True)
+class DataSchema:
+    """Schema definition for data validation."""
+    schema_name: str
+    schema_version: str
+    fields: Dict[str, Dict[str, Any]]  # field_name -> {type, required, constraints}
+    created_at: datetime = field(default_factory=datetime.now)
+    description: str = ""
 
-class DataSummary:
-    """Summary statistics for stored data."""
-    data_type: DataType
-    start_time: datetime
-    end_time: datetime
-    record_count: int
-    size_bytes: int
-    metrics: List[str]
-    components: List[str]
-    sampling_intervals: List[str]
+    def validate_record(self, record: DataRecord) -> Tuple[bool, List[str]]:
+        """Validate a data record against this schema."""
+        errors = []
+
+        # Check required fields
+        for field_name, field_config in self.fields.items():
+            if field_config.get('required', False) and field_name not in record:
+                errors.append(f"Missing required field: {field_name}")
+                continue
+
+            if field_name not in record:
+                continue
+
+            value = record[field_name]
+            expected_type = field_config.get('type')
+
+            # Type validation
+            if expected_type and not isinstance(value, expected_type):
+                if not self._is_compatible_type(value, expected_type):
+                    errors.append(
+                        f"Field {field_name} has incorrect type. "
+                        f"Expected {expected_type.__name__}, got {type(value).__name__}"
+                    )
+
+            # Constraint validation
+            constraints = field_config.get('constraints', {})
+            field_errors = self._validate_constraints(field_name, value, constraints)
+            errors.extend(field_errors)
+
+        return len(errors) == 0, errors
+
+    def _is_compatible_type(self, value: Any, expected_type: Type) -> bool:
+        """Check if value is compatible with expected type."""
+        if expected_type is float:
+            return isinstance(value, (int, float, np.number))
+        elif expected_type is int:
+            return isinstance(value, (int, np.integer))
+        elif expected_type is str:
+            return isinstance(value, str)
+        elif expected_type == datetime:
+            return isinstance(value, (datetime, pd.Timestamp))
+        return False
+
+    def _validate_constraints(
+        self,
+        field_name: str,
+        value: Any,
+        constraints: Dict[str, Any]
+    ) -> List[str]:
+        """Validate field constraints."""
+        errors = []
+
+        if 'min_value' in constraints and value < constraints['min_value']:
+            errors.append(f"Field {field_name} below minimum value {constraints['min_value']}")
+
+        if 'max_value' in constraints and value > constraints['max_value']:
+            errors.append(f"Field {field_name} above maximum value {constraints['max_value']}")
+
+        if 'min_length' in constraints and len(str(value)) < constraints['min_length']:
+            errors.append(f"Field {field_name} below minimum length {constraints['min_length']}")
+
+        if 'max_length' in constraints and len(str(value)) > constraints['max_length']:
+            errors.append(f"Field {field_name} above maximum length {constraints['max_length']}")
+
+        if 'allowed_values' in constraints and value not in constraints['allowed_values']:
+            errors.append(f"Field {field_name} not in allowed values {constraints['allowed_values']}")
+
+        return errors
 
 
-class AnalysisResult:
-    """Result of data analysis operation."""
-    analysis_type: str
-    parameters: Dict[str, Any]
-    results: Dict[str, Any]
-    metadata: Dict[str, Any]
-    generated_at: datetime = field(default_factory=datetime.now)
+@dataclass
+class DataQualityReport:
+    """Comprehensive data quality assessment report."""
 
-class LongTermDataManager:
-    """
-    Comprehensive long-term data storage and analysis system.
-    
-    Features:
-    - Multi-format data storage (HDF5, SQLite, CSV, etc.)
-    - Efficient querying and indexing
-    - Automated data archiving and compression
-    - Statistical analysis and trend detection
-    - Integration with degradation and reliability analysis
-    - Data quality monitoring and validation
-    """
-    
-    def __init__(self, 
-                 data_directory: str = "../data/stability_data",
-                 max_memory_mb: int = 1000,
-                 compression_level: int = 6,
-                 auto_archive_days: int = 90):
-        """
-        Initialize the long-term data manager.
+    # Basic quality metrics
+    total_records: int = 0
+    valid_records: int = 0
+    invalid_records: int = 0
+    missing_data_percentage: float = 0.0
+    duplicate_records: int = 0
+
+    # Temporal quality
+    temporal_coverage: timedelta = field(default=timedelta())
+    temporal_gaps: List[Tuple[datetime, datetime]] = field(default_factory=list)
+    sampling_rate_consistency: float = 0.0
+
+    # Value quality
+    outlier_count: int = 0
+    outlier_percentage: float = 0.0
+    value_range_violations: int = 0
+    type_consistency: float = 0.0
+
+    # Statistical quality
+    completeness_score: float = 0.0
+    accuracy_score: float = 0.0
+    consistency_score: float = 0.0
+    timeliness_score: float = 0.0
+
+    # Overall assessment
+    overall_quality_score: float = 0.0
+    quality_level: DataQuality = DataQuality.ACCEPTABLE
+
+    # Issues and recommendations
+    quality_issues: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
+
+    # Metadata
+    assessment_timestamp: datetime = field(default_factory=datetime.now)
+    data_source: str = ""
+    assessment_period: timedelta = field(default=timedelta(hours=1))
+
+    def __post_init__(self) -> None:
+        """Compute derived quality metrics."""
+        self._compute_overall_score()
+        self._determine_quality_level()
+        self._generate_recommendations()
+
+    def _compute_overall_score(self) -> None:
+        """Compute overall quality score from individual metrics."""
+        scores = [
+            self.completeness_score,
+            self.accuracy_score,
+            self.consistency_score,
+            self.timeliness_score
+        ]
+
+        # Weight different aspects of quality
+        weights = [0.3, 0.3, 0.2, 0.2]
+        self.overall_quality_score = sum(score * weight for score, weight in zip(scores, weights))
+
+    def _determine_quality_level(self) -> None:
+        """Determine quality level based on overall score."""
+        if self.overall_quality_score >= 0.9:
+            self.quality_level = DataQuality.EXCELLENT
+        elif self.overall_quality_score >= 0.8:
+            self.quality_level = DataQuality.GOOD
+        elif self.overall_quality_score >= 0.6:
+            self.quality_level = DataQuality.ACCEPTABLE
+        elif self.overall_quality_score >= 0.3:
+            self.quality_level = DataQuality.POOR
+        else:
+            self.quality_level = DataQuality.INVALID
+
+    def _generate_recommendations(self) -> None:
+        """Generate quality improvement recommendations."""
+        if self.missing_data_percentage > 10:
+            self.recommendations.append("Investigate and fix data collection gaps")
+
+        if self.outlier_percentage > 5:
+            self.recommendations.append("Review outlier detection and data validation")
+
+        if self.duplicate_records > 0:
+            self.recommendations.append("Implement duplicate detection and removal")
+
+        if self.temporal_gaps:
+            self.recommendations.append("Address temporal gaps in data collection")
+
+        if self.sampling_rate_consistency < 0.8:
+            self.recommendations.append("Improve sampling rate consistency")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert report to dictionary format."""
+        return {
+            'total_records': self.total_records,
+            'valid_records': self.valid_records,
+            'invalid_records': self.invalid_records,
+            'missing_data_percentage': self.missing_data_percentage,
+            'duplicate_records': self.duplicate_records,
+            'temporal_coverage': self.temporal_coverage.total_seconds(),
+            'temporal_gaps': [(start.isoformat(), end.isoformat()) for start, end in self.temporal_gaps],
+            'sampling_rate_consistency': self.sampling_rate_consistency,
+            'outlier_count': self.outlier_count,
+            'outlier_percentage': self.outlier_percentage,
+            'value_range_violations': self.value_range_violations,
+            'type_consistency': self.type_consistency,
+            'completeness_score': self.completeness_score,
+            'accuracy_score': self.accuracy_score,
+            'consistency_score': self.consistency_score,
+            'timeliness_score': self.timeliness_score,
+            'overall_quality_score': self.overall_quality_score,
+            'quality_level': self.quality_level.name,
+            'quality_issues': self.quality_issues,
+            'recommendations': self.recommendations,
+            'assessment_timestamp': self.assessment_timestamp.isoformat(),
+            'data_source': self.data_source,
+            'assessment_period': self.assessment_period.total_seconds()
+        }
+
+
+class DataStorage(Protocol):
+    """Protocol for data storage implementations."""
+
+    def store_data(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data_type: DataType,
+        **kwargs: Any
+    ) -> bool:
+        """Store data."""
+        ...
+
+    def retrieve_data(
+        self,
+        data_type: DataType,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        **kwargs: Any
+    ) -> QueryResult:
+        """Retrieve data."""
+        ...
+
+    def delete_data(
+        self,
+        data_type: DataType,
+        conditions: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> bool:
+        """Delete data."""
+        ...
+
+
+class BaseDataStorage(ABC):
+    """Base class for data storage implementations."""
+
+    def __init__(
+        self,
+        storage_path: Union[str, Path],
+        compression: bool = True,
+        backup_enabled: bool = True
+    ) -> None:
+        """Initialize data storage.
         
         Args:
-            data_directory: Root directory for data storage
-            max_memory_mb: Maximum memory usage for caching
-            compression_level: Compression level (1-9)
-            auto_archive_days: Days after which to auto-archive data
+            storage_path: Path for data storage
+            compression: Enable data compression
+            backup_enabled: Enable automatic backups
         """
-        self.data_directory = Path(data_directory)
-        self.data_directory.mkdir(parents=True, exist_ok=True)
+        self.storage_path = Path(storage_path)
+        self.compression = compression
+        self.backup_enabled = backup_enabled
+        self._setup_logging()
+        self._ensure_storage_directory()
+
+    def _setup_logging(self) -> None:
+        """Setup logging for the storage system."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def _ensure_storage_directory(self) -> None:
+        """Ensure storage directory exists."""
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+
+    @abstractmethod
+    def store_data(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data_type: DataType,
+        **kwargs: Any
+    ) -> bool:
+        """Store data."""
+        pass
+
+    @abstractmethod
+    def retrieve_data(
+        self,
+        data_type: DataType,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        **kwargs: Any
+    ) -> QueryResult:
+        """Retrieve data."""
+        pass
+
+    @abstractmethod
+    def delete_data(
+        self,
+        data_type: DataType,
+        conditions: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> bool:
+        """Delete data."""
+        pass
+
+    def create_backup(self, backup_path: Optional[Path] = None) -> bool:
+        """Create backup of stored data."""
+        if not self.backup_enabled:
+            return False
+
+        try:
+            backup_path = backup_path or self.storage_path.parent / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_path.mkdir(parents=True, exist_ok=True)
+
+            # Copy all data files to backup location
+            import shutil
+            shutil.copytree(self.storage_path, backup_path / "data", dirs_exist_ok=True)
+
+            self.logger.info(f"Backup created at {backup_path}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Backup creation failed: {str(e)}")
+            return False
+
+
+class SQLiteDataStorage(BaseDataStorage):
+    """SQLite-based data storage implementation."""
+
+    def __init__(
+        self,
+        storage_path: Union[str, Path],
+        compression: bool = True,
+        backup_enabled: bool = True,
+        database_name: str = "mfc_stability_data.db"
+    ) -> None:
+        """Initialize SQLite data storage.
         
-        self.max_memory_mb = max_memory_mb
-        self.compression_level = compression_level
-        self.auto_archive_days = auto_archive_days
-        
-        # Initialize storage backends
-        self._init_storage_backends()
-        
-        # Data cache
-        self._data_cache = {}
-        self._cache_lock = threading.Lock()
-        self._cache_size_mb = 0
-        
-        # Metadata database
-        self.metadata_db_path = self.data_directory / "metadata.db"
-        self._init_metadata_db()
-        
-        # Storage format mapping
-        self.format_mapping = {
-            DataType.SENSOR_DATA: StorageFormat.HDF5,
-            DataType.SYSTEM_METRICS: StorageFormat.PARQUET,
-            DataType.PERFORMANCE_DATA: StorageFormat.PARQUET,
-            DataType.DEGRADATION_PATTERNS: StorageFormat.JSON,
-            DataType.MAINTENANCE_RECORDS: StorageFormat.SQLITE,
-            DataType.RELIABILITY_METRICS: StorageFormat.JSON,
-            DataType.ENVIRONMENTAL_DATA: StorageFormat.HDF5,
-            DataType.OPERATIONAL_LOGS: StorageFormat.SQLITE
-        }
-        
-        # Logger
-        self.logger = logging.getLogger(__name__)
-        
-        # Start background tasks
-        self._start_background_tasks()
-    
-    def _init_storage_backends(self):
-        """Initialize storage backend directories."""
-        self.storage_paths = {
-            StorageFormat.HDF5: self.data_directory / "hdf5",
-            StorageFormat.SQLITE: self.data_directory / "sqlite",
-            StorageFormat.CSV: self.data_directory / "csv",
-            StorageFormat.JSON: self.data_directory / "json",
-            StorageFormat.PARQUET: self.data_directory / "parquet"
-        }
-        
-        for path in self.storage_paths.values():
-            path.mkdir(parents=True, exist_ok=True)
-    
-    def _init_metadata_db(self):
-        """Initialize metadata database."""
-        with sqlite3.connect(self.metadata_db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS data_files (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    data_type TEXT NOT NULL,
-                    filename TEXT NOT NULL,
-                    start_time TEXT NOT NULL,
-                    end_time TEXT NOT NULL,
-                    record_count INTEGER,
-                    size_bytes INTEGER,
-                    storage_format TEXT,
-                    compression TEXT,
-                    created_at TEXT,
-                    archived BOOLEAN DEFAULT FALSE,
-                    checksum TEXT
-                )
-            """)
-            
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS data_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    file_id INTEGER,
-                    metric_name TEXT NOT NULL,
-                    component TEXT,
-                    data_type TEXT,
-                    min_value REAL,
-                    max_value REAL,
-                    mean_value REAL,
-                    std_value REAL,
-                    null_count INTEGER,
-                    FOREIGN KEY (file_id) REFERENCES data_files (id)
-                )
-            """)
-            
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_data_files_type_time 
-                ON data_files (data_type, start_time, end_time)
-            """)
-            
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_data_metrics_name_component 
-                ON data_metrics (metric_name, component)
-            """)
-    
-    def store_data(self, 
-                   data: Union[pd.DataFrame, Dict[str, Any], List[Dict[str, Any]]],
-                   data_type: DataType,
-                   metadata: Optional[Dict[str, Any]] = None) -> str:
+        Args:
+            storage_path: Path for data storage
+            compression: Enable data compression
+            backup_enabled: Enable automatic backups
+            database_name: Name of the SQLite database file
         """
-        Store data in the appropriate format.
+        super().__init__(storage_path, compression, backup_enabled)
+        self.db_path = self.storage_path / database_name
+        self._initialize_database()
+
+    def _initialize_database(self) -> None:
+        """Initialize SQLite database with required tables."""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+
+                # Create main data table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS mfc_data (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp DATETIME NOT NULL,
+                        data_type TEXT NOT NULL,
+                        component_id TEXT,
+                        metric_name TEXT,
+                        value REAL,
+                        unit TEXT,
+                        quality_score REAL DEFAULT 1.0,
+                        metadata TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+                # Create indices for better query performance
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_timestamp 
+                    ON mfc_data(timestamp)
+                """)
+
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_data_type_timestamp 
+                    ON mfc_data(data_type, timestamp)
+                """)
+
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_component_metric 
+                    ON mfc_data(component_id, metric_name)
+                """)
+
+                # Create data quality log table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS data_quality_log (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        assessment_timestamp DATETIME NOT NULL,
+                        data_source TEXT,
+                        quality_score REAL,
+                        quality_level TEXT,
+                        total_records INTEGER,
+                        valid_records INTEGER,
+                        issues TEXT,
+                        recommendations TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+                conn.commit()
+                self.logger.info("SQLite database initialized successfully")
+
+        except Exception as e:
+            self.logger.error(f"Database initialization failed: {str(e)}")
+            raise
+
+    @contextmanager
+    def _get_connection(self) -> Iterator[sqlite3.Connection]:
+        """Get database connection with proper resource management."""
+        conn = None
+        try:
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row  # Enable dict-like access
+            yield conn
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            raise e
+        finally:
+            if conn:
+                conn.close()
+
+    def store_data(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data_type: DataType,
+        **kwargs: Any
+    ) -> bool:
+        """Store data in SQLite database.
         
         Args:
             data: Data to store
-            data_type: Type of data
-            metadata: Additional metadata
+            data_type: Type of data being stored
+            **kwargs: Additional storage parameters
             
         Returns:
-            File ID for the stored data
+            True if storage successful, False otherwise
         """
-        # Convert data to DataFrame if needed
-        if isinstance(data, dict):
-            df = pd.DataFrame([data])
-        elif isinstance(data, list):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
-        
-        # Add timestamp if not present
-        if 'timestamp' not in df.columns:
-            df['timestamp'] = datetime.now()
-        
-        # Ensure timestamp is datetime
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        
-        # Sort by timestamp
-        df = df.sort_values('timestamp')
-        
-        # Determine storage format
-        storage_format = self.format_mapping.get(data_type, StorageFormat.PARQUET)
-        
-        # Generate filename
-        start_time = df['timestamp'].min()
-        end_time = df['timestamp'].max()
-        timestamp_str = start_time.strftime("%Y%m%d_%H%M%S")
-        filename = f"{data_type.value}_{timestamp_str}.{self._get_file_extension(storage_format)}"
-        
-        # Store data
-        filepath = self.storage_paths[storage_format] / filename
-        record_count, size_bytes = self._write_data_file(df, filepath, storage_format, data_type)
-        
-        # Update metadata database
-        with sqlite3.connect(self.metadata_db_path) as conn:
-            cursor = conn.execute("""
-                INSERT INTO data_files 
-                (data_type, filename, start_time, end_time, record_count, size_bytes, 
-                 storage_format, created_at, checksum)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                data_type.value,
-                filename,
-                start_time.isoformat(),
-                end_time.isoformat(),
-                record_count,
-                size_bytes,
-                storage_format.value,
-                datetime.now().isoformat(),
-                self._calculate_checksum(filepath)
-            ))
-            
-            file_id = cursor.lastrowid
-            
-            # Store metric metadata
-            numeric_columns = df.select_dtypes(include=[np.number]).columns
-            for column in numeric_columns:
-                if column != 'timestamp':
-                    values = df[column].dropna()
-                    if len(values) > 0:
-                        conn.execute("""
-                            INSERT INTO data_metrics
-                            (file_id, metric_name, data_type, min_value, max_value, 
-                             mean_value, std_value, null_count)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            file_id,
-                            column,
-                            data_type.value,
-                            float(values.min()),
-                            float(values.max()),
-                            float(values.mean()),
-                            float(values.std()) if len(values) > 1 else 0.0,
-                            int(df[column].isnull().sum())
-                        ))
-        
-        self.logger.info(f"Stored {record_count} records of {data_type.value} in {filename}")
-        return str(file_id)
-    
-    def _get_file_extension(self, storage_format: StorageFormat) -> str:
-        """Get file extension for storage format."""
-        extensions = {
-            StorageFormat.HDF5: "h5",
-            StorageFormat.SQLITE: "db",
-            StorageFormat.CSV: "csv.gz",
-            StorageFormat.JSON: "json.gz",
-            StorageFormat.PARQUET: "parquet"
-        }
-        return extensions[storage_format]
-    
-    def _write_data_file(self, 
-                        df: pd.DataFrame, 
-                        filepath: Path, 
-                        storage_format: StorageFormat,
-                        data_type: DataType) -> Tuple[int, int]:
-        """Write data file in specified format."""
-        
-        if storage_format == StorageFormat.HDF5:
-            with h5py.File(filepath, 'w') as f:
-                # Store as HDF5 dataset
-                for column in df.columns:
-                    if column == 'timestamp':
-                        # Convert timestamp to Unix timestamp
-                        timestamps = df[column].astype('datetime64[s]').astype('int64')
-                        f.create_dataset(column, data=timestamps, compression='gzip')
-                    elif df[column].dtype == 'object':
-                        # String data
-                        str_data = df[column].astype(str).values
-                        f.create_dataset(column, data=str_data, compression='gzip')
-                    else:
-                        # Numeric data
-                        f.create_dataset(column, data=df[column].values, compression='gzip')
-                
-                # Add metadata
-                f.attrs['data_type'] = data_type.value
-                f.attrs['record_count'] = len(df)
-                f.attrs['created_at'] = datetime.now().isoformat()
-        
-        elif storage_format == StorageFormat.PARQUET:
-            df.to_parquet(filepath, compression='snappy', index=False)
-        
-        elif storage_format == StorageFormat.CSV:
-            with gzip.open(filepath, 'wt') as f:
-                df.to_csv(f, index=False)
-        
-        elif storage_format == StorageFormat.JSON:
-            data_dict = df.to_dict('records')
-            with gzip.open(filepath, 'wt') as f:
-                json.dump({
-                    'data_type': data_type.value,
-                    'created_at': datetime.now().isoformat(),
-                    'records': data_dict
-                }, f, default=str, indent=2)
-        
-        elif storage_format == StorageFormat.SQLITE:
-            with sqlite3.connect(filepath) as conn:
-                df.to_sql('data', conn, if_exists='replace', index=False)
-        
-        # Get file size
-        size_bytes = filepath.stat().st_size
-        record_count = len(df)
-        
-        return record_count, size_bytes
-    
-    def _calculate_checksum(self, filepath: Path) -> str:
-        """Calculate SHA-256 checksum of file."""
-        import hashlib
-        
-        sha256_hash = hashlib.sha256()
-        with open(filepath, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(chunk)
-        
-        return sha256_hash.hexdigest()[:16]  # First 16 characters
-    
-    def query_data(self, query: DataQuery) -> pd.DataFrame:
-        """
-        Query data based on specified criteria.
+        try:
+            # Normalize data to list of records
+            records = self._normalize_data_input(data)
+
+            if not records:
+                return True  # Nothing to store
+
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+
+                for record in records:
+                    # Extract standard fields
+                    timestamp = record.get('timestamp', datetime.now())
+                    component_id = record.get('component_id', '')
+                    metric_name = record.get('metric_name', '')
+                    value = record.get('value', 0.0)
+                    unit = record.get('unit', '')
+                    quality_score = record.get('quality_score', 1.0)
+
+                    # Store additional fields as JSON metadata
+                    metadata_fields = {
+                        k: v for k, v in record.items()
+                        if k not in ['timestamp', 'component_id', 'metric_name', 'value', 'unit', 'quality_score']
+                    }
+                    metadata_json = json.dumps(metadata_fields) if metadata_fields else None
+
+                    cursor.execute("""
+                        INSERT INTO mfc_data 
+                        (timestamp, data_type, component_id, metric_name, value, unit, quality_score, metadata)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
+                        data_type.name,
+                        component_id,
+                        metric_name,
+                        float(value) if value is not None and isinstance(value, (int, float, np.number)) else None,
+                        unit,
+                        float(quality_score) if isinstance(quality_score, (int, float, np.number)) else 0.0,
+                        metadata_json
+                    ))
+
+                conn.commit()
+                self.logger.info(f"Stored {len(records)} records of type {data_type.name}")
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Data storage failed: {str(e)}")
+            return False
+
+    def retrieve_data(
+        self,
+        data_type: DataType,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        **kwargs: Any
+    ) -> QueryResult:
+        """Retrieve data from SQLite database.
         
         Args:
-            query: Query parameters
+            data_type: Type of data to retrieve
+            start_time: Start time for data retrieval
+            end_time: End time for data retrieval
+            **kwargs: Additional query parameters
             
         Returns:
-            DataFrame with queried data
+            Query results as DataFrame
         """
-        # Find relevant files from metadata
-        with sqlite3.connect(self.metadata_db_path) as conn:
-            # Build SQL query
-            where_conditions = []
-            params = []
-            
-            # Data type filter
-            if query.data_types:
-                placeholders = ','.join(['?' for _ in query.data_types])
-                where_conditions.append(f"data_type IN ({placeholders})")
-                params.extend([dt.value for dt in query.data_types])
-            
-            # Time range filter
-            where_conditions.append("end_time >= ? AND start_time <= ?")
-            params.extend([query.start_time.isoformat(), query.end_time.isoformat()])
-            
-            # Build full query
-            where_clause = " AND ".join(where_conditions)
-            sql_query = f"""
-                SELECT * FROM data_files 
-                WHERE {where_clause}
-                ORDER BY start_time
-            """
-            
-            file_metadata = pd.read_sql_query(sql_query, conn, params=params)
-        
-        if file_metadata.empty:
-            return pd.DataFrame()
-        
-        # Load and combine data from files
-        combined_data = []
-        
-        for _, file_info in file_metadata.iterrows():
-            try:
-                # Load data file
-                data_type = DataType(file_info['data_type'])
-                storage_format = StorageFormat(file_info['storage_format'])
-                filepath = self.storage_paths[storage_format] / file_info['filename']
-                
-                df = self._read_data_file(filepath, storage_format, data_type)
-                
-                # Apply time filter
-                if 'timestamp' in df.columns:
-                    df = df[
-                        (df['timestamp'] >= query.start_time) & 
-                        (df['timestamp'] <= query.end_time)
-                    ]
-                
-                # Apply component filter
-                if query.components and 'component' in df.columns:
-                    df = df[df['component'].isin(query.components)]
-                
-                # Apply metric filter
-                if query.metrics:
-                    available_metrics = [col for col in query.metrics if col in df.columns]
-                    if available_metrics:
-                        keep_columns = ['timestamp'] + available_metrics
-                        if 'component' in df.columns:
-                            keep_columns.append('component')
-                        df = df[keep_columns]
-                
-                # Apply additional filters
-                for filter_column, filter_value in query.filters.items():
-                    if filter_column in df.columns:
-                        if isinstance(filter_value, (list, tuple)):
-                            df = df[df[filter_column].isin(filter_value)]
-                        else:
-                            df = df[df[filter_column] == filter_value]
-                
-                if not df.empty:
-                    combined_data.append(df)
-                
-            except Exception as e:
-                self.logger.warning(f"Error loading file {file_info['filename']}: {e}")
-                continue
-        
-        if not combined_data:
-            return pd.DataFrame()
-        
-        # Combine all data
-        result_df = pd.concat(combined_data, ignore_index=True)
-        
-        # Sort by timestamp
-        if 'timestamp' in result_df.columns:
-            result_df = result_df.sort_values('timestamp')
-        
-        # Apply sampling rate
-        if query.sampling_rate and 'timestamp' in result_df.columns:
-            result_df = result_df.set_index('timestamp')
-            result_df = result_df.resample(query.sampling_rate).agg(
-                query.aggregation if query.aggregation else 'mean'
-            ).reset_index()
-        
-        return result_df
-    
-    def _read_data_file(self, 
-                       filepath: Path, 
-                       storage_format: StorageFormat,
-                       data_type: DataType) -> pd.DataFrame:
-        """Read data file in specified format."""
-        
-        if storage_format == StorageFormat.HDF5:
-            data_dict = {}
-            with h5py.File(filepath, 'r') as f:
-                for key in f.keys():
-                    if key == 'timestamp':
-                        # Convert Unix timestamp back to datetime
-                        timestamps = f[key][:]
-                        data_dict[key] = pd.to_datetime(timestamps, unit='s')
-                    else:
-                        data_dict[key] = f[key][:]
-            
-            return pd.DataFrame(data_dict)
-        
-        elif storage_format == StorageFormat.PARQUET:
-            return pd.read_parquet(filepath)
-        
-        elif storage_format == StorageFormat.CSV:
-            with gzip.open(filepath, 'rt') as f:
-                df = pd.read_csv(f)
-                if 'timestamp' in df.columns:
+        try:
+            with self._get_connection() as conn:
+                # Build query
+                query = "SELECT * FROM mfc_data WHERE data_type = ?"
+                params = [data_type.name]
+
+                if start_time:
+                    query += " AND timestamp >= ?"
+                    params.append(start_time.isoformat())
+
+                if end_time:
+                    query += " AND timestamp <= ?"
+                    params.append(end_time.isoformat())
+
+                # Add additional filters
+                component_id = kwargs.get('component_id')
+                if component_id:
+                    query += " AND component_id = ?"
+                    params.append(component_id)
+
+                metric_name = kwargs.get('metric_name')
+                if metric_name:
+                    query += " AND metric_name = ?"
+                    params.append(metric_name)
+
+                # Add ordering
+                query += " ORDER BY timestamp"
+
+                # Add limit if specified
+                limit = kwargs.get('limit')
+                if limit:
+                    query += f" LIMIT {int(limit)}"
+
+                # Execute query
+                df = pd.read_sql_query(query, conn, params=params)
+
+                # Convert timestamp column to datetime
+                if not df.empty and 'timestamp' in df.columns:
                     df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+                self.logger.info(f"Retrieved {len(df)} records of type {data_type.name}")
                 return df
+
+        except Exception as e:
+            self.logger.error(f"Data retrieval failed: {str(e)}")
+            return pd.DataFrame()  # Return empty DataFrame on error
+
+    def delete_data(
+        self,
+        data_type: DataType,
+        conditions: Optional[Dict[str, Any]] = None,
+        **kwargs: Any
+    ) -> bool:
+        """Delete data from SQLite database.
         
-        elif storage_format == StorageFormat.JSON:
-            with gzip.open(filepath, 'rt') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['records'])
-                if 'timestamp' in df.columns:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'])
-                return df
-        
-        elif storage_format == StorageFormat.SQLITE:
-            with sqlite3.connect(filepath) as conn:
-                df = pd.read_sql_query("SELECT * FROM data", conn)
-                if 'timestamp' in df.columns:
-                    df['timestamp'] = pd.to_datetime(df['timestamp'])
-                return df
-        
+        Args:
+            data_type: Type of data to delete
+            conditions: Deletion conditions
+            **kwargs: Additional deletion parameters
+            
+        Returns:
+            True if deletion successful, False otherwise
+        """
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+
+                # Build delete query
+                query = "DELETE FROM mfc_data WHERE data_type = ?"
+                params = [data_type.name]
+
+                if conditions:
+                    for key, value in conditions.items():
+                        if key in ['timestamp', 'component_id', 'metric_name']:
+                            query += f" AND {key} = ?"
+                            params.append(value)
+
+                # Execute deletion
+                cursor.execute(query, params)
+                deleted_count = cursor.rowcount
+
+                conn.commit()
+                self.logger.info(f"Deleted {deleted_count} records of type {data_type.name}")
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Data deletion failed: {str(e)}")
+            return False
+
+    def _normalize_data_input(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord]
+    ) -> List[DataRecord]:
+        """Normalize data input to list of records."""
+        if isinstance(data, pd.DataFrame):
+            return data.to_dict('records')
+        elif isinstance(data, dict):
+            return [data]
+        elif isinstance(data, list):
+            return data
         else:
-            raise ValueError(f"Unsupported storage format: {storage_format}")
-    
-    def get_data_summary(self, data_types: Optional[List[DataType]] = None) -> List[DataSummary]:
-        """Get summary of stored data."""
-        with sqlite3.connect(self.metadata_db_path) as conn:
-            if data_types:
-                placeholders = ','.join(['?' for _ in data_types])
-                query = f"""
-                    SELECT df.*, GROUP_CONCAT(DISTINCT dm.metric_name) as metrics,
-                           GROUP_CONCAT(DISTINCT dm.component) as components
-                    FROM data_files df
-                    LEFT JOIN data_metrics dm ON df.id = dm.file_id
-                    WHERE df.data_type IN ({placeholders})
-                    GROUP BY df.id
-                    ORDER BY df.start_time
-                """
-                params = [dt.value for dt in data_types]
-            else:
-                query = """
-                    SELECT df.*, GROUP_CONCAT(DISTINCT dm.metric_name) as metrics,
-                           GROUP_CONCAT(DISTINCT dm.component) as components
-                    FROM data_files df
-                    LEFT JOIN data_metrics dm ON df.id = dm.file_id
-                    GROUP BY df.id
-                    ORDER BY df.start_time
-                """
-                params = []
-            
-            file_data = pd.read_sql_query(query, conn, params=params)
+            raise ValueError(f"Unsupported data type: {type(data)}")
+
+
+class MFCDataManager:
+    """Main data manager for MFC stability analysis."""
+
+    def __init__(
+        self,
+        storage: Optional[DataStorage] = None,
+        schema_registry: Optional[Dict[DataType, DataSchema]] = None,
+        quality_thresholds: Optional[Dict[str, float]] = None
+    ) -> None:
+        """Initialize MFC data manager.
         
-        summaries = []
-        for _, row in file_data.iterrows():
-            summary = DataSummary(
-                data_type=DataType(row['data_type']),
-                start_time=pd.to_datetime(row['start_time']),
-                end_time=pd.to_datetime(row['end_time']),
-                record_count=row['record_count'],
-                size_bytes=row['size_bytes'],
-                metrics=row['metrics'].split(',') if row['metrics'] else [],
-                components=row['components'].split(',') if row['components'] else [],
-                sampling_intervals=[]  # Could be computed from data
-            )
-            summaries.append(summary)
-        
-        return summaries
-    
-    def analyze_trends(self, 
-                      metrics: List[str],
-                      components: Optional[List[str]] = None,
-                      time_window_days: int = 30) -> AnalysisResult:
-        """Analyze long-term trends in specified metrics."""
-        
-        # Query recent data
-        end_time = datetime.now()
-        start_time = end_time - timedelta(days=time_window_days)
-        
-        query = DataQuery(
-            data_types=[DataType.SENSOR_DATA, DataType.SYSTEM_METRICS, DataType.PERFORMANCE_DATA],
-            start_time=start_time,
-            end_time=end_time,
-            components=components,
-            metrics=metrics,
-            sampling_rate='1H',  # Hourly sampling
-            aggregation='mean'
-        )
-        
-        data = self.query_data(query)
-        
-        if data.empty:
-            return AnalysisResult(
-                analysis_type="trend_analysis",
-                parameters={"metrics": metrics, "time_window_days": time_window_days},
-                results={"error": "No data available for analysis"},
-                metadata={"data_points": 0}
-            )
-        
-        # Perform trend analysis for each metric
-        trend_results = {}
-        
-        for metric in metrics:
-            if metric not in data.columns:
-                continue
-            
-            values = data[metric].dropna()
-            timestamps = data.loc[values.index, 'timestamp']
-            
-            if len(values) < 10:
-                continue
-            
-            # Linear trend analysis
-            time_numeric = np.arange(len(values))
-            slope, intercept, r_value, p_value, std_err = stats.linregress(time_numeric, values)
-            
-            # Change point detection
-            change_points = self._detect_trend_changes(values.values)
-            
-            # Seasonal decomposition (simplified)
-            seasonality = self._analyze_seasonality(values.values, timestamps)
-            
-            # Statistical tests
-            stationarity_test = self._test_stationarity(values.values)
-            
-            trend_results[metric] = {
-                'trend_slope': slope,
-                'trend_r_squared': r_value**2,
-                'trend_p_value': p_value,
-                'trend_significance': 'significant' if p_value < 0.05 else 'not_significant',
-                'change_points': change_points,
-                'seasonality_strength': seasonality,
-                'stationarity_p_value': stationarity_test,
-                'mean_value': float(values.mean()),
-                'std_value': float(values.std()),
-                'min_value': float(values.min()),
-                'max_value': float(values.max()),
-                'data_points': len(values)
-            }
-        
-        return AnalysisResult(
-            analysis_type="trend_analysis",
-            parameters={
-                "metrics": metrics,
-                "components": components,
-                "time_window_days": time_window_days,
-                "sampling_rate": "1H"
+        Args:
+            storage: Data storage implementation
+            schema_registry: Registry of data schemas
+            quality_thresholds: Quality assessment thresholds
+        """
+        self.storage = storage or SQLiteDataStorage("./data/mfc_stability")
+        self.schema_registry = schema_registry or self._create_default_schemas()
+        self.quality_thresholds = quality_thresholds or self._create_default_thresholds()
+        self._setup_logging()
+
+    def _setup_logging(self) -> None:
+        """Setup logging for the data manager."""
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def _create_default_schemas(self) -> Dict[DataType, DataSchema]:
+        """Create default data schemas for MFC data types."""
+        schemas = {}
+
+        # Sensor reading schema
+        schemas[DataType.SENSOR_READING] = DataSchema(
+            schema_name="sensor_reading",
+            schema_version="1.0",
+            fields={
+                'timestamp': {'type': datetime, 'required': True},
+                'component_id': {'type': str, 'required': True},
+                'metric_name': {'type': str, 'required': True},
+                'value': {'type': float, 'required': True},
+                'unit': {'type': str, 'required': False},
+                'quality_score': {'type': float, 'required': False, 'constraints': {'min_value': 0.0, 'max_value': 1.0}}
             },
-            results=trend_results,
-            metadata={
-                "total_data_points": len(data),
-                "time_range": f"{start_time.isoformat()} to {end_time.isoformat()}",
-                "analysis_duration_seconds": 0  # Could time the analysis
-            }
+            description="Schema for sensor readings and measurements"
         )
-    
-    def _detect_trend_changes(self, values: np.ndarray) -> List[int]:
-        """Detect significant changes in trend."""
-        if len(values) < 20:
-            return []
-        
-        # Use a simple moving window approach
-        window_size = len(values) // 10
-        change_points = []
-        
-        for i in range(window_size, len(values) - window_size):
-            # Compare trends before and after potential change point
-            before = values[max(0, i - window_size):i]
-            after = values[i:min(len(values), i + window_size)]
-            
-            if len(before) < 5 or len(after) < 5:
-                continue
-            
-            # Calculate trend slopes
-            slope_before = np.polyfit(range(len(before)), before, 1)[0]
-            slope_after = np.polyfit(range(len(after)), after, 1)[0]
-            
-            # Check for significant change in slope
-            if abs(slope_after - slope_before) > np.std(values) * 0.1:
-                change_points.append(i)
-        
-        return change_points
-    
-    def _analyze_seasonality(self, values: np.ndarray, timestamps: pd.Series) -> float:
-        """Analyze seasonality strength in time series."""
-        if len(values) < 48:  # Need at least 2 days of hourly data
-            return 0.0
-        
-        # Simple approach: check for daily patterns
-        try:
-            # Group by hour of day
-            hour_groups = timestamps.dt.hour
-            hourly_means = []
-            
-            for hour in range(24):
-                hour_mask = hour_groups == hour
-                if hour_mask.any():
-                    hourly_means.append(np.mean(values[hour_mask]))
-                else:
-                    hourly_means.append(np.mean(values))
-            
-            # Calculate coefficient of variation for hourly means
-            hourly_means = np.array(hourly_means)
-            cv = np.std(hourly_means) / (np.mean(hourly_means) + 1e-10)
-            
-            return min(cv, 1.0)  # Cap at 1.0
-            
-        except Exception:
-            return 0.0
-    
-    def _test_stationarity(self, values: np.ndarray) -> float:
-        """Test for stationarity using Augmented Dickey-Fuller test."""
-        try:
-            from statsmodels.tsa.stattools import adfuller
-            result = adfuller(values)
-            return result[1]  # p-value
-        except ImportError:
-            # Fallback: variance ratio test
-            if len(values) < 20:
-                return 1.0
-            
-            mid = len(values) // 2
-            var1 = np.var(values[:mid])
-            var2 = np.var(values[mid:])
-            
-            if var1 == 0 or var2 == 0:
-                return 1.0
-            
-            f_ratio = max(var1, var2) / min(var1, var2)
-            # Convert F-ratio to approximate p-value
-            return 1.0 / (1.0 + f_ratio)
-    
-    def export_analysis_report(self, 
-                              analysis_results: List[AnalysisResult],
-                              filepath: str):
-        """Export analysis results to comprehensive report."""
-        
-        report = {
-            'generated_at': datetime.now().isoformat(),
-            'report_type': 'long_term_stability_analysis',
-            'data_manager_config': {
-                'data_directory': str(self.data_directory),
-                'max_memory_mb': self.max_memory_mb,
-                'auto_archive_days': self.auto_archive_days
+
+        # Performance metric schema
+        schemas[DataType.PERFORMANCE_METRIC] = DataSchema(
+            schema_name="performance_metric",
+            schema_version="1.0",
+            fields={
+                'timestamp': {'type': datetime, 'required': True},
+                'metric_name': {'type': str, 'required': True},
+                'value': {'type': float, 'required': True},
+                'baseline_value': {'type': float, 'required': False},
+                'threshold_value': {'type': float, 'required': False},
+                'status': {'type': str, 'required': False}
             },
-            'data_summary': [
-                {
-                    'data_type': summary.data_type.value,
-                    'start_time': summary.start_time.isoformat(),
-                    'end_time': summary.end_time.isoformat(),
-                    'record_count': summary.record_count,
-                    'size_mb': summary.size_bytes / (1024 * 1024),
-                    'metrics': summary.metrics,
-                    'components': summary.components
-                }
-                for summary in self.get_data_summary()
-            ],
-            'analysis_results': [
-                {
-                    'analysis_type': result.analysis_type,
-                    'parameters': result.parameters,
-                    'results': result.results,
-                    'metadata': result.metadata,
-                    'generated_at': result.generated_at.isoformat()
-                }
-                for result in analysis_results
-            ]
+            description="Schema for performance metrics and KPIs"
+        )
+
+        return schemas
+
+    def _create_default_thresholds(self) -> Dict[str, float]:
+        """Create default quality assessment thresholds."""
+        return {
+            'completeness_threshold': 0.95,
+            'accuracy_threshold': 0.90,
+            'consistency_threshold': 0.85,
+            'timeliness_threshold': 0.80,
+            'outlier_threshold': 5.0,  # Percentage
+            'missing_data_threshold': 10.0  # Percentage
         }
+
+    def store_data(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data_type: DataType,
+        validate: bool = True,
+        **kwargs: Any
+    ) -> Tuple[bool, List[str]]:
+        """Store data with optional validation.
         
-        with open(filepath, 'w') as f:
-            json.dump(report, f, indent=2, default=str)
-        
-        self.logger.info(f"Analysis report exported to {filepath}")
-    
-    def _start_background_tasks(self):
-        """Start background maintenance tasks."""
-        # Could implement:
-        # - Automatic data archiving
-        # - Cache cleanup
-        # - Data integrity checks
-        # - Compression optimization
-        pass
-    
-    def cleanup_cache(self):
-        """Clean up data cache to free memory."""
-        with self._cache_lock:
-            self._data_cache.clear()
-            self._cache_size_mb = 0
-        
-        self.logger.info("Data cache cleared")
-    
-    def archive_old_data(self, archive_days: Optional[int] = None):
-        """Archive old data files."""
-        if archive_days is None:
-            archive_days = self.auto_archive_days
-        
-        cutoff_date = datetime.now() - timedelta(days=archive_days)
-        
-        with sqlite3.connect(self.metadata_db_path) as conn:
-            # Find files to archive
-            old_files = pd.read_sql_query("""
-                SELECT * FROM data_files 
-                WHERE end_time < ? AND archived = FALSE
-            """, conn, params=[cutoff_date.isoformat()])
+        Args:
+            data: Data to store
+            data_type: Type of data being stored
+            validate: Whether to validate data before storage
+            **kwargs: Additional storage parameters
             
-            archived_count = 0
-            for _, file_info in old_files.iterrows():
-                try:
-                    # Move file to archive directory
-                    storage_format = StorageFormat(file_info['storage_format'])
-                    current_path = self.storage_paths[storage_format] / file_info['filename']
-                    
-                    archive_dir = self.data_directory / "archive" / storage_format.value
-                    archive_dir.mkdir(parents=True, exist_ok=True)
-                    archive_path = archive_dir / file_info['filename']
-                    
-                    if current_path.exists():
-                        current_path.rename(archive_path)
-                        
-                        # Update metadata
-                        conn.execute("""
-                            UPDATE data_files SET archived = TRUE 
-                            WHERE id = ?
-                        """, (file_info['id'],))
-                        
-                        archived_count += 1
-                        
-                except Exception as e:
-                    self.logger.warning(f"Error archiving file {file_info['filename']}: {e}")
+        Returns:
+            Tuple of (success, validation_errors)
+        """
+        validation_errors = []
+
+        try:
+            # Validate data if requested and schema exists
+            if validate and data_type in self.schema_registry:
+                schema = self.schema_registry[data_type]
+                records = self._normalize_data_for_validation(data)
+
+                for i, record in enumerate(records):
+                    is_valid, errors = schema.validate_record(record)
+                    if not is_valid:
+                        validation_errors.extend([f"Record {i}: {error}" for error in errors])
+
+                # Stop if validation failed and we have errors
+                if validation_errors:
+                    self.logger.warning(f"Data validation failed with {len(validation_errors)} errors")
+                    return False, validation_errors
+
+            # Store data
+            success = self.storage.store_data(data, data_type, **kwargs)
+
+            if success:
+                self.logger.info(f"Successfully stored data of type {data_type.name}")
+            else:
+                self.logger.error(f"Failed to store data of type {data_type.name}")
+
+            return success, validation_errors
+
+        except Exception as e:
+            self.logger.error(f"Data storage operation failed: {str(e)}")
+            return False, [str(e)]
+
+    def retrieve_data(
+        self,
+        data_type: DataType,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        **kwargs: Any
+    ) -> QueryResult:
+        """Retrieve data from storage.
         
-        self.logger.info(f"Archived {archived_count} data files older than {archive_days} days")
+        Args:
+            data_type: Type of data to retrieve
+            start_time: Start time for data retrieval
+            end_time: End time for data retrieval
+            **kwargs: Additional query parameters
+            
+        Returns:
+            Retrieved data
+        """
+        try:
+            result = self.storage.retrieve_data(data_type, start_time, end_time, **kwargs)
+            self.logger.info(f"Retrieved data of type {data_type.name}")
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Data retrieval failed: {str(e)}")
+            return pd.DataFrame()
+
+    def assess_data_quality(
+        self,
+        data: Union[pd.DataFrame, DataType],
+        time_range: Optional[Tuple[datetime, datetime]] = None,
+        **kwargs: Any
+    ) -> DataQualityReport:
+        """Assess quality of data.
+        
+        Args:
+            data: Data to assess or data type to retrieve and assess
+            time_range: Time range for assessment
+            **kwargs: Additional assessment parameters
+            
+        Returns:
+            Data quality assessment report
+        """
+        try:
+            # Retrieve data if DataType provided
+            if isinstance(data, DataType):
+                start_time, end_time = time_range if time_range else (None, None)
+                df = self.retrieve_data(data, start_time, end_time, **kwargs)
+                if isinstance(df, pd.DataFrame):
+                    data = df
+                else:
+                    return DataQualityReport(quality_level=DataQuality.INVALID)
+
+            if not isinstance(data, pd.DataFrame):
+                return DataQualityReport(quality_level=DataQuality.INVALID)
+
+            # Initialize quality report
+            report = DataQualityReport(
+                total_records=len(data),
+                data_source=kwargs.get('data_source', 'unknown')
+            )
+
+            if len(data) == 0:
+                return report
+
+            # Assess completeness
+            report.missing_data_percentage = (data.isnull().sum().sum() / (len(data) * len(data.columns))) * 100
+            report.completeness_score = max(0.0, 1.0 - report.missing_data_percentage / 100.0)
+
+            # Assess duplicates
+            report.duplicate_records = len(data) - len(data.drop_duplicates())
+
+            # Assess temporal quality if timestamp column exists
+            if 'timestamp' in data.columns:
+                report = self._assess_temporal_quality(data, report)
+
+            # Assess value quality for numeric columns
+            numeric_columns = data.select_dtypes(include=[np.number]).columns
+            if len(numeric_columns) > 0:
+                report = self._assess_value_quality(data[numeric_columns], report)
+
+            # Calculate overall scores
+            report.accuracy_score = self._calculate_accuracy_score(data)
+            report.consistency_score = self._calculate_consistency_score(data)
+            report.timeliness_score = self._calculate_timeliness_score(data)
+
+            # Determine valid/invalid records
+            report.valid_records = len(data) - report.duplicate_records
+            report.invalid_records = report.duplicate_records
+
+            self.logger.info(f"Data quality assessment completed. Overall score: {report.overall_quality_score:.3f}")
+            return report
+
+        except Exception as e:
+            self.logger.error(f"Data quality assessment failed: {str(e)}")
+            return DataQualityReport(quality_level=DataQuality.INVALID)
+
+    def _assess_temporal_quality(self, data: pd.DataFrame, report: DataQualityReport) -> DataQualityReport:
+        """Assess temporal aspects of data quality."""
+        try:
+            timestamps = pd.to_datetime(data['timestamp'])
+
+            # Calculate temporal coverage
+            if len(timestamps) > 1:
+                report.temporal_coverage = timestamps.max() - timestamps.min()
+
+                # Find temporal gaps (gaps > expected sampling interval)
+                time_diffs = timestamps.diff().dropna()
+                if len(time_diffs) > 0:
+                    median_interval = time_diffs.median()
+                    gap_threshold = median_interval * 3  # Gaps > 3x median interval
+
+                    gaps = time_diffs[time_diffs > gap_threshold]
+                    report.temporal_gaps = [
+                        (timestamps.iloc[i-1], timestamps.iloc[i])
+                        for i in gaps.index
+                    ]
+
+                    # Sampling rate consistency
+                    interval_cv = (time_diffs.std() / time_diffs.mean()) if time_diffs.mean() > 0 else 1.0
+                    report.sampling_rate_consistency = max(0.0, 1.0 - interval_cv)
+
+        except Exception as e:
+            self.logger.warning(f"Temporal quality assessment failed: {str(e)}")
+
+        return report
+
+    def _assess_value_quality(self, data: pd.DataFrame, report: DataQualityReport) -> DataQualityReport:
+        """Assess value quality for numeric data."""
+        try:
+            # Outlier detection using IQR method
+            outlier_counts = []
+
+            for column in data.columns:
+                if data[column].dtype in ['float64', 'int64']:
+                    Q1 = data[column].quantile(0.25)
+                    Q3 = data[column].quantile(0.75)
+                    IQR = Q3 - Q1
+
+                    lower_bound = Q1 - 1.5 * IQR
+                    upper_bound = Q3 + 1.5 * IQR
+
+                    outliers = ((data[column] < lower_bound) | (data[column] > upper_bound)).sum()
+                    outlier_counts.append(outliers)
+
+            if outlier_counts:
+                report.outlier_count = sum(outlier_counts)
+                report.outlier_percentage = (report.outlier_count / len(data)) * 100
+
+        except Exception as e:
+            self.logger.warning(f"Value quality assessment failed: {str(e)}")
+
+        return report
+
+    def _calculate_accuracy_score(self, data: pd.DataFrame) -> float:
+        """Calculate accuracy score based on data characteristics."""
+        try:
+            # Use outlier percentage as proxy for accuracy
+            outlier_penalty = min(0.5, len(data.select_dtypes(include=[np.number]).columns) * 0.1)
+            return max(0.0, 1.0 - outlier_penalty)
+        except Exception:
+            return 0.5
+
+    def _calculate_consistency_score(self, data: pd.DataFrame) -> float:
+        """Calculate consistency score based on data patterns."""
+        try:
+            # Check for consistent data types and patterns
+            consistency_factors = []
+
+            for column in data.columns:
+                if data[column].dtype == 'object':
+                    # For string columns, check for consistent formatting
+                    unique_ratio = len(data[column].unique()) / len(data[column])
+                    consistency_factors.append(min(1.0, 1.0 - unique_ratio))
+                else:
+                    # For numeric columns, check for consistent ranges
+                    if data[column].std() > 0:
+                        cv = data[column].std() / abs(data[column].mean())
+                        consistency_factors.append(max(0.0, 1.0 - min(cv, 1.0)))
+                    else:
+                        consistency_factors.append(1.0)
+
+            return float(np.mean(consistency_factors)) if consistency_factors else 0.5
+
+        except Exception:
+            return 0.5
+
+    def _calculate_timeliness_score(self, data: pd.DataFrame) -> float:
+        """Calculate timeliness score based on data recency."""
+        try:
+            if 'timestamp' in data.columns:
+                timestamps = pd.to_datetime(data['timestamp'])
+                latest_timestamp = timestamps.max()
+                current_time = datetime.now()
+
+                # Score based on how recent the latest data is
+                time_diff = current_time - latest_timestamp
+                hours_old = time_diff.total_seconds() / 3600
+
+                # Full score if data is less than 1 hour old, decreasing score for older data
+                return max(0.0, 1.0 - min(hours_old / 24.0, 1.0))  # 24 hours = 0 score
+            else:
+                return 1.0  # No timestamp info, assume timely
+
+        except Exception:
+            return 0.5
+
+    def _normalize_data_for_validation(
+        self,
+        data: Union[pd.DataFrame, List[DataRecord], DataRecord]
+    ) -> List[DataRecord]:
+        """Normalize data for validation."""
+        if isinstance(data, pd.DataFrame):
+            return data.to_dict('records')
+        elif isinstance(data, dict):
+            return [data]
+        elif isinstance(data, list):
+            return data
+        else:
+            raise ValueError(f"Unsupported data type for validation: {type(data)}")
+
+    def export_data(
+        self,
+        data_type: DataType,
+        output_path: Union[str, Path],
+        format_type: StorageFormat = StorageFormat.CSV,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        **kwargs: Any
+    ) -> bool:
+        """Export data to external format.
+        
+        Args:
+            data_type: Type of data to export
+            output_path: Path for exported data
+            format_type: Export format
+            start_time: Start time for data export
+            end_time: End time for data export
+            **kwargs: Additional export parameters
+            
+        Returns:
+            True if export successful, False otherwise
+        """
+        try:
+            # Retrieve data
+            data = self.retrieve_data(data_type, start_time, end_time, **kwargs)
+
+            if isinstance(data, pd.DataFrame) and not data.empty:
+                output_file = Path(output_path).with_suffix(format_type.file_extension)
+
+                if format_type == StorageFormat.CSV:
+                    data.to_csv(output_file, index=False)
+                elif format_type == StorageFormat.JSON:
+                    data.to_json(output_file, orient='records', date_format='iso')
+                elif format_type == StorageFormat.PARQUET:
+                    data.to_parquet(output_file)
+                elif format_type == StorageFormat.PICKLE:
+                    data.to_pickle(output_file)
+                else:
+                    raise ValueError(f"Unsupported export format: {format_type}")
+
+                self.logger.info(f"Data exported to {output_file}")
+                return True
+            else:
+                self.logger.warning("No data to export")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Data export failed: {str(e)}")
+            return False
+
+
+# Factory functions and utilities
+def create_mfc_data_manager(
+    storage_path: str = "./data/mfc_stability",
+    storage_type: str = "sqlite",
+    **kwargs: Any
+) -> MFCDataManager:
+    """Create MFC data manager with specified storage."""
+    if storage_type.lower() == "sqlite":
+        storage = SQLiteDataStorage(storage_path, **kwargs)
+    else:
+        raise ValueError(f"Unsupported storage type: {storage_type}")
+
+    return MFCDataManager(storage=storage)
+
+
+def generate_sample_sensor_data(
+    start_time: datetime,
+    duration_hours: int = 24,
+    sampling_interval_minutes: int = 5
+) -> pd.DataFrame:
+    """Generate sample sensor data for testing."""
+    np.random.seed(42)
+
+    # Generate timestamps
+    timestamps = pd.date_range(
+        start=start_time,
+        periods=duration_hours * 60 // sampling_interval_minutes,
+        freq=f'{sampling_interval_minutes}min'
+    )
+
+    # Generate synthetic sensor data
+    base_power = 20.0
+    power_variation = 2.0 * np.sin(2 * np.pi * np.arange(len(timestamps)) / (24 * 60 / sampling_interval_minutes))
+    noise = np.random.normal(0, 0.5, len(timestamps))
+    power_data = base_power + power_variation + noise
+
+    # Create DataFrame
+    data = pd.DataFrame({
+        'timestamp': timestamps,
+        'component_id': 'MFC_001',
+        'metric_name': 'power_output',
+        'value': power_data,
+        'unit': 'W',
+        'quality_score': np.random.uniform(0.8, 1.0, len(timestamps))
+    })
+
+    return data
+
+
+# Example usage and testing
+def run_example_data_management() -> None:
+    """Run example data management operations."""
+    # Create data manager
+    data_manager = create_mfc_data_manager()
+
+    # Generate sample data
+    start_time = datetime.now() - timedelta(hours=24)
+    sample_data = generate_sample_sensor_data(start_time, duration_hours=24)
+
+    print("Data Management Example:")
+    print(f"Generated {len(sample_data)} sample records")
+
+    # Store data
+    success, errors = data_manager.store_data(
+        sample_data,
+        DataType.SENSOR_READING,
+        validate=True
+    )
+
+    if success:
+        print("✓ Data stored successfully")
+    else:
+        print(f"✗ Data storage failed: {errors}")
+
+    # Retrieve data
+    retrieved_data = data_manager.retrieve_data(
+        DataType.SENSOR_READING,
+        start_time=start_time,
+        end_time=datetime.now()
+    )
+
+    print(f"Retrieved {len(retrieved_data)} records")
+
+    # Assess data quality
+    quality_report = data_manager.assess_data_quality(retrieved_data)
+
+    print("\nData Quality Assessment:")
+    print(f"Overall Quality Score: {quality_report.overall_quality_score:.3f}")
+    print(f"Quality Level: {quality_report.quality_level}")
+    print(f"Completeness Score: {quality_report.completeness_score:.3f}")
+    print(f"Missing Data: {quality_report.missing_data_percentage:.1f}%")
+    print(f"Outliers: {quality_report.outlier_count} ({quality_report.outlier_percentage:.1f}%)")
+
+    if quality_report.recommendations:
+        print("Recommendations:")
+        for rec in quality_report.recommendations:
+            print(f"- {rec}")
+
+    # Export data
+    export_success = data_manager.export_data(
+        DataType.SENSOR_READING,
+        "./data/exported_sensor_data",
+        StorageFormat.CSV,
+        start_time=start_time
+    )
+
+    if export_success:
+        print("✓ Data exported successfully")
+    else:
+        print("✗ Data export failed")
+
+
+if __name__ == "__main__":
+    run_example_data_management()

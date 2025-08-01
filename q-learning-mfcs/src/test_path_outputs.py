@@ -17,18 +17,18 @@ matplotlib.use('Agg')  # Use non-GUI backend for testing
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from path_config import (
-    get_figure_path, get_simulation_data_path, get_model_path, 
+    get_figure_path, get_simulation_data_path, get_model_path,
     get_report_path, get_log_path, FIGURES_DIR, SIMULATION_DATA_DIR,
     MODELS_DIR, REPORTS_DIR, LOGS_DIR
 )
 
 class TestPathOutputs(unittest.TestCase):
     """Test suite for verifying correct path outputs."""
-    
+
     def setUp(self):
         """Set up test environment."""
         self.test_files_created = []
-        
+
     def tearDown(self):
         """Clean up test files."""
         for filepath in self.test_files_created:
@@ -37,11 +37,11 @@ class TestPathOutputs(unittest.TestCase):
                     os.remove(filepath)
                 except:
                     pass
-    
+
     def track_file(self, filepath):
         """Track a file for cleanup."""
         self.test_files_created.append(filepath)
-        
+
     def test_path_config_functions(self):
         """Test that path configuration functions work correctly."""
         fig_path = get_figure_path('test.png')
@@ -49,13 +49,13 @@ class TestPathOutputs(unittest.TestCase):
         model_path = get_model_path('test.pkl')
         report_path = get_report_path('test.pdf')
         log_path = get_log_path('test.log')
-        
+
         self.assertTrue(fig_path.endswith('data/figures/test.png'))
         self.assertTrue(data_path.endswith('data/simulation_data/test.csv'))
         self.assertTrue(model_path.endswith('q_learning_models/test.pkl'))
         self.assertTrue(report_path.endswith('reports/test.pdf'))
         self.assertTrue(log_path.endswith('data/logs/test.log'))
-        
+
     def test_directories_exist(self):
         """Test that all required directories exist."""
         self.assertTrue(FIGURES_DIR.exists())
@@ -66,20 +66,20 @@ class TestPathOutputs(unittest.TestCase):
 
 class MockSimulationTest:
     """Base class for mock simulation tests."""
-    
+
     def __init__(self, test_case):
         self.test_case = test_case
         self.created_files = []
-        
+
     def mock_simulation_run(self, duration_minutes=1):
         """Create mock simulation data."""
         import numpy as np
         import pandas as pd
-        
+
         # Create minimal simulation data
         time_steps = np.arange(0, duration_minutes * 60, 10)  # 10-second intervals
         n_steps = len(time_steps)
-        
+
         data = {
             'time_hours': time_steps / 3600,
             'power_total': np.random.uniform(0.1, 0.5, n_steps),
@@ -88,15 +88,15 @@ class MockSimulationTest:
             'substrate_utilization': np.random.uniform(0.6, 0.9, n_steps),
             'flow_rate': np.random.uniform(10, 30, n_steps),
         }
-        
+
         return pd.DataFrame(data)
-    
+
     def verify_file_created(self, filepath, file_type="file"):
         """Verify that a file was created in the correct location."""
         self.created_files.append(filepath)
         if not os.path.exists(filepath):
             raise AssertionError(f"{file_type} not created: {filepath}")
-        
+
         # Verify it's in the correct directory
         if 'figures' in filepath and '.png' in filepath:
             self.test_case.assertIn('data/figures', filepath)
@@ -108,12 +108,12 @@ class MockSimulationTest:
             self.test_case.assertIn('reports', filepath)
         elif 'logs' in filepath and '.log' in filepath:
             self.test_case.assertIn('data/logs', filepath)
-            
+
         return True
 
 def test_simple_plotting_file():
     """Test a simple file that generates plots."""
-    
+
     # Test generate_performance_graphs.py
     test_code = '''
 import matplotlib.pyplot as plt
@@ -134,20 +134,20 @@ plt.close()
 
 print(f"Saved plot to: {filename}")
 '''
-    
+
     # Execute the test code
     exec(test_code)
-    
+
     # Verify file was created
     expected_path = get_figure_path('test_performance_graph.png')
     if not os.path.exists(expected_path):
         raise AssertionError(f"Plot file not created: {expected_path}")
-    
+
     return expected_path
 
 def test_data_output_file():
     """Test a file that outputs CSV and JSON data."""
-    
+
     test_code = '''
 import pandas as pd
 import json
@@ -177,23 +177,23 @@ with open(json_path, 'w') as f:
 print(f"Saved CSV to: {csv_path}")
 print(f"Saved JSON to: {json_path}")
 '''
-    
+
     exec(test_code)
-    
+
     # Verify files were created
     csv_path = get_simulation_data_path('test_simulation_data.csv')
     json_path = get_simulation_data_path('test_simulation_data.json')
-    
+
     if not os.path.exists(csv_path):
         raise AssertionError(f"CSV file not created: {csv_path}")
     if not os.path.exists(json_path):
         raise AssertionError(f"JSON file not created: {json_path}")
-    
+
     return [csv_path, json_path]
 
 def test_model_output_file():
     """Test a file that outputs pickle models."""
-    
+
     import pickle
     from collections import defaultdict
     from path_config import get_model_path
@@ -210,19 +210,19 @@ def test_model_output_file():
         pickle.dump(dict(q_table), f)
 
     print(f"Saved model to: {model_path}")
-    
+
     # Verify file was created
     if not os.path.exists(model_path):
         raise AssertionError(f"Model file not created: {model_path}")
-    
+
     return model_path
 
 class TestActualFiles(unittest.TestCase):
     """Test actual source files with minimal execution."""
-    
+
     def setUp(self):
         self.cleanup_files = []
-        
+
     def tearDown(self):
         """Clean up test files."""
         for filepath in self.cleanup_files:
@@ -231,20 +231,20 @@ class TestActualFiles(unittest.TestCase):
                     os.remove(filepath)
                 except:
                     pass
-    
+
     def test_path_config_integration(self):
         """Test basic path configuration integration."""
         # Test simple plotting
         plot_file = test_simple_plotting_file()
         self.cleanup_files.append(plot_file)
         self.assertTrue(os.path.exists(plot_file))
-        
+
         # Test data output
         data_files = test_data_output_file()
         self.cleanup_files.extend(data_files)
         for f in data_files:
             self.assertTrue(os.path.exists(f))
-        
+
         # Test model output
         model_file = test_model_output_file()
         self.cleanup_files.append(model_file)
@@ -252,7 +252,7 @@ class TestActualFiles(unittest.TestCase):
 
 def run_file_import_tests():
     """Test that all modified files can be imported without errors."""
-    
+
     src_dir = Path(__file__).parent
     python_files = [
         'mfc_unified_qlearning_control.py',
@@ -277,9 +277,9 @@ def run_file_import_tests():
         'generate_pdf_report.py',
         'generate_enhanced_pdf_report.py'
     ]
-    
+
     results = {}
-    
+
     for filename in python_files:
         filepath = src_dir / filename
         if filepath.exists():
@@ -296,46 +296,46 @@ def run_file_import_tests():
                 results[filename] = f"❌ Import error: {str(e)}"
         else:
             results[filename] = "❌ File not found"
-    
+
     return results
 
 if __name__ == '__main__':
     print("🧪 Running Path Output Test Suite")
     print("=" * 50)
-    
+
     # Test 1: Basic path configuration
     print("\n1. Testing path configuration functions...")
     suite1 = unittest.TestLoader().loadTestsFromTestCase(TestPathOutputs)
     result1 = unittest.TextTestRunner(verbosity=2).run(suite1)
-    
+
     # Test 2: Integration tests
     print("\n2. Testing path integration...")
     suite2 = unittest.TestLoader().loadTestsFromTestCase(TestActualFiles)
     result2 = unittest.TextTestRunner(verbosity=2).run(suite2)
-    
+
     # Test 3: Import tests
     print("\n3. Testing file imports...")
     import_results = run_file_import_tests()
-    
+
     print("\nImport Test Results:")
     print("-" * 30)
     for filename, result in import_results.items():
         print(f"{filename}: {result}")
-    
+
     # Summary
     print("\n" + "=" * 50)
     print("📊 TEST SUMMARY")
     print("=" * 50)
-    
+
     total_tests = result1.testsRun + result2.testsRun
     total_failures = len(result1.failures) + len(result1.errors) + len(result2.failures) + len(result2.errors)
-    
+
     successful_imports = sum(1 for result in import_results.values() if "✅" in result)
     total_imports = len(import_results)
-    
+
     print(f"Unit Tests: {total_tests - total_failures}/{total_tests} passed")
     print(f"Import Tests: {successful_imports}/{total_imports} passed")
-    
+
     if total_failures == 0 and successful_imports == total_imports:
         print("🎉 ALL TESTS PASSED!")
         sys.exit(0)

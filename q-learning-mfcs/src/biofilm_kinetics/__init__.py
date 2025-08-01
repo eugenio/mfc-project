@@ -22,6 +22,6 @@ __author__ = "MFC Simulation Project"
 
 __all__ = [
     'BiofilmKineticsModel',
-    'SpeciesParameters', 
+    'SpeciesParameters',
     'SubstrateParameters'
 ]

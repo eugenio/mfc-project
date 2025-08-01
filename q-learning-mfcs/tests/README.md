@@ -28,6 +28,7 @@ tests/
 ## Test Categories
 
 ### 1. Path Configuration Tests (`test_path_config.py`)
+
 - **TestPathConfig**: Verifies that the `path_config.py` module works correctly
   - Tests directory existence
   - Tests path function outputs
@@ -35,7 +36,9 @@ tests/
   - Tests subdirectory handling
 
 ### 2. File Output Integration Tests (`test_file_outputs.py`)
+
 - **TestFileOutputIntegration**: Tests that different output types work correctly
+
   - Matplotlib figure output to `data/figures/`
   - CSV data output to `data/simulation_data/`
   - JSON data output to `data/simulation_data/`
@@ -43,18 +46,22 @@ tests/
   - Multiple output types simultaneously
 
 - **TestSpecificFileImports**: Tests that modified files can be imported
+
   - Main simulation files
   - Analysis and visualization files
   - Utility files (excluding Mojo-dependent ones)
 
 ### 3. Actual Execution Tests (`test_actual_executions.py`)
+
 - **TestActualFileExecutions**: Tests actual script execution with minimal parameters
+
   - Simple plotting script execution
   - Data generation script execution
   - Model saving script execution
   - Minimal simulation runs (skipped by default for speed)
 
 - **TestFileOutputPatterns**: Tests that files follow expected patterns
+
   - Verifies files import `path_config`
   - Checks for absence of hardcoded paths
   - Verifies output directories contain expected file types
@@ -81,6 +88,7 @@ tests/
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 cd tests/
 python run_tests.py          # Core functionality tests
@@ -96,6 +104,7 @@ python gui/test_gui_browser.py            # Full browser tests (requires Chrome)
 ```
 
 ### Run Specific Test Categories
+
 ```bash
 # Path configuration tests only
 python run_tests.py --test-class path_config
@@ -114,6 +123,7 @@ python run_tests.py --test-class patterns
 ```
 
 ### Verbosity Options
+
 ```bash
 # Verbose output
 python run_tests.py --verbose
@@ -135,25 +145,30 @@ python run_tests.py --quiet
 ## What the Tests Verify
 
 1. **Path Configuration Module**:
+
    - ✅ All required directories exist
    - ✅ Path functions return correct absolute paths
    - ✅ Paths point to standardized directories
 
-2. **File Output Integration**:
+1. **File Output Integration**:
+
    - ✅ Matplotlib can save figures to `data/figures/`
    - ✅ Pandas can save CSV to `data/simulation_data/`
    - ✅ JSON can be saved to `data/simulation_data/`
    - ✅ Pickle models can be saved to `q_learning_models/`
 
-3. **Import Verification**:
+1. **Import Verification**:
+
    - ✅ All modified Python files can be imported without errors
    - ✅ Files correctly import `path_config` module
 
-4. **Actual Execution**:
+1. **Actual Execution**:
+
    - ✅ Scripts can execute and create outputs in correct directories
    - ✅ Generated files have appropriate sizes and content
 
-5. **Code Pattern Verification**:
+1. **Code Pattern Verification**:
+
    - ✅ Files use `path_config` imports
    - ✅ Files don't contain hardcoded path patterns
    - ✅ Output directories contain expected file types

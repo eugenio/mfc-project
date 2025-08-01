@@ -44,7 +44,7 @@ class BacterialSpecies(Enum):
 @dataclass
 class EISMeasurement:
     """Container for EIS measurement data."""
-    
+
     frequency: float  # Hz
     impedance_magnitude: float  # Ohm
     impedance_phase: float  # radians
@@ -52,14 +52,14 @@ class EISMeasurement:
     imaginary_impedance: float  # Ohm
     timestamp: float  # hours
     temperature: float  # K
-    
+
     @property
     def complex_impedance(self) -> complex:
         """Get complex impedance."""
         return complex(self.real_impedance, self.imaginary_impedance)
-    
+
     @classmethod
-    def from_complex(cls, frequency: float, impedance: complex, 
+    def from_complex(cls, frequency: float, impedance: complex,
                     timestamp: float = 0.0, temperature: float = 303.0) -> 'EISMeasurement':
         """Create measurement from complex impedance."""
         magnitude = abs(impedance)
@@ -89,18 +89,18 @@ class EISCircuitModel:
     - Cbio: Biofilm capacitance
     - Rct: Charge transfer resistance
     """
-    
+
     def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED):
         """Initialize circuit model with species-specific parameters."""
         self.species = species
         self._load_species_parameters()
-        
+
         # Literature-validated frequency range (PMC10452506)
         self.frequency_range = (100, 1e6)  # Hz
-        
+
         # Default circuit parameters (will be updated by biofilm state)
         self.reset_parameters()
-    
+
     def _load_species_parameters(self):
         """Load species-specific EIS parameters from literature."""
         if self.species == BacterialSpecies.GEOBACTER:
@@ -130,22 +130,22 @@ class EISCircuitModel:
                 'max_thickness': 70.0,  # μm
                 'conductivity': 7.5e-4,  # S/cm (intermediate)
             }
-    
+
     def reset_parameters(self):
         """Reset circuit parameters to baseline values."""
         # Solution resistance (electrode geometry dependent)
         self.Rs = 50.0  # Ohm (typical for small electrodes)
-        
+
         # Double layer capacitance (literature: ~10-100 μF/cm²)
         self.Cdl = 50e-6  # F (for 1 cm² electrode)
-        
+
         # Biofilm parameters (updated by biofilm state)
         self.Rbio = 1000.0  # Ohm (initial high resistance)
         self.Cbio = 1e-6   # F (initial low capacitance)
-        
+
         # Charge transfer resistance
         self.Rct = 500.0   # Ohm
-    
+
     def update_from_biofilm_state(self, thickness: float, biomass_density: float,
                                   porosity: float = 0.8, electrode_area: float = 1e-4):
         """
@@ -159,32 +159,32 @@ class EISCircuitModel:
         """
         # Convert area to cm²
         area_cm2 = electrode_area * 1e4
-        
+
         # Biofilm resistance calculation
         # Based on: R = ρ * L / A
         resistivity = self.species_params['base_resistivity']
         resistivity *= (1 + (1 - porosity) * biomass_density / 10.0)  # Density effect
-        
+
         thickness_cm = thickness * 1e-4  # μm to cm
         self.Rbio = resistivity * thickness_cm / area_cm2
-        
+
         # Ensure minimum resistance
         self.Rbio = max(self.Rbio, 10.0)
-        
+
         # Biofilm capacitance calculation
         # Based on: C = ε * A / d
         capacitance_factor = self.species_params['capacitance_factor']
         self.Cbio = capacitance_factor * area_cm2 * thickness / 10.0
-        
+
         # Ensure minimum capacitance
         self.Cbio = max(self.Cbio, 1e-9)
-        
+
         # Update charge transfer resistance (biofilm thickness effect)
         # For electroactive biofilms, thicker biofilms have LOWER charge transfer resistance
         # due to more electron transfer pathways
         thickness_factor = max(0.1, 1.0 - 0.8 * thickness / self.species_params['max_thickness'])
         self.Rct = 500.0 * thickness_factor
-    
+
     def calculate_impedance(self, frequency: float) -> complex:
         """
         Calculate complex impedance at given frequency.
@@ -196,22 +196,22 @@ class EISCircuitModel:
             Complex impedance (Ohm)
         """
         omega = 2 * np.pi * frequency
-        
+
         # Capacitive impedances
         Zcdl = 1 / (1j * omega * self.Cdl)
         Zcbio = 1 / (1j * omega * self.Cbio)
-        
+
         # Biofilm branch: Rbio in series with Cbio
         Zbio_branch = self.Rbio + Zcbio
-        
+
         # Parallel combination of Cdl and biofilm branch
         Zparallel = 1 / (1/Zcdl + 1/Zbio_branch)
-        
+
         # Total impedance: Rs + parallel combination + Rct
         Z_total = self.Rs + Zparallel + self.Rct
-        
+
         return Z_total
-    
+
     def fit_parameters(self, measurements: List[EISMeasurement]) -> Dict[str, float]:
         """
         Fit circuit parameters to experimental data.
@@ -225,27 +225,27 @@ class EISCircuitModel:
         # Extract frequency and impedance data
         frequencies = np.array([m.frequency for m in measurements])
         impedances = np.array([m.complex_impedance for m in measurements])
-        
+
         # Simple parameter estimation using high and low frequency limits
         # High frequency: Rs ≈ Re(Z) at f → ∞
         high_freq_idx = np.argmax(frequencies)
         self.Rs = impedances[high_freq_idx].real
-        
+
         # Low frequency: Total resistance ≈ Re(Z) at f → 0
         low_freq_idx = np.argmin(frequencies)
         total_resistance = impedances[low_freq_idx].real
         self.Rct = max(total_resistance - self.Rs - self.Rbio, 10.0)
-        
+
         # Estimate capacitances from phase behavior
         # Find frequency where phase is maximum (characteristic frequency)
         phases = np.array([abs(m.impedance_phase) for m in measurements])
         max_phase_idx = np.argmax(phases)
         char_freq = frequencies[max_phase_idx]
-        
+
         # Estimate Cdl from characteristic frequency
         self.Cdl = 1 / (2 * np.pi * char_freq * self.Rs)
         self.Cdl = np.clip(self.Cdl, 1e-9, 1e-3)  # Reasonable bounds
-        
+
         return {
             'Rs': self.Rs,
             'Cdl': self.Cdl,
@@ -266,7 +266,7 @@ class EISModel:
     - Noise and drift modeling
     - Integration with biofilm kinetics
     """
-    
+
     def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED,
                  electrode_area: float = 1e-4, use_gpu: bool = True):
         """
@@ -280,7 +280,7 @@ class EISModel:
         self.species = species
         self.electrode_area = electrode_area
         self.use_gpu = use_gpu
-        
+
         # Initialize GPU if available
         self.gpu_acc = None
         if use_gpu and get_gpu_accelerator:
@@ -288,31 +288,31 @@ class EISModel:
             self.gpu_available = self.gpu_acc.is_gpu_available()
         else:
             self.gpu_available = False
-        
+
         # Initialize circuit model
         self.circuit = EISCircuitModel(species)
-        
+
         # Measurement parameters
         self.frequency_points = np.logspace(2, 6, 50)  # 100 Hz to 1 MHz, 50 points
         self.measurement_amplitude = 0.010  # 10 mV AC amplitude
-        
+
         # Calibration parameters (species-specific)
         self._initialize_calibration()
-        
+
         # Noise and drift parameters
         self.noise_level = 0.02  # 2% relative noise
         self.drift_rate = 0.001  # 0.1% per hour
-        
+
         # Historical data
         self.measurement_history = []
         self.thickness_history = []
         self.time_history = []
-        
+
         # Current state
         self.current_thickness = 0.0
         self.current_biomass = 0.0
         self.measurement_time = 0.0
-    
+
     def _initialize_calibration(self):
         """Initialize species-specific calibration parameters."""
         if self.species == BacterialSpecies.GEOBACTER:
@@ -340,7 +340,7 @@ class EISModel:
                 'max_thickness': 70.0,  # μm
                 'sensitivity_range': (4.0, 50.0),  # μm
             }
-    
+
     def simulate_measurement(self, biofilm_thickness: float, biomass_density: float,
                            porosity: float = 0.8, temperature: float = 303.0,
                            time_hours: float = 0.0) -> List[EISMeasurement]:
@@ -361,9 +361,9 @@ class EISModel:
         self.circuit.update_from_biofilm_state(
             biofilm_thickness, biomass_density, porosity, self.electrode_area
         )
-        
+
         measurements = []
-        
+
         # Calculate impedance across frequency range
         if self.gpu_available:
             # GPU-accelerated calculation
@@ -375,19 +375,19 @@ class EISModel:
             for freq in self.frequency_points:
                 Z = self.circuit.calculate_impedance(freq)
                 impedances.append(Z)
-        
+
         # Create measurements with noise
         for i, freq in enumerate(self.frequency_points):
             Z = impedances[i]
-            
+
             # Add measurement noise
             noise_factor = 1.0 + np.random.normal(0, self.noise_level)
             Z_noisy = Z * noise_factor
-            
+
             # Add drift effect
             drift_factor = 1.0 + self.drift_rate * time_hours
             Z_drift = Z_noisy * drift_factor
-            
+
             measurement = EISMeasurement.from_complex(
                 frequency=freq,
                 impedance=Z_drift,
@@ -395,35 +395,35 @@ class EISModel:
                 temperature=temperature
             )
             measurements.append(measurement)
-        
+
         # Store current state
         self.current_thickness = biofilm_thickness
         self.current_biomass = biomass_density
         self.measurement_time = time_hours
-        
+
         # Update history
         self.measurement_history.append(measurements)
         self.thickness_history.append(biofilm_thickness)
         self.time_history.append(time_hours)
-        
+
         return measurements
-    
+
     def _calculate_impedance_spectrum_gpu(self, frequencies_gpu):
         """Calculate impedance spectrum using GPU acceleration."""
         # GPU implementation for parallel frequency calculation
-        self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
-        
+        omega_gpu = self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
+
         # Capacitive impedances (simplified for GPU)
         # This is a simplified version - full complex arithmetic requires more GPU ops
         impedances = []
         frequencies_cpu = self.gpu_acc.to_cpu(frequencies_gpu)
-        
+
         for freq in frequencies_cpu:
             Z = self.circuit.calculate_impedance(freq)
             impedances.append(Z)
-        
+
         return impedances
-    
+
     def estimate_thickness(self, measurements: List[EISMeasurement],
                           method: str = 'low_frequency') -> float:
         """
@@ -438,45 +438,45 @@ class EISModel:
         """
         if not measurements:
             return 0.0
-        
+
         if method == 'low_frequency':
             # Use low-frequency impedance for thickness estimation
             low_freq_measurements = [m for m in measurements if m.frequency <= 1000]
             if not low_freq_measurements:
                 low_freq_measurements = [min(measurements, key=lambda x: x.frequency)]
-            
+
             avg_impedance = np.mean([m.impedance_magnitude for m in low_freq_measurements])
-            
+
             # Linear calibration model
             thickness = (self.calibration['thickness_intercept'] - avg_impedance) / self.calibration['thickness_slope']
-            
+
         elif method == 'characteristic':
             # Use characteristic frequency for thickness estimation
             phases = [abs(m.impedance_phase) for m in measurements]
             max_phase_idx = np.argmax(phases)
             char_impedance = measurements[max_phase_idx].impedance_magnitude
-            
+
             # Characteristic impedance correlation
             thickness = (self.calibration['thickness_intercept'] - char_impedance) / self.calibration['thickness_slope']
-            
+
         elif method == 'fitting':
             # Use circuit fitting for thickness estimation
             fitted_params = self.circuit.fit_parameters(measurements)
-            
+
             # Relate biofilm resistance to thickness
             Rbio = fitted_params['Rbio']
             resistivity = self.circuit.species_params['base_resistivity']
             thickness_cm = Rbio * self.electrode_area * 1e4 / resistivity
             thickness = thickness_cm * 1e4  # cm to μm
-            
+
         else:
             raise ValueError(f"Unknown estimation method: {method}")
-        
+
         # Apply bounds
         thickness = np.clip(thickness, 0.0, self.calibration['max_thickness'])
-        
+
         return thickness
-    
+
     def get_biofilm_properties(self, measurements: List[EISMeasurement]) -> Dict[str, float]:
         """
         Extract biofilm properties from EIS measurements.
@@ -489,21 +489,21 @@ class EISModel:
         """
         if not measurements:
             return {}
-        
+
         # Estimate thickness
         thickness = self.estimate_thickness(measurements)
-        
+
         # Fit circuit parameters
         fitted_params = self.circuit.fit_parameters(measurements)
-        
+
         # Calculate derived properties
         conductivity = 1.0 / fitted_params['Rbio'] * (thickness * 1e-6) / self.electrode_area
         capacitance_per_area = fitted_params['Cbio'] / (self.electrode_area * 1e4)  # F/cm²
-        
+
         # Estimate biomass from impedance (empirical correlation)
         low_freq_impedance = min([m.impedance_magnitude for m in measurements])
         biomass_estimate = max(0, (2000 - low_freq_impedance) / 100.0)  # g/L (empirical)
-        
+
         return {
             'thickness_um': thickness,
             'conductivity_S_per_m': conductivity,
@@ -514,29 +514,29 @@ class EISModel:
             'charge_transfer_resistance_ohm': fitted_params['Rct'],
             'measurement_quality': self._assess_measurement_quality(measurements)
         }
-    
+
     def _assess_measurement_quality(self, measurements: List[EISMeasurement]) -> float:
         """Assess measurement quality (0-1 score)."""
         if len(measurements) < 10:
             return 0.5  # Insufficient data
-        
+
         # Check frequency coverage
         frequencies = [m.frequency for m in measurements]
         freq_range = max(frequencies) / min(frequencies)
         coverage_score = min(1.0, freq_range / 1e4)  # Good if 4+ decades
-        
+
         # Check phase behavior (should have characteristic shape)
         phases = [abs(m.impedance_phase) for m in measurements]
         phase_range = max(phases) - min(phases)
         phase_score = min(1.0, phase_range / (np.pi/2))  # Good if >45° range
-        
+
         # Check impedance magnitude consistency
         magnitudes = [m.impedance_magnitude for m in measurements]
         magnitude_cv = np.std(magnitudes) / np.mean(magnitudes)
         consistency_score = max(0.0, 1.0 - magnitude_cv)
-        
+
         return (coverage_score + phase_score + consistency_score) / 3.0
-    
+
     def calibrate_for_species(self, reference_measurements: List[Tuple[float, List[EISMeasurement]]]):
         """
         Calibrate EIS model for specific species using reference data.
@@ -547,31 +547,31 @@ class EISModel:
         if len(reference_measurements) < 3:
             print("Warning: Insufficient calibration data (need ≥3 points)")
             return
-        
+
         thicknesses = []
         impedances = []
-        
+
         for known_thickness, measurements in reference_measurements:
             # Use low-frequency impedance as calibration metric
             low_freq_impedance = min([m.impedance_magnitude for m in measurements])
             thicknesses.append(known_thickness)
             impedances.append(low_freq_impedance)
-        
+
         # Linear regression for calibration
         thicknesses = np.array(thicknesses)
         impedances = np.array(impedances)
-        
+
         # Calculate slope and intercept
         slope = np.sum((thicknesses - np.mean(thicknesses)) * (impedances - np.mean(impedances))) / \
                 np.sum((thicknesses - np.mean(thicknesses))**2)
         intercept = np.mean(impedances) - slope * np.mean(thicknesses)
-        
+
         # Update calibration parameters
         self.calibration['thickness_slope'] = slope
         self.calibration['thickness_intercept'] = intercept
-        
+
         print(f"EIS calibration updated: slope={slope:.1f} Ohm/μm, intercept={intercept:.1f} Ohm")
-    
+
     def get_measurement_summary(self) -> Dict[str, Any]:
         """Get summary of current EIS measurement state."""
         return {
