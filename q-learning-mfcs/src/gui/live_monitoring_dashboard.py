@@ -91,6 +91,8 @@ class LiveDataGenerator:
         """Generate realistic MFC performance data."""
         current_time = datetime.now()
         elapsed_hours = (current_time - self.start_time).total_seconds() / 3600
+        # Use simulation elapsed time instead of system time
+        simulation_time = self.start_time + timedelta(hours=elapsed_hours)
         
         # Simulate realistic MFC behavior with trends
         base_power = 0.5 + 0.1 * np.sin(elapsed_hours * 0.1)  # Daily cycle
@@ -121,7 +123,7 @@ class LiveDataGenerator:
         conductivity = 0.001 * (substrate_concentration + 20) + np.random.normal(0, 0.0002)
         
         return PerformanceMetric(
-            timestamp=current_time,
+            timestamp=simulation_time,
             power_output_mW=power_output,
             substrate_concentration_mM=substrate_concentration,
             current_density_mA_cm2=current_density,
@@ -259,10 +261,18 @@ class LiveMonitoringDashboard:
     Implements real-time visualization with customizable layout.
     """
     
-    def __init__(self):
+    def __init__(self, n_cells: int = 5):
+        self.n_cells = n_cells
         self.data_generator = LiveDataGenerator({})
         self.alert_manager = AlertManager()
         self.layout_config = self._get_default_layout()
+        
+        # Initialize simulation start time
+        if 'simulation_start_time' not in st.session_state:
+            st.session_state.simulation_start_time = datetime.now()
+        
+        # Update data generator start time to match simulation
+        self.data_generator.start_time = st.session_state.simulation_start_time
         
         # Initialize session state
         if 'monitoring_data' not in st.session_state:
@@ -271,7 +281,18 @@ class LiveMonitoringDashboard:
             st.session_state.monitoring_alerts = []
         if 'last_update' not in st.session_state:
             st.session_state.last_update = datetime.now()
+        if 'monitoring_n_cells' not in st.session_state:
+            st.session_state.monitoring_n_cells = n_cells
             
+    def reset_simulation_time(self):
+        """Reset simulation start time for new simulation."""
+        st.session_state.simulation_start_time = datetime.now()
+        self.data_generator.start_time = st.session_state.simulation_start_time
+        # Clear existing data since we're starting fresh
+        st.session_state.monitoring_data = []
+        st.session_state.monitoring_alerts = []
+        st.session_state.last_update = datetime.now()
+    
     def _get_default_layout(self) -> DashboardLayout:
         """Get default dashboard layout configuration."""
         return DashboardLayout(
@@ -289,11 +310,18 @@ class LiveMonitoringDashboard:
     def update_data(self, force_update: bool = False):
         """Update monitoring data with new measurements."""
         current_time = datetime.now()
+        
+        # Initialize last_update if it doesn't exist
+        if 'last_update' not in st.session_state or st.session_state.last_update is None:
+            st.session_state.last_update = current_time
+            
         time_since_update = (current_time - st.session_state.last_update).total_seconds()
         
         if force_update or time_since_update >= self.layout_config.refresh_interval:
             # Generate new data points for multiple cells
-            cell_ids = ["Cell_01", "Cell_02", "Cell_03"]
+            # Use the actual number of cells from session state or instance
+            n_cells = st.session_state.get('monitoring_n_cells', self.n_cells)
+            cell_ids = [f"Cell_{i+1:02d}" for i in range(n_cells)]
             new_metrics = []
             
             for cell_id in cell_ids:
@@ -406,7 +434,7 @@ class LiveMonitoringDashboard:
             color='cell_id',
             title='Real-Time Power Output by Cell',
             labels={
-                'timestamp': 'Time',
+                'timestamp': 'Simulation Time',
                 'power_mW': 'Power Output (mW)',
                 'cell_id': 'MFC Cell'
             }
@@ -414,7 +442,7 @@ class LiveMonitoringDashboard:
         
         # Customize layout
         fig.update_layout(
-            xaxis_title="Time",
+            xaxis_title="Simulation Time",
             yaxis_title="Power Output (mW)",
             hovermode='x unified',
             showlegend=True,
@@ -458,7 +486,7 @@ class LiveMonitoringDashboard:
             color='cell_id',
             title='Substrate Consumption Over Time',
             labels={
-                'timestamp': 'Time',
+                'timestamp': 'Simulation Time',
                 'substrate_mM': 'Substrate Concentration (mM)',
                 'cell_id': 'MFC Cell'
             }
@@ -587,6 +615,9 @@ class LiveMonitoringDashboard:
             # Update configuration
             self.layout_config.refresh_interval = refresh_interval
             self.layout_config.max_data_points = max_data_points
+            
+            # Store refresh interval in session state for other components
+            st.session_state['live_monitoring_refresh'] = refresh_interval
             
             if show_historical:
                 if st.button("Load Historical Data (24h)"):
