@@ -87,6 +87,7 @@ plotly = ">=6.2.0,<7"
 altair = ">=5.5.0,<6"
 selenium = ">=4.34.2,<5"
 webdriver-manager = ">=4.0.2,<5"
+pydantic = ">=2.10.4"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -127,6 +128,19 @@ seaborn = ">=0.13.2,<0.14"
 [feature.ml.dependencies]
 optuna = ">=4.4.0,<5"
 
+# Genome-scale metabolic modeling
+[feature.gsm.dependencies]
+# Note: cobra requires specific solver versions
+python = ">=3.12.11,<3.13"  # Ensure Python version
+glpk = ">=5.0"  # Linear programming solver
+
+[feature.gsm.pypi-dependencies]
+cobra = ">=0.29.0"  # COBRApy for metabolic modeling
+mackinac = ">=0.8.4"  # Bridge between ModelSEED and COBRApy
+escher = ">=1.7.0"  # Metabolic pathway visualization
+memote = ">=0.13.0"  # Model testing framework
+swiglpk = ">=5.0.0"  # GLPK bindings for cobra
+
 # Mojo/Modular runtime
 [feature.modular.dependencies]
 modular = "25.4.*"
@@ -148,6 +162,7 @@ webdriver-manager = ">=4.0.2, <5"
 requests = ">=2.31.0"
 python-crontab = ">=3.3.0, <4"
 types-python-crontab = ">=3.3.0.20250715, <4"
+pubmedclient = ">=0.2.0, <0.3"
 
 # API and web server components
 [feature.api.pypi-dependencies]
@@ -218,6 +233,9 @@ gui-dev = ["dev", "gui", "tools"]
 
 # Machine learning research environment
 ml-research = ["dev", "ml", "advanced-ml", "gui"]
+
+# Genome-scale metabolic modeling environment
+gsm-research = ["dev", "gsm", "ml", "gui"]
 
 # API server environment
 api-server = ["api", "project"]
