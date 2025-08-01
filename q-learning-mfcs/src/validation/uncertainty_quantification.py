@@ -11,13 +11,8 @@ Created: 2025-08-01
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any, Callable
+from typing import Dict, List, Tuple, Any, Callable
 import json
-from pathlib import Path
-import warnings
-import matplotlib.pyplot as plt
-from scipy import stats
-from scipy.optimize import minimize
 
 @dataclass
 class ParameterUncertainty:
@@ -124,7 +119,7 @@ class MonteCarloAnalysis:
                 if (i + 1) % 100 == 0:
                     print(f"  Completed {i + 1}/{len(parameter_samples)} samples")
                     
-            except Exception as e:
+            except Exception:
                 # Handle failed model runs
                 for name in output_names:
                     outputs[name].append(np.nan)
@@ -193,7 +188,7 @@ class MonteCarloAnalysis:
                 if output_name in result and not np.isnan(result[output_name]):
                     outputs.append(result[output_name])
                     valid_indices.append(i)
-            except:
+            except (ValueError, TypeError, KeyError, AttributeError):
                 continue
         
         outputs = np.array(outputs)
@@ -351,10 +346,6 @@ class UncertaintyQuantificationFramework:
             flavin_efficiency = params.get('flavin_transfer_efficiency', 0.7)
             
             # Simplified calculations
-            # Reynolds number effect
-            re = density * 0.001 * 0.001 / viscosity  # Simplified Re calculation
-            flow_factor = min(1.0, re / 10.0)  # Flow enhancement factor
-            
             # Mass transport limitation
             transport_factor = min(1.0, diffusivity / 1e-9)
             
@@ -517,12 +508,12 @@ if __name__ == "__main__":
     summary = uq_framework.generate_uncertainty_summary(results)
     
     # Print key findings
-    print(f"\n🎯 Key Uncertainty Findings:")
+    print("\n🎯 Key Uncertainty Findings:")
     for finding in summary['key_findings']:
         print(f"  {finding}")
     
     # Print most sensitive parameters
-    print(f"\n🔍 Most Sensitive Parameters:")
+    print("\n🔍 Most Sensitive Parameters:")
     for output_name, params in summary['most_sensitive_parameters'].items():
         print(f"  {output_name}:")
         for i, (param, sensitivity) in enumerate(params):
@@ -541,4 +532,4 @@ if __name__ == "__main__":
     
     print(f"\n💾 Uncertainty analysis exported to: {results_file}")
     print(f"💾 Summary exported to: {summary_file}")
-    print(f"\n✅ Uncertainty quantification completed!")
+    print("\n✅ Uncertainty quantification completed!")

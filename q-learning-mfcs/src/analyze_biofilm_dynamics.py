@@ -6,7 +6,6 @@ Detailed analysis of biofilm growth dynamics from simulation data
 import sys
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Add src to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -38,7 +37,7 @@ def analyze_biofilm_dynamics():
             else:
                 biofilm_values = biofilm_str
             biofilm_data.append(biofilm_values)
-        except:
+        except (ValueError, IndexError, TypeError):
             biofilm_data.append([1.0] * 5)  # Default to 5 cells with 1 μm thickness
     
     biofilm_array = np.array(biofilm_data)
@@ -57,7 +56,7 @@ def analyze_biofilm_dynamics():
     phase1_idx = np.where(time_hours <= 10)[0]
     if len(phase1_idx) > 0:
         phase1_growth = np.mean(growth_rate[phase1_idx])
-        print(f"\n🌱 Initial Phase (0-10h):")
+        print("\n🌱 Initial Phase (0-10h):")
         print(f"   Average growth rate: {phase1_growth:.4f} μm/h")
         print(f"   Final thickness: {avg_thickness[phase1_idx[-1]]:.2f} μm")
     
@@ -65,7 +64,7 @@ def analyze_biofilm_dynamics():
     phase2_idx = np.where((time_hours > 10) & (time_hours <= 50))[0]
     if len(phase2_idx) > 0:
         phase2_growth = np.mean(growth_rate[phase2_idx])
-        print(f"\n📈 Exponential Phase (10-50h):")
+        print("\n📈 Exponential Phase (10-50h):")
         print(f"   Average growth rate: {phase2_growth:.4f} μm/h")
         print(f"   Thickness increase: {avg_thickness[phase2_idx[-1]] - avg_thickness[phase2_idx[0]]:.2f} μm")
     
@@ -73,7 +72,7 @@ def analyze_biofilm_dynamics():
     phase3_idx = np.where((time_hours > 50) & (time_hours <= 100))[0]
     if len(phase3_idx) > 0:
         phase3_growth = np.mean(growth_rate[phase3_idx])
-        print(f"\n📏 Linear Phase (50-100h):")
+        print("\n📏 Linear Phase (50-100h):")
         print(f"   Average growth rate: {phase3_growth:.4f} μm/h")
         print(f"   Thickness increase: {avg_thickness[phase3_idx[-1]] - avg_thickness[phase3_idx[0]]:.2f} μm")
     
@@ -81,12 +80,12 @@ def analyze_biofilm_dynamics():
     phase4_idx = np.where(time_hours > 100)[0]
     if len(phase4_idx) > 0:
         phase4_growth = np.mean(growth_rate[phase4_idx])
-        print(f"\n🌳 Mature Phase (100h+):")
+        print("\n🌳 Mature Phase (100h+):")
         print(f"   Average growth rate: {phase4_growth:.4f} μm/h")
         print(f"   Final thickness: {avg_thickness[-1]:.2f} μm")
     
     # Substrate utilization correlation
-    print(f"\n🔗 Biofilm-Substrate Correlation:")
+    print("\n🔗 Biofilm-Substrate Correlation:")
     substrate_conc = df['reservoir_concentration'].values
     substrate_addition = df['substrate_addition_rate'].values
     
@@ -102,7 +101,7 @@ def analyze_biofilm_dynamics():
     # Power production relationship
     power = df['total_power'].values
     corr_power, p_power = pearsonr(avg_thickness, power)
-    print(f"\n⚡ Biofilm-Power Relationship:")
+    print("\n⚡ Biofilm-Power Relationship:")
     print(f"   Thickness vs Power: r={corr_power:.3f} (p={p_power:.3e})")
     
     # Calculate power per unit biofilm
@@ -111,7 +110,7 @@ def analyze_biofilm_dynamics():
     print(f"   Peak power density: {np.max(power_per_biofilm):.4f} W/μm at {time_hours[np.argmax(power_per_biofilm)]:.1f}h")
     
     # Growth variability between cells
-    print(f"\n📊 Cell-to-Cell Variability:")
+    print("\n📊 Cell-to-Cell Variability:")
     cell_std = np.std(biofilm_array, axis=1)
     print(f"   Initial variability: {cell_std[0]:.4f} μm")
     print(f"   Final variability: {cell_std[-1]:.4f} μm")
@@ -119,7 +118,7 @@ def analyze_biofilm_dynamics():
     
     # Growth stability metrics
     growth_stability = np.std(growth_rate)
-    print(f"\n📉 Growth Stability:")
+    print("\n📉 Growth Stability:")
     print(f"   Growth rate std dev: {growth_stability:.4f} μm/h")
     print(f"   Coefficient of variation: {growth_stability/np.mean(growth_rate):.2%}")
     
@@ -127,7 +126,7 @@ def analyze_biofilm_dynamics():
     anomaly_threshold = np.mean(growth_rate) + 3 * np.std(growth_rate)
     anomalies = np.where(np.abs(growth_rate) > anomaly_threshold)[0]
     if len(anomalies) > 0:
-        print(f"\n⚠️ Growth Anomalies Detected:")
+        print("\n⚠️ Growth Anomalies Detected:")
         for idx in anomalies[:5]:  # Show first 5
             print(f"   Time {time_hours[idx]:.1f}h: growth rate = {growth_rate[idx]:.4f} μm/h")
     
@@ -135,7 +134,7 @@ def analyze_biofilm_dynamics():
     q_actions = df['q_action'].values
     unique_actions, action_counts = np.unique(q_actions, return_counts=True)
     
-    print(f"\n🎮 Q-Learning Control Actions:")
+    print("\n🎮 Q-Learning Control Actions:")
     print(f"   Unique actions used: {len(unique_actions)}")
     print(f"   Most common action: {unique_actions[np.argmax(action_counts)]} ({np.max(action_counts)/len(q_actions)*100:.1f}%)")
     

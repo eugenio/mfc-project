@@ -9,12 +9,10 @@ Created: 2025-08-01
 """
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple
-import warnings
-from pathlib import Path
+from typing import Dict, List, Optional, Any
 
 # Import existing electrode system
-from ..config.electrode_config import (
+from ..config.electrode_config import ElectrodeConfiguration, ElectrodeGeometry, ElectrodeMaterial
 from .literature_database import LiteratureDatabase, ValidationQuery, ValidationResult
 from .quality_assessor import QualityAssessor
 from .citation_manager import CitationManager, CitationReport
@@ -437,7 +435,7 @@ class ElectrodeValidationIntegrator:
     def _generate_markdown_report(self, report: ElectrodeValidationReport) -> str:
         """Generate markdown validation report."""
         
-        md = f"# Electrode Validation Report\n\n"
+        md = "# Electrode Validation Report\n\n"
         md += f"**Electrode:** {report.electrode_name}\n"
         md += f"**Material:** {report.material.value}\n"
         md += f"**Geometry:** {report.geometry.value}\n"
@@ -472,7 +470,7 @@ class ElectrodeValidationIntegrator:
             md += f"- **Literature Matches:** {len(result.validation_result.literature_matches)}\n"
             
             if result.recommendations:
-                md += f"- **Recommendations:**\n"
+                md += "- **Recommendations:**\n"
                 for rec in result.recommendations:
                     md += f"  - {rec}\n"
                     
@@ -539,7 +537,7 @@ if __name__ == "__main__":
         organism="Shewanella oneidensis"
     )
     
-    print(f"📊 Validation Result:")
+    print("📊 Validation Result:")
     print(f"  Parameter: {result.parameter_name}")
     print(f"  Value: {result.model_value} {result.units}")
     print(f"  Status: {result.validation_result.validation_status}")
@@ -547,8 +545,8 @@ if __name__ == "__main__":
     print(f"  Quality: {result.quality_score:.3f}")
     
     if result.recommendations:
-        print(f"  Recommendations:")
+        print("  Recommendations:")
         for rec in result.recommendations[:3]:  # Show first 3
             print(f"    - {rec}")
             
-    print(f"\n✅ Electrode validation integration test completed!")
+    print("\n✅ Electrode validation integration test completed!")
