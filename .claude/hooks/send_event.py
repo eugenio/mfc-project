@@ -12,13 +12,14 @@ Multi-Agent Observability Hook Script
 Sends Claude Code hook events to the observability server.
 """
 
-import json
-import sys
-import os
 import argparse
-import urllib.request
+import json
+import os
+import sys
 import urllib.error
+import urllib.request
 from datetime import datetime
+
 from utils.summarizer import generate_event_summary
 
 
@@ -39,7 +40,7 @@ def send_event_to_server(event_data, server_url="http://localhost:4000/events", 
         with urllib.request.urlopen(req, timeout=2) as response:
             if response.status == 200:
                 if verbose:
-                    print(f"Successfully sent event to observability server", file=sys.stderr)
+                    print("Successfully sent event to observability server", file=sys.stderr)
                 return True
             else:
                 if verbose:
@@ -108,7 +109,7 @@ def main():
             # Read .jsonl file and convert to JSON array
             chat_data = []
             try:
-                with open(transcript_path, "r") as f:
+                with open(transcript_path) as f:
                     for line in f:
                         line = line.strip()
                         if line:
