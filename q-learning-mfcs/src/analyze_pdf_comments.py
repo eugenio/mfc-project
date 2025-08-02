@@ -4,10 +4,12 @@ PDF Comment and Annotation Analyzer using PyMuPDF
 Extracts and displays comments, annotations, and metadata from PDF files.
 """
 
-import fitz  # PyMuPDF
-import sys
 import json
+import sys
 from pathlib import Path
+
+import fitz  # PyMuPDF
+
 from path_config import get_simulation_data_path
 
 

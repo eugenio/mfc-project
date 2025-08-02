@@ -5,12 +5,15 @@ This demo shows how to use the Mojo-accelerated Q-learning algorithm
 for microbial fuel cell control optimization.
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')  # Use non-interactive backend
+import time
+
 import matplotlib.pyplot as plt
 from odes import MFCModel
-import time
+
 
 def run_mojo_qlearning_demo():
     """Run the Mojo-accelerated Q-learning demo"""

@@ -9,19 +9,18 @@ growth validation.
 Created: 2025-08-01
 """
 
+import json
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any
-import json
-from pathlib import Path
-import warnings
+
 
 @dataclass
 class ExperimentalDataset:
     """Container for experimental MFC dataset."""
-    
+
     dataset_id: str
     source_reference: str
     organism: str
@@ -31,18 +30,18 @@ class ExperimentalDataset:
     temperature: float
     ph: float
     substrate_concentration: float
-    
+
     # Performance data
     current_density: List[float] = field(default_factory=list)
     voltage: List[float] = field(default_factory=list)
     power_density: List[float] = field(default_factory=list)
     coulombic_efficiency: List[float] = field(default_factory=list)
-    
+
     # Time series data (optional)
     time_points: List[float] = field(default_factory=list)
     biofilm_thickness: List[float] = field(default_factory=list)
     substrate_consumption: List[float] = field(default_factory=list)
-    
+
     # Metadata
     experimental_conditions: Dict[str, Any] = field(default_factory=dict)
     notes: str = ""
@@ -54,26 +53,26 @@ class MFCExperimentalDatabase:
     Contains curated experimental datasets from literature for validating
     physics models, biofilm growth predictions, and metabolic predictions.
     """
-    
+
     def __init__(self):
         self.datasets = {}
         self._build_experimental_database()
-    
+
     def _build_experimental_database(self):
         """Build database of experimental datasets."""
-        
+
         # Shewanella oneidensis MR-1 datasets
         self._add_shewanella_datasets()
-        
+
         # Geobacter datasets for comparison
         self._add_geobacter_datasets()
-        
+
         # Mixed culture datasets
         self._add_mixed_culture_datasets()
-    
+
     def _add_shewanella_datasets(self):
         """Add Shewanella oneidensis MR-1 experimental datasets."""
-        
+
         # Dataset 1: Marsili et al. 2008 - Flavin-mediated electron transfer
         self.datasets['marsili2008_flavin'] = ExperimentalDataset(
             dataset_id='marsili2008_flavin',
@@ -98,7 +97,7 @@ class MFCExperimentalDatabase:
             },
             notes='Demonstrates flavin-mediated electron transfer enhancement'
         )
-        
+
         # Dataset 2: Coursolle & Gralnick 2010 - Mtr pathway
         self.datasets['coursolle2010_mtr'] = ExperimentalDataset(
             dataset_id='coursolle2010_mtr',
@@ -123,7 +122,7 @@ class MFCExperimentalDatabase:
             },
             notes='Demonstrates importance of Mtr respiratory pathway'
         )
-        
+
         # Dataset 3: Time series biofilm growth
         self.datasets['shewanella_biofilm_growth'] = ExperimentalDataset(
             dataset_id='shewanella_biofilm_growth',
@@ -147,10 +146,10 @@ class MFCExperimentalDatabase:
             },
             notes='Biofilm growth dynamics and performance correlation'
         )
-    
+
     def _add_geobacter_datasets(self):
         """Add Geobacter datasets for comparison."""
-        
+
         # Dataset 4: Geobacter sulfurreducens comparison
         self.datasets['geobacter_comparison'] = ExperimentalDataset(
             dataset_id='geobacter_comparison',
@@ -174,10 +173,10 @@ class MFCExperimentalDatabase:
             },
             notes='Higher performance baseline for comparison with Shewanella'
         )
-    
+
     def _add_mixed_culture_datasets(self):
         """Add mixed culture datasets."""
-        
+
         # Dataset 5: Mixed culture MFC
         self.datasets['mixed_culture'] = ExperimentalDataset(
             dataset_id='mixed_culture',
@@ -206,11 +205,11 @@ class ModelValidationFramework:
     """
     Framework for validating MFC models against experimental data.
     """
-    
+
     def __init__(self, experimental_db: MFCExperimentalDatabase):
         self.experimental_db = experimental_db
         self.validation_results = {}
-    
+
     def validate_polarization_curve(self, dataset_id: str, model_predictions: Dict[str, List[float]]) -> Dict[str, Any]:
         """
         Validate model predictions against experimental polarization curves.
@@ -219,22 +218,22 @@ class ModelValidationFramework:
             dataset_id: ID of experimental dataset
             model_predictions: Dictionary with 'current_density', 'voltage', 'power_density'
         """
-        
+
         if dataset_id not in self.experimental_db.datasets:
             return {'error': f'Dataset {dataset_id} not found'}
-        
+
         dataset = self.experimental_db.datasets[dataset_id]
-        
+
         # Extract experimental data
         exp_current = np.array(dataset.current_density)
         exp_voltage = np.array(dataset.voltage)
         exp_power = np.array(dataset.power_density)
-        
+
         # Extract model predictions
         pred_current = np.array(model_predictions.get('current_density', []))
         pred_voltage = np.array(model_predictions.get('voltage', []))
         pred_power = np.array(model_predictions.get('power_density', []))
-        
+
         validation_result = {
             'dataset_info': {
                 'dataset_id': dataset_id,
@@ -246,25 +245,25 @@ class ModelValidationFramework:
             'performance_metrics': {},
             'validation_status': 'pending'
         }
-        
+
         # Current density validation
         if len(pred_current) > 0 and len(exp_current) > 0:
             # Interpolate to common points for comparison
-            common_voltage = np.linspace(max(min(exp_voltage), min(pred_voltage)), 
+            common_voltage = np.linspace(max(min(exp_voltage), min(pred_voltage)),
                                        min(max(exp_voltage), max(pred_voltage)), 10)
-            
+
             exp_current_interp = np.interp(common_voltage, exp_voltage[::-1], exp_current[::-1])
             pred_current_interp = np.interp(common_voltage, pred_voltage[::-1], pred_current[::-1])
-            
+
             # Calculate metrics
             mae_current = np.mean(np.abs(exp_current_interp - pred_current_interp))
             rmse_current = np.sqrt(np.mean((exp_current_interp - pred_current_interp)**2))
-            
+
             # R-squared
             ss_tot = np.sum((exp_current_interp - np.mean(exp_current_interp))**2)
             ss_res = np.sum((exp_current_interp - pred_current_interp)**2)
             r2_current = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
-            
+
             validation_result['statistical_analysis']['current_density'] = {
                 'mae': mae_current,
                 'rmse': rmse_current,
@@ -272,16 +271,16 @@ class ModelValidationFramework:
                 'mean_experimental': np.mean(exp_current),
                 'mean_predicted': np.mean(pred_current)
             }
-        
+
         # Power density validation
         if len(pred_power) > 0 and len(exp_power) > 0:
             # Find maximum power points
             exp_max_power = np.max(exp_power)
             pred_max_power = np.max(pred_power)
-            
+
             exp_max_power_idx = np.argmax(exp_power)
             pred_max_power_idx = np.argmax(pred_power)
-            
+
             validation_result['performance_metrics'] = {
                 'max_power_experimental': exp_max_power,
                 'max_power_predicted': pred_max_power,
@@ -290,7 +289,7 @@ class ModelValidationFramework:
                 'optimal_current_experimental': exp_current[exp_max_power_idx],
                 'optimal_current_predicted': pred_current[pred_max_power_idx] if len(pred_current) > pred_max_power_idx else None
             }
-        
+
         # Overall validation status
         if 'current_density' in validation_result['statistical_analysis']:
             r2 = validation_result['statistical_analysis']['current_density']['r_squared']
@@ -302,32 +301,32 @@ class ModelValidationFramework:
                 validation_result['validation_status'] = 'acceptable'
             else:
                 validation_result['validation_status'] = 'poor'
-        
+
         return validation_result
-    
+
     def validate_biofilm_growth(self, dataset_id: str, model_predictions: Dict[str, List[float]]) -> Dict[str, Any]:
         """
         Validate biofilm growth model against experimental time series data.
         """
-        
+
         if dataset_id not in self.experimental_db.datasets:
             return {'error': f'Dataset {dataset_id} not found'}
-        
+
         dataset = self.experimental_db.datasets[dataset_id]
-        
+
         if not dataset.time_points or not dataset.biofilm_thickness:
             return {'error': 'No time series biofilm data available'}
-        
+
         # Extract experimental data
         exp_time = np.array(dataset.time_points)
         exp_thickness = np.array(dataset.biofilm_thickness)
         exp_current = np.array(dataset.current_density) if dataset.current_density else None
-        
+
         # Extract model predictions
         pred_time = np.array(model_predictions.get('time_points', []))
         pred_thickness = np.array(model_predictions.get('biofilm_thickness', []))
         pred_current = np.array(model_predictions.get('current_density', []))
-        
+
         validation_result = {
             'dataset_info': {
                 'dataset_id': dataset_id,
@@ -338,24 +337,24 @@ class ModelValidationFramework:
             'performance_correlation': {},
             'validation_status': 'pending'
         }
-        
+
         # Biofilm thickness validation
         if len(pred_thickness) > 0 and len(exp_thickness) > 0:
             # Interpolate to common time points
-            common_time = np.linspace(max(min(exp_time), min(pred_time)), 
+            common_time = np.linspace(max(min(exp_time), min(pred_time)),
                                     min(max(exp_time), max(pred_time)), 10)
-            
+
             exp_thickness_interp = np.interp(common_time, exp_time, exp_thickness)
             pred_thickness_interp = np.interp(common_time, pred_time, pred_thickness)
-            
+
             # Calculate metrics
             mae_thickness = np.mean(np.abs(exp_thickness_interp - pred_thickness_interp))
             rmse_thickness = np.sqrt(np.mean((exp_thickness_interp - pred_thickness_interp)**2))
-            
+
             # Growth rate analysis
             exp_growth_rate = np.gradient(exp_thickness, exp_time)
             pred_growth_rate = np.gradient(pred_thickness, pred_time)
-            
+
             validation_result['growth_analysis'] = {
                 'thickness_mae': mae_thickness,
                 'thickness_rmse': rmse_thickness,
@@ -364,26 +363,26 @@ class ModelValidationFramework:
                 'max_growth_rate_experimental': np.max(exp_growth_rate),
                 'max_growth_rate_predicted': np.max(pred_growth_rate) if len(pred_growth_rate) > 0 else 0
             }
-        
+
         # Performance correlation analysis
         if exp_current is not None and len(pred_current) > 0:
             # Correlate biofilm thickness with current density
             if len(exp_current) == len(exp_thickness):
                 correlation_exp = np.corrcoef(exp_thickness, exp_current)[0, 1]
                 correlation_pred = np.corrcoef(pred_thickness[:len(pred_current)], pred_current)[0, 1] if len(pred_thickness) >= len(pred_current) else 0
-                
+
                 validation_result['performance_correlation'] = {
                     'thickness_current_corr_experimental': correlation_exp,
                     'thickness_current_corr_predicted': correlation_pred,
                     'correlation_error': abs(correlation_exp - correlation_pred)
                 }
-        
+
         # Overall validation status
         if 'thickness_rmse' in validation_result['growth_analysis']:
             rmse = validation_result['growth_analysis']['thickness_rmse']
             final_thickness = validation_result['growth_analysis']['final_thickness_experimental']
             relative_rmse = rmse / final_thickness * 100 if final_thickness > 0 else 100
-            
+
             if relative_rmse < 10:
                 validation_result['validation_status'] = 'excellent'
             elif relative_rmse < 20:
@@ -392,12 +391,12 @@ class ModelValidationFramework:
                 validation_result['validation_status'] = 'acceptable'
             else:
                 validation_result['validation_status'] = 'poor'
-        
+
         return validation_result
-    
+
     def generate_comprehensive_validation_report(self) -> Dict[str, Any]:
         """Generate comprehensive validation report for all datasets."""
-        
+
         report = {
             'validation_summary': {
                 'total_datasets': len(self.experimental_db.datasets),
@@ -412,11 +411,11 @@ class ModelValidationFramework:
             'dataset_validations': {},
             'recommendations': []
         }
-        
+
         # Collect unique organisms
         organisms = set(dataset.organism for dataset in self.experimental_db.datasets.values())
         report['validation_summary']['organisms_tested'] = list(organisms)
-        
+
         # Example validation for each dataset (in real implementation, these would come from model runs)
         for dataset_id, dataset in self.experimental_db.datasets.items():
             # Simulate model predictions (in practice, these would come from running the models)
@@ -426,98 +425,98 @@ class ModelValidationFramework:
                 simulated_current = [c * (1 + np.random.normal(0, noise_factor)) for c in dataset.current_density]
                 simulated_voltage = [v * (1 + np.random.normal(0, noise_factor * 0.5)) for v in dataset.voltage]
                 simulated_power = [c * v for c, v in zip(simulated_current, simulated_voltage)]
-                
+
                 model_predictions = {
                     'current_density': simulated_current,
                     'voltage': simulated_voltage,
                     'power_density': simulated_power
                 }
-                
+
                 validation_result = self.validate_polarization_curve(dataset_id, model_predictions)
                 report['dataset_validations'][dataset_id] = validation_result
-                
+
                 # Update summary metrics
                 status = validation_result.get('validation_status', 'poor')
                 if status in report['validation_summary']['validation_metrics']:
                     report['validation_summary']['validation_metrics'][status] += 1
-        
+
         # Generate recommendations
         report['recommendations'] = self._generate_recommendations(report)
-        
+
         return report
-    
+
     def _generate_recommendations(self, validation_report: Dict[str, Any]) -> List[str]:
         """Generate recommendations based on validation results."""
-        
+
         recommendations = []
-        
+
         metrics = validation_report['validation_summary']['validation_metrics']
         total = sum(metrics.values())
-        
+
         if total > 0:
             excellent_ratio = metrics['excellent'] / total
             good_ratio = metrics['good'] / total
             poor_ratio = metrics['poor'] / total
-            
+
             if excellent_ratio > 0.7:
                 recommendations.append("✅ Model validation is excellent across datasets. Ready for experimental verification.")
             elif good_ratio + excellent_ratio > 0.7:
                 recommendations.append("✅ Model validation is good. Minor parameter adjustments may improve accuracy.")
             else:
                 recommendations.append("⚠️ Model validation shows mixed results. Review parameter sources and model assumptions.")
-            
+
             if poor_ratio > 0.3:
                 recommendations.append("❌ Some datasets show poor validation. Focus on improving physics models or parameter calibration.")
-        
+
         # Organism-specific recommendations
         organisms = validation_report['validation_summary']['organisms_tested']
         if 'Shewanella oneidensis MR-1' in organisms:
             recommendations.append("🧬 Shewanella-specific validation completed. GSM model parameters well-supported.")
-        
+
         if len(organisms) > 1:
             recommendations.append("🔬 Multi-organism validation provides broader model applicability.")
-        
+
         return recommendations
 
 if __name__ == "__main__":
     # Example usage
     print("🔬 Phase 5: Experimental Validation Framework")
     print("=" * 60)
-    
+
     # Create experimental database
     exp_db = MFCExperimentalDatabase()
-    
-    print(f"Experimental database loaded:")
+
+    print("Experimental database loaded:")
     print(f"  Datasets: {len(exp_db.datasets)}")
-    
+
     # Create validation framework
     validator = ModelValidationFramework(exp_db)
-    
+
     # Generate comprehensive validation report
     print("\n📋 Running experimental validation...")
     report = validator.generate_comprehensive_validation_report()
-    
+
     # Print summary
     summary = report['validation_summary']
-    print(f"\n📊 Experimental Validation Summary:")
+    print("\n📊 Experimental Validation Summary:")
     print(f"  Total datasets: {summary['total_datasets']}")
     print(f"  Organisms tested: {', '.join(summary['organisms_tested'])}")
     print(f"  ✅ Excellent: {summary['validation_metrics']['excellent']}")
     print(f"  ✅ Good: {summary['validation_metrics']['good']}")
     print(f"  ⚠️  Acceptable: {summary['validation_metrics']['acceptable']}")
     print(f"  ❌ Poor: {summary['validation_metrics']['poor']}")
-    
+
     # Print recommendations
-    print(f"\n💡 Recommendations:")
+    print("\n💡 Recommendations:")
     for rec in report['recommendations']:
         print(f"  {rec}")
-    
+
     # Export report
     timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
     report_file = f"experimental_validation_report_{timestamp}.json"
-    
+
     with open(report_file, 'w') as f:
         json.dump(report, f, indent=2, default=str)
-    
+
     print(f"\n💾 Experimental validation report exported to: {report_file}")
-    print(f"\n✅ Experimental validation framework completed!")
+    print("\n✅ Experimental validation framework completed!")

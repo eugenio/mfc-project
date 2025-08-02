@@ -3,13 +3,15 @@
 # Python module. The legacy `max.mojo.importer` is no longer needed.
 
 
-import numpy as np
-from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.integrate import solve_ivp
+
 sys.path.insert(0, "")
-from  odes  import MFCModel # Import the Mojo module compiled from odes.mojo
+from odes import MFCModel  # Import the Mojo module compiled from odes.mojo
+
 # 1. Initialize the Mojo model struct
 mfc = MFCModel()  # Create an instance of the MFCModel
 

@@ -9,14 +9,15 @@ Created: 2025-07-26
 Last modified: 2025-07-26
 """
 
+import json
 import os
+import signal
+import subprocess
 import sys
 import time
-import json
-import subprocess
 from datetime import datetime
 from pathlib import Path
-import signal
+
 
 def detect_gpu_backend():
     """Detect available GPU backend (NVIDIA CUDA or AMD ROCm)."""
@@ -66,7 +67,7 @@ def setup_gpu_backend():
             # Test if CUDA backend actually works
             devices = jax.devices()
             import jax.numpy as jnp
-            from jax import random, jit, vmap
+            from jax import jit, random, vmap
             print(f"✅ JAX CUDA backend initialized on {devices[0]}")
             return jax, jnp, random, jit, vmap, 'NVIDIA CUDA', True
         except Exception as e:
@@ -80,7 +81,7 @@ def setup_gpu_backend():
             # Test if ROCm backend actually works
             devices = jax.devices()
             import jax.numpy as jnp
-            from jax import random, jit, vmap
+            from jax import jit, random, vmap
             print(f"✅ JAX ROCm backend initialized on {devices[0]}")
             return jax, jnp, random, jit, vmap, 'AMD ROCm', True
         except Exception as e:
@@ -93,7 +94,7 @@ def setup_gpu_backend():
         os.environ.pop('HIP_VISIBLE_DEVICES', None)
         import jax
         import jax.numpy as jnp
-        from jax import random, jit, vmap
+        from jax import jit, random, vmap
         devices = jax.devices()
         print(f"✅ JAX CPU backend initialized on {devices[0]}")
         return jax, jnp, random, jit, vmap, 'CPU (JAX)', True
@@ -219,7 +220,7 @@ class GPUAcceleratedMFC:
         print(f"📂 Loading checkpoint: {latest_checkpoint.name}")
 
         try:
-            with open(latest_checkpoint, 'r') as f:
+            with open(latest_checkpoint) as f:
                 checkpoint_data = json.load(f)
 
             # Extract checkpoint Q-table
@@ -308,7 +309,7 @@ class GPUAcceleratedMFC:
         latest_checkpoint = checkpoint_files[0]
 
         try:
-            with open(latest_checkpoint, 'r') as f:
+            with open(latest_checkpoint) as f:
                 checkpoint_data = json.load(f)
 
             # Get current epsilon from checkpoint

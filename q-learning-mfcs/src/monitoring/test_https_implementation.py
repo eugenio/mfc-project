@@ -24,7 +24,7 @@ from unittest.mock import patch
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from ssl_config import (
+from monitoring.ssl_config import (
     SSLConfig, CertificateManager, SSLContextManager,
     load_ssl_config
 )
@@ -134,7 +134,7 @@ class HTTPSTestSuite(unittest.TestCase):
 
     def test_security_headers(self):
         """Test security headers generation"""
-        from ssl_config import SecurityHeaders
+        from monitoring.ssl_config import SecurityHeaders
 
         headers = SecurityHeaders.get_security_headers(self.ssl_config)
 

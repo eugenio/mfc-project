@@ -4,27 +4,32 @@ Security Middleware for MFC Monitoring System
 Provides comprehensive security features including headers, CSRF protection, and session management.
 """
 
-import os
-import sys
-import hmac
+import base64
 import hashlib
-import secrets
+import hmac
+import json
 import logging
+import os
+import secrets
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any
-import json
-import base64
+from typing import Any, Callable, Dict, List, Optional
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from ssl_config import SSLConfig, SecurityHeaders, load_ssl_config  # noqa: E402
-from fastapi import Request, Response, HTTPException, Depends  # noqa: E402
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials  # noqa: E402
+from fastapi import Depends, HTTPException, Request, Response  # noqa: E402
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 from starlette.responses import RedirectResponse  # noqa: E402
+
+from monitoring.ssl_config import (  # noqa: E402
+    SecurityHeaders,
+    SSLConfig,
+    load_ssl_config,
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -77,7 +82,7 @@ class SecurityConfig:
         allowed_file = Path("/etc/mfc/allowed-ips.txt")
         if allowed_file.exists():
             try:
-                with open(allowed_file, 'r') as f:
+                with open(allowed_file) as f:
                     return [line.strip() for line in f if line.strip() and not line.startswith('#')]
             except Exception as e:
                 logger.warning(f"Failed to load allowed IPs: {e}")
@@ -90,7 +95,7 @@ class SecurityConfig:
         blocked_file = Path("/etc/mfc/blocked-ips.txt")
         if blocked_file.exists():
             try:
-                with open(blocked_file, 'r') as f:
+                with open(blocked_file) as f:
                     return [line.strip() for line in f if line.strip() and not line.startswith('#')]
             except Exception as e:
                 logger.warning(f"Failed to load blocked IPs: {e}")

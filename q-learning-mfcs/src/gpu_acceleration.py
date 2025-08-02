@@ -5,7 +5,8 @@ Provides abstraction layer for both NVIDIA CUDA and AMD ROCm support.
 """
 
 import sys
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 import numpy as np
 
 
@@ -432,9 +433,9 @@ class GPUAccelerator:
 
             # Test basic operations
             c = a + b
-            d = self.abs(a - b)
+            self.abs(a - b)
             e = self.maximum(a, b)
-            f = self.mean(c)
+            self.mean(c)
 
             # Test conversion back to CPU
             result = self.to_cpu(c)
@@ -501,7 +502,7 @@ def benchmark_backends():
         b = np.random.rand(size, size).astype(np.float32)
 
         start_time = time.time()
-        c = np.dot(a, b)
+        np.dot(a, b)
         cpu_time = time.time() - start_time
         cpu_times.append(cpu_time)
 
@@ -522,9 +523,9 @@ def benchmark_backends():
 
                     start_time = time.time()
                     if backend == 'cuda':
-                        c = gpu_acc.cp.dot(a, b)
+                        gpu_acc.cp.dot(a, b)
                     else:  # rocm
-                        c = gpu_acc.torch.mm(a, b)
+                        gpu_acc.torch.mm(a, b)
                     gpu_acc.synchronize()
                     gpu_time = time.time() - start_time
                     gpu_times.append(gpu_time)

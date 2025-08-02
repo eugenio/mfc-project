@@ -14,10 +14,10 @@ Key Features:
 - KEGG pathway integration
 """
 
+from .electron_shuttles import ElectronShuttleModel
+from .membrane_transport import MembraneTransport
 from .metabolic_core import MetabolicModel
 from .pathway_database import PathwayDatabase
-from .membrane_transport import MembraneTransport
-from .electron_shuttles import ElectronShuttleModel
 
 __version__ = "1.0.0"
 __author__ = "MFC Simulation Project"

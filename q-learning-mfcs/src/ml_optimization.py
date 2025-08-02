@@ -12,35 +12,40 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass
-from enum import Enum
 import logging
-from datetime import datetime, timezone
 from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Import adaptive controller components
 from adaptive_mfc_controller import AdaptiveMFCController, SystemState
+from config import QLearningConfig, SensorConfig
 
 # Base components
 from sensing_models.sensor_fusion import BacterialSpecies
-from config import QLearningConfig, SensorConfig
 
 # ML libraries
 try:
-    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-    from sklearn.model_selection import cross_val_score, RandomizedSearchCV, TimeSeriesSplit
-    from sklearn.preprocessing import StandardScaler, MinMaxScaler
-    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
     from sklearn.cluster import KMeans
+    from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+    from sklearn.model_selection import (
+        RandomizedSearchCV,
+        TimeSeriesSplit,
+        cross_val_score,
+    )
+    from sklearn.preprocessing import MinMaxScaler, StandardScaler
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
 # Bayesian optimization
 try:
-    from scipy.optimize import minimize, differential_evolution
+    from scipy.optimize import differential_evolution, minimize
     from scipy.stats import norm
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -238,7 +243,7 @@ class FeatureEngineer:
         features = {}
 
         # Extract time series
-        timestamps = [s.fused_measurement.timestamp for s in recent_states]
+        [s.fused_measurement.timestamp for s in recent_states]
         thicknesses = [s.fused_measurement.thickness_um for s in recent_states]
 
         # Time since last major change

@@ -15,17 +15,25 @@ Last Modified: 2025-07-31
 from __future__ import annotations
 
 import logging
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import (
-    Any, Dict, List, Optional, Tuple, Union, Protocol,
-    TypeVar, DefaultDict
+    Any,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    TypeVar,
+    Union,
 )
-from collections import defaultdict
+
+import numpy as np
+import pandas as pd
 
 # Configure logging
 logger = logging.getLogger(__name__)

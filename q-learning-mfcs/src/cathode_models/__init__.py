@@ -17,33 +17,27 @@ Convenience functions:
 Created: 2025-07-26
 """
 
-from .base_cathode import (
-    BaseCathodeModel,
-    CathodeParameters, 
-    ButlerVolmerKinetics
-)
-
-from .platinum_cathode import (
-    PlatinumCathodeModel,
-    PlatinumParameters,
-    create_platinum_cathode
-)
-
+from .base_cathode import BaseCathodeModel, ButlerVolmerKinetics, CathodeParameters
 from .biological_cathode import (
     BiologicalCathodeModel,
     BiologicalParameters,
-    create_biological_cathode
+    create_biological_cathode,
+)
+from .platinum_cathode import (
+    PlatinumCathodeModel,
+    PlatinumParameters,
+    create_platinum_cathode,
 )
 
 __all__ = [
     'BaseCathodeModel',
     'CathodeParameters',
     'ButlerVolmerKinetics',
-    'PlatinumCathodeModel', 
+    'PlatinumCathodeModel',
     'PlatinumParameters',
     'create_platinum_cathode',
     'BiologicalCathodeModel',
-    'BiologicalParameters', 
+    'BiologicalParameters',
     'create_biological_cathode'
 ]
 
