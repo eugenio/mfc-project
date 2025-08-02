@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 """
 Streamlit GUI for MFC Simulation Control and Monitoring
+
+CRITICAL ARCHITECTURE WARNING:
+=================================
+This file implements a 3-phase data optimization architecture:
+- Phase 1: Shared Memory Queue (queue.Queue for real-time streaming)
+- Phase 2: Incremental Updates (change detection, smart GUI updates)  
+- Phase 3: Parquet Migration (planned - columnar storage optimization)
+
+ANY MODIFICATIONS MUST:
+1. Preserve the existing queue-based streaming architecture
+2. Maintain incremental update mechanisms for performance
+3. Respect the non-blocking data flow patterns
+4. Follow existing method signatures and behavior
+5. Test thoroughly as this controls real-time MFC simulation data
+
+INTEGRATION REQUIREMENTS:
+- New methods must integrate with SimulationRunner class structure
+- GUI updates must use cached data and incremental refresh patterns
+- Data flow: simulation -> queue -> incremental updates -> GUI rendering
+- Performance-critical: changes here affect live simulation responsiveness
 """
 
 import streamlit as st
@@ -8,7 +28,6 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import time
 import json
 import gzip
 from pathlib import Path
@@ -16,6 +35,9 @@ import sys
 import os
 import threading
 import queue
+# Phase 3: Parquet Migration
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 # Add src to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -46,15 +68,52 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 class SimulationRunner:
-    """Thread-safe simulation runner for Streamlit"""
+    """Thread-safe simulation runner for Streamlit
+    
+    CRITICAL ARCHITECTURE COMPONENT:
+    =================================
+    This class implements the core data optimization architecture with:
+    - Phase 1: Memory queue streaming (data_queue, live_data_buffer)
+    - Phase 2: Incremental updates (change detection, smart refresh flags)
+    
+    MODIFICATION WARNING:
+    Any changes to this class must preserve:
+    1. Queue-based real-time data streaming patterns
+    2. Non-blocking data operations (get_nowait, put_nowait)
+    3. Incremental update mechanisms for GUI performance
+    4. Thread-safe operation between simulation and GUI threads
+    5. Change detection flags and caching mechanisms
+    
+    Critical methods that control data flow:
+    - get_live_data(): Non-blocking queue data retrieval
+    - get_buffered_data(): DataFrame generation from buffer
+    - has_data_changed(): Change detection for performance
+    - should_update_plots/metrics(): Smart refresh decisions
+    """
 
     def __init__(self):
         self.simulation = None
         self.is_running = False
         self.should_stop = False
-        self.results_queue = queue.Queue()
+        self.results_queue = queue.Queue()  # For status messages
+        self.data_queue = queue.Queue(maxsize=100)  # For real-time data streaming
         self.thread = None
         self.current_output_dir = None
+        self.live_data_buffer = []  # In-memory buffer for GUI
+        
+        # Phase 2: Incremental Updates - Change Detection
+        self.last_data_count = 0
+        self.last_plot_hash = None
+        self.last_metrics_hash = None
+        self.plot_dirty_flag = True
+        self.metrics_dirty_flag = True
+        
+        # Phase 3: Parquet Migration - Columnar Storage
+        self.parquet_buffer = []
+        self.parquet_batch_size = 100  # Write every 100 data points
+        self.parquet_writer = None
+        self.parquet_schema = None
+        self.enable_parquet = True  # Feature flag for Parquet storage
 
     def start_simulation(self, config, duration_hours, n_cells=None, electrode_area_m2=None, target_conc=None, gui_refresh_interval=5.0):
         """Start simulation in background thread
@@ -84,14 +143,34 @@ class SimulationRunner:
         """Stop the running simulation"""
         if self.is_running:
             self.should_stop = True
-            self.results_queue.put(('stopped', 'Simulation stopped by user', self.current_output_dir))
-
-            # Wait for thread to finish (with timeout)
+            
+            # Wait for thread to finish (with longer timeout for GPU cleanup)
             if self.thread and self.thread.is_alive():
-                self.thread.join(timeout=5.0)  # Wait up to 5 seconds
+                self.thread.join(timeout=10.0)  # Wait up to 10 seconds for GPU cleanup
+                
+                # If thread is still alive after timeout, force cleanup
+                if self.thread.is_alive():
+                    print("Warning: Simulation thread did not stop gracefully")
+                    self._force_cleanup()
+                    return False
 
-            # Clean up resources
-            self._cleanup_resources()
+            # Ensure stopped message is sent after thread completes
+            self.results_queue.put(('stopped', 'Simulation stopped by user', self.current_output_dir))
+            
+            # Final state cleanup
+            self.is_running = False
+            self.should_stop = False
+            self.thread = None  # Clear thread reference
+            
+            # Clear data queue and buffer
+            while not self.data_queue.empty():
+                try:
+                    self.data_queue.get_nowait()
+                except queue.Empty:
+                    break
+            self.live_data_buffer.clear()
+            
+            print("✅ Simulation stopped successfully")
             return True
         return False
 
@@ -169,14 +248,16 @@ class SimulationRunner:
             n_steps = int(duration_hours / dt_hours)
 
             # Calculate save interval based on GUI refresh rate
-            # Save data every GUI refresh interval (in simulation time)
-            # Convert GUI refresh seconds to simulation hours, then to steps
+            # For performance, save data at reasonable intervals regardless of GUI refresh
+            # Minimum save interval: every 30 simulation steps (3 sim hours)
+            # Maximum save interval: every 100 simulation steps (10 sim hours)
+            min_save_steps = 30  # Minimum 3 hours of simulation time between saves
+            max_save_steps = 100  # Maximum 10 hours of simulation time between saves
+            
+            # Calculate based on GUI refresh, but constrain to reasonable bounds
             gui_refresh_hours = gui_refresh_interval / 3600.0  # Convert seconds to hours
-            save_interval_steps = max(1, int(gui_refresh_hours / dt_hours))
-
-            # Also maintain a minimum save frequency for very slow refresh rates
-            min_save_steps = 10  # Save at least every 1 hour of simulation time
-            save_interval_steps = min(save_interval_steps, min_save_steps)
+            calculated_steps = max(1, int(gui_refresh_hours / dt_hours))
+            save_interval_steps = max(min_save_steps, min(calculated_steps, max_save_steps))
 
             print(f"GUI sync: Saving simulation data every {save_interval_steps} steps ({save_interval_steps * dt_hours:.2f} sim hours) for {gui_refresh_interval}s GUI refresh")
 
@@ -203,6 +284,10 @@ class SimulationRunner:
                 # Simulate timestep
                 step_results = mfc_sim.simulate_timestep(dt_hours)
 
+                # Check for stop signal after GPU computation
+                if self.should_stop:
+                    break
+
                 # Store results at GUI-synchronized intervals
                 if step % save_interval_steps == 0:
                     results['time_hours'].append(current_time)
@@ -215,12 +300,49 @@ class SimulationRunner:
                     results['epsilon'].append(step_results['epsilon'])
                     results['reward'].append(step_results['reward'])
 
-                    # Save data file immediately for real-time monitoring
-                    df = pd.DataFrame(results)
-                    data_file = output_dir / f"gui_simulation_data_{timestamp}.csv.gz"
-                    df.to_csv(data_file, compression='gzip', index=False)
+                    # Send latest data point to GUI queue (Phase 1: Shared Memory)
+                    latest_data_point = {
+                        'time_hours': current_time,
+                        'reservoir_concentration': float(mfc_sim.reservoir_concentration),
+                        'outlet_concentration': float(mfc_sim.outlet_concentration),
+                        'total_power': step_results['total_power'],
+                        'biofilm_thicknesses': [float(x) for x in mfc_sim.biofilm_thicknesses],
+                        'substrate_addition_rate': step_results['substrate_addition'],
+                        'q_action': step_results['action'],
+                        'epsilon': step_results['epsilon'],
+                        'reward': step_results['reward']
+                    }
+                    
+                    try:
+                        self.data_queue.put_nowait(latest_data_point)
+                    except queue.Full:
+                        pass  # Skip if queue full
+                    
+                    # Phase 3: Parquet batch processing
+                    if self.enable_parquet:
+                        # Initialize Parquet writer on first data point
+                        if self.parquet_writer is None and self.parquet_schema is None:
+                            self.create_parquet_schema(latest_data_point)
+                            self.init_parquet_writer(output_dir)
+                        
+                        # Add to Parquet buffer
+                        if self.parquet_writer is not None:
+                            self.parquet_buffer.append(latest_data_point.copy())
+                            
+                            # Write batch when buffer is full
+                            self.write_parquet_batch()
+                        
+                    # Async CSV.gz backup every 100 steps (reduced frequency for legacy support)
+                    if step % 100 == 0:
+                        df = pd.DataFrame(results)
+                        data_file = output_dir / f"gui_simulation_data_{timestamp}.csv.gz"
+                        df.to_csv(data_file, compression='gzip', index=False)
 
-            # Save final results
+            # Phase 3: Finalize Parquet storage
+            if self.enable_parquet:
+                self.close_parquet_writer()
+            
+            # Save final results (CSV.gz for backward compatibility)
             df = pd.DataFrame(results)
             data_file = output_dir / f"gui_simulation_data_{timestamp}.csv.gz"
             df.to_csv(data_file, compression='gzip', index=False)
@@ -267,6 +389,135 @@ class SimulationRunner:
         except queue.Empty:
             pass
         return None
+
+    def get_live_data(self):
+        """Get live simulation data from memory queue (non-blocking)"""
+        new_data = []
+        try:
+            while not self.data_queue.empty():
+                data_point = self.data_queue.get_nowait()
+                new_data.append(data_point)
+                self.live_data_buffer.append(data_point)
+                
+                # Keep buffer size manageable (last 1000 points)
+                if len(self.live_data_buffer) > 1000:
+                    self.live_data_buffer = self.live_data_buffer[-1000:]
+                    
+        except queue.Empty:
+            pass
+        return new_data
+
+    def get_buffered_data(self):
+        """Get current data buffer as DataFrame"""
+        if not self.live_data_buffer:
+            return None
+        try:
+            return pd.DataFrame(self.live_data_buffer)
+        except Exception as e:
+            print(f"Error creating DataFrame from buffer: {e}")
+            return None
+
+    def has_data_changed(self):
+        """Phase 2: Check if new data points are available"""
+        current_count = len(self.live_data_buffer)
+        if current_count != self.last_data_count:
+            self.last_data_count = current_count
+            self.plot_dirty_flag = True
+            self.metrics_dirty_flag = True
+            return True
+        return False
+
+    def should_update_plots(self, force=False):
+        """Phase 2: Check if plots need updating"""
+        if force or self.plot_dirty_flag:
+            self.plot_dirty_flag = False
+            return True
+        return False
+
+    def should_update_metrics(self, force=False):
+        """Phase 2: Check if metrics need updating"""
+        if force or self.metrics_dirty_flag:
+            self.metrics_dirty_flag = False
+            return True
+        return False
+
+    def get_incremental_update_info(self):
+        """Phase 2: Get information about what needs updating"""
+        return {
+            'has_new_data': self.has_data_changed(),
+            'data_count': len(self.live_data_buffer),
+            'needs_plot_update': self.plot_dirty_flag,
+            'needs_metrics_update': self.metrics_dirty_flag
+        }
+
+    def create_parquet_schema(self, sample_data):
+        """Phase 3: Create Parquet schema from sample data"""
+        if not self.enable_parquet or not sample_data:
+            return None
+        try:
+            df_sample = pd.DataFrame([sample_data])
+            schema_fields = []
+            for col, dtype in df_sample.dtypes.items():
+                if dtype in ['float64', 'float32']:
+                    schema_fields.append(pa.field(col, pa.float32()))
+                elif dtype in ['int64', 'int32']:
+                    schema_fields.append(pa.field(col, pa.int32()))
+                else:
+                    schema_fields.append(pa.field(col, pa.string()))
+            self.parquet_schema = pa.schema(schema_fields)
+            return self.parquet_schema
+        except Exception as e:
+            print(f"Warning: Could not create Parquet schema: {e}")
+            self.enable_parquet = False
+            return None
+
+    def init_parquet_writer(self, output_dir):
+        """Phase 3: Initialize Parquet writer"""
+        if not self.enable_parquet or not self.parquet_schema:
+            return False
+        try:
+            parquet_path = Path(output_dir) / "simulation_data.parquet"
+            self.parquet_writer = pq.ParquetWriter(
+                parquet_path, schema=self.parquet_schema, compression='snappy'
+            )
+            return True
+        except Exception as e:
+            print(f"Warning: Could not initialize Parquet writer: {e}")
+            self.enable_parquet = False
+            return False
+
+    def write_parquet_batch(self):
+        """Phase 3: Write Parquet batch when buffer reaches threshold"""
+        if not self.enable_parquet or not self.parquet_writer or len(self.parquet_buffer) < self.parquet_batch_size:
+            return
+        
+        try:
+            df_batch = pd.DataFrame(self.parquet_buffer)
+            table = pa.Table.from_pandas(df_batch, schema=self.parquet_schema)
+            self.parquet_writer.write_table(table)
+            self.parquet_buffer.clear()
+            return True
+        except Exception as e:
+            print(f"Warning: Could not write Parquet batch: {e}")
+            self.enable_parquet = False
+            return False
+
+    def close_parquet_writer(self):
+        """Phase 3: Close Parquet writer"""
+        if self.parquet_writer:
+            try:
+                if self.parquet_buffer:
+                    df_batch = pd.DataFrame(self.parquet_buffer)
+                    table = pa.Table.from_pandas(df_batch, schema=self.parquet_schema)
+                    self.parquet_writer.write_table(table)
+                    self.parquet_buffer.clear()
+                self.parquet_writer.close()
+                self.parquet_writer = None
+                return True
+            except Exception as e:
+                print(f"Warning: Could not close Parquet writer: {e}")
+                return False
+        return True
 
 # Initialize session state
 if 'sim_runner' not in st.session_state:
@@ -1360,11 +1611,12 @@ def main():
         # Configuration preview
         st.subheader("Current Configuration")
         current_refresh = st.session_state.get('current_refresh_interval', 5.0)
-        # Calculate data save frequency
+        # Calculate data save frequency (matching simulation logic)
         gui_refresh_hours = current_refresh / 3600.0
-        save_interval_steps = max(1, int(gui_refresh_hours / 0.1))  # 0.1h timestep
-        min_save_steps = 10
-        actual_save_steps = min(save_interval_steps, min_save_steps)
+        min_save_steps = 30  # Minimum 3 hours of simulation time between saves
+        max_save_steps = 100  # Maximum 10 hours of simulation time between saves
+        calculated_steps = max(1, int(gui_refresh_hours / 0.1))  # 0.1h timestep
+        actual_save_steps = max(min_save_steps, min(calculated_steps, max_save_steps))
         save_frequency_hours = actual_save_steps * 0.1
 
         config_data = {
@@ -1389,7 +1641,7 @@ def main():
         col1, col2, col3 = st.columns([2, 1, 3])
 
         with col1:
-            auto_refresh = st.checkbox("Enable Auto-refresh", value=False)
+            auto_refresh = st.checkbox("🔄 Enable Auto-refresh", value=True)
 
         with col2:
             refresh_interval = st.number_input(
@@ -1410,24 +1662,31 @@ def main():
                 if st.session_state.sim_runner.is_running:
                     st.success("📊 Data sync enabled with simulation")
 
-        # Implement auto-refresh
+        # Implement auto-refresh (non-blocking)
         if auto_refresh:
-            st.empty()  # Force redraw
-            time.sleep(refresh_interval)
-            st.rerun()
+            # Use a more efficient refresh method
+            import time
+            current_time = time.time()
+            if 'last_refresh_time' not in st.session_state:
+                st.session_state.last_refresh_time = current_time
+            
+            if current_time - st.session_state.last_refresh_time >= refresh_interval:
+                st.session_state.last_refresh_time = current_time
+                st.rerun()
 
         # Check if simulation is running and show live data
         if st.session_state.sim_runner.is_running and st.session_state.sim_runner.current_output_dir:
             st.subheader("🟢 Live Simulation Data")
 
-            # Load current simulation data
-            df = load_simulation_data(st.session_state.sim_runner.current_output_dir)
+            # Load current simulation data from memory queue (Phase 1: Shared Memory)
+            new_data = st.session_state.sim_runner.get_live_data()
+            df = st.session_state.sim_runner.get_buffered_data()
+            
             if df is not None and len(df) > 0:
                 # Get actual elapsed time from simulation data
                 actual_hours = df['time_hours'].iloc[-1] if 'time_hours' in df.columns else 0
-                refresh_rate = st.session_state.get('current_refresh_interval', 5.0)
                 st.info(f"📊 Simulation running: {actual_hours:.1f} hours elapsed, {len(df)} data points")
-                st.success(f"⚡ Real-time sync: Data saved every {refresh_rate}s")
+                st.success(f"⚡ Memory streaming: {len(new_data)} new points this refresh")
             else:
                 st.info("Waiting for simulation data...")
                 df = None
@@ -1445,9 +1704,21 @@ def main():
                 df = None
 
         if df is not None:
-            # Real-time plots
-            fig = create_real_time_plots(df)
-            st.plotly_chart(fig, use_container_width=True, key="monitor_plots")
+            # Phase 2: Smart plot updates - only recreate when needed
+            if st.session_state.sim_runner.should_update_plots():
+                fig = create_real_time_plots(df)
+                st.session_state['cached_plot'] = fig
+                st.plotly_chart(fig, use_container_width=True, key="monitor_plots")
+            else:
+                # Use cached plot if no new data
+                cached_plot = st.session_state.get('cached_plot')
+                if cached_plot is not None:
+                    st.plotly_chart(cached_plot, use_container_width=True, key="monitor_plots")
+                else:
+                    # Fallback: create new plot
+                    fig = create_real_time_plots(df)
+                    st.session_state['cached_plot'] = fig
+                    st.plotly_chart(fig, use_container_width=True, key="monitor_plots")
 
             # Current status metrics
             if len(df) > 0:
