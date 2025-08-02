@@ -352,8 +352,7 @@ class EnhancedMFCApp:
 
     def render_electrode_configuration(self):
         """Render electrode configuration interface."""
-        st.subheader("⚡ Electrode Configuration")
-        st.info("Electrode configuration interface coming soon...")
+        return self.electrode_config_ui.render_full_electrode_configuration()
 
     def _cleanup_gpu_resources(self):
         """Clean up GPU resources before starting new simulation."""
