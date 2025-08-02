@@ -126,7 +126,7 @@ class IntegratedMFCModel:
         self.biofilm_models = []
         self.metabolic_models = []
 
-        for i in range(self.n_cells):
+        for _i in range(self.n_cells):
             # Biofilm model
             biofilm_model = BiofilmKineticsModel(
                 species=self.species,

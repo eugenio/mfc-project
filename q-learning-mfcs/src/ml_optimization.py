@@ -1006,7 +1006,7 @@ class MLOptimizedMFCController:
         insights = {
             'feature_summary': {
                 'total_features': len(features),
-                'key_values': {k: v for k, v in list(features.items())[:5]},  # Top 5 features
+                'key_values': dict(list(features.items())[:5]),  # Top 5 features
             },
             'learning_status': {
                 'data_points_collected': len(self.control_data_history),

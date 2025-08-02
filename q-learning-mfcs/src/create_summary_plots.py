@@ -90,7 +90,7 @@ def create_summary_plots():
     ax2.annotate(f'Final: {final_energy:.1f}Wh',
                 xy=(100, final_energy),
                 xytext=(85, final_energy + 10),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
                 fontsize=12, fontweight='bold', color='red')
 
     # 3. Individual Cell Final States

@@ -152,7 +152,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         self.biofilm_models = []
         self.metabolic_models = []
 
-        for i in range(self.n_cells):
+        for _i in range(self.n_cells):
             # Enhanced biofilm model with sensor integration
             biofilm_model = EnhancedBiofilmModel(
                 species=self.species,
@@ -193,7 +193,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
             'mixed': BacterialSpecies.MIXED
         }
 
-        for i in range(self.n_cells):
+        for _i in range(self.n_cells):
             # EIS sensor for each cell
             if self.enable_eis:
                 eis_model = EISModel(
@@ -229,7 +229,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
                 self.sensor_fusion_models.append(fusion_model)
 
         # Initialize sensor states for each cell
-        for i in range(self.n_cells):
+        for _i in range(self.n_cells):
             sensor_state = {
                 'eis_status': 'good' if self.enable_eis else 'disabled',
                 'qcm_status': 'good' if self.enable_qcm else 'disabled',
@@ -682,7 +682,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         validation_scores = []
 
-        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
+        for _i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
             model_thickness = biofilm_state['biofilm_thickness']
             model_biomass = biofilm_state['biomass_density']
 
@@ -754,7 +754,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         thickness_errors = []
         biomass_errors = []
 
-        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
+        for _i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
             # EIS data
             if 'eis' in sensor_data and 'properties' in sensor_data['eis']:
                 eis_props = sensor_data['eis']['properties']

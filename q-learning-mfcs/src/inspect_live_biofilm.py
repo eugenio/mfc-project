@@ -43,7 +43,7 @@ def inspect_latest_simulation():
 
                 # Parse biofilm data (it's stored as string representation of list)
                 biofilm_data = []
-                for idx, row in df.iterrows():
+                for _idx, row in df.iterrows():
                     try:
                         # Convert string representation to list
                         biofilm_str = row['biofilm_thicknesses']

@@ -129,7 +129,7 @@ SUBSTRATE CONTROL COMPARISON (100 hours):
 
 PID Controller (Baseline):
 • Max concentration: {pid_max:.1f} mM
-• Final concentration: {pid_final:.1f} mM  
+• Final concentration: {pid_final:.1f} mM
 • Average power: {pid_avg_power:.2f} mW
 • Control: Uncontrolled exponential growth
 
@@ -157,7 +157,7 @@ IMPROVEMENTS ACHIEVED:
 
 ax6.text(0.05, 0.95, summary_text, transform=ax6.transAxes, fontsize=10,
          verticalalignment='top', fontfamily='monospace',
-         bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+         bbox={'boxstyle': 'round', 'facecolor': 'lightblue', 'alpha': 0.8})
 
 plt.tight_layout()
 plt.savefig('data/figures/qlearning_substrate_control_analysis.png', dpi=300, bbox_inches='tight')

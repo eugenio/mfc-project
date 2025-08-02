@@ -306,7 +306,7 @@ class SimulationRunner:
 
                 for label, key in metrics:
                     value = results.get(key, 'N/A')
-                    if isinstance(value, (int, float)):
+                    if isinstance(value, int | float):
                         f.write(f"{label}: {value:.4f}\n")
                     else:
                         f.write(f"{label}: {value}\n")

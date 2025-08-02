@@ -105,7 +105,7 @@ class PositionalEncoding(nn.Module):
             d_model: Model dimension
             max_len: Maximum sequence length
         """
-        super(PositionalEncoding, self).__init__()
+        super().__init__()
 
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
@@ -139,7 +139,7 @@ class MultiHeadAttention(nn.Module):
             dropout: Dropout rate
             attention_type: Type of attention mechanism
         """
-        super(MultiHeadAttention, self).__init__()
+        super().__init__()
 
         assert d_model % n_heads == 0
 
@@ -230,7 +230,7 @@ class TransformerEncoderLayer(nn.Module):
 
     def __init__(self, config: TransformerConfig):
         """Initialize transformer encoder layer."""
-        super(TransformerEncoderLayer, self).__init__()
+        super().__init__()
 
         self.config = config
 
@@ -279,7 +279,7 @@ class SensorFusionAttention(nn.Module):
             config: Transformer configuration
             sensor_dims: Dimensions for each sensor type
         """
-        super(SensorFusionAttention, self).__init__()
+        super().__init__()
 
         self.config = config
         self.sensor_dims = sensor_dims
@@ -372,7 +372,7 @@ class TemporalAttentionModule(nn.Module):
 
     def __init__(self, config: TransformerConfig):
         """Initialize temporal attention module."""
-        super(TemporalAttentionModule, self).__init__()
+        super().__init__()
 
         self.config = config
 
@@ -448,7 +448,7 @@ class TransformerMFCController(nn.Module):
             output_dim: Output dimension (number of actions)
             config: Transformer configuration
         """
-        super(TransformerMFCController, self).__init__()
+        super().__init__()
 
         self.config = config or TransformerConfig()
         self.input_dims = input_dims

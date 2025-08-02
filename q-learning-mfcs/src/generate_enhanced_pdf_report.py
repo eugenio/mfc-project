@@ -357,7 +357,7 @@ def create_simulation_results_page(pdf):
     stats_text = f'Peak: {peak_power:.2f}W | Avg: {avg_power:.2f}W | Total: {total_energy:.1f}Wh'
     ax_power.text(0.98, 0.95, stats_text, transform=ax_power.transAxes,
                  ha='right', va='top', fontsize=9, fontweight='bold',
-                 bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+                 bbox={'boxstyle': "round,pad=0.3", 'facecolor': 'white', 'alpha': 0.8})
 
     # Individual Cell Voltages
     ax_cells = fig.add_subplot(gs[2, 0])
@@ -449,7 +449,7 @@ def create_simulation_results_page(pdf):
 
     ax_health.text(1.15, 0.5, summary_text, transform=ax_health.transAxes,
                    fontsize=9, va='center', ha='left',
-                   bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.8))
+                   bbox={'boxstyle': "round,pad=0.5", 'facecolor': 'lightgray', 'alpha': 0.8})
 
     plt.tight_layout()
     pdf.savefig(fig, bbox_inches='tight', dpi=300)
@@ -592,9 +592,9 @@ def create_energy_analysis_page(pdf):
     ax_economic.annotate(f'10-year savings: ${final_savings:,.0f}',
                         xy=(10, mfc_costs[-1] - power_revenue[-1]),
                         xytext=(7, traditional_costs[-1] - 1000),
-                        arrowprops=dict(arrowstyle='->', color='blue', lw=2),
+                        arrowprops={'arrowstyle': '->', 'color': 'blue', 'lw': 2},
                         fontsize=11, fontweight='bold', color='blue',
-                        bbox=dict(boxstyle="round,pad=0.3", facecolor='lightblue', alpha=0.8))
+                        bbox={'boxstyle': "round,pad=0.3", 'facecolor': 'lightblue', 'alpha': 0.8})
 
     # Environmental Impact
     ax_env = fig.add_subplot(gs[3, 0])
@@ -644,7 +644,7 @@ def create_energy_analysis_page(pdf):
 
     # Add current position marker
     ax_trl.annotate('Current Project\nPosition', xy=(4, 1), xytext=(6, 0.8),
-                   arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                   arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
                    fontsize=9, fontweight='bold', color='red', ha='center')
 
     plt.tight_layout()

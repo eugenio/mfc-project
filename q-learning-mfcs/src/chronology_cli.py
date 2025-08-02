@@ -73,7 +73,7 @@ def cmd_list(args) -> None:
             for key in ['total_energy', 'average_power', 'coulombic_efficiency']:
                 if key in entry.results_summary:
                     value = entry.results_summary[key]
-                    if isinstance(value, (int, float)):
+                    if isinstance(value, int | float):
                         key_metrics.append(f"{key}: {value:.3f}")
             if key_metrics:
                 print(f"    {' | '.join(key_metrics)}")

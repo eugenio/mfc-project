@@ -529,7 +529,7 @@ def generate_comparison_plots(successful_results):
     ax1.tick_params(axis='x', rotation=45)
 
     # Add value labels on bars
-    for i, (bar, energy) in enumerate(zip(bars1, energies, strict=False)):
+    for _i, (bar, energy) in enumerate(zip(bars1, energies, strict=False)):
         ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(energies)*0.01,
                 f'{energy:.1f}', ha='center', va='bottom', fontweight='bold')
 
