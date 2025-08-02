@@ -107,8 +107,7 @@ play-failure = "python scripts/audio_notifier.py failure"
 play-completion = "python scripts/audio_notifier.py completion"
 
 # GUI Tasks
-gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
-gui-enhanced = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
+gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_main_app.py"
 
 # HTTPS/SSL Management Tasks
 ssl-init = "cd q-learning-mfcs/src/monitoring && python ssl_config.py --init"
