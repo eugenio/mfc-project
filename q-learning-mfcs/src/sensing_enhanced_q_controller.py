@@ -15,13 +15,19 @@ The controller uses real-time sensor feedback to make more informed
 control decisions, leading to better biofilm management and MFC performance.
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any
-import sys
 import os
+import sys
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Import configuration classes
-from config import QLearningConfig, SensorConfig, validate_qlearning_config, validate_sensor_config
+from config import (
+    QLearningConfig,
+    SensorConfig,
+    validate_qlearning_config,
+    validate_sensor_config,
+)
 
 # Import base controller
 sys.path.append(os.path.dirname(__file__))

@@ -5,16 +5,18 @@ Supports arbitrary data length with Latin character subplot labels
 """
 
 import matplotlib
+
 matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from typing import List, Tuple, Optional, Union
-from pathlib import Path
-import json
 import gzip
-from datetime import datetime
+import json
 import string
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # Import path configuration
 try:
@@ -220,7 +222,7 @@ def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str 
     json_path = Path(data_path).with_suffix('.json')
     metadata = {}
     if json_path.exists():
-        with open(json_path, 'r') as f:
+        with open(json_path) as f:
             metadata = json.load(f)
 
     # Create timestamp for output files
@@ -503,7 +505,7 @@ def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str =
     # Load metadata if available
     metadata = {}
     if json_file:
-        with open(json_file, 'r') as f:
+        with open(json_file) as f:
             metadata = json.load(f)
         print(f"Loaded metadata from: {json_file}")
 

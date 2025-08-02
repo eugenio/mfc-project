@@ -4,8 +4,8 @@ Includes species-specific parameters, substrate properties, and literature refer
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class BacterialSpecies(Enum):

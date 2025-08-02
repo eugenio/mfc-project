@@ -4,8 +4,9 @@ Replaces hardcoded values in Q-learning controllers and optimization algorithms.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
-from .electrode_config import ElectrodeConfiguration, DEFAULT_GRAPHITE_PLATE_CONFIG
+from typing import List, Optional, Tuple
+
+from .electrode_config import DEFAULT_GRAPHITE_PLATE_CONFIG, ElectrodeConfiguration
 
 
 @dataclass
@@ -173,7 +174,7 @@ class QLearningConfig:
     # Electrode configurations (comprehensive material and geometry)
     anode_config: ElectrodeConfiguration = field(default_factory=lambda: DEFAULT_GRAPHITE_PLATE_CONFIG)
     cathode_config: Optional[ElectrodeConfiguration] = None  # If None, uses same as anode
-    
+
     # Legacy electrode areas (calculated from configurations, for backward compatibility)
     anode_area_per_cell: float = field(init=False)  # Calculated from anode_config
     cathode_area_per_cell: float = field(init=False)  # Calculated from cathode_config
@@ -205,11 +206,11 @@ class QLearningConfig:
         """Calculate derived parameters after initialization."""
         # Calculate electrode areas from configurations
         self.anode_area_per_cell = self.anode_config.calculate_effective_surface_area()
-        
+
         # Use cathode config if provided, otherwise same as anode
         cathode_config = self.cathode_config if self.cathode_config is not None else self.anode_config
         self.cathode_area_per_cell = cathode_config.calculate_effective_surface_area()
-        
+
         # Calculate total areas
         self.total_anode_area = self.anode_area_per_cell * self.n_cells
         self.total_cathode_area = self.cathode_area_per_cell * self.n_cells

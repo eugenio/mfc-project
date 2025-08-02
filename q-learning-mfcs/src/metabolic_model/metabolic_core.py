@@ -5,32 +5,37 @@ This module provides the main interface for metabolic modeling in MFC systems,
 combining all components into a comprehensive simulation framework.
 """
 
-import numpy as np
-from typing import Dict, Tuple, Any, Optional
-from dataclasses import dataclass
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
 
 # Add path for GPU acceleration
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from gpu_acceleration import get_gpu_accelerator
 
-from .pathway_database import PathwayDatabase, Species, Substrate, MetabolicReaction
-from .membrane_transport import MembraneTransport
 from .electron_shuttles import ElectronShuttleModel, ShuttleType
+from .membrane_transport import MembraneTransport
+from .pathway_database import MetabolicReaction, PathwayDatabase, Species, Substrate
 
 # Import biological configuration
 try:
     from config.biological_config import (
-        SpeciesMetabolicConfig, BacterialSpecies,
-        get_geobacter_config, get_shewanella_config
-    )
-    from config.substrate_config import (
-        ComprehensiveSubstrateConfig, SubstrateType,
-        DEFAULT_SUBSTRATE_CONFIGS
+        BacterialSpecies,
+        SpeciesMetabolicConfig,
+        get_geobacter_config,
+        get_shewanella_config,
     )
     from config.biological_validation import (
-        validate_species_metabolic_config, validate_comprehensive_substrate_config
+        validate_comprehensive_substrate_config,
+        validate_species_metabolic_config,
+    )
+    from config.substrate_config import (
+        DEFAULT_SUBSTRATE_CONFIGS,
+        ComprehensiveSubstrateConfig,
+        SubstrateType,
     )
 except ImportError:
     # Fallback if configuration modules are not available
@@ -175,7 +180,7 @@ class MetabolicModel:
         # Initialize metabolite concentrations from configuration or defaults
         if self.species_config and hasattr(self.species_config, 'metabolite_concentrations'):
             self.metabolites = self.species_config.metabolite_concentrations.copy()
-            
+
             # Update substrate concentrations based on selected substrate for compatibility
             if self.substrate == Substrate.ACETATE:
                 self.metabolites["acetate"] = 10.0

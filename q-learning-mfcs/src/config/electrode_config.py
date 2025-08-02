@@ -16,10 +16,10 @@ Literature References:
 4. Erable, B. et al. (2012). "Anode materials for microbial fuel cells"
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, Tuple
-from enum import Enum
 import math
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class ElectrodeMaterial(Enum):
@@ -47,24 +47,24 @@ class ElectrodeGeometry(Enum):
 @dataclass
 class MaterialProperties:
     """Material-specific electrode properties from literature."""
-    
+
     # Electrical properties
     specific_conductance: float  # S/m - electrical conductivity
     contact_resistance: float  # Ω·cm² - electrode-electrolyte interface resistance
-    
+
     # Surface properties
     surface_charge_density: float  # C/m² - surface charge at neutral pH
     hydrophobicity_angle: float  # degrees - water contact angle
     surface_roughness: float  # dimensionless - relative to smooth surface
-    
+
     # Microbial attachment properties
     biofilm_adhesion_coefficient: float  # dimensionless - relative to graphite
     attachment_energy: float  # kJ/mol - microbial attachment energy
-    
+
     # Surface area properties
     specific_surface_area: Optional[float] = None  # m²/m³ - for porous materials
     porosity: Optional[float] = None  # dimensionless - void fraction for porous materials
-    
+
     # Literature reference
     reference: str = "User specified"
 
@@ -72,119 +72,119 @@ class MaterialProperties:
 @dataclass
 class ElectrodeGeometrySpec:
     """Electrode geometry specifications."""
-    
+
     geometry_type: ElectrodeGeometry
-    
+
     # Dimensions (in meters)
     length: Optional[float] = None  # m
     width: Optional[float] = None   # m
     height: Optional[float] = None  # m
     diameter: Optional[float] = None  # m
     thickness: Optional[float] = None  # m
-    
+
     # For custom geometries
     projected_area: Optional[float] = None  # m² - manually specified
     total_surface_area: Optional[float] = None  # m² - manually specified
-    
+
     def calculate_projected_area(self) -> float:
         """Calculate projected area based on geometry type."""
         if self.projected_area is not None:
             return self.projected_area
-            
+
         if self.geometry_type == ElectrodeGeometry.RECTANGULAR_PLATE:
             if self.length and self.width:
                 return self.length * self.width
-                
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_ROD:
             if self.diameter and self.length:
                 return math.pi * (self.diameter / 2) ** 2
-                
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_TUBE:
             if self.diameter and self.length:
                 return math.pi * (self.diameter / 2) ** 2  # Cross-sectional area
-                
+
         elif self.geometry_type == ElectrodeGeometry.SPHERICAL:
             if self.diameter:
                 return math.pi * (self.diameter / 2) ** 2  # Great circle area
-        
+
         raise ValueError(f"Insufficient dimensions for {self.geometry_type}")
-    
+
     def calculate_total_surface_area(self) -> float:
         """Calculate total surface area available for microbial colonization."""
         if self.total_surface_area is not None:
             return self.total_surface_area
-            
+
         if self.geometry_type == ElectrodeGeometry.RECTANGULAR_PLATE:
             if self.length and self.width and self.thickness:
                 # All surfaces exposed
-                return 2 * (self.length * self.width + 
-                          self.length * self.thickness + 
+                return 2 * (self.length * self.width +
+                          self.length * self.thickness +
                           self.width * self.thickness)
-                          
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_ROD:
             if self.diameter and self.length:
                 # Cylindrical surface + end caps
-                return (math.pi * self.diameter * self.length + 
+                return (math.pi * self.diameter * self.length +
                         2 * math.pi * (self.diameter / 2) ** 2)
-                        
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_TUBE:
             if self.diameter and self.length and self.thickness:
                 # Inner and outer cylindrical surfaces + annular ends
                 outer_area = math.pi * self.diameter * self.length
                 inner_area = math.pi * (self.diameter - 2 * self.thickness) * self.length
-                end_area = 2 * math.pi * ((self.diameter / 2) ** 2 - 
+                end_area = 2 * math.pi * ((self.diameter / 2) ** 2 -
                                         ((self.diameter - 2 * self.thickness) / 2) ** 2)
                 return outer_area + inner_area + end_area
-                
+
         elif self.geometry_type == ElectrodeGeometry.SPHERICAL:
             if self.diameter:
                 return 4 * math.pi * (self.diameter / 2) ** 2
-        
+
         raise ValueError(f"Insufficient dimensions for {self.geometry_type}")
-    
+
     def calculate_volume(self) -> float:
         """Calculate electrode volume."""
         if self.geometry_type == ElectrodeGeometry.RECTANGULAR_PLATE:
             if self.length and self.width and self.thickness:
                 return self.length * self.width * self.thickness
-                
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_ROD:
             if self.diameter and self.length:
                 return math.pi * (self.diameter / 2) ** 2 * self.length
-                
+
         elif self.geometry_type == ElectrodeGeometry.CYLINDRICAL_TUBE:
             if self.diameter and self.length and self.thickness:
                 outer_vol = math.pi * (self.diameter / 2) ** 2 * self.length
                 inner_vol = math.pi * ((self.diameter - 2 * self.thickness) / 2) ** 2 * self.length
                 return outer_vol - inner_vol
-                
+
         elif self.geometry_type == ElectrodeGeometry.SPHERICAL:
             if self.diameter:
                 return (4/3) * math.pi * (self.diameter / 2) ** 3
-        
+
         raise ValueError(f"Insufficient dimensions for {self.geometry_type}")
 
 
 @dataclass
 class ElectrodeConfiguration:
     """Complete electrode configuration with material and geometry."""
-    
+
     material: ElectrodeMaterial
     geometry: ElectrodeGeometrySpec
     material_properties: MaterialProperties
-    
+
     # Operational parameters
     operating_potential: float = -0.4  # V vs SHE - typical anode potential
     surface_treatment: str = "none"  # Surface treatment applied
     age_hours: float = 0.0  # Hours of operation (affects biofilm development)
-    
+
     def calculate_effective_surface_area(self) -> float:
         """
         Calculate effective surface area for microbial colonization.
         Accounts for material-specific surface area enhancement.
         """
         projected_area = self.geometry.calculate_projected_area()
-        
+
         # For porous materials, use specific surface area
         if self.material_properties.specific_surface_area is not None:
             volume = self.geometry.calculate_volume()
@@ -194,35 +194,35 @@ class ElectrodeConfiguration:
             total_area = self.geometry.calculate_total_surface_area()
             # Apply surface roughness factor
             return total_area * self.material_properties.surface_roughness
-    
+
     def calculate_biofilm_capacity(self) -> float:
         """Calculate maximum biofilm capacity based on electrode properties."""
         effective_area = self.calculate_effective_surface_area()
-        
+
         # Base biofilm thickness (literature: 10-200 μm for MFC)
         base_thickness_m = 50e-6  # 50 μm
-        
+
         # Adjust based on material properties
         adhesion_factor = self.material_properties.biofilm_adhesion_coefficient
         hydrophobicity_factor = 1.0 - (self.material_properties.hydrophobicity_angle - 60) / 180
-        
+
         effective_thickness = base_thickness_m * adhesion_factor * max(0.1, hydrophobicity_factor)
-        
+
         return effective_area * effective_thickness  # m³ biofilm volume
-    
+
     def calculate_charge_transfer_coefficient(self) -> float:
         """Calculate charge transfer coefficient based on material properties."""
         # Base charge transfer coefficient (dimensionless, 0-1)
         base_coefficient = 0.5
-        
+
         # Adjust based on conductance (higher conductance = better charge transfer)
         conductance_factor = min(1.0, self.material_properties.specific_conductance / 1000)  # Normalize to 1000 S/m
-        
+
         # Adjust based on contact resistance (lower resistance = better transfer)
         resistance_factor = max(0.1, 1.0 / (1.0 + self.material_properties.contact_resistance))
-        
+
         return base_coefficient * conductance_factor * resistance_factor
-    
+
     def get_configuration_summary(self) -> Dict[str, Any]:
         """Get a summary of electrode configuration for display."""
         return {
@@ -250,7 +250,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         attachment_energy=-12.5,  # kJ/mol - Favorable attachment
         reference="Logan, B.E. (2008). Microbial Fuel Cells"
     ),
-    
+
     ElectrodeMaterial.GRAPHITE_ROD: MaterialProperties(
         specific_conductance=25000,  # S/m - Same as plate
         contact_resistance=0.12,  # Ω·cm² - Slightly higher due to geometry
@@ -261,7 +261,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         attachment_energy=-12.0,  # kJ/mol
         reference="Logan, B.E. (2008). Microbial Fuel Cells"
     ),
-    
+
     ElectrodeMaterial.CARBON_FELT: MaterialProperties(
         specific_conductance=500,  # S/m - Lower than graphite
         contact_resistance=0.8,  # Ω·cm² - Higher due to fiber structure
@@ -274,7 +274,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         porosity=0.95,  # 95% void space
         reference="Wei, J. et al. (2011). Biosens. Bioelectron."
     ),
-    
+
     ElectrodeMaterial.CARBON_CLOTH: MaterialProperties(
         specific_conductance=800,  # S/m
         contact_resistance=0.6,  # Ω·cm²
@@ -287,7 +287,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         porosity=0.85,  # 85% void space
         reference="Santoro, C. et al. (2017). Chem. Soc. Rev."
     ),
-    
+
     ElectrodeMaterial.CARBON_PAPER: MaterialProperties(
         specific_conductance=1200,  # S/m
         contact_resistance=0.4,  # Ω·cm²
@@ -300,7 +300,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         porosity=0.70,  # 70% void space
         reference="Erable, B. et al. (2012). Electrochem. Commun."
     ),
-    
+
     ElectrodeMaterial.STAINLESS_STEEL: MaterialProperties(
         specific_conductance=1400000,  # S/m - Very high conductivity
         contact_resistance=0.05,  # Ω·cm² - Very low
@@ -311,7 +311,7 @@ MATERIAL_PROPERTIES_DATABASE = {
         attachment_energy=-5.0,  # kJ/mol - Less favorable
         reference="Torres, C.I. et al. (2010). Environ. Sci. Technol."
     ),
-    
+
     ElectrodeMaterial.PLATINUM: MaterialProperties(
         specific_conductance=9600000,  # S/m - Excellent conductivity
         contact_resistance=0.01,  # Ω·cm² - Extremely low
@@ -347,10 +347,11 @@ def create_electrode_config(
     if custom_properties is not None:
         material_props = custom_properties
     else:
-        material_props = MATERIAL_PROPERTIES_DATABASE.get(material)
-        if material_props is None:
+        material_props_lookup = MATERIAL_PROPERTIES_DATABASE.get(material)
+        if material_props_lookup is None:
             raise ValueError(f"No predefined properties for material {material}")
-    
+        material_props = material_props_lookup
+
     # Create geometry specification
     geometry = ElectrodeGeometrySpec(
         geometry_type=geometry_type,
@@ -362,7 +363,7 @@ def create_electrode_config(
         projected_area=dimensions.get('projected_area'),
         total_surface_area=dimensions.get('total_surface_area')
     )
-    
+
     return ElectrodeConfiguration(
         material=material,
         geometry=geometry,
@@ -376,7 +377,7 @@ DEFAULT_GRAPHITE_PLATE_CONFIG = create_electrode_config(
     geometry_type=ElectrodeGeometry.RECTANGULAR_PLATE,
     dimensions={
         'length': 0.05,    # 5 cm
-        'width': 0.05,     # 5 cm  
+        'width': 0.05,     # 5 cm
         'thickness': 0.005  # 5 mm
     }
 )

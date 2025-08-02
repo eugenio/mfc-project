@@ -10,13 +10,16 @@ This extended simulation demonstrates:
 - System recovery and maintenance cycles
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from mfc_stack_simulation import MFCStack, MFCStackQLearningController
-import time
 import json
+import time
 from datetime import datetime
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from mfc_stack_simulation import MFCStack, MFCStackQLearningController
 from path_config import get_figure_path, get_simulation_data_path
+
 
 class LongTermMFCStack(MFCStack):
     """Extended MFC stack with long-term effects"""

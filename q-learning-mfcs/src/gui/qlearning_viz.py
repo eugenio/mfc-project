@@ -21,22 +21,24 @@ Literature References:
 3. Mnih, V. et al. (2015). "Human-level control through deep reinforcement learning"
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.express as px
-from typing import Dict, List, Optional, Tuple
 import json
+import os
 import pickle
-from pathlib import Path
-from dataclasses import dataclass
-from enum import Enum
 
 # Import existing configurations
 import sys
-import os
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+from plotly.subplots import make_subplots
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class QLearningVisualizationType(Enum):
@@ -791,7 +793,7 @@ def load_qtable_from_file(file_path: str) -> Optional[np.ndarray]:
             q_table = np.load(path)
         else:
             # Try JSON format
-            with open(path, 'r') as f:
+            with open(path) as f:
                 data = json.load(f)
                 q_table = np.array(data['q_table'])
 

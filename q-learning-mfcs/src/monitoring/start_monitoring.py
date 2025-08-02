@@ -4,25 +4,28 @@ MFC Monitoring System Startup Script with HTTPS Support
 Orchestrates the secure startup of all monitoring components.
 """
 
-import sys
-import time
-import signal
+import argparse
 import logging
+import signal
 import subprocess
+import sys
 import threading
+import time
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from datetime import datetime
-import argparse
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 try:
-    from ssl_config import (
-        SSLConfig, load_ssl_config, initialize_ssl_infrastructure,
-        test_ssl_connection, save_ssl_config
+    from monitoring.ssl_config import (
+        SSLConfig,
+        initialize_ssl_infrastructure,
+        load_ssl_config,
+        save_ssl_config,
+        test_ssl_connection,
     )
 except ImportError as e:
     print(f"❌ Failed to import SSL configuration: {e}")

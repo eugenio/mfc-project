@@ -4,18 +4,18 @@ Streamlit Dashboard Frontend for MFC Monitoring System with HTTPS Support
 Provides secure web interface for simulation monitoring and control.
 """
 
-import sys
 import logging
 import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import streamlit as st
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import requests
+import streamlit as st
+from plotly.subplots import make_subplots
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -24,9 +24,12 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 try:
-    from ssl_config import (
-        SSLConfig, SecurityHeaders, load_ssl_config,
-        initialize_ssl_infrastructure, test_ssl_connection
+    from monitoring.ssl_config import (
+        SecurityHeaders,
+        SSLConfig,
+        initialize_ssl_infrastructure,
+        load_ssl_config,
+        test_ssl_connection,
     )
 except ImportError as e:
     st.error(f"Failed to import SSL configuration: {e}")

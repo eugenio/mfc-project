@@ -5,14 +5,19 @@ Ensures biological plausibility and parameter consistency.
 
 from typing import Dict
 
-from .parameter_validation import ConfigValidationError, validate_range
 from .biological_config import (
-    SpeciesMetabolicConfig, BiofilmKineticsConfig, ElectrochemicalConfig,
-    KineticParameters, MetabolicReactionConfig
+    BiofilmKineticsConfig,
+    ElectrochemicalConfig,
+    KineticParameters,
+    MetabolicReactionConfig,
+    SpeciesMetabolicConfig,
 )
+from .parameter_validation import ConfigValidationError, validate_range
 from .substrate_config import (
-    ComprehensiveSubstrateConfig, SubstrateKineticsConfig,
-    SubstrateDegradationPathway, SubstrateType
+    ComprehensiveSubstrateConfig,
+    SubstrateDegradationPathway,
+    SubstrateKineticsConfig,
+    SubstrateType,
 )
 
 

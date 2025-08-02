@@ -12,7 +12,7 @@ Usage:
 
 import os
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 try:
     import gitlab
@@ -30,36 +30,36 @@ except ImportError:
 
 class GitLabIssueManager:
     """Manages GitLab issues for bug reports and feature requests."""
-    
+
     def __init__(self):
         self.gl = None
         self.project = None
         self._setup_connection()
-    
+
     def _setup_connection(self):
         """Setup GitLab connection."""
         if not GITLAB_AVAILABLE:
             return
-            
+
         token = os.getenv('GITLAB_TOKEN')
         project_id = os.getenv('GITLAB_PROJECT_ID')
         gitlab_url = os.getenv('GITLAB_URL', 'https://gitlab.com')
-        
+
         if not token:
             print("⚠️  GITLAB_TOKEN environment variable not set")
             return
         if not project_id:
             print("⚠️  GITLAB_PROJECT_ID environment variable not set")
             return
-            
+
         try:
             self.gl = gitlab.Gitlab(gitlab_url, private_token=token)
             self.project = self.gl.projects.get(project_id)
             print(f"✅ Connected to GitLab project: {self.project.name}")
         except Exception as e:
             print(f"❌ GitLab connection failed: {e}")
-    
-    def create_bug_issue(self, title: str, description: str, 
+
+    def create_bug_issue(self, title: str, description: str,
                         steps_to_reproduce: Optional[str] = None,
                         expected_behavior: Optional[str] = None,
                         environment: Optional[str] = None) -> Optional[int]:
@@ -67,7 +67,7 @@ class GitLabIssueManager:
         if not self.project:
             print("❌ GitLab not configured")
             return None
-        
+
         issue_desc = f"""## 🐛 Bug Description
 {description}
 
@@ -75,25 +75,25 @@ class GitLabIssueManager:
 **Reporter:** Claude Code Assistant
 
 """
-        
+
         if steps_to_reproduce:
             issue_desc += f"""## 🔄 Steps to Reproduce
 {steps_to_reproduce}
 
 """
-        
+
         if expected_behavior:
             issue_desc += f"""## ✅ Expected Behavior
 {expected_behavior}
 
 """
-        
+
         if environment:
             issue_desc += f"""## 🖥️ Environment
 {environment}
 
 """
-        
+
         try:
             issue = self.project.issues.create({
                 'title': f"🐛 {title}",
@@ -105,7 +105,7 @@ class GitLabIssueManager:
         except Exception as e:
             print(f"❌ Failed to create bug issue: {e}")
             return None
-    
+
     def create_enhancement_issue(self, title: str, description: str,
                                todo_list: Optional[List[str]] = None,
                                priority: str = 'medium') -> Optional[int]:
@@ -113,7 +113,7 @@ class GitLabIssueManager:
         if not self.project:
             print("❌ GitLab not configured")
             return None
-        
+
         issue_desc = f"""## ✨ Enhancement Description
 {description}
 
@@ -122,20 +122,20 @@ class GitLabIssueManager:
 **Priority:** {priority.title()}
 
 """
-        
+
         if todo_list:
             issue_desc += """## 📝 Implementation Tasks
 
 """
             for task in todo_list:
                 issue_desc += f"- [ ] {task}\n"
-        
+
         labels = ['enhancement']
         if priority == 'high':
             labels.append('priority::high')
         elif priority == 'low':
             labels.append('priority::low')
-        
+
         try:
             issue = self.project.issues.create({
                 'title': f"✨ {title}",
@@ -147,23 +147,23 @@ class GitLabIssueManager:
         except Exception as e:
             print(f"❌ Failed to create enhancement issue: {e}")
             return None
-    
+
     def update_issue(self, issue_iid: int, comment: str, close: bool = False) -> bool:
         """Update an issue with a comment and optionally close it."""
         if not self.project:
             return False
-        
+
         try:
             issue = self.project.issues.get(issue_iid)
-            
+
             # Add comment
             issue.notes.create({'body': comment})
-            
+
             # Close if requested
             if close:
                 issue.state_event = 'close'
                 issue.save()
-            
+
             print(f"✅ Updated issue #{issue_iid}")
             return True
         except Exception as e:

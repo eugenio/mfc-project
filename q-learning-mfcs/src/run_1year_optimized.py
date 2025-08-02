@@ -8,20 +8,21 @@ and calculates substrate consumption and buffer maintenance requirements.
 Created: 2025-07-26
 """
 
+import json
 import os
+import signal
 import sys
 import time
-import json
-import signal
 from datetime import datetime
 from pathlib import Path
+
 import numpy as np
 
 # Add src to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from mfc_recirculation_control import simulate_mfc_with_recirculation
 from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+from mfc_recirculation_control import simulate_mfc_with_recirculation
 
 
 def setup_gpu_acceleration():

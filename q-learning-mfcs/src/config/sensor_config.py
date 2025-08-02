@@ -4,8 +4,8 @@ Replaces hardcoded values in EIS, QCM, and sensor fusion models.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Tuple, Union
 from enum import Enum
+from typing import Dict, Tuple, Union
 
 
 class FusionMethod(Enum):

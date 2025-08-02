@@ -4,26 +4,28 @@ Certificate Management Utility for MFC Monitoring System
 Handles SSL certificate lifecycle including generation, renewal, and monitoring.
 """
 
-import sys
-import logging
-import subprocess
-from pathlib import Path
-from typing import Dict, Optional, Tuple, Any
-from datetime import datetime
 import argparse
 import json
+import logging
 import smtplib
-from email.mime.text import MIMEText
+import subprocess
+import sys
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 # ruff: noqa: E402
-from ssl_config import (
-    SSLConfig, CertificateManager, load_ssl_config,
-    initialize_ssl_infrastructure
+from monitoring.ssl_config import (
+    CertificateManager,
+    SSLConfig,
+    initialize_ssl_infrastructure,
+    load_ssl_config,
 )
 
 # Setup logging
@@ -56,7 +58,7 @@ class EnhancedCertificateManager(CertificateManager):
 
         if config_file.exists():
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file) as f:
                     return {**default_config, **json.load(f)}
             except Exception as e:
                 logger.warning(f"Failed to load notification config: {e}")
