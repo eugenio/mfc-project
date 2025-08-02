@@ -249,7 +249,7 @@ mojo-dev = ["dev", "modular", "tools"]
 
 # GPU environments (optional, only when needed)
 # Note: JAX dependencies are version-frozen for compatibility - see feature definitions above
-amd-gpu = ["amd-gpu", "ml", "api", "gui"]
+amd-gpu = ["amd-gpu", "ml", "api", "gui", "dev"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
 # Complete environment (should be avoided in production)
