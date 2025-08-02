@@ -79,7 +79,7 @@ Performance Summary (100 hours):
 
 PID Controller:
 • Max concentration: {pid_max_conc:.1f} mM
-• Final concentration: {pid_final_conc:.1f} mM  
+• Final concentration: {pid_final_conc:.1f} mM
 • Average power: {pid_avg_power:.2f} mW
 • Control: Uncontrolled increase
 
@@ -99,7 +99,7 @@ Improvement:
 
 ax4.text(0.05, 0.95, summary_text, transform=ax4.transAxes, fontsize=11,
          verticalalignment='top', fontfamily='monospace',
-         bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
+         bbox={'boxstyle': 'round', 'facecolor': 'lightgray', 'alpha': 0.8})
 
 plt.tight_layout()
 plt.savefig('data/figures/qlearning_vs_pid_comparison.png', dpi=300, bbox_inches='tight')

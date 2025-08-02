@@ -245,7 +245,7 @@ def create_stack_diagram():
 
     # Add dimensions
     ax1.annotate('', xy=(1, 0.2), xytext=(11, 0.2),
-                arrowprops=dict(arrowstyle='<->', color='red', lw=2))
+                arrowprops={'arrowstyle': '<->', 'color': 'red', 'lw': 2})
     ax1.text(6, 0.1, '11.0 cm', ha='center', va='top', fontsize=10, color='red', fontweight='bold')
 
     # 2. Top view of single cell
@@ -311,7 +311,7 @@ def create_stack_diagram():
 
     # Add dimensions
     ax2.annotate('', xy=(2, 0.5), xytext=(6, 0.5),
-                arrowprops=dict(arrowstyle='<->', color='red', lw=2))
+                arrowprops={'arrowstyle': '<->', 'color': 'red', 'lw': 2})
     ax2.text(4, 0.3, '2.24 cm', ha='center', va='top', fontsize=10, color='red', fontweight='bold')
 
     # Legend

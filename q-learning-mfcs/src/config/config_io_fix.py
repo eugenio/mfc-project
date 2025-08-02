@@ -13,7 +13,7 @@ def enum_dict_factory(field_list):
             return obj.value
         elif isinstance(obj, dict):
             return {k: convert_value(v) for k, v in obj.items()}
-        elif isinstance(obj, (list, tuple)):
+        elif isinstance(obj, list | tuple):
             return type(obj)(convert_value(v) for v in obj)
         else:
             return obj

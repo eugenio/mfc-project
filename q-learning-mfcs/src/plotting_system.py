@@ -194,7 +194,7 @@ def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.0
     """
     ax.text(x, y, text, transform=ax.transAxes,
             verticalalignment=va, horizontalalignment=ha,
-            bbox=dict(boxstyle=boxstyle, facecolor=facecolor, alpha=alpha))
+            bbox={'boxstyle': boxstyle, 'facecolor': facecolor, 'alpha': alpha})
 
 
 def save_figure(fig: plt.Figure, filename: str, dpi: int = 300, bbox_inches: str = 'tight'):
@@ -316,7 +316,7 @@ def plot_mfc_simulation_results(data_path: str | Path, output_prefix: str = "mfc
 
     ax.text(0.1, 0.9, summary_text, transform=ax.transAxes, fontsize=11,
             verticalalignment='top', fontfamily='monospace',
-            bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
+            bbox={'boxstyle': 'round', 'facecolor': 'lightgray', 'alpha': 0.8})
 
     plt.tight_layout()
     save_figure(fig1, get_figure_path(f"{output_prefix}_overview_{timestamp}.png"))
@@ -541,8 +541,8 @@ def plot_gpu_simulation_results(data_dir: str | Path, output_prefix: str = "gpu_
     ax.annotate(f'CONTROL FAILURE\nFinal: {final_conc:.1f} mM\n(4x target)',
                 xy=(duration_days*0.8, final_conc),
                 xytext=(duration_days*0.5, final_conc*0.7),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='red', alpha=0.3),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
+                bbox={'boxstyle': 'round,pad=0.3', 'facecolor': 'red', 'alpha': 0.3},
                 fontsize=10, color='red', weight='bold')
 
     setup_axis(ax, 'Time (days)', 'Substrate Concentration (mM)', 'Substrate Control Performance')
@@ -556,8 +556,8 @@ def plot_gpu_simulation_results(data_dir: str | Path, output_prefix: str = "gpu_
     ax.annotate(f'POWER FAILURE\nMean: {mean_power:.3f} mW',
                 xy=(duration_days*0.5, df['total_power'].mean()),
                 xytext=(duration_days*0.3, df['total_power'].max()*0.5),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='red', alpha=0.3),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
+                bbox={'boxstyle': 'round,pad=0.3', 'facecolor': 'red', 'alpha': 0.3},
                 fontsize=10, color='red', weight='bold')
     setup_axis(ax, 'Time (days)', 'Power Output (W)', 'Power Generation', legend=False)
 
@@ -619,7 +619,7 @@ def plot_gpu_simulation_results(data_dir: str | Path, output_prefix: str = "gpu_
 
     ax.text(0.05, 0.95, summary_text, transform=ax.transAxes, fontsize=11,
             verticalalignment='top', fontfamily='monospace',
-            bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
+            bbox={'boxstyle': 'round', 'facecolor': 'lightcoral', 'alpha': 0.8})
 
     plt.tight_layout()
     save_figure(fig1, get_figure_path(f"{output_prefix}_control_failure_analysis_{timestamp}.png"))

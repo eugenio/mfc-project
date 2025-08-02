@@ -264,7 +264,7 @@ def create_technical_overview(pdf):
 
     for start, end in connections:
         ax.annotate('', xy=end, xytext=start,
-                   arrowprops=dict(arrowstyle='->', lw=1.5, color='#333333'),
+                   arrowprops={'arrowstyle': '->', 'lw': 1.5, 'color': '#333333'},
                    transform=ax.transAxes)
 
     # Technical specifications
@@ -401,7 +401,7 @@ def create_simulation_results(pdf):
     ax1.annotate(f'Peak: {power_profile[peak_idx]:.3f}W',
                 xy=(hours[peak_idx], power_profile[peak_idx]),
                 xytext=(hours[peak_idx] + 10, power_profile[peak_idx] + 0.2),
-                arrowprops=dict(arrowstyle='->', color='red'))
+                arrowprops={'arrowstyle': '->', 'color': 'red'})
 
     # 2. Energy Production
     energy_cumulative = np.cumsum(power_profile) * 1.0  # Wh
@@ -418,7 +418,7 @@ def create_simulation_results(pdf):
     ax2.annotate(f'Total: {final_energy:.2f} Wh',
                 xy=(100, final_energy),
                 xytext=(85, final_energy * 0.8),
-                arrowprops=dict(arrowstyle='->', color='green'),
+                arrowprops={'arrowstyle': '->', 'color': 'green'},
                 fontweight='bold')
 
     # 3. Individual Cell Performance

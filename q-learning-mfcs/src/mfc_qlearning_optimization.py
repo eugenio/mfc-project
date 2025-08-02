@@ -775,8 +775,8 @@ class MFCQLearningSimulation:
         """
 
         ax9.text(0.1, 0.9, summary_text, transform=ax9.transAxes, fontsize=10,
-                verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3",
-                facecolor="lightgreen", alpha=0.5))
+                verticalalignment='top', bbox={'boxstyle': "round,pad=0.3",
+                'facecolor': "lightgreen", 'alpha': 0.5})
 
         # Create a separate figure for instantaneous flow rate
         plt.figure(figsize=(12, 8))
@@ -809,8 +809,8 @@ class MFCQLearningSimulation:
         mean_flow = np.mean(flow_rates_ml[flow_rates_ml > 0])
         std_flow = np.std(flow_rates_ml[flow_rates_ml > 0])
         plt.text(0.7, 0.8, f'Mean: {mean_flow:.1f} mL/h\nStd: {std_flow:.1f} mL/h',
-                transform=plt.gca().transAxes, bbox=dict(boxstyle="round,pad=0.3",
-                facecolor="lightblue", alpha=0.7))
+                transform=plt.gca().transAxes, bbox={'boxstyle': "round,pad=0.3",
+                'facecolor': "lightblue", 'alpha': 0.7})
 
         # Add alphabetic labels to flow rate analysis figure
         current_fig = plt.gcf()
@@ -913,7 +913,7 @@ class MFCQLearningSimulation:
                 corr = np.corrcoef(q_flows[valid_q_mask], q_utils[valid_q_mask])[0,1]
                 plt.text(0.05, 0.95, f'Correlation: {corr:.3f}',
                         transform=plt.gca().transAxes,
-                        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+                        bbox={'boxstyle': "round,pad=0.3", 'facecolor': "white", 'alpha': 0.8})
 
         # Add alphabetic labels to flow vs utilization figure
         current_fig = plt.gcf()

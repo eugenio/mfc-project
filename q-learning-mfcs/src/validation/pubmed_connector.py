@@ -277,7 +277,7 @@ class PubMedConnector:
             return pmids
 
         except requests.RequestException as e:
-            warnings.warn(f"PubMed search failed: {e}")
+            warnings.warn(f"PubMed search failed: {e}", stacklevel=2)
             return []
 
     def fetch_article_details(self, pmids: list[str]) -> list[PubMedArticle]:
@@ -333,7 +333,7 @@ class PubMedConnector:
             return self._parse_pubmed_xml(response.text)
 
         except requests.RequestException as e:
-            warnings.warn(f"PubMed fetch failed: {e}")
+            warnings.warn(f"PubMed fetch failed: {e}", stacklevel=2)
             return []
 
     def _parse_pubmed_xml(self, xml_text: str) -> list[PubMedArticle]:
@@ -351,7 +351,7 @@ class PubMedConnector:
                     self._cache_article(article)
 
         except ET.ParseError as e:
-            warnings.warn(f"XML parsing failed: {e}")
+            warnings.warn(f"XML parsing failed: {e}", stacklevel=2)
 
         return articles
 
@@ -421,7 +421,7 @@ class PubMedConnector:
             )
 
         except Exception as e:
-            warnings.warn(f"Failed to parse article: {e}")
+            warnings.warn(f"Failed to parse article: {e}", stacklevel=2)
             return None
 
     def _extract_publication_date(self, pub_date_elem) -> str:

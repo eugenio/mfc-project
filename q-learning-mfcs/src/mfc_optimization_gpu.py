@@ -562,8 +562,8 @@ class MFCOptimizationSimulation:
         """
 
         ax9.text(0.1, 0.9, summary_text, transform=ax9.transAxes, fontsize=11,
-                verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3",
-                facecolor="lightblue", alpha=0.5))
+                verticalalignment='top', bbox={'boxstyle': "round,pad=0.3",
+                'facecolor': "lightblue", 'alpha': 0.5})
 
         plt.tight_layout()
 

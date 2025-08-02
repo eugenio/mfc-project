@@ -147,13 +147,13 @@ class DataSchema:
     def _is_compatible_type(self, value: Any, expected_type: type) -> bool:
         """Check if value is compatible with expected type."""
         if expected_type is float:
-            return isinstance(value, (int, float, np.number))
+            return isinstance(value, int | float | np.number)
         elif expected_type is int:
-            return isinstance(value, (int, np.integer))
+            return isinstance(value, int | np.integer)
         elif expected_type is str:
             return isinstance(value, str)
         elif expected_type == datetime:
-            return isinstance(value, (datetime, pd.Timestamp))
+            return isinstance(value, datetime | pd.Timestamp)
         return False
 
     def _validate_constraints(
@@ -566,9 +566,9 @@ class SQLiteDataStorage(BaseDataStorage):
                         data_type.name,
                         component_id,
                         metric_name,
-                        float(value) if value is not None and isinstance(value, (int, float, np.number)) else None,
+                        float(value) if value is not None and isinstance(value, int | float | np.number) else None,
                         unit,
-                        float(quality_score) if isinstance(quality_score, (int, float, np.number)) else 0.0,
+                        float(quality_score) if isinstance(quality_score, int | float | np.number) else 0.0,
                         metadata_json
                     ))
 

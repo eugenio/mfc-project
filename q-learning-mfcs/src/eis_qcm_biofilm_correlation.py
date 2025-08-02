@@ -491,7 +491,7 @@ Literature Validation:
 
     ax9.text(0.05, 0.95, summary_text, transform=ax9.transAxes,
             fontsize=10, fontfamily='monospace', verticalalignment='top',
-            bbox=dict(boxstyle='round,pad=0.5', facecolor='lightblue', alpha=0.8))
+            bbox={'boxstyle': 'round,pad=0.5', 'facecolor': 'lightblue', 'alpha': 0.8})
 
     plt.tight_layout()
     plt.savefig(get_figure_path('eis_qcm_biofilm_correlation_analysis.png'), dpi=300, bbox_inches='tight')

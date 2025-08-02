@@ -45,7 +45,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some uncertainty quantification features will be limited.")
+    warnings.warn("SciPy not available. Some uncertainty quantification features will be limited.", stacklevel=2)
 
 try:
     import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ try:
     HAS_PLOTTING = True
 except ImportError:
     HAS_PLOTTING = False
-    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.")
+    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.", stacklevel=2)
 
 # Import configuration classes
 
@@ -330,8 +330,10 @@ class UncertaintyQuantifier(ABC):
         return statistics
 
     def _calculate_confidence_intervals(self, output_samples: dict[str, np.ndarray],
-                                      confidence_levels: list[float] = [0.95, 0.99]) -> dict[str, dict[str, tuple[float, float]]]:
+                                      confidence_levels: list[float] = None) -> dict[str, dict[str, tuple[float, float]]]:
         """Calculate confidence intervals for outputs."""
+        if confidence_levels is None:
+            confidence_levels = [0.95, 0.99]
         intervals = {}
 
         for output_name, samples in output_samples.items():
@@ -350,8 +352,10 @@ class UncertaintyQuantifier(ABC):
         return intervals
 
     def _calculate_percentiles(self, output_samples: dict[str, np.ndarray],
-                             percentile_values: list[float] = [5, 25, 50, 75, 95]) -> dict[str, dict[str, float]]:
+                             percentile_values: list[float] = None) -> dict[str, dict[str, float]]:
         """Calculate percentiles for outputs."""
+        if percentile_values is None:
+            percentile_values = [5, 25, 50, 75, 95]
         percentiles = {}
 
         for output_name, samples in output_samples.items():
@@ -447,7 +451,7 @@ class MonteCarloAnalyzer(UncertaintyQuantifier):
 
         # Parameter-output correlations
         result.parameter_output_correlations = {}
-        for i, output_name in enumerate(result.output_names):
+        for _i, output_name in enumerate(result.output_names):
             result.parameter_output_correlations[output_name] = np.corrcoef(
                 parameter_samples.T, output_samples[output_name]
             )[:self.n_parameters, -1]
@@ -558,7 +562,7 @@ class BayesianInference(UncertaintyQuantifier):
         # Define log-prior function
         def log_prior(parameters):
             lp = 0.0
-            for i, (param, prior) in enumerate(zip(parameters, self.prior_distributions, strict=False)):
+            for _i, (param, prior) in enumerate(zip(parameters, self.prior_distributions, strict=False)):
                 lp += prior.pdf(np.array([param]))[0]
             return np.log(lp) if lp > 0 else -np.inf
 
@@ -846,7 +850,7 @@ def calculate_sensitivity_indices_from_pce(pce_coefficients: np.ndarray,
     for i in range(n_params):
         # First-order sensitivity index
         first_order_var = 0.0
-        for j, (coeff, multi_index) in enumerate(zip(pce_coefficients[1:], multi_indices[1:], strict=False)):
+        for _j, (coeff, multi_index) in enumerate(zip(pce_coefficients[1:], multi_indices[1:], strict=False)):
             if np.sum(multi_index) == multi_index[i] and multi_index[i] > 0:
                 first_order_var += coeff**2
 

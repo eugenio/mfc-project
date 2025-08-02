@@ -723,7 +723,7 @@ class PredictiveBiofimHealthMonitor:
                     alert_type='anomaly_detected',
                     severity='critical',
                     message=f'{len(critical_anomalies)} critical anomalies detected',
-                    affected_components=list(set([sensor for a in critical_anomalies for sensor in a.affected_sensors])),
+                    affected_components=list({sensor for a in critical_anomalies for sensor in a.affected_sensors}),
                     recommended_actions=[a.recommended_action for a in critical_anomalies[:3]],  # Top 3
                     predicted_consequences='System reliability compromised',
                     confidence=np.mean([a.confidence for a in critical_anomalies])

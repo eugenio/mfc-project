@@ -343,7 +343,7 @@ def demonstrate_individual_components():
     print("   ✅ Feature categories: raw, statistical, temporal, health, derived")
 
     # Show some key features
-    key_features = {k: v for k, v in list(features.items())[:5]}
+    key_features = dict(list(features.items())[:5])
     print("   📊 Sample features:")
     for name, value in key_features.items():
         print(f"      • {name}: {value:.3f}")

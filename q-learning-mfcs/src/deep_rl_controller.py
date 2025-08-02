@@ -230,7 +230,7 @@ class DuelingDQN(nn.Module):
             action_dim: Number of actions
             config: DRL configuration
         """
-        super(DuelingDQN, self).__init__()
+        super().__init__()
 
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -323,7 +323,7 @@ class RainbowDQN(nn.Module):
             v_min: Minimum value for value distribution
             v_max: Maximum value for value distribution
         """
-        super(RainbowDQN, self).__init__()
+        super().__init__()
 
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -394,7 +394,7 @@ class NoisyLinear(nn.Module):
             out_features: Output dimension
             std_init: Initial standard deviation for noise
         """
-        super(NoisyLinear, self).__init__()
+        super().__init__()
 
         self.in_features = in_features
         self.out_features = out_features

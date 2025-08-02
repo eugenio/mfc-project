@@ -48,7 +48,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Statistical analysis will be limited.")
+    warnings.warn("SciPy not available. Statistical analysis will be limited.", stacklevel=2)
 
 # Advanced statistical analysis
 try:
@@ -60,7 +60,7 @@ try:
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
-    warnings.warn("Statsmodels not available. Some advanced statistical tests will be limited.")
+    warnings.warn("Statsmodels not available. Some advanced statistical tests will be limited.", stacklevel=2)
 
 # Machine learning for statistical analysis
 try:
@@ -71,7 +71,7 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Some multivariate analysis will be limited.")
+    warnings.warn("Scikit-learn not available. Some multivariate analysis will be limited.", stacklevel=2)
 
 
 class TestType(Enum):

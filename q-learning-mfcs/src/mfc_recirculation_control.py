@@ -1159,7 +1159,7 @@ if __name__ == "__main__":
         },
         'controller_statistics': {
             'substrate_halt_percentage': np.mean(results['substrate_halt']) * 100 if results['substrate_halt'] else 0,
-            'control_modes_used': list(set(d['mode'] for d in controller.control_history)) if controller.control_history else [],
+            'control_modes_used': list({d['mode'] for d in controller.control_history}) if controller.control_history else [],
             'average_outlet_error': np.mean([abs(d['outlet_error']) for d in controller.control_history]) if controller.control_history else 0,
             'average_reservoir_error': np.mean([abs(d['reservoir_error']) for d in controller.control_history]) if controller.control_history else 0
         },

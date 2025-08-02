@@ -218,7 +218,7 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
             fig_flow = go.Figure(data=go.Heatmap(
                 z=velocity_2d.T,
                 colorscale='Viridis',
-                colorbar=dict(title="Velocity (m/s)")
+                colorbar={"title": "Velocity (m/s)"}
             ))
             fig_flow.update_layout(
                 title="Velocity Field (x-component)",
@@ -239,7 +239,7 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
             fig_conc = go.Figure(data=go.Heatmap(
                 z=concentration_2d.T,
                 colorscale='Plasma',
-                colorbar=dict(title="Concentration (kg/m³)")
+                colorbar={"title": "Concentration (kg/m³)"}
             ))
             fig_conc.update_layout(
                 title="Substrate Concentration",
@@ -256,7 +256,7 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
         fig_biofilm = go.Figure(data=go.Heatmap(
             z=result.biofilm_thickness,
             colorscale='Greens',
-            colorbar=dict(title="Thickness (μm)")
+            colorbar={"title": "Thickness (μm)"}
         ))
         fig_biofilm.update_layout(
             title="Biofilm Thickness After 24 Hours",

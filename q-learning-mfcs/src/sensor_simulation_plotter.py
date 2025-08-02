@@ -256,7 +256,7 @@ class SensorMFCPlotter:
         max_power = np.max(power) * 1000 if len(power) > 0 else 0
         ax.annotate(f'Peak: {max_power:.2f} mW',
                    xy=(0.7, 0.8), xycoords='axes fraction',
-                   bbox=dict(boxstyle="round,pad=0.3", facecolor='lightblue', alpha=0.7))
+                   bbox={'boxstyle': "round,pad=0.3", 'facecolor': 'lightblue', 'alpha': 0.7})
 
     def _plot_sensor_status_dashboard(self, ax, data):
         """Plot sensor status dashboard."""
@@ -280,7 +280,7 @@ class SensorMFCPlotter:
         ax.set_xlim(0, 1)
 
         # Add confidence values
-        for i, (bar, conf) in enumerate(zip(bars, confidence, strict=False)):
+        for i, (_bar, conf) in enumerate(zip(bars, confidence, strict=False)):
             ax.text(conf + 0.02, i, f'{conf:.2f}', va='center')
 
     def _plot_biofilm_sensor_validation(self, ax, data):
@@ -584,8 +584,8 @@ class SensorMFCPlotter:
                 ax.annotate('Substrate\nAddition', xy=(add_time, max(substrate_conc) * 0.9),
                            xytext=(10, 10), textcoords='offset points',
                            fontsize=9, ha='left', va='bottom',
-                           bbox=dict(boxstyle='round,pad=0.3', facecolor='orange', alpha=0.7),
-                           arrowprops=dict(arrowstyle='->', color='orange'))
+                           bbox={'boxstyle': 'round,pad=0.3', 'facecolor': 'orange', 'alpha': 0.7},
+                           arrowprops={'arrowstyle': '->', 'color': 'orange'})
 
         # Add consumption rate annotation
         if len(substrate_conc) > 10:
@@ -602,7 +602,7 @@ class SensorMFCPlotter:
 
             ax.text(0.02, 0.98, info_text,
                    transform=ax.transAxes, fontsize=9, va='top',
-                   bbox=dict(boxstyle='round,pad=0.4', facecolor='lightblue', alpha=0.8))
+                   bbox={'boxstyle': 'round,pad=0.4', 'facecolor': 'lightblue', 'alpha': 0.8})
 
         ax.set_xlabel('Time (hours)')
         ax.set_ylabel('Concentration (mM)')
@@ -619,7 +619,7 @@ class SensorMFCPlotter:
         substrate_conc = np.zeros_like(time)
         current_conc = 20.0  # Initial concentration
 
-        for i, t in enumerate(time):
+        for i, _t in enumerate(time):
             # Natural consumption (first-order kinetics with Monod-like behavior)
             dt = time[1] - time[0] if len(time) > 1 else 1.0
 
@@ -1021,7 +1021,7 @@ PERFORMANCE SUMMARY
 • Sensor Fusion Accuracy: {data.get('fusion_accuracy', 0):.1f}%"""
 
         fig.text(0.02, 0.02, info_text, fontsize=8, verticalalignment='bottom',
-                bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.8))
+                bbox={'boxstyle': "round,pad=0.5", 'facecolor': 'lightgray', 'alpha': 0.8})
 
     def save_simulation_data(self, data: dict[str, Any]) -> tuple[str, str]:
         """
@@ -1036,7 +1036,7 @@ PERFORMANCE SUMMARY
         # Prepare CSV data
         time_series_data = {}
         for key, values in data.items():
-            if isinstance(values, (list, np.ndarray)) and len(values) > 0:
+            if isinstance(values, list | np.ndarray) and len(values) > 0:
                 time_series_data[key] = np.array(values)
 
         # Create DataFrame for CSV
@@ -1065,7 +1065,7 @@ PERFORMANCE SUMMARY
         for key, value in data.items():
             if isinstance(value, np.ndarray):
                 json_data[key] = value.tolist()
-            elif isinstance(value, (list, dict, str, int, float, bool)) or value is None:
+            elif isinstance(value, list | dict | str | int | float | bool) or value is None:
                 json_data[key] = value
             else:
                 json_data[key] = str(value)

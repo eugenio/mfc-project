@@ -100,7 +100,7 @@ def create_biofilm_health_comparison(unified_df, non_unified_df, recirculation_d
 
     # Add annotations for key events
     ax1.annotate('BIOFILM COLLAPSE', xy=(50, 0.5), xytext=(70, 0.8),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
                 fontsize=10, color='red', fontweight='bold')
 
     # Plot 2: Final biofilm thickness comparison
@@ -464,9 +464,9 @@ def create_breakthrough_analysis_plot(unified_df, non_unified_df, recirculation_
 
     # Add dramatic annotation
     ax1.annotate('BIOFILM DEATH\nSTARVATION!', xy=(50, 0.5), xytext=(70, 1.0),
-                arrowprops=dict(arrowstyle='->', color='red', lw=3),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 3},
                 fontsize=12, color='red', fontweight='bold',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='yellow', alpha=0.7))
+                bbox={'boxstyle': "round,pad=0.3", 'facecolor': 'yellow', 'alpha': 0.7})
 
     # Plot 2: The Solution - Recirculation System Success
     ax2 = axes[0, 1]
@@ -491,9 +491,9 @@ def create_breakthrough_analysis_plot(unified_df, non_unified_df, recirculation_
 
     # Add success annotation
     ax2.annotate('BIOFILM THRIVING\nPROGRESSIVE GROWTH!', xy=(75, 1.079), xytext=(50, 0.8),
-                arrowprops=dict(arrowstyle='->', color='green', lw=3),
+                arrowprops={'arrowstyle': '->', 'color': 'green', 'lw': 3},
                 fontsize=12, color='green', fontweight='bold',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='lightgreen', alpha=0.7))
+                bbox={'boxstyle': "round,pad=0.3", 'facecolor': 'lightgreen', 'alpha': 0.7})
 
     # Plot 3: Cell Monitoring - The Key Innovation
     ax3 = axes[1, 0]
@@ -521,7 +521,7 @@ def create_breakthrough_analysis_plot(unified_df, non_unified_df, recirculation_
     # Highlight that all cells stay healthy
     ax3.text(50, 15, 'ALL CELLS HEALTHY\nNO STARVATION EVENTS',
              fontsize=11, color='green', fontweight='bold',
-             bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgreen', alpha=0.8))
+             bbox={'boxstyle': "round,pad=0.5", 'facecolor': 'lightgreen', 'alpha': 0.8})
 
     # Plot 4: System Comparison Summary
     ax4 = axes[1, 1]
@@ -557,7 +557,7 @@ def create_breakthrough_analysis_plot(unified_df, non_unified_df, recirculation_
     # Add breakthrough badge
     ax4.text(2, 0.2, '🥇\nFIRST SYSTEM TO\nPREVENT BIOFILM\nSTARVATION',
              ha='center', va='center', fontsize=10, fontweight='bold',
-             bbox=dict(boxstyle="round,pad=0.5", facecolor='gold', alpha=0.8))
+             bbox={'boxstyle': "round,pad=0.5", 'facecolor': 'gold', 'alpha': 0.8})
 
     plt.tight_layout()
     return fig
