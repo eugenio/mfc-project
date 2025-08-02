@@ -6,7 +6,6 @@ from pathlib import Path
 
 # Get the project root directory (q-learning-mfcs)
 PROJECT_ROOT = Path(__file__).parent.parent
-BASE_DIR = PROJECT_ROOT  # Alias for backward compatibility
 
 # Define standard output directories
 FIGURES_DIR = PROJECT_ROOT / "data" / "figures"
