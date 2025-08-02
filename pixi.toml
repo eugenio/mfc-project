@@ -88,6 +88,8 @@ altair = ">=5.5.0,<6"
 selenium = ">=4.34.2,<5"
 webdriver-manager = ">=4.0.2,<5"
 pydantic = ">=2.10.4"
+ruff = ">=0.12.7,<0.13"
+mypy = ">=1.17.1,<2"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -187,11 +189,13 @@ scikit-optimize = ">=0.9.0"
 # WARNING: JAX/JAXlib versions are frozen for compatibility between jax and jaxlib
 # AMD GPU environment uses exact versions (==0.5.0) to prevent compatibility issues
 # NVIDIA GPU environment uses minimum versions for flexibility
-# 
+#
 # If updating these versions, run JAX tests to avoid regressions:
-#   AMD GPU:    pixi run -e amd-gpu pytest q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
-#   NVIDIA GPU: pixi run -e nvidia-gpu pytest q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
-# 
+#   AMD GPU:    pixi run -e amd-gpu pytest 
+#     q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+#   NVIDIA GPU: pixi run -e nvidia-gpu pytest 
+#     q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+#
 # Known working combinations:
 #   AMD GPU (ROCm): jax==0.5.0 + jaxlib==0.5.0
 #   NVIDIA GPU (CUDA12): jax>=0.4.0 + jaxlib>=0.4.0
@@ -245,7 +249,7 @@ mojo-dev = ["dev", "modular", "tools"]
 
 # GPU environments (optional, only when needed)
 # Note: JAX dependencies are version-frozen for compatibility - see feature definitions above
-amd-gpu = ["amd-gpu", "ml"]
+amd-gpu = ["amd-gpu", "ml", "api", "gui"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
 # Complete environment (should be avoided in production)
