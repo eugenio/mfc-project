@@ -535,7 +535,7 @@ if __name__ == "__main__":
         
     # Show statistics
     stats = connector.get_cache_statistics()
-    print(f"\n📊 Cache Statistics:")
+    print("\n📊 Cache Statistics:")
     print(f"  API calls: {stats['api_calls_made']}")
     print(f"  Cache hits: {stats['cache_hits']}")
     print(f"  Hit rate: {stats['cache_hit_rate']:.2%}")
