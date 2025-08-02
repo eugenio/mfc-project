@@ -7,6 +7,7 @@ from gui.pages.advanced_physics import render_advanced_physics_page
 from gui.pages.cell_config import render_cell_configuration_page
 from gui.pages.dashboard import render_dashboard_page
 from gui.pages.electrode_enhanced import render_enhanced_electrode_page
+from gui.pages.gsm_integration import render_gsm_integration_page
 from gui.pages.literature_validation import render_literature_validation_page
 from gui.pages.ml_optimization import render_ml_optimization_page
 from gui.pages.performance_monitor import render_performance_monitor_page
@@ -21,7 +22,7 @@ class NavigationController:
             "cell_configuration": render_cell_configuration_page,
             "advanced_physics": render_advanced_physics_page,
             "ml_optimization": render_ml_optimization_page,
-            "gsm_integration": self._render_placeholder,
+            "gsm_integration": render_gsm_integration_page,
             "literature_validation": render_literature_validation_page,
             "performance_monitor": render_performance_monitor_page,
             "system_configuration": render_system_configuration_page
