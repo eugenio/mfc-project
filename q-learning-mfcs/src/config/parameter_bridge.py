@@ -172,7 +172,7 @@ class ParameterBridge:
             # Find mapping rule for this literature parameter
             mapping_rule = None
 
-            for key, rule in self.mapping_rules.items():
+            for _key, rule in self.mapping_rules.items():
                 if rule.literature_name == lit_param_name:
                     mapping_rule = rule
                     break
@@ -233,7 +233,7 @@ class ParameterBridge:
         """
         literature_params = {}
 
-        for config_key, rule in self.mapping_rules.items():
+        for _config_key, rule in self.mapping_rules.items():
             try:
                 config_value = self._get_nested_attribute(config, rule.config_attribute)
                 literature_value = config_value / rule.conversion_factor

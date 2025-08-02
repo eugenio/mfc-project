@@ -45,7 +45,7 @@ try:
     HAS_HDF5 = True
 except ImportError:
     HAS_HDF5 = False
-    warnings.warn("h5py not available. HDF5 support will be limited.")
+    warnings.warn("h5py not available. HDF5 support will be limited.", stacklevel=2)
 
 try:
     from scipy import interpolate, signal, stats
@@ -53,7 +53,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some data processing features will be limited.")
+    warnings.warn("SciPy not available. Some data processing features will be limited.", stacklevel=2)
 
 try:
     import matplotlib.pyplot as plt
@@ -61,7 +61,7 @@ try:
     HAS_PLOTTING = True
 except ImportError:
     HAS_PLOTTING = False
-    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.")
+    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.", stacklevel=2)
 
 # Import related modules
 
@@ -906,7 +906,7 @@ def calculate_model_validation_metrics(observed: np.ndarray, predicted: np.ndarr
 def detect_change_points(time_series: np.ndarray, method: str = 'pelt') -> list[int]:
     """Detect change points in time series data."""
     if not HAS_SCIPY:
-        warnings.warn("SciPy required for change point detection")
+        warnings.warn("SciPy required for change point detection", stacklevel=2)
         return []
 
     # Simple implementation using variance change detection
