@@ -19,14 +19,15 @@ Literature References:
 3. Few, S. (2009). "Information Dashboard Design"
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import sys
-import os
-from typing import Dict, Any
 import logging
+import os
+import sys
+from datetime import datetime
+from typing import Any, Dict
+
+import numpy as np
+import pandas as pd
+import streamlit as st
 
 # Suppress JAX TPU initialization messages (not errors, just informational)
 logging.getLogger('jax._src.xla_bridge').setLevel(logging.WARNING)
@@ -35,25 +36,21 @@ logging.getLogger('jax._src.xla_bridge').setLevel(logging.WARNING)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import enhanced components
-from gui.enhanced_components import (
-    initialize_enhanced_ui,
-    render_enhanced_sidebar
-)
+# Import existing components and configs
+from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+from gui.alert_configuration_ui import render_alert_configuration
+from gui.electrode_configuration_ui import ElectrodeConfigurationUI
+from gui.enhanced_components import initialize_enhanced_ui, render_enhanced_sidebar
+from gui.live_monitoring_dashboard import LiveMonitoringDashboard
+from gui.parameter_input import ParameterInputComponent
 from gui.qlearning_viz import (
     QLearningVisualizer,
     create_demo_qlearning_data,
-    load_qtable_from_file
+    load_qtable_from_file,
 )
-from gui.parameter_input import ParameterInputComponent
 from gui.qtable_visualization import QTableVisualization
-from gui.live_monitoring_dashboard import LiveMonitoringDashboard
-from gui.alert_configuration_ui import render_alert_configuration
-from gui.electrode_configuration_ui import ElectrodeConfigurationUI
-from monitoring.alert_management import AlertManager
-
-# Import existing components and configs
-from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
 from mfc_streamlit_gui import SimulationRunner
+from monitoring.alert_management import AlertManager
 
 # Configure Streamlit page
 st.set_page_config(
@@ -187,7 +184,7 @@ class EnhancedMFCApp:
                 db_path="mfc_alerts.db",
                 email_config=email_config if email_config['username'] else None
             )
-            
+
             # Set up default thresholds for MFC parameters
             self._setup_default_thresholds()
 
@@ -197,7 +194,7 @@ class EnhancedMFCApp:
     def _setup_default_thresholds(self):
         """Set up default alert thresholds for MFC parameters."""
         alert_manager = st.session_state.alert_manager
-        
+
         # Power density thresholds
         alert_manager.set_threshold(
             "power_density",
@@ -208,7 +205,7 @@ class EnhancedMFCApp:
             unit="W/m²",
             enabled=True
         )
-        
+
         # Substrate concentration thresholds
         alert_manager.set_threshold(
             "substrate_concentration",
@@ -219,7 +216,7 @@ class EnhancedMFCApp:
             unit="mM",
             enabled=True
         )
-        
+
         # pH thresholds
         alert_manager.set_threshold(
             "pH",
@@ -230,7 +227,7 @@ class EnhancedMFCApp:
             unit="",
             enabled=True
         )
-        
+
         # Temperature thresholds
         alert_manager.set_threshold(
             "temperature",
@@ -241,7 +238,7 @@ class EnhancedMFCApp:
             unit="°C",
             enabled=True
         )
-        
+
         # Biofilm thickness thresholds
         alert_manager.set_threshold(
             "biofilm_thickness",
@@ -281,7 +278,7 @@ class EnhancedMFCApp:
             active_alerts = st.session_state.alert_manager.get_active_alerts()
             active_alerts_count = len(active_alerts)
             critical_count = sum(1 for a in active_alerts if a.severity == "critical")
-        
+
         # Create alert indicator
         alert_indicator = ""
         if active_alerts_count > 0:
@@ -297,7 +294,7 @@ class EnhancedMFCApp:
                     ⚠️ {active_alerts_count} Active Alert{"s" if active_alerts_count != 1 else ""}
                 </div>
                 """
-        
+
         st.markdown(f"""
         <div class="main-header">
             <h1>🔬 Enhanced MFC Research Platform</h1>
@@ -352,6 +349,20 @@ class EnhancedMFCApp:
     def render_scientific_parameter_interface(self):
         """Render scientific parameter input interface with literature validation."""
         return self.parameter_input.render_parameter_input_form()
+
+    def render_electrode_configuration(self):
+        """Render electrode configuration interface."""
+        st.subheader("⚡ Electrode Configuration")
+        st.info("Electrode configuration interface coming soon...")
+
+    def _cleanup_gpu_resources(self):
+        """Clean up GPU resources before starting new simulation."""
+        try:
+            import jax
+            # Clear JAX caches
+            jax.clear_caches()
+        except Exception:
+            pass
 
     def render_parameter_validation_summary(self, parameters: Dict[str, Any]):
         """Render parameter validation summary."""
@@ -430,7 +441,7 @@ class EnhancedMFCApp:
                         help="Use GPU for faster simulation (8400× speedup)" if gpu_available else "GPU not detected, but you can still try to enable it",
                         key="gpu_acceleration_checkbox"
                     )
-                    
+
                     # Show debug info about GPU detection
                     if st.checkbox("🔧 Show GPU Debug Info", key="gpu_debug_info"):
                         try:
@@ -442,7 +453,7 @@ class EnhancedMFCApp:
                             st.write(f"GPU available: {gpu_available}")
                         except Exception as e:
                             st.write(f"GPU detection error: {e}")
-                    
+
                     # Manual GPU cleanup button
                     if st.button("🧹 Clean GPU Memory", help="Manually clean up GPU memory and caches"):
                         self._cleanup_gpu_resources()
@@ -510,10 +521,10 @@ class EnhancedMFCApp:
                 if st.button("▶️ Start Enhanced Simulation", type="primary"):
                     # Clean up any previous GPU state before starting new simulation
                     self._cleanup_gpu_resources()
-                    
+
                     # Reset simulation timing for live monitoring
                     self.live_monitoring.reset_simulation_time()
-                    
+
                     # Start simulation with enhanced parameters
                     # Use the actual refresh interval from live monitoring settings
                     actual_refresh_interval = st.session_state.get('live_monitoring_refresh', 5)
@@ -751,7 +762,7 @@ class EnhancedMFCApp:
                             'escalated': alert.escalated
                         })
                     export_data['active_alerts'] = pd.DataFrame(alert_records)
-                
+
                 # Export alert history
                 alert_history = st.session_state.alert_manager.get_alert_history(hours=168)  # Last week
                 if alert_history:
@@ -768,7 +779,7 @@ class EnhancedMFCApp:
                             'escalated': alert.escalated
                         })
                     export_data['alert_history'] = pd.DataFrame(history_records)
-                
+
                 # Export threshold configurations
                 threshold_records = []
                 for param, threshold in st.session_state.alert_manager.thresholds.items():
@@ -783,7 +794,7 @@ class EnhancedMFCApp:
                     })
                 if threshold_records:
                     export_data['alert_thresholds'] = pd.DataFrame(threshold_records)
-                    
+
             except Exception:
                 # Continue if alert data unavailable
                 pass
@@ -893,7 +904,7 @@ class EnhancedMFCApp:
         # Main application tabs
         tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
             "⚙️ Parameters",
-            "⚡ Electrodes", 
+            "⚡ Electrodes",
             "🚀 Simulation",
             "🧠 Q-Learning",
             "📡 Monitoring",

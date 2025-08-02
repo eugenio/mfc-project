@@ -2,19 +2,28 @@
 """
 GUI Test Runner for MFC Streamlit Application
 
-This script runs all GUI tests and provides a summary report.
+Enhanced version with integrated server management and headless testing support.
+This script runs all GUI tests and provides a comprehensive summary report.
 Run from the tests directory or the project root.
+
+Created: 2025-08-01
+Last modified: 2025-08-02
 """
 
 import sys
 import os
+import time
+import subprocess
 from pathlib import Path
+from typing import Dict, Any, List, Optional
 
 def run_gui_tests():
-    """Run all GUI tests and provide summary"""
+    """Run comprehensive GUI tests with integrated server management."""
     
-    print("🧪 MFC GUI Test Suite Runner")
-    print("=" * 50)
+    print("🧪 Enhanced MFC GUI Test Suite Runner")
+    print("=" * 60)
+    print("🔥 Features: Server Management | Headless Testing | Quality Assessment")
+    print("=" * 60)
     
     # Get the tests directory
     tests_dir = Path(__file__).parent
@@ -28,7 +37,23 @@ def run_gui_tests():
     src_dir = tests_dir.parent / "src"
     sys.path.insert(0, str(src_dir))
     
+    # Import test utilities with server management
+    try:
+        from utils import (
+            StreamlitTestServer, 
+            HeadlessGUITester, 
+            run_comprehensive_gui_tests,
+            get_available_port
+        )
+        server_management_available = True
+        print("✅ Server management and headless testing available")
+    except ImportError as e:
+        server_management_available = False
+        print(f"⚠️ Server management not available: {e}")
+        print("💡 Using fallback testing methods")
+    
     results = {}
+    overall_start_time = time.time()
     
     # Test 1: Simple GUI Test (HTTP-based, no browser required)
     print("\n🚀 Running Simple GUI Tests...")
@@ -106,7 +131,7 @@ def run_gui_tests():
             # Run the test file as a subprocess to avoid conflicts
             import subprocess
             result = subprocess.run([sys.executable, test_file], 
-                                  capture_output=True, text=True, timeout=60)
+                                  capture_output=True, text=True, timeout=300)
             
             test_passed = result.returncode == 0
             specific_results[test_name.lower().replace(' ', '_')] = test_passed

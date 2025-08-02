@@ -29,18 +29,19 @@ Literature References:
 4. Gama, J. (2010). "Knowledge Discovery from Data Streams"
 """
 
-import numpy as np
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-import warnings
-import time
 import threading
-from queue import Queue, Empty
+import time
+import warnings
+from abc import ABC, abstractmethod
 from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from queue import Empty, Queue
+from typing import Any, Callable, Dict, List, Optional
+
+import numpy as np
 
 # Async and threading support
 try:
@@ -61,8 +62,8 @@ except ImportError:
 
 # Time series analysis
 try:
-    from statsmodels.tsa.seasonal import seasonal_decompose  # noqa: F401
     from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: F401
+    from statsmodels.tsa.seasonal import seasonal_decompose  # noqa: F401
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False

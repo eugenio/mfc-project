@@ -28,13 +28,14 @@ Literature References:
 4. Hyndman, R. J., & Athanasopoulos, G. (2018). "Forecasting: principles and practice"
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
-from datetime import datetime
 import warnings
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Statistical dependencies
 try:
@@ -46,8 +47,8 @@ except ImportError:
     warnings.warn("SciPy not available. Some statistical tests will be limited.")
 
 try:
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
     from sklearn.model_selection import KFold, TimeSeriesSplit, cross_val_score
-    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
     from sklearn.preprocessing import StandardScaler
     HAS_SKLEARN = True
 except ImportError:

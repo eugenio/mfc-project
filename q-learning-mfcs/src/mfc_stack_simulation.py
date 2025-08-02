@@ -10,13 +10,16 @@ This simulation includes:
 - Power stability maintenance
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from odes import MFCModel
-from path_config import get_figure_path, get_simulation_data_path
+import random
 import time
 from collections import deque
-import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+from odes import MFCModel
+
+from path_config import get_figure_path, get_simulation_data_path
+
 
 class MFCSensor:
     """Sensor simulation for MFC monitoring"""

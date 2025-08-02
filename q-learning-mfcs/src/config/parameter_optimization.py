@@ -25,18 +25,19 @@ Literature References:
 4. Forrester, A., et al. (2008). "Engineering Design via Surrogate Modelling"
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
-from abc import ABC, abstractmethod
 import warnings
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Callable, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Optional dependencies for advanced optimization
 try:
-    from scipy.optimize import minimize, differential_evolution
+    from scipy.optimize import differential_evolution, minimize
     from scipy.stats import norm
     HAS_SCIPY = True
 except ImportError:
@@ -45,7 +46,7 @@ except ImportError:
 
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Matern, RBF, WhiteKernel
+    from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False

@@ -3,12 +3,15 @@ Create focused summary plots for the 100-hour MFC simulation results.
 These plots highlight the most important performance metrics.
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+
 from path_config import get_figure_path
+
 
 def create_summary_plots():
     """Create focused summary plots for key performance metrics"""
@@ -137,7 +140,7 @@ def create_summary_plots():
     ]
 
     # Create grid layout for metrics
-    rows, cols = 5, 2
+    _rows, cols = 5, 2
     for i, (label, value, color) in enumerate(metrics):
         row = i // cols
         col = i % cols
@@ -223,7 +226,6 @@ def create_technical_summary():
 
     # Generate sample control actions
     np.random.seed(42)
-    n_samples = 1000
 
     for i, (control_type, (min_val, max_val)) in enumerate(zip(control_types, action_ranges)):
         # Simulate learned control distribution
@@ -252,9 +254,9 @@ def create_technical_summary():
     x = np.arange(len(categories))
     width = 0.35
 
-    bars1 = ax4.bar(x - width/2, baseline_scores, width, label='Baseline Control',
+    ax4.bar(x - width/2, baseline_scores, width, label='Baseline Control',
                     color='lightcoral', alpha=0.8)
-    bars2 = ax4.bar(x + width/2, qlearning_scores, width, label='Q-Learning Control',
+    ax4.bar(x + width/2, qlearning_scores, width, label='Q-Learning Control',
                     color='lightgreen', alpha=0.8)
 
     ax4.set_xlabel('Performance Category', fontsize=12)

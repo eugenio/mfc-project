@@ -7,16 +7,17 @@ records of simulation parameters and results with YAML export/import capabilitie
 Created: 2025-07-31
 """
 
-import yaml
 import json
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
-from dataclasses import dataclass, field
 import logging
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from .config_io import dataclass_to_dict, convert_values_for_serialization
+import yaml
+
+from .config_io import convert_values_for_serialization, dataclass_to_dict
 from .qlearning_config import QLearningConfig
 from .sensor_config import SensorConfig
 
@@ -218,7 +219,7 @@ class ChronologyManager:
     def load_chronology(self) -> None:
         """Load chronology from YAML file."""
         try:
-            with open(self.chronology_file, 'r') as f:
+            with open(self.chronology_file) as f:
                 data = yaml.safe_load(f)
 
             if not data:

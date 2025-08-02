@@ -25,22 +25,23 @@ Literature References:
 4. Kennedy, M. C., & O'Hagan, A. (2001). "Bayesian calibration of computer models"
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import warnings
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Callable, Dict, List, Optional, Tuple
+
+import numpy as np
 from scipy import stats
 
 # Optional dependencies
 try:
-    from scipy.stats import gaussian_kde, multivariate_normal
-    from scipy.optimize import minimize
     from scipy.linalg import cholesky
+    from scipy.optimize import minimize
+    from scipy.stats import gaussian_kde, multivariate_normal
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False

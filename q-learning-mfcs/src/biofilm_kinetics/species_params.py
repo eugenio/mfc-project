@@ -6,9 +6,10 @@ S. oneidensis MR-1, and mixed cultures based on literature values
 from the MATHEMATICAL_MODELS_CELL_ATTACHMENT.md documentation.
 """
 
-import numpy as np
-from typing import Dict
 from dataclasses import dataclass
+from typing import Dict
+
+import numpy as np
 
 
 @dataclass

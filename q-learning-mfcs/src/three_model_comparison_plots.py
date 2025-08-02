@@ -5,13 +5,16 @@ Compares: Unified, Non-Unified, and Recirculation Control systems
 Focus areas: Biofilm health, substrate utilization, system performance
 """
 
-import pandas as pd
-import numpy as np
 import matplotlib
+import numpy as np
+import pandas as pd
+
 matplotlib.use('Agg')  # Use non-interactive backend
+import os
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
+
 from path_config import get_figure_path, get_simulation_data_path
 
 # Set style for professional plots

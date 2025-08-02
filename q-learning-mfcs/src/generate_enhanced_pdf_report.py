@@ -3,13 +3,15 @@ Enhanced PDF Report Generator for Q-Learning MFC Stack Project
 with improved layout, typography, and comprehensive visualizations.
 """
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.backends.backend_pdf import PdfPages
-import numpy as np
 import datetime
-import matplotlib.gridspec as gridspec
+
 import matplotlib
+import matplotlib.gridspec as gridspec
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
+
 matplotlib.use('Agg')
 
 def create_cover_page(pdf):
@@ -322,7 +324,7 @@ def create_simulation_results_page(pdf):
     # Q-learning metrics
     epsilon = 0.1 * np.exp(-time_hours/30) + 0.01
     q_values = np.cumsum(np.random.normal(0.1, 0.05, len(time_hours)))
-    rewards = np.cumsum(total_power) / 100
+    np.cumsum(total_power) / 100
 
     # Power Output Evolution
     ax_power = fig.add_subplot(gs[1, :])
@@ -507,8 +509,7 @@ def create_energy_analysis_page(pdf):
     ax_flow.set_title('Energy Flow Optimization', fontsize=12, fontweight='bold')
 
     # Create energy flow visualization
-    from matplotlib.patches import FancyArrowPatch
-    from matplotlib.patches import Circle
+    from matplotlib.patches import Circle, FancyArrowPatch
 
     # MFC source
     mfc_circle = Circle((0.2, 0.5), 0.1, facecolor='green', alpha=0.7, edgecolor='black')
@@ -524,7 +525,6 @@ def create_energy_analysis_page(pdf):
         {'name': 'Comm\n40mW', 'pos': (0.6, 0.2), 'size': 40/790*0.15, 'color': 'yellow'},
     ]
 
-    total_consumed = 305
     for comp in components:
         circle = Circle(comp['pos'], comp['size'], facecolor=comp['color'],
                        alpha=0.7, edgecolor='black')
@@ -629,9 +629,9 @@ def create_energy_analysis_page(pdf):
     x_trl = np.arange(len(trl_levels))
     width_trl = 0.35
 
-    bars_current = ax_trl.bar(x_trl - width_trl/2, current_trl, width_trl,
+    ax_trl.bar(x_trl - width_trl/2, current_trl, width_trl,
                              label='Current Status', color='lightblue', alpha=0.8)
-    bars_target = ax_trl.bar(x_trl + width_trl/2, target_trl, width_trl,
+    ax_trl.bar(x_trl + width_trl/2, target_trl, width_trl,
                             label='2-Year Target', color='darkblue', alpha=0.8)
 
     ax_trl.set_xlabel('Technology Readiness Level', fontsize=10)

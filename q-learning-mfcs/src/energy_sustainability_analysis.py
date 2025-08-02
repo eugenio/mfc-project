@@ -5,11 +5,13 @@ This analysis determines if the MFC stack can be energy self-sustainable
 when considering all control system and actuator power requirements.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+
 matplotlib.use('Agg')
 from path_config import get_figure_path
+
 
 def analyze_energy_sustainability():
     """Analyze complete energy balance of the MFC control system"""
@@ -319,7 +321,6 @@ def create_sustainability_visualization(results, optimization_scenarios):
         ('Comm\n86 mW', 0.5, 0.2, 'yellow')
     ]
 
-    total_load = 0
     for i, (label, x, y, color) in enumerate(loads):
         load_rect = plt.Rectangle((x, y-0.05), 0.15, 0.1, facecolor=color, alpha=0.7, edgecolor='black')
         ax3.add_patch(load_rect)

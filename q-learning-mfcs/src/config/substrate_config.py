@@ -4,11 +4,13 @@ Includes detailed substrate properties, kinetics, and environmental effects.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .biological_config import (
-    SubstrateType, BacterialSpecies, LiteratureReference,
-    LITERATURE_REFERENCES
+    LITERATURE_REFERENCES,
+    BacterialSpecies,
+    LiteratureReference,
+    SubstrateType,
 )
 
 

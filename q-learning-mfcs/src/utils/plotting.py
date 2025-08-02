@@ -4,9 +4,10 @@ Standardized plotting utilities for MFC simulations
 Supports arbitrary data length with Latin character subplot labels
 """
 
-import matplotlib.pyplot as plt
-from typing import List, Tuple, Optional, Any
 import string
+from typing import Any, List, Optional, Tuple
+
+import matplotlib.pyplot as plt
 
 
 class SubplotLabeler:
