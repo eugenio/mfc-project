@@ -602,12 +602,12 @@ def create_real_time_plots(df):
     # Substrate concentration plot
     fig.add_trace(
         go.Scatter(x=df['time_hours'], y=df['reservoir_concentration'],
-                  name='Reservoir', line=dict(color='blue', width=2)),
+                  name='Reservoir', line={"color": 'blue', "width": 2}),
         row=1, col=1
     )
     fig.add_trace(
         go.Scatter(x=df['time_hours'], y=df['outlet_concentration'],
-                  name='Outlet', line=dict(color='red', width=2)),
+                  name='Outlet', line={"color": 'red', "width": 2}),
         row=1, col=1
     )
     # Target line
@@ -617,14 +617,14 @@ def create_real_time_plots(df):
     # Power output
     fig.add_trace(
         go.Scatter(x=df['time_hours'], y=df['total_power'],
-                  name='Power', line=dict(color='orange', width=2)),
+                  name='Power', line={"color": 'orange', "width": 2}),
         row=1, col=2
     )
 
     # Q-learning actions
     fig.add_trace(
         go.Scatter(x=df['time_hours'], y=df['q_action'],
-                  mode='markers', name='Actions', marker=dict(color='purple', size=4)),
+                  mode='markers', name='Actions', marker={"color": 'purple', "size": 4}),
         row=2, col=1
     )
 
@@ -634,7 +634,7 @@ def create_real_time_plots(df):
         def parse_biofilm_data(x):
             """Safely parse biofilm thickness data from various formats"""
             try:
-                if isinstance(x, (list, tuple)):
+                if isinstance(x, list | tuple):
                     # Already a list/tuple
                     return sum(x) / len(x) if len(x) > 0 else 1.0
                 elif isinstance(x, str) and x.strip():
@@ -646,7 +646,7 @@ def create_real_time_plots(df):
                     else:
                         # Single value
                         return float(x_clean) if x_clean else 1.0
-                elif isinstance(x, (int, float)):
+                elif isinstance(x, int | float):
                     # Single numeric value
                     return float(x)
                 else:
@@ -658,7 +658,7 @@ def create_real_time_plots(df):
 
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=biofilm_avg,
-                      name='Avg Thickness', line=dict(color='brown', width=2)),
+                      name='Avg Thickness', line={"color": 'brown', "width": 2}),
             row=2, col=2
         )
 
@@ -666,13 +666,13 @@ def create_real_time_plots(df):
     if 'flow_rate_ml_h' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['flow_rate_ml_h'],
-                      name='Flow Rate (mL/h)', line=dict(color='cyan', width=2)),
+                      name='Flow Rate (mL/h)', line={"color": 'cyan', "width": 2}),
             row=2, col=2
         )
     if 'substrate_efficiency' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['substrate_efficiency'],
-                      name='Efficiency', line=dict(color='green', width=2)),
+                      name='Efficiency', line={"color": 'green', "width": 2}),
             row=2, col=2, secondary_y=True
         )
 
@@ -680,7 +680,7 @@ def create_real_time_plots(df):
     if 'system_voltage' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['system_voltage'],
-                      name='Voltage (V)', line=dict(color='blue', width=2)),
+                      name='Voltage (V)', line={"color": 'blue', "width": 2}),
             row=2, col=3
         )
 
@@ -691,7 +691,7 @@ def create_real_time_plots(df):
             cell_powers = [powers[i] if len(powers) > i else 0 for powers in df['individual_cell_powers']]
             fig.add_trace(
                 go.Scatter(x=df['time_hours'], y=cell_powers,
-                          name=f'Cell {i+1}', line=dict(width=1.5)),
+                          name=f'Cell {i+1}', line={"width": 1.5}),
                 row=3, col=1
             )
 
@@ -699,13 +699,13 @@ def create_real_time_plots(df):
     if 'mixing_efficiency' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['mixing_efficiency'],
-                      name='Mixing Eff', line=dict(color='purple', width=2)),
+                      name='Mixing Eff', line={"color": 'purple', "width": 2}),
             row=3, col=2
         )
     if 'biofilm_activity_factor' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['biofilm_activity_factor'],
-                      name='Biofilm Activity', line=dict(color='orange', width=2)),
+                      name='Biofilm Activity', line={"color": 'orange', "width": 2}),
             row=3, col=2, secondary_y=True
         )
 
@@ -713,13 +713,13 @@ def create_real_time_plots(df):
     if 'q_value' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['q_value'],
-                      name='Q-Value', line=dict(color='blue', width=2)),
+                      name='Q-Value', line={"color": 'blue', "width": 2}),
             row=3, col=3
         )
     if 'reward' in df.columns:
         fig.add_trace(
             go.Scatter(x=df['time_hours'], y=df['reward'],
-                      name='Reward', line=dict(color='green', width=2)),
+                      name='Reward', line={"color": 'green', "width": 2}),
             row=3, col=3, secondary_y=True
         )
 
@@ -749,7 +749,7 @@ def create_real_time_plots(df):
         fig.add_trace(
             go.Scatter(x=time_hours, y=cumulative_energy_display,
                       name=f'Cumulative Energy ({energy_unit})',
-                      line=dict(color='darkgreen', width=3),
+                      line={"color": 'darkgreen', "width": 3},
                       fill='tonexty' if len(fig.data) == 0 else 'tozeroy',
                       fillcolor='rgba(0,128,0,0.1)'),
             row=4, col=1
@@ -855,7 +855,7 @@ def create_biofilm_analysis_plots(df):
                     cell_values = [timepoint[i] if i < len(timepoint) else 0 for timepoint in biofilm_data]
                     fig.add_trace(
                         go.Scatter(x=time_data, y=cell_values,
-                                  name=f'Cell {i+1}', line=dict(width=2)),
+                                  name=f'Cell {i+1}', line={"width": 2}),
                         row=1, col=1
                     )
         elif 'biofilm_thickness_per_cell' in data_dict:
@@ -865,7 +865,7 @@ def create_biofilm_analysis_plots(df):
                 if col_name in data_dict:
                     fig.add_trace(
                         go.Scatter(x=time_data, y=data_dict[col_name],
-                                  name=f'Cell {i+1}', line=dict(width=2)),
+                                  name=f'Cell {i+1}', line={"width": 2}),
                         row=1, col=1
                     )
 
@@ -893,7 +893,7 @@ def create_biofilm_analysis_plots(df):
             # Add placeholder if data processing fails
             fig.add_trace(
                 go.Scatter(x=[0], y=[0], mode='markers',
-                          name='No biomass data', marker=dict(size=0)),
+                          name='No biomass data', marker={"size": 0}),
                 row=1, col=2
             )
 
@@ -917,7 +917,7 @@ def create_biofilm_analysis_plots(df):
     fig.add_trace(
         go.Scatter(x=time_data, y=avg_attachment,
                   name='Avg Attachment/Thickness',
-                  line=dict(color='green', width=2)),
+                  line={"color": 'green', "width": 2}),
         row=1, col=3
     )
 
@@ -968,14 +968,14 @@ def create_metabolic_analysis_plots(df):
                 cell_values = [timepoint[i] if i < len(timepoint) else 0.3 for timepoint in nadh_data]
                 fig.add_trace(
                     go.Scatter(x=time_data, y=cell_values,
-                              name=f'Cell {i+1} NADH', line=dict(width=2)),
+                              name=f'Cell {i+1} NADH', line={"width": 2}),
                     row=1, col=1
                 )
         else:
             # Single value or average
             fig.add_trace(
                 go.Scatter(x=time_data, y=nadh_data if isinstance(nadh_data, list) else [0.3] * len(time_data),
-                          name='Avg NADH Ratio', line=dict(width=2)),
+                          name='Avg NADH Ratio', line={"width": 2}),
                 row=1, col=1
             )
 
@@ -990,7 +990,7 @@ def create_metabolic_analysis_plots(df):
 
         fig.add_trace(
             go.Scatter(x=time_data, y=avg_atp,
-                      name='Avg ATP', line=dict(color='red', width=2)),
+                      name='Avg ATP', line={"color": 'red', "width": 2}),
             row=1, col=2
         )
 
@@ -1005,13 +1005,13 @@ def create_metabolic_analysis_plots(df):
 
         fig.add_trace(
             go.Scatter(x=time_data, y=avg_flux,
-                      name='Avg e- Flux', line=dict(color='blue', width=2)),
+                      name='Avg e- Flux', line={"color": 'blue', "width": 2}),
             row=1, col=3
         )
     elif 'total_current' in data_dict:
         fig.add_trace(
             go.Scatter(x=time_data, y=data_dict['total_current'],
-                      name='Total Current (A)', line=dict(color='blue', width=2)),
+                      name='Total Current (A)', line={"color": 'blue', "width": 2}),
             row=1, col=3
         )
 
@@ -1061,7 +1061,7 @@ def create_sensing_analysis_plots(df):
         impedance_data = data_dict.get('eis_impedance_magnitude', [1000] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=impedance_data if impedance_data else [1000] * len(time_data),
-                      name='|Z| @ 1kHz', line=dict(color='purple', width=2)),
+                      name='|Z| @ 1kHz', line={"color": 'purple', "width": 2}),
             row=1, col=1
         )
 
@@ -1070,7 +1070,7 @@ def create_sensing_analysis_plots(df):
         phase_data = data_dict.get('eis_impedance_phase', [-45] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=phase_data if phase_data else [-45] * len(time_data),
-                      name='Phase @ 1kHz', line=dict(color='orange', width=2)),
+                      name='Phase @ 1kHz', line={"color": 'orange', "width": 2}),
             row=1, col=2
         )
 
@@ -1079,7 +1079,7 @@ def create_sensing_analysis_plots(df):
         freq_data = data_dict.get('qcm_frequency_shift', [-500] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=freq_data if freq_data else [-500] * len(time_data),
-                      name='Δf (Hz)', line=dict(color='green', width=2)),
+                      name='Δf (Hz)', line={"color": 'green', "width": 2}),
             row=1, col=3
         )
 
@@ -1088,7 +1088,7 @@ def create_sensing_analysis_plots(df):
         rct_data = data_dict.get('charge_transfer_resistance', [100] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=rct_data if rct_data else [100] * len(time_data),
-                      name='Rct (Ω)', line=dict(color='red', width=2)),
+                      name='Rct (Ω)', line={"color": 'red', "width": 2}),
             row=2, col=1
         )
 
@@ -1097,7 +1097,7 @@ def create_sensing_analysis_plots(df):
         mass_data = data_dict.get('qcm_mass_loading', [0.1] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=mass_data if mass_data else [0.1] * len(time_data),
-                      name='Mass Loading (μg/cm²)', line=dict(color='brown', width=2)),
+                      name='Mass Loading (μg/cm²)', line={"color": 'brown', "width": 2}),
             row=2, col=2
         )
 
@@ -1193,7 +1193,7 @@ def create_spatial_distribution_plots(df, n_cells=5):
         fig.add_trace(
             go.Scatter(x=[f'Cell {i+1}' for i in range(n_cells)], y=temperatures,
                       mode='markers+lines', name='Temperature (°C)',
-                      line=dict(color='orange', width=2), marker=dict(size=8)),
+                      line={"color": 'orange', "width": 2}, marker={"size": 8}),
             row=2, col=1
         )
 
@@ -1212,7 +1212,7 @@ def create_spatial_distribution_plots(df, n_cells=5):
         fig.add_trace(
             go.Scatter(x=[f'Cell {i+1}' for i in range(n_cells)], y=biofilm_thickness,
                       mode='markers+lines', name='Biofilm Thickness (μm)',
-                      line=dict(color='green', width=2), marker=dict(size=8)),
+                      line={"color": 'green', "width": 2}, marker={"size": 8}),
             row=2, col=2
         )
 
@@ -1252,7 +1252,7 @@ def create_performance_analysis_plots(df):
         energy_eff_data = data_dict.get('energy_efficiency', [75] * len(time_data))
         fig.add_trace(
             go.Scatter(x=time_data, y=energy_eff_data if energy_eff_data else [75] * len(time_data),
-                      name='Energy Efficiency (%)', line=dict(color='green', width=2)),
+                      name='Energy Efficiency (%)', line={"color": 'green', "width": 2}),
             row=1, col=1
         )
 
@@ -1265,7 +1265,7 @@ def create_performance_analysis_plots(df):
             ce_data = [sum(timepoint)/len(timepoint) if timepoint else 85 for timepoint in ce_data]
         fig.add_trace(
             go.Scatter(x=time_data, y=ce_data if ce_data else [85] * len(time_data),
-                      name='Coulombic Efficiency (%)', line=dict(color='blue', width=2)),
+                      name='Coulombic Efficiency (%)', line={"color": 'blue', "width": 2}),
             row=1, col=2
         )
 
@@ -1281,7 +1281,7 @@ def create_performance_analysis_plots(df):
                 power_data = [sum(timepoint)/len(timepoint) if timepoint else 2.0 for timepoint in power_data]
         fig.add_trace(
             go.Scatter(x=time_data, y=power_data if power_data else [2.0] * len(time_data),
-                      name='Power Density (W/m²)', line=dict(color='red', width=2)),
+                      name='Power Density (W/m²)', line={"color": 'red', "width": 2}),
             row=1, col=3
         )
 
@@ -1294,7 +1294,7 @@ def create_performance_analysis_plots(df):
             cumulative_energy = []
             cumsum = 0
             for val in energy_data:
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     cumsum += val
                 elif isinstance(val, list) and val:
                     cumsum += sum(val)
@@ -1304,7 +1304,7 @@ def create_performance_analysis_plots(df):
 
         fig.add_trace(
             go.Scatter(x=time_data, y=cumulative_energy,
-                      name='Cumulative Energy (Wh)', line=dict(color='purple', width=2)),
+                      name='Cumulative Energy (Wh)', line={"color": 'purple', "width": 2}),
             row=2, col=1
         )
 
@@ -1313,13 +1313,13 @@ def create_performance_analysis_plots(df):
         control_error = data_dict.get('control_error', [0] * len(time_data))
     elif 'outlet_concentration' in data_dict:
         outlet_conc = data_dict.get('outlet_concentration', [25] * len(time_data))
-        control_error = [abs(25 - x) if isinstance(x, (int, float)) else 0 for x in outlet_conc]
+        control_error = [abs(25 - x) if isinstance(x, int | float) else 0 for x in outlet_conc]
     else:
         control_error = [0] * len(time_data)
 
     fig.add_trace(
         go.Scatter(x=time_data, y=control_error,
-                  name='Control Error (mM)', line=dict(color='orange', width=2)),
+                  name='Control Error (mM)', line={"color": 'orange', "width": 2}),
         row=2, col=2
     )
 
@@ -1327,11 +1327,11 @@ def create_performance_analysis_plots(df):
     if 'operating_cost' in data_dict or 'revenue' in data_dict:
         cost_data = data_dict.get('operating_cost', [1.0] * len(time_data))
         revenue_data = data_dict.get('revenue', [2.0] * len(time_data))
-        profit = [(r - c) if isinstance(r, (int, float)) and isinstance(c, (int, float)) else 1.0
+        profit = [(r - c) if isinstance(r, int | float) and isinstance(c, int | float) else 1.0
                  for r, c in zip(revenue_data, cost_data, strict=False)]
         fig.add_trace(
             go.Scatter(x=time_data, y=profit,
-                      name='Profit ($/h)', line=dict(color='gold', width=2)),
+                      name='Profit ($/h)', line={"color": 'gold', "width": 2}),
             row=2, col=3
         )
 
@@ -1377,7 +1377,7 @@ def create_parameter_correlation_matrix(df):
             else:
                 # Check if it's numeric data
                 try:
-                    numeric_values = [float(x) if isinstance(x, (int, float)) else 0 for x in data]
+                    numeric_values = [float(x) if isinstance(x, int | float) else 0 for x in data]
                 except (ValueError, TypeError):
                     continue
         else:

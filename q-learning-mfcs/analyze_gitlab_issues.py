@@ -40,10 +40,10 @@ class GitLabIssueAnalyzer:
     def get_all_issues(self, state='opened') -> list[dict[str, Any]]:
         """
         Retrieve all issues from GitLab.
-        
+
         Args:
             state: Issue state ('opened', 'closed', 'all')
-            
+
         Returns:
             List of issue dictionaries
         """
@@ -79,10 +79,10 @@ class GitLabIssueAnalyzer:
     def analyze_issue_severity(self, issue: dict[str, Any]) -> IssueSeverity:
         """
         Analyze issue severity based on content and labels.
-        
+
         Args:
             issue: Issue dictionary
-            
+
         Returns:
             Determined severity level
         """
@@ -133,10 +133,10 @@ class GitLabIssueAnalyzer:
     def analyze_issue_urgency(self, issue: dict[str, Any]) -> IssueUrgency:
         """
         Analyze issue urgency based on age, activity, and content.
-        
+
         Args:
             issue: Issue dictionary
-            
+
         Returns:
             Determined urgency level
         """
@@ -169,10 +169,10 @@ class GitLabIssueAnalyzer:
     def analyze_issue_type(self, issue: dict[str, Any]) -> IssueType:
         """
         Determine issue type based on labels and content.
-        
+
         Args:
             issue: Issue dictionary
-            
+
         Returns:
             Determined issue type
         """
@@ -224,13 +224,13 @@ class GitLabIssueAnalyzer:
                                 issue_type: IssueType, issue: dict[str, Any]) -> int:
         """
         Calculate a priority score for the issue.
-        
+
         Args:
             severity: Issue severity
-            urgency: Issue urgency  
+            urgency: Issue urgency
             issue_type: Issue type
             issue: Issue data
-            
+
         Returns:
             Priority score (higher = more important)
         """
@@ -271,7 +271,7 @@ class GitLabIssueAnalyzer:
     def analyze_and_prioritize_issues(self) -> list[dict[str, Any]]:
         """
         Analyze all issues and return them prioritized.
-        
+
         Returns:
             List of analyzed and prioritized issues
         """
@@ -311,10 +311,10 @@ class GitLabIssueAnalyzer:
     def generate_priority_report(self, analyzed_issues: list[dict[str, Any]]) -> str:
         """
         Generate a comprehensive priority report.
-        
+
         Args:
             analyzed_issues: List of analyzed issues
-            
+
         Returns:
             Formatted report string
         """

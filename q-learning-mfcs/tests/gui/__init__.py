@@ -4,7 +4,7 @@ GUI test suite for MFC Streamlit application.
 This module contains comprehensive tests for the Streamlit GUI including:
 - Browser-based interaction tests (Selenium)
 - HTTP endpoint tests
-- Memory-based data loading tests  
+- Memory-based data loading tests
 - Autorefresh functionality tests
 - Error handling and race condition tests
 

@@ -930,8 +930,8 @@ class MFCDynamicSubstrateSimulation:
         """
 
         ax12.text(0.1, 0.9, summary_text, transform=ax12.transAxes, fontsize=10,
-                verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3",
-                facecolor="lightcyan", alpha=0.8))
+                verticalalignment='top', bbox={'boxstyle': "round,pad=0.3",
+                'facecolor': "lightcyan", 'alpha': 0.8})
 
         # Add alphabetic labels to main dashboard
         add_subplot_labels(fig, 'a')
@@ -1052,8 +1052,8 @@ class MFCDynamicSubstrateSimulation:
             """
 
             plt.text(0.1, 0.9, control_stats_text, transform=plt.gca().transAxes, fontsize=10,
-                    verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3",
-                    facecolor="lightgreen", alpha=0.8))
+                    verticalalignment='top', bbox={'boxstyle': "round,pad=0.3",
+                    'facecolor': "lightgreen", 'alpha': 0.8})
 
         # Add alphabetic labels to control analysis figure
         current_fig = plt.gcf()

@@ -1089,8 +1089,8 @@ class MFCUnifiedQLearningSimulation:
         """
 
         ax16.text(0.1, 0.9, summary_text, transform=ax16.transAxes, fontsize=9,
-                 verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3",
-                 facecolor="lightcyan", alpha=0.9))
+                 verticalalignment='top', bbox={"boxstyle": "round,pad=0.3",
+                 "facecolor": "lightcyan", "alpha": 0.9})
 
         # Add alphabetic labels
         add_subplot_labels(fig, 'a')

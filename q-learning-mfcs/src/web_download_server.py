@@ -326,7 +326,7 @@ def create_streamlit_download_interface():
                 if entry.results_summary:
                     st.write("**Key Results:**")
                     for key, value in list(entry.results_summary.items())[:5]:
-                        if isinstance(value, (int, float)):
+                        if isinstance(value, int | float):
                             st.write(f"  - {key}: {value:.4f}")
                         else:
                             st.write(f"  - {key}: {value}")

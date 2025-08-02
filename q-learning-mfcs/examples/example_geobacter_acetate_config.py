@@ -154,7 +154,7 @@ geobacter_config, acetate_config = create_custom_geobacter_acetate_config()
 # Initialize model with custom configuration
 model = MetabolicModel(
     species="geobacter",
-    substrate="acetate", 
+    substrate="acetate",
     species_config=geobacter_config,
     substrate_config=acetate_config
 )
@@ -162,7 +162,7 @@ model = MetabolicModel(
 # The model will now use the custom parameters from configuration
 model.reset_state()  # Uses metabolite concentrations from config
 fluxes = model.calculate_metabolic_fluxes(
-    biomass=1.0, growth_rate=0.2, 
+    biomass=1.0, growth_rate=0.2,
     anode_potential=-0.2, substrate_supply=5.0
 )
     """)

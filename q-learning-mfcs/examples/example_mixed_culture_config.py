@@ -36,7 +36,7 @@ class MixedCultureConfig:
     def __init__(self, species_ratios: dict[BacterialSpecies, float]):
         """
         Initialize mixed culture configuration.
-        
+
         Args:
             species_ratios: Dictionary of species to their fractional abundance
         """
@@ -95,10 +95,10 @@ class MixedCultureConfig:
     def get_effective_substrate_kinetics(self, substrate: SubstrateType) -> SubstrateKineticsConfig:
         """
         Calculate effective substrate kinetics for mixed culture.
-        
+
         Args:
             substrate: Substrate type
-            
+
         Returns:
             Effective kinetics combining all species
         """
@@ -140,10 +140,10 @@ class MixedCultureConfig:
     def calculate_substrate_competition(self, substrate_concentrations: dict[SubstrateType, float]) -> dict[SubstrateType, dict[BacterialSpecies, float]]:
         """
         Calculate substrate uptake rates considering competition.
-        
+
         Args:
             substrate_concentrations: Current substrate concentrations (mmol/L)
-            
+
         Returns:
             Dictionary of substrate -> species -> uptake rate
         """
@@ -179,10 +179,10 @@ class MixedCultureConfig:
     def calculate_synergy_factor(self, current_densities: dict[BacterialSpecies, float]) -> float:
         """
         Calculate synergy factor for mixed culture current production.
-        
+
         Args:
             current_densities: Current production by each species (A/m²)
-            
+
         Returns:
             Synergy enhancement factor
         """
@@ -305,7 +305,7 @@ def validate_mixed_configurations():
             print(f"Validating composition {i+1}...")
 
             # Validate individual species configs
-            for species, species_config in config.species_configs.items():
+            for _species, species_config in config.species_configs.items():
                 validate_species_metabolic_config(species_config)
 
             print(f"✓ Composition {i+1} validation passed")

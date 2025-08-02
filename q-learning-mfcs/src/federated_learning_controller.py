@@ -466,7 +466,7 @@ class FederatedClient:
         total_loss = 0.0
         num_batches = 0
 
-        for epoch in range(self.config.local_epochs):
+        for _epoch in range(self.config.local_epochs):
             epoch_loss = 0.0
 
             # Simple batch processing (in practice, use DataLoader)
@@ -1101,7 +1101,7 @@ if __name__ == "__main__":
         print(f"Client {config['client_id']} registered: {success}")
 
     # Add dummy training data
-    for client_id, client in fed_system.clients.items():
+    for client_id, _client in fed_system.clients.items():
         num_samples = fed_system.client_info[client_id].data_samples
 
         # Generate random training data (normally would come from real MFC operations)
