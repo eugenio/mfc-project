@@ -179,7 +179,7 @@ def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.0
     """
     ax.text(x, y, text, transform=ax.transAxes,
             verticalalignment=va, horizontalalignment=ha,
-            bbox=dict(boxstyle=boxstyle, facecolor=facecolor, alpha=alpha))
+            bbox={"boxstyle": boxstyle, "facecolor": facecolor, "alpha": alpha})
 
 
 def save_figure(fig: plt.Figure, filename: str, dpi: int = 300, bbox_inches: str = 'tight'):
