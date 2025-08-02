@@ -267,7 +267,7 @@ class CitationManager:
             elif style.lower() == "bibtex":
                 formatted.append(citation.to_bibtex_format())
             else:
-                warnings.warn(f"Unknown citation style: {style}. Using APA.")
+                warnings.warn(f"Unknown citation style: {style}. Using APA.", stacklevel=2)
                 formatted.append(citation.to_apa_format())
 
         return formatted
@@ -345,7 +345,7 @@ class CitationManager:
             metadata['doi_coverage'] = with_doi / len(citations)
 
             # Journal diversity
-            journals = set(c.journal for c in citations if c.journal)
+            journals = {c.journal for c in citations if c.journal}
             metadata['journal_diversity'] = len(journals)
 
         report = CitationReport(
@@ -378,7 +378,7 @@ class CitationManager:
         elif output_format.lower() == "json":
             return self._generate_json_report(reports)
         else:
-            warnings.warn(f"Unknown output format: {output_format}. Using markdown.")
+            warnings.warn(f"Unknown output format: {output_format}. Using markdown.", stacklevel=2)
             return self._generate_markdown_report(reports)
 
     def _generate_markdown_report(self, reports: list[CitationReport]) -> str:
@@ -546,7 +546,7 @@ class CitationManager:
             citations_to_export = [self.citations[pmid] for pmid in pmids if pmid in self.citations]
 
         if not citations_to_export:
-            warnings.warn("No citations to export.")
+            warnings.warn("No citations to export.", stacklevel=2)
             return
 
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -569,8 +569,8 @@ class CitationManager:
 
         stats = {
             'total_citations': len(citations),
-            'unique_journals': len(set(c.journal for c in citations if c.journal)),
-            'unique_authors': len(set(author for c in citations for author in c.authors)),
+            'unique_journals': len({c.journal for c in citations if c.journal}),
+            'unique_authors': len({author for c in citations for author in c.authors}),
             'doi_coverage': sum(1 for c in citations if c.doi) / len(citations),
             'recent_citations': sum(1 for c in citations if c.year >= current_year - 5),
             'year_distribution': {},
