@@ -3,13 +3,14 @@
 
 import streamlit as st
 from gui.core_layout import apply_enhanced_theme, create_navigation_sidebar
+from gui.pages.advanced_physics import render_advanced_physics_page
+from gui.pages.cell_config import render_cell_configuration_page
 from gui.pages.dashboard import render_dashboard_page
 from gui.pages.electrode_enhanced import render_enhanced_electrode_page
-from gui.pages.cell_config import render_cell_configuration_page
-from gui.pages.advanced_physics import render_advanced_physics_page
+from gui.pages.literature_validation import render_literature_validation_page
 from gui.pages.ml_optimization import render_ml_optimization_page
 from gui.pages.performance_monitor import render_performance_monitor_page
-from gui.pages.literature_validation import render_literature_validation_page
+
 
 class NavigationController:
     def __init__(self):
@@ -24,7 +25,7 @@ class NavigationController:
             "performance_monitor": render_performance_monitor_page,
             "system_configuration": self._render_placeholder
         }
-    
+
     def run(self):
         apply_enhanced_theme()
         st.set_page_config(
@@ -32,11 +33,11 @@ class NavigationController:
             page_icon="🔬",
             layout="wide"
         )
-        
+
         selected_page = create_navigation_sidebar()
         if selected_page in self.pages:
             self.pages[selected_page]()
-    
+
     def _render_placeholder(self):
         st.title("Coming Soon")
         st.info("This page is under development!")
