@@ -6,7 +6,6 @@ Visualization analysis of substrate utilization performance between unified and 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from path_config import get_figure_path, get_simulation_data_path
 
 

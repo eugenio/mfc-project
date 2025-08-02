@@ -14,7 +14,6 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from path_config import get_figure_path, get_simulation_data_path
 
 
@@ -228,16 +227,16 @@ def create_literature_comparison_plots():
 
     improvements_text = """
     📊 LITERATURE VALIDATION IMPROVEMENTS
-    
+
     🧬 Biofilm Growth Rate:
        0.001 → 0.05 h⁻¹ (50× increase)
-    
+
     ⚡ Standard Potential:
        0.77 → 0.35 V (acetate-specific)
-    
+
     🔄 Reaction Rate:
        0.10 → 0.15 (50% increase)
-    
+
     📈 PERFORMANCE GAINS:
        Power: +138% (0.08 → 0.19 W)
        Biofilm: Optimal → Maximum

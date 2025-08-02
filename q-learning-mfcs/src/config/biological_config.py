@@ -5,7 +5,6 @@ Includes species-specific parameters, substrate properties, and literature refer
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
 
 
 class BacterialSpecies(Enum):
@@ -30,9 +29,9 @@ class LiteratureReference:
     title: str
     journal: str
     year: int
-    doi: Optional[str] = None
-    pmid: Optional[str] = None
-    pages: Optional[str] = None
+    doi: str | None = None
+    pmid: str | None = None
+    pages: str | None = None
 
     def __str__(self) -> str:
         return f"{self.authors} ({self.year}). {self.title}. {self.journal}."
@@ -45,7 +44,7 @@ class KineticParameters:
     # Michaelis-Menten parameters
     vmax: float  # Maximum reaction rate (mmol/gDW/h)
     km: float    # Michaelis constant (mmol/L)
-    ki: Optional[float] = None  # Inhibition constant (mmol/L)
+    ki: float | None = None  # Inhibition constant (mmol/L)
 
     # Temperature dependence
     ea: float = 50.0  # Activation energy (kJ/mol)
@@ -56,7 +55,7 @@ class KineticParameters:
     ph_tolerance: float = 1.0  # pH tolerance range
 
     # Literature reference
-    reference: Optional[LiteratureReference] = None
+    reference: LiteratureReference | None = None
 
 
 @dataclass
@@ -68,7 +67,7 @@ class MetabolicReactionConfig:
     equation: str  # Balanced chemical equation
 
     # Stoichiometry
-    stoichiometry: Dict[str, float]  # {metabolite: coefficient}
+    stoichiometry: dict[str, float]  # {metabolite: coefficient}
 
     # Enzyme information
     enzyme_name: str
@@ -80,8 +79,8 @@ class MetabolicReactionConfig:
     delta_g0: float  # Standard Gibbs free energy (kJ/mol)
 
     # Optional fields with defaults
-    ec_number: Optional[str] = None
-    kegg_id: Optional[str] = None
+    ec_number: str | None = None
+    kegg_id: str | None = None
     reversible: bool = True
 
     # Flux constraints
@@ -96,10 +95,10 @@ class SpeciesMetabolicConfig:
     species: BacterialSpecies
 
     # Central metabolism reactions
-    reactions: List[MetabolicReactionConfig] = field(default_factory=list)
+    reactions: list[MetabolicReactionConfig] = field(default_factory=list)
 
     # Key metabolite concentrations (mmol/L)
-    metabolite_concentrations: Dict[str, float] = field(default_factory=dict)
+    metabolite_concentrations: dict[str, float] = field(default_factory=dict)
 
     # Electron transport parameters
     electron_transport_efficiency: float = 0.85  # Efficiency of electron transport to electrode
@@ -116,12 +115,12 @@ class SpeciesMetabolicConfig:
     max_biofilm_thickness: float = 100.0  # μm - maximum sustainable thickness
 
     # Environmental tolerances
-    temperature_range: Tuple[float, float] = (273.0, 333.0)  # K
-    ph_range: Tuple[float, float] = (5.0, 9.0)
+    temperature_range: tuple[float, float] = (273.0, 333.0)  # K
+    ph_range: tuple[float, float] = (5.0, 9.0)
     salinity_tolerance: float = 0.5  # M NaCl
 
     # Literature references
-    references: List[LiteratureReference] = field(default_factory=list)
+    references: list[LiteratureReference] = field(default_factory=list)
 
 
 @dataclass
@@ -147,10 +146,10 @@ class SubstrateProperties:
     theoretical_cod: float  # mg COD/mg substrate
 
     # Uptake kinetics (species-specific)
-    uptake_kinetics: Dict[BacterialSpecies, KineticParameters] = field(default_factory=dict)
+    uptake_kinetics: dict[BacterialSpecies, KineticParameters] = field(default_factory=dict)
 
     # Literature reference
-    reference: Optional[LiteratureReference] = None
+    reference: LiteratureReference | None = None
 
 
 @dataclass
@@ -163,7 +162,7 @@ class BiofilmKineticsConfig:
     tortuosity: float = 1.5  # Diffusion tortuosity factor
 
     # Growth kinetics
-    monod_kinetics: Dict[str, float] = field(default_factory=lambda: {
+    monod_kinetics: dict[str, float] = field(default_factory=lambda: {
         'max_growth_rate': 0.3,  # 1/h
         'half_saturation': 0.5,  # mmol/L
         'yield_coefficient': 0.1,  # gDW/mmol
@@ -171,7 +170,7 @@ class BiofilmKineticsConfig:
     })
 
     # Nernst-Monod parameters for electroactive biofilms
-    nernst_monod: Dict[str, float] = field(default_factory=lambda: {
+    nernst_monod: dict[str, float] = field(default_factory=lambda: {
         'standard_potential': -0.3,  # V vs SHE
         'electron_transfer_rate': 1.0,  # 1/s
         'biofilm_conductivity': 0.005,  # S/m
@@ -179,7 +178,7 @@ class BiofilmKineticsConfig:
     })
 
     # Mass transfer coefficients
-    mass_transfer: Dict[str, float] = field(default_factory=lambda: {
+    mass_transfer: dict[str, float] = field(default_factory=lambda: {
         'boundary_layer_thickness': 0.1,  # mm
         'substrate_diffusivity': 1.0e-9,  # m²/s
         'oxygen_diffusivity': 2.0e-9,  # m²/s
@@ -187,7 +186,7 @@ class BiofilmKineticsConfig:
     })
 
     # Biofilm structure parameters
-    structure: Dict[str, float] = field(default_factory=lambda: {
+    structure: dict[str, float] = field(default_factory=lambda: {
         'critical_thickness': 50.0,  # μm - critical thickness for layering
         'detachment_shear_stress': 0.5,  # Pa
         'compaction_factor': 0.9,  # Compaction with age
@@ -195,7 +194,7 @@ class BiofilmKineticsConfig:
     })
 
     # Literature references
-    references: List[LiteratureReference] = field(default_factory=list)
+    references: list[LiteratureReference] = field(default_factory=list)
 
 
 @dataclass
@@ -208,7 +207,7 @@ class ElectrochemicalConfig:
     avogadro_number: float = 6.022e23  # 1/mol
 
     # Standard electrode potentials (V vs SHE)
-    standard_potentials: Dict[str, float] = field(default_factory=lambda: {
+    standard_potentials: dict[str, float] = field(default_factory=lambda: {
         'acetate_co2': -0.28,  # Acetate/CO2 couple
         'lactate_pyruvate': -0.19,  # Lactate/pyruvate couple
         'nad_nadh': -0.32,  # NAD+/NADH couple
@@ -217,7 +216,7 @@ class ElectrochemicalConfig:
     })
 
     # Electrode materials
-    electrode_properties: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+    electrode_properties: dict[str, dict[str, float]] = field(default_factory=lambda: {
         'carbon_cloth': {
             'surface_area': 0.5,  # m²/g
             'conductivity': 25000.0,  # S/m
@@ -233,7 +232,7 @@ class ElectrochemicalConfig:
     })
 
     # Membrane properties
-    membrane_properties: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+    membrane_properties: dict[str, dict[str, float]] = field(default_factory=lambda: {
         'nafion_117': {
             'thickness': 0.175,  # mm
             'conductivity': 0.1,  # S/cm
@@ -249,7 +248,7 @@ class ElectrochemicalConfig:
     })
 
     # Literature references
-    references: List[LiteratureReference] = field(default_factory=list)
+    references: list[LiteratureReference] = field(default_factory=list)
 
 
 # Literature references database
@@ -445,7 +444,7 @@ def get_shewanella_config() -> SpeciesMetabolicConfig:
     )
 
 
-def get_default_substrate_properties() -> Dict[SubstrateType, SubstrateProperties]:
+def get_default_substrate_properties() -> dict[SubstrateType, SubstrateProperties]:
     """Get default substrate properties for common substrates."""
 
     acetate_uptake = {

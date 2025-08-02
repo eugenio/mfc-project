@@ -3,8 +3,9 @@
 Plot the improved Q-learning results showing the fixed substrate control
 """
 
-import pandas as pd
 import matplotlib
+import pandas as pd
+
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np

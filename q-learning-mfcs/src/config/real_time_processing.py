@@ -35,11 +35,12 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from queue import Empty, Queue
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -111,9 +112,9 @@ class DataPoint:
     sensor_id: str
     value: float
     quality: DataQuality = DataQuality.GOOD
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'timestamp': self.timestamp.isoformat(),
@@ -124,7 +125,7 @@ class DataPoint:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DataPoint':
+    def from_dict(cls, data: dict[str, Any]) -> 'DataPoint':
         """Create from dictionary."""
         return cls(
             timestamp=datetime.fromisoformat(data['timestamp']),
@@ -210,11 +211,11 @@ class Alert:
     level: AlertLevel
     sensor_id: str
     message: str
-    value: Optional[float] = None
-    threshold: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    value: float | None = None
+    threshold: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             'timestamp': self.timestamp.isoformat(),
@@ -233,7 +234,7 @@ class StreamBuffer:
     def __init__(self, max_size: int = 10000):
         """
         Initialize stream buffer.
-        
+
         Args:
             max_size: Maximum number of data points to store
         """
@@ -248,13 +249,13 @@ class StreamBuffer:
             self.buffer.append(data_point)
             self.total_points += 1
 
-    def get_recent(self, n: int = 100) -> List[DataPoint]:
+    def get_recent(self, n: int = 100) -> list[DataPoint]:
         """Get n most recent data points."""
         with self.lock:
             return list(self.buffer)[-n:]
 
     def get_time_window(self, start_time: datetime,
-                       end_time: Optional[datetime] = None) -> List[DataPoint]:
+                       end_time: datetime | None = None) -> list[DataPoint]:
         """Get data points within time window."""
         if end_time is None:
             end_time = datetime.now()
@@ -263,7 +264,7 @@ class StreamBuffer:
             return [dp for dp in self.buffer
                    if start_time <= dp.timestamp <= end_time]
 
-    def get_sensor_data(self, sensor_id: str, n: int = 100) -> List[DataPoint]:
+    def get_sensor_data(self, sensor_id: str, n: int = 100) -> list[DataPoint]:
         """Get recent data for specific sensor."""
         with self.lock:
             sensor_data = [dp for dp in self.buffer if dp.sensor_id == sensor_id]
@@ -286,7 +287,7 @@ class DataStream(ABC):
     def __init__(self, stream_id: str, buffer_size: int = 10000):
         """
         Initialize data stream.
-        
+
         Args:
             stream_id: Unique identifier for the stream
             buffer_size: Size of data buffer
@@ -295,8 +296,8 @@ class DataStream(ABC):
         self.buffer = StreamBuffer(buffer_size)
         self.is_active = False
         self.logger = logging.getLogger(__name__)
-        self.callbacks: List[Callable[[DataPoint], None]] = []
-        self.stats: Dict[str, Any] = {}
+        self.callbacks: list[Callable[[DataPoint], None]] = []
+        self.stats: dict[str, Any] = {}
 
     @abstractmethod
     def start(self):
@@ -325,7 +326,7 @@ class DataStream(ABC):
             except Exception as e:
                 self.logger.warning(f"Callback error: {e}")
 
-    def get_stats(self, sensor_id: str) -> Optional[StreamingStats]:
+    def get_stats(self, sensor_id: str) -> StreamingStats | None:
         """Get streaming statistics for sensor."""
         return self.stats.get(sensor_id)
 
@@ -345,11 +346,11 @@ class DataStream(ABC):
 class MFCDataStream(DataStream):
     """Specialized data stream for MFC sensor data."""
 
-    def __init__(self, stream_id: str, sensor_config: Dict[str, Any],
+    def __init__(self, stream_id: str, sensor_config: dict[str, Any],
                  sampling_rate: float = 1.0, buffer_size: int = 10000):
         """
         Initialize MFC data stream.
-        
+
         Args:
             stream_id: Unique identifier for the stream
             sensor_config: Configuration for sensors
@@ -404,10 +405,10 @@ class MFCDataStream(DataStream):
                 self.logger.error(f"Error in data acquisition: {e}")
                 time.sleep(0.1)  # Brief pause before retrying
 
-    def _read_sensor(self, sensor_id: str, config: Dict[str, Any]) -> DataPoint:
+    def _read_sensor(self, sensor_id: str, config: dict[str, Any]) -> DataPoint:
         """
         Simulate reading from a sensor.
-        
+
         In a real implementation, this would interface with actual hardware.
         """
         # Simulate sensor reading with some noise
@@ -440,15 +441,15 @@ class MFCDataStream(DataStream):
 class StreamProcessor:
     """Real-time data processing engine."""
 
-    def __init__(self, processing_config: Dict[str, Any]):
+    def __init__(self, processing_config: dict[str, Any]):
         """
         Initialize stream processor.
-        
+
         Args:
             processing_config: Configuration for processing pipeline
         """
         self.config = processing_config
-        self.processors: List[Any] = []
+        self.processors: list[Any] = []
         self.logger = logging.getLogger(__name__)
 
         # Initialize processing pipeline
@@ -470,13 +471,13 @@ class StreamProcessor:
             elif processor_type == 'anomaly_detection':
                 self.processors.append(self._create_anomaly_processor(stage_config))
 
-    def process(self, data_points: List[DataPoint]) -> List[DataPoint]:
+    def process(self, data_points: list[DataPoint]) -> list[DataPoint]:
         """
         Process a batch of data points through the pipeline.
-        
+
         Args:
             data_points: List of data points to process
-            
+
         Returns:
             Processed data points
         """
@@ -490,17 +491,17 @@ class StreamProcessor:
 
         return processed_data
 
-    def _create_smoothing_processor(self, config: Dict[str, Any]) -> Callable:
+    def _create_smoothing_processor(self, config: dict[str, Any]) -> Callable:
         """Create smoothing processor."""
         method = config.get('method', 'moving_average')
         window_size = config.get('window_size', 5)
 
-        def smooth_processor(data_points: List[DataPoint]) -> List[DataPoint]:
+        def smooth_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             if len(data_points) < window_size:
                 return data_points
 
             # Group by sensor
-            sensor_data: Dict[str, List[DataPoint]] = {}
+            sensor_data: dict[str, list[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -533,14 +534,14 @@ class StreamProcessor:
 
         return smooth_processor
 
-    def _create_outlier_processor(self, config: Dict[str, Any]) -> Callable:
+    def _create_outlier_processor(self, config: dict[str, Any]) -> Callable:
         """Create outlier detection processor."""
         method = config.get('method', 'iqr')
         threshold = config.get('threshold', 3.0)
 
-        def outlier_processor(data_points: List[DataPoint]) -> List[DataPoint]:
+        def outlier_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             # Group by sensor
-            sensor_data: Dict[str, List[DataPoint]] = {}
+            sensor_data: dict[str, list[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -595,13 +596,13 @@ class StreamProcessor:
 
         return outlier_processor
 
-    def _create_trend_processor(self, config: Dict[str, Any]) -> Callable:
+    def _create_trend_processor(self, config: dict[str, Any]) -> Callable:
         """Create trend analysis processor."""
         window_size = config.get('window_size', 20)
 
-        def trend_processor(data_points: List[DataPoint]) -> List[DataPoint]:
+        def trend_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             # Group by sensor
-            sensor_data: Dict[str, List[DataPoint]] = {}
+            sensor_data: dict[str, list[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -646,17 +647,17 @@ class StreamProcessor:
 
         return trend_processor
 
-    def _create_anomaly_processor(self, config: Dict[str, Any]) -> Callable:
+    def _create_anomaly_processor(self, config: dict[str, Any]) -> Callable:
         """Create anomaly detection processor."""
         method = config.get('method', 'isolation_forest')
         contamination = config.get('contamination', 0.1)
 
-        def anomaly_processor(data_points: List[DataPoint]) -> List[DataPoint]:
+        def anomaly_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             if not HAS_SKLEARN:
                 return data_points
 
             # Group by sensor
-            sensor_data: Dict[str, List[DataPoint]] = {}
+            sensor_data: dict[str, list[DataPoint]] = {}
             for dp in data_points:
                 if dp.sensor_id not in sensor_data:
                     sensor_data[dp.sensor_id] = []
@@ -718,16 +719,16 @@ class StreamProcessor:
 class RealTimeAnalyzer:
     """Real-time analytics and monitoring."""
 
-    def __init__(self, analysis_config: Dict[str, Any]):
+    def __init__(self, analysis_config: dict[str, Any]):
         """
         Initialize real-time analyzer.
-        
+
         Args:
             analysis_config: Configuration for analysis
         """
         self.config = analysis_config
         self.alert_thresholds = analysis_config.get('alert_thresholds', {})
-        self.alert_callbacks: List[Callable[[Alert], None]] = []
+        self.alert_callbacks: list[Callable[[Alert], None]] = []
         self.logger = logging.getLogger(__name__)
 
     def add_alert_callback(self, callback: Callable[[Alert], None]):
@@ -735,14 +736,14 @@ class RealTimeAnalyzer:
         self.alert_callbacks.append(callback)
 
     def analyze_stream(self, data_stream: DataStream,
-                      analysis_window: timedelta = timedelta(minutes=5)) -> Dict[str, Any]:
+                      analysis_window: timedelta = timedelta(minutes=5)) -> dict[str, Any]:
         """
         Perform real-time analysis on data stream.
-        
+
         Args:
             data_stream: Data stream to analyze
             analysis_window: Time window for analysis
-            
+
         Returns:
             Analysis results
         """
@@ -755,7 +756,7 @@ class RealTimeAnalyzer:
             return {'status': 'no_data', 'timestamp': end_time.isoformat()}
 
         # Group by sensor
-        sensor_data: Dict[str, List[DataPoint]] = {}
+        sensor_data: dict[str, list[DataPoint]] = {}
         for dp in recent_data:
             if dp.sensor_id not in sensor_data:
                 sensor_data[dp.sensor_id] = []
@@ -777,7 +778,7 @@ class RealTimeAnalyzer:
 
         return analysis_results
 
-    def _analyze_sensor_data(self, sensor_id: str, data_points: List[DataPoint]) -> Dict[str, Any]:
+    def _analyze_sensor_data(self, sensor_id: str, data_points: list[DataPoint]) -> dict[str, Any]:
         """Analyze data for a single sensor."""
         values = [dp.value for dp in data_points if not np.isnan(dp.value)]
 
@@ -831,8 +832,8 @@ class RealTimeAnalyzer:
 
         return analysis
 
-    def _check_alerts(self, sensor_id: str, analysis: Dict[str, Any],
-                     data_points: List[DataPoint]):
+    def _check_alerts(self, sensor_id: str, analysis: dict[str, Any],
+                     data_points: list[DataPoint]):
         """Check for alert conditions."""
         if sensor_id not in self.alert_thresholds:
             return
@@ -902,10 +903,10 @@ class RealTimeAnalyzer:
 class AlertSystem:
     """Real-time alerting and notification system."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize alert system.
-        
+
         Args:
             config: Alert system configuration
         """
@@ -937,7 +938,7 @@ class AlertSystem:
         """Send alert through the system."""
         self.alert_queue.put(alert)
 
-    def get_recent_alerts(self, n: int = 100) -> List[Alert]:
+    def get_recent_alerts(self, n: int = 100) -> list[Alert]:
         """Get recent alerts."""
         return list(self.alert_history)[-n:]
 
@@ -995,10 +996,10 @@ class AlertSystem:
 
 
 # Utility functions for real-time processing
-def create_sample_mfc_config() -> Dict[str, Any]:
+def create_sample_mfc_config() -> dict[str, Any]:
     """
     Create sample MFC sensor configuration.
-    
+
     Returns:
         Sample sensor configuration
     """
@@ -1034,10 +1035,10 @@ def create_sample_mfc_config() -> Dict[str, Any]:
     }
 
 
-def create_sample_processing_config() -> Dict[str, Any]:
+def create_sample_processing_config() -> dict[str, Any]:
     """
     Create sample processing configuration.
-    
+
     Returns:
         Sample processing configuration
     """
@@ -1066,10 +1067,10 @@ def create_sample_processing_config() -> Dict[str, Any]:
     }
 
 
-def create_sample_alert_config() -> Dict[str, Any]:
+def create_sample_alert_config() -> dict[str, Any]:
     """
     Create sample alert configuration.
-    
+
     Returns:
         Sample alert configuration
     """

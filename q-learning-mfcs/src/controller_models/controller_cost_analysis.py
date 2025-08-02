@@ -9,7 +9,7 @@ and operational costs.
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 from .model_inference import InferenceSpecs, ModelFormat
 
@@ -326,7 +326,7 @@ class ControllerCostAnalyzer:
         """Add a power requirement to the analysis"""
         self.power_requirements.append(power_req)
 
-    def calculate_total_power_requirements(self) -> Dict[str, float]:
+    def calculate_total_power_requirements(self) -> dict[str, float]:
         """Calculate total power requirements for the system"""
 
         total_idle = 0.0
@@ -379,7 +379,7 @@ class ControllerCostAnalyzer:
             'component_breakdown': component_details
         }
 
-    def calculate_cost_analysis(self, analysis_years: int = 10) -> Dict[str, Any]:
+    def calculate_cost_analysis(self, analysis_years: int = 10) -> dict[str, Any]:
         """Calculate comprehensive cost analysis over specified years"""
 
         total_initial_cost = 0.0
@@ -568,7 +568,7 @@ class ControllerCostAnalyzer:
         return "\n".join(report)
 
     def compare_configurations(self, other_analyzer: 'ControllerCostAnalyzer',
-                             analysis_years: int = 10) -> Dict[str, Any]:
+                             analysis_years: int = 10) -> dict[str, Any]:
         """Compare this configuration with another"""
 
         analysis_a = self.calculate_cost_analysis(analysis_years)
@@ -599,7 +599,7 @@ class ControllerCostAnalyzer:
         return comparison
 
 
-def create_standard_controller_configurations() -> Dict[str, ControllerCostAnalyzer]:
+def create_standard_controller_configurations() -> dict[str, ControllerCostAnalyzer]:
     """Create standard controller cost analysis configurations"""
 
     # High-performance configuration

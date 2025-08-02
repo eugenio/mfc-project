@@ -22,7 +22,7 @@ import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -79,14 +79,14 @@ class EISMeasurement:
 class EISCircuitModel:
     """
     Equivalent circuit model for EIS biofilm characterization.
-    
+
     Implements modified Randles circuit with biofilm component:
     Rs - (Cdl || (Rbio - Cbio)) - Rct
-    
+
     Where:
     - Rs: Solution resistance
     - Cdl: Double layer capacitance
-    - Rbio: Biofilm resistance 
+    - Rbio: Biofilm resistance
     - Cbio: Biofilm capacitance
     - Rct: Charge transfer resistance
     """
@@ -151,7 +151,7 @@ class EISCircuitModel:
                                   porosity: float = 0.8, electrode_area: float = 1e-4):
         """
         Update circuit parameters from biofilm physical state.
-        
+
         Args:
             thickness: Biofilm thickness (μm)
             biomass_density: Biomass density (g/L)
@@ -189,10 +189,10 @@ class EISCircuitModel:
     def calculate_impedance(self, frequency: float) -> complex:
         """
         Calculate complex impedance at given frequency.
-        
+
         Args:
             frequency: Frequency (Hz)
-            
+
         Returns:
             Complex impedance (Ohm)
         """
@@ -213,13 +213,13 @@ class EISCircuitModel:
 
         return Z_total
 
-    def fit_parameters(self, measurements: List[EISMeasurement]) -> Dict[str, float]:
+    def fit_parameters(self, measurements: list[EISMeasurement]) -> dict[str, float]:
         """
         Fit circuit parameters to experimental data.
-        
+
         Args:
             measurements: List of EIS measurements
-            
+
         Returns:
             Fitted parameters dictionary
         """
@@ -259,7 +259,7 @@ class EISCircuitModel:
 class EISModel:
     """
     Complete EIS model for biofilm characterization in MFCs.
-    
+
     Features:
     - Real-time impedance spectrum simulation
     - Biofilm thickness estimation
@@ -272,7 +272,7 @@ class EISModel:
                  electrode_area: float = 1e-4, use_gpu: bool = True):
         """
         Initialize EIS model.
-        
+
         Args:
             species: Bacterial species
             electrode_area: Electrode area (m²)
@@ -344,17 +344,17 @@ class EISModel:
 
     def simulate_measurement(self, biofilm_thickness: float, biomass_density: float,
                            porosity: float = 0.8, temperature: float = 303.0,
-                           time_hours: float = 0.0) -> List[EISMeasurement]:
+                           time_hours: float = 0.0) -> list[EISMeasurement]:
         """
         Simulate EIS measurement for given biofilm state.
-        
+
         Args:
             biofilm_thickness: Biofilm thickness (μm)
             biomass_density: Biomass density (g/L)
             porosity: Biofilm porosity (0-1)
             temperature: Temperature (K)
             time_hours: Measurement time (hours)
-            
+
         Returns:
             List of EIS measurements across frequency range
         """
@@ -425,15 +425,15 @@ class EISModel:
 
         return impedances
 
-    def estimate_thickness(self, measurements: List[EISMeasurement],
+    def estimate_thickness(self, measurements: list[EISMeasurement],
                           method: str = 'low_frequency') -> float:
         """
         Estimate biofilm thickness from EIS measurements.
-        
+
         Args:
             measurements: EIS measurement data
             method: Estimation method ('low_frequency', 'characteristic', 'fitting')
-            
+
         Returns:
             Estimated thickness (μm)
         """
@@ -478,13 +478,13 @@ class EISModel:
 
         return thickness
 
-    def get_biofilm_properties(self, measurements: List[EISMeasurement]) -> Dict[str, float]:
+    def get_biofilm_properties(self, measurements: list[EISMeasurement]) -> dict[str, float]:
         """
         Extract biofilm properties from EIS measurements.
-        
+
         Args:
             measurements: EIS measurement data
-            
+
         Returns:
             Dictionary of biofilm properties
         """
@@ -516,7 +516,7 @@ class EISModel:
             'measurement_quality': self._assess_measurement_quality(measurements)
         }
 
-    def _assess_measurement_quality(self, measurements: List[EISMeasurement]) -> float:
+    def _assess_measurement_quality(self, measurements: list[EISMeasurement]) -> float:
         """Assess measurement quality (0-1 score)."""
         if len(measurements) < 10:
             return 0.5  # Insufficient data
@@ -538,10 +538,10 @@ class EISModel:
 
         return (coverage_score + phase_score + consistency_score) / 3.0
 
-    def calibrate_for_species(self, reference_measurements: List[Tuple[float, List[EISMeasurement]]]):
+    def calibrate_for_species(self, reference_measurements: list[tuple[float, list[EISMeasurement]]]):
         """
         Calibrate EIS model for specific species using reference data.
-        
+
         Args:
             reference_measurements: List of (known_thickness, measurements) pairs
         """
@@ -573,7 +573,7 @@ class EISModel:
 
         print(f"EIS calibration updated: slope={slope:.1f} Ohm/μm, intercept={intercept:.1f} Ohm")
 
-    def get_measurement_summary(self) -> Dict[str, Any]:
+    def get_measurement_summary(self) -> dict[str, Any]:
         """Get summary of current EIS measurement state."""
         return {
             'species': self.species.value,

@@ -20,15 +20,15 @@ except ImportError:
 
 def create_merge_request():
     """Create merge request for Phase 3 & 4."""
-    
+
     if not GITLAB_AVAILABLE:
         print("GitLab not available")
         return
-    
+
     try:
         manager = GitLabIssueManager()
         project = manager.project
-        
+
         # Create merge request
         mr_data = {
             'source_branch': 'cathode-models',
@@ -98,15 +98,15 @@ This completes the foundational component modeling for the MFC Q-Learning system
             'labels': ['enhancement', 'phase-completion'],
             'remove_source_branch': False  # Keep branch for reference
         }
-        
+
         # Create the merge request
         mr = project.mergerequests.create(mr_data)
-        
+
         print(f"✅ Created merge request #{mr.iid}: {mr.title}")
         print(f"📎 URL: {mr.web_url}")
-        
+
         return mr
-        
+
     except Exception as e:
         print(f"❌ Error creating merge request: {e}")
         return None

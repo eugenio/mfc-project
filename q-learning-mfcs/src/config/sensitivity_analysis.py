@@ -25,9 +25,10 @@ Literature References:
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,7 +64,7 @@ class ParameterBounds:
     min_value: float
     max_value: float
     distribution: str = "uniform"  # "uniform", "normal", "lognormal"
-    nominal_value: Optional[float] = None
+    nominal_value: float | None = None
 
     def __post_init__(self):
         """Validate parameter bounds."""
@@ -80,7 +81,7 @@ class ParameterDefinition:
     """Complete parameter definition for sensitivity analysis."""
     name: str
     bounds: ParameterBounds
-    config_path: List[str]  # Path to parameter in configuration (e.g., ["control", "flow_control", "max_flow_rate"])
+    config_path: list[str]  # Path to parameter in configuration (e.g., ["control", "flow_control", "max_flow_rate"])
     description: str = ""
     units: str = ""
     category: str = "general"  # Parameter category for grouping
@@ -92,46 +93,46 @@ class SensitivityResult:
 
     # Method information
     method: SensitivityMethod
-    parameter_names: List[str]
-    output_names: List[str]
+    parameter_names: list[str]
+    output_names: list[str]
 
     # Sensitivity indices
-    first_order_indices: Optional[Dict[str, np.ndarray]] = None  # S1 indices
-    total_order_indices: Optional[Dict[str, np.ndarray]] = None  # ST indices
-    second_order_indices: Optional[Dict[str, np.ndarray]] = None  # S2 indices
+    first_order_indices: dict[str, np.ndarray] | None = None  # S1 indices
+    total_order_indices: dict[str, np.ndarray] | None = None  # ST indices
+    second_order_indices: dict[str, np.ndarray] | None = None  # S2 indices
 
     # Morris method results
-    morris_means: Optional[Dict[str, np.ndarray]] = None  # Morris μ values
-    morris_stds: Optional[Dict[str, np.ndarray]] = None   # Morris σ values
-    morris_means_star: Optional[Dict[str, np.ndarray]] = None  # Morris μ* values
+    morris_means: dict[str, np.ndarray] | None = None  # Morris μ values
+    morris_stds: dict[str, np.ndarray] | None = None   # Morris σ values
+    morris_means_star: dict[str, np.ndarray] | None = None  # Morris μ* values
 
     # OAT results
-    local_sensitivities: Optional[Dict[str, np.ndarray]] = None
+    local_sensitivities: dict[str, np.ndarray] | None = None
 
     # Raw data
-    parameter_samples: Optional[np.ndarray] = None
-    output_samples: Optional[Dict[str, np.ndarray]] = None
+    parameter_samples: np.ndarray | None = None
+    output_samples: dict[str, np.ndarray] | None = None
 
     # Metadata
     n_samples: int = 0
     computation_time: float = 0.0
-    confidence_intervals: Optional[Dict[str, Tuple[np.ndarray, np.ndarray]]] = None
+    confidence_intervals: dict[str, tuple[np.ndarray, np.ndarray]] | None = None
 
     # Analysis metadata
     created_at: str = field(default_factory=lambda: pd.Timestamp.now().isoformat())
-    configuration_snapshot: Optional[Dict[str, Any]] = None
+    configuration_snapshot: dict[str, Any] | None = None
 
 
 class ParameterSpace:
     """Parameter space definition and sampling utilities."""
 
-    def __init__(self, parameters: List[ParameterDefinition]):
+    def __init__(self, parameters: list[ParameterDefinition]):
         """
         Initialize parameter space.
-        
+
         Args:
             parameters: List of parameter definitions
-            
+
         Raises:
             ValueError: If parameters list is empty
         """
@@ -158,15 +159,15 @@ class ParameterSpace:
         self.logger = logging.getLogger(__name__)
 
     def sample(self, n_samples: int, method: SamplingMethod = SamplingMethod.LATIN_HYPERCUBE,
-               seed: Optional[int] = None) -> np.ndarray:
+               seed: int | None = None) -> np.ndarray:
         """
         Sample parameters from the parameter space.
-        
+
         Args:
             n_samples: Number of samples to generate
             method: Sampling method
             seed: Random seed for reproducibility
-            
+
         Returns:
             Array of parameter samples (n_samples x n_parameters)
         """
@@ -247,12 +248,12 @@ class ParameterSpace:
 class SensitivityAnalyzer:
     """Main sensitivity analysis framework."""
 
-    def __init__(self, parameter_space: Optional[ParameterSpace],
-                 model_function: Optional[Callable[[np.ndarray], Dict[str, np.ndarray]]],
-                 output_names: List[str]):
+    def __init__(self, parameter_space: ParameterSpace | None,
+                 model_function: Callable[[np.ndarray], dict[str, np.ndarray]] | None,
+                 output_names: list[str]):
         """
         Initialize sensitivity analyzer.
-        
+
         Args:
             parameter_space: Parameter space definition
             model_function: Function that takes parameter array and returns output dict
@@ -264,16 +265,16 @@ class SensitivityAnalyzer:
         self.logger = logging.getLogger(__name__)
 
         # Cache for model evaluations
-        self._model_cache: Dict[tuple, Dict[str, np.ndarray]] = {}
+        self._model_cache: dict[tuple, dict[str, np.ndarray]] = {}
         self.cache_enabled = True
 
-    def _evaluate_model(self, parameter_samples: np.ndarray) -> Dict[str, np.ndarray]:
+    def _evaluate_model(self, parameter_samples: np.ndarray) -> dict[str, np.ndarray]:
         """
         Evaluate model with caching support.
-        
+
         Args:
             parameter_samples: Parameter samples array
-            
+
         Returns:
             Dictionary of output arrays
         """
@@ -299,13 +300,13 @@ class SensitivityAnalyzer:
                           **kwargs) -> SensitivityResult:
         """
         Perform sensitivity analysis using specified method.
-        
+
         Args:
             method: Sensitivity analysis method
             n_samples: Number of samples for analysis
             sampling_method: Parameter sampling method
             **kwargs: Method-specific parameters
-            
+
         Returns:
             Sensitivity analysis results
         """
@@ -340,11 +341,11 @@ class SensitivityAnalyzer:
                               perturbation_factor: float = 0.1) -> SensitivityResult:
         """
         Perform One-At-a-Time sensitivity analysis.
-        
+
         Args:
             n_samples: Number of samples per parameter
             perturbation_factor: Relative perturbation factor
-            
+
         Returns:
             Sensitivity analysis results
         """
@@ -404,10 +405,10 @@ class SensitivityAnalyzer:
     def _analyze_gradient_based(self, step_size: float = 1e-6) -> SensitivityResult:
         """
         Perform gradient-based sensitivity analysis.
-        
+
         Args:
             step_size: Finite difference step size
-            
+
         Returns:
             Sensitivity analysis results
         """
@@ -456,12 +457,12 @@ class SensitivityAnalyzer:
                        grid_jump: int = 2) -> SensitivityResult:
         """
         Perform Morris elementary effects method.
-        
+
         Args:
             n_samples: Number of trajectories
             n_levels: Number of levels for parameter grid
             grid_jump: Grid jump size
-            
+
         Returns:
             Sensitivity analysis results
         """
@@ -475,7 +476,7 @@ class SensitivityAnalyzer:
         trajectories = self._generate_morris_trajectories(n_samples, n_levels, grid_jump)
 
         # Evaluate model for all trajectories
-        all_outputs: Dict[str, List[float]] = {}
+        all_outputs: dict[str, list[float]] = {}
         for output_name in self.output_names:
             all_outputs[output_name] = []
 
@@ -518,7 +519,7 @@ class SensitivityAnalyzer:
         return result
 
     def _generate_morris_trajectories(self, n_trajectories: int, n_levels: int,
-                                    grid_jump: int) -> List[np.ndarray]:
+                                    grid_jump: int) -> list[np.ndarray]:
         """Generate Morris trajectories for elementary effects method."""
         trajectories = []
         n_params = self.parameter_space.n_parameters
@@ -554,12 +555,12 @@ class SensitivityAnalyzer:
                       calc_second_order: bool = False) -> SensitivityResult:
         """
         Perform Sobol global sensitivity analysis.
-        
+
         Args:
             n_samples: Number of samples
             sampling_method: Sampling method
             calc_second_order: Whether to calculate second-order indices
-            
+
         Returns:
             Sensitivity analysis results
         """
@@ -656,15 +657,15 @@ class SensitivityAnalyzer:
         return result
 
     def rank_parameters(self, result: SensitivityResult,
-                       output_name: str, metric: str = "total_order") -> List[Tuple[str, float]]:
+                       output_name: str, metric: str = "total_order") -> list[tuple[str, float]]:
         """
         Rank parameters by sensitivity importance.
-        
+
         Args:
             result: Sensitivity analysis results
             output_name: Name of output to analyze
             metric: Sensitivity metric to use for ranking
-            
+
         Returns:
             List of (parameter_name, sensitivity_value) tuples, sorted by importance
         """
@@ -680,7 +681,7 @@ class SensitivityAnalyzer:
             raise ValueError(f"Metric '{metric}' not available in results")
 
         # Create ranking
-        ranking = list(zip(result.parameter_names, values))
+        ranking = list(zip(result.parameter_names, values, strict=False))
         ranking.sort(key=lambda x: abs(x[1]), reverse=True)
 
         return ranking
@@ -689,10 +690,10 @@ class SensitivityAnalyzer:
 class SensitivityVisualizer:
     """Visualization tools for sensitivity analysis results."""
 
-    def __init__(self, visualization_config: Optional[VisualizationConfig] = None):
+    def __init__(self, visualization_config: VisualizationConfig | None = None):
         """
         Initialize sensitivity visualizer.
-        
+
         Args:
             visualization_config: Visualization configuration
         """
@@ -704,15 +705,15 @@ class SensitivityVisualizer:
         self.colors = get_colors_for_scheme(self.config.color_scheme_type, self.config.color_scheme)
 
     def plot_sensitivity_indices(self, result: SensitivityResult,
-                                output_name: str, save_path: Optional[str] = None) -> plt.Figure:
+                                output_name: str, save_path: str | None = None) -> plt.Figure:
         """
         Plot sensitivity indices (first-order and total-order).
-        
+
         Args:
             result: Sensitivity analysis results
             output_name: Output to visualize
             save_path: Path to save figure
-            
+
         Returns:
             Matplotlib figure
         """
@@ -749,15 +750,15 @@ class SensitivityVisualizer:
         return fig
 
     def plot_morris_results(self, result: SensitivityResult,
-                           output_name: str, save_path: Optional[str] = None) -> plt.Figure:
+                           output_name: str, save_path: str | None = None) -> plt.Figure:
         """
         Plot Morris method results (μ* vs σ).
-        
+
         Args:
             result: Sensitivity analysis results
             output_name: Output to visualize
             save_path: Path to save figure
-            
+
         Returns:
             Matplotlib figure
         """
@@ -794,18 +795,18 @@ class SensitivityVisualizer:
 
     def plot_parameter_ranking(self, result: SensitivityResult,
                               output_name: str, metric: str = "total_order",
-                              top_n: Optional[int] = None,
-                              save_path: Optional[str] = None) -> plt.Figure:
+                              top_n: int | None = None,
+                              save_path: str | None = None) -> plt.Figure:
         """
         Plot parameter ranking by sensitivity.
-        
+
         Args:
             result: Sensitivity analysis results
             output_name: Output to visualize
             metric: Sensitivity metric for ranking
             top_n: Number of top parameters to show
             save_path: Path to save figure
-            
+
         Returns:
             Matplotlib figure
         """
@@ -831,7 +832,7 @@ class SensitivityVisualizer:
         ax.grid(True, alpha=0.3, axis='x')
 
         # Add value labels on bars
-        for i, (bar, value) in enumerate(zip(bars, values)):
+        for i, (bar, value) in enumerate(zip(bars, values, strict=False)):
             ax.text(bar.get_width() + max(values) * 0.01, bar.get_y() + bar.get_height()/2,
                    f'{value:.3f}', va='center', fontsize=9)
 

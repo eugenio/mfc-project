@@ -16,7 +16,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from path_config import get_figure_path, get_model_path, get_simulation_data_path
 
 # Try to import GPU acceleration libraries
@@ -750,22 +749,22 @@ class MFCQLearningSimulationParallel:
         summary_text = f"""
         Q-LEARNING OPTIMIZATION
         PARALLEL FLOW CONFIGURATION
-        
+
         Total Energy: {total_energy:.1f} Wh
         Average Power: {avg_power:.3f} W
         Final Power: {self.stack_powers[-1]:.3f} W
-        
+
         Final Flow Rate: {final_flow_rate:.1f} mL/h
         Substrate Utilization: {final_utilization:.2f}%
-        
+
         Q-Learning Stats:
         Total Reward: {total_q_reward:.1f}
         Q-Table Size: {q_table_size} states
         Final ε: {self.q_controller.epsilon:.3f}
-        
+
         PARALLEL FLOW BENEFITS:
         ✓ Equal inlet to all cells
-        ✓ Independent cell operation  
+        ✓ Independent cell operation
         ✓ Higher utilization potential
         """
 

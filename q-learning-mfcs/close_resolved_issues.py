@@ -11,11 +11,12 @@ sys.path.insert(0, str(Path(__file__).parent / 'tests'))
 
 from gitlab_issue_manager import GitLabIssueManager
 
+
 def main():
     """Close resolved cathode model issues."""
-    
+
     manager = GitLabIssueManager()
-    
+
     # Issues to close with their resolutions
     issues_to_close = [
         {
@@ -66,7 +67,7 @@ def main():
             )
         }
     ]
-    
+
     # Close each issue
     for issue_info in issues_to_close:
         try:
@@ -74,8 +75,8 @@ def main():
             print(f"✓ Successfully closed issue #{issue_info['iid']}")
         except Exception as e:
             print(f"✗ Failed to close issue #{issue_info['iid']}: {e}")
-    
-    print("\n📊 Summary: Attempted to close {} cathode model issues".format(len(issues_to_close)))
+
+    print(f"\n📊 Summary: Attempted to close {len(issues_to_close)} cathode model issues")
 
 if __name__ == "__main__":
     main()

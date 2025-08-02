@@ -19,7 +19,7 @@ from email.mime.text import MIMEText
 def send_completion_email(results_file, recipient_email=None):
     """
     Send email notification when simulation completes.
-    
+
     Args:
         results_file: Path to simulation results JSON file
         recipient_email: Email address to send notification to
@@ -121,7 +121,7 @@ MFC Simulation System
 def setup_email_monitoring(pid_file, log_file):
     """
     Monitor simulation process and send email when complete.
-    
+
     Args:
         pid_file: Path to PID file
         log_file: Path to log file

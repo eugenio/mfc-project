@@ -8,7 +8,7 @@ and flux constraints derived from KEGG and literature sources.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 class Species(Enum):
@@ -30,14 +30,14 @@ class MetabolicReaction:
     id: str                    # Reaction identifier
     name: str                  # Reaction name
     equation: str              # Reaction equation
-    stoichiometry: Dict[str, float]  # Stoichiometric coefficients
+    stoichiometry: dict[str, float]  # Stoichiometric coefficients
     enzyme: str                # Enzyme name/EC number
     kegg_id: str              # KEGG reaction ID
 
     # Kinetic parameters
     vmax: float               # Maximum reaction rate (mmol/gDW/h)
-    km_values: Dict[str, float]  # Michaelis constants (mmol/L)
-    ki_values: Dict[str, float]  # Inhibition constants (mmol/L)
+    km_values: dict[str, float]  # Michaelis constants (mmol/L)
+    ki_values: dict[str, float]  # Inhibition constants (mmol/L)
 
     # Thermodynamic parameters
     delta_g0: float           # Standard Gibbs free energy (kJ/mol)
@@ -53,11 +53,11 @@ class MetabolicPathway:
     """Container for complete metabolic pathway."""
 
     name: str                          # Pathway name
-    reactions: List[MetabolicReaction] # List of reactions
-    key_metabolites: List[str]         # Important metabolites
+    reactions: list[MetabolicReaction] # List of reactions
+    key_metabolites: list[str]         # Important metabolites
     electron_yield: float              # Total electrons per substrate
     energy_yield: float                # ATP yield per substrate
-    byproducts: Dict[str, float]       # Byproduct stoichiometry
+    byproducts: dict[str, float]       # Byproduct stoichiometry
 
 
 class PathwayDatabase:
@@ -69,7 +69,7 @@ class PathwayDatabase:
         self._metabolites = self._load_metabolites()
         self._electron_carriers = self._load_electron_carriers()
 
-    def _load_pathways(self) -> Dict[Tuple[Species, Substrate], MetabolicPathway]:
+    def _load_pathways(self) -> dict[tuple[Species, Substrate], MetabolicPathway]:
         """Load metabolic pathways from KEGG and literature."""
         pathways = {}
 
@@ -369,7 +369,7 @@ class PathwayDatabase:
             byproducts={"co2": 2.0}
         )
 
-    def _load_metabolites(self) -> Dict[str, Dict[str, Any]]:
+    def _load_metabolites(self) -> dict[str, dict[str, Any]]:
         """Load metabolite properties."""
         return {
             "acetate": {
@@ -410,7 +410,7 @@ class PathwayDatabase:
             }
         }
 
-    def _load_electron_carriers(self) -> Dict[str, Dict[str, Any]]:
+    def _load_electron_carriers(self) -> dict[str, dict[str, Any]]:
         """Load electron carrier properties."""
         return {
             "cytochrome_c": {
@@ -433,14 +433,14 @@ class PathwayDatabase:
     def get_pathway(self, species: Species, substrate: Substrate) -> MetabolicPathway:
         """
         Get metabolic pathway for species-substrate combination.
-        
+
         Args:
             species: Bacterial species
             substrate: Substrate type
-            
+
         Returns:
             MetabolicPathway object
-            
+
         Raises:
             KeyError: If combination not available
         """
@@ -452,44 +452,44 @@ class PathwayDatabase:
 
         return self._pathways[key]
 
-    def get_metabolite_properties(self, metabolite: str) -> Dict[str, Any]:
+    def get_metabolite_properties(self, metabolite: str) -> dict[str, Any]:
         """Get properties for specific metabolite."""
         if metabolite not in self._metabolites:
             raise KeyError(f"Metabolite '{metabolite}' not found in database")
         return self._metabolites[metabolite]
 
-    def get_electron_carrier_properties(self, carrier: str) -> Dict[str, Any]:
+    def get_electron_carrier_properties(self, carrier: str) -> dict[str, Any]:
         """Get properties for specific electron carrier."""
         if carrier not in self._electron_carriers:
             raise KeyError(f"Electron carrier '{carrier}' not found in database")
         return self._electron_carriers[carrier]
 
-    def calculate_pathway_stoichiometry(self, species: Species, substrate: Substrate) -> Dict[str, float]:
+    def calculate_pathway_stoichiometry(self, species: Species, substrate: Substrate) -> dict[str, float]:
         """
         Calculate overall pathway stoichiometry.
-        
+
         Args:
             species: Bacterial species
             substrate: Substrate type
-            
+
         Returns:
             Dictionary of net stoichiometric coefficients
         """
         pathway = self.get_pathway(species, substrate)
 
         # Sum stoichiometry across all reactions
-        net_stoichiometry: Dict[str, float] = {}
+        net_stoichiometry: dict[str, float] = {}
         for reaction in pathway.reactions:
             for metabolite, coeff in reaction.stoichiometry.items():
                 net_stoichiometry[metabolite] = net_stoichiometry.get(metabolite, 0) + coeff
 
         return net_stoichiometry
 
-    def get_available_combinations(self) -> List[Tuple[Species, Substrate]]:
+    def get_available_combinations(self) -> list[tuple[Species, Substrate]]:
         """Get list of available species-substrate combinations."""
         return list(self._pathways.keys())
 
-    def get_kegg_pathway_ids(self, species: Species) -> Dict[str, str]:
+    def get_kegg_pathway_ids(self, species: Species) -> dict[str, str]:
         """Get KEGG pathway IDs for species."""
         kegg_ids = {
             Species.GEOBACTER: {

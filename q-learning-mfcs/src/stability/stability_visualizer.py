@@ -11,7 +11,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,7 @@ from reliability_analyzer import ComponentReliability, ReliabilityAnalyzer
 
 class VisualizationConfig:
     """Configuration for visualization settings."""
-    figure_size: Tuple[int, int] = (12, 8)
+    figure_size: tuple[int, int] = (12, 8)
     dpi: int = 300
     color_scheme: str = "viridis"
     show_interactive: bool = True
@@ -41,7 +41,7 @@ class VisualizationConfig:
 class StabilityVisualizer:
     """
     Comprehensive stability visualization and reporting system.
-    
+
     Features:
     - Interactive degradation pattern dashboards
     - Reliability trend visualizations
@@ -53,10 +53,10 @@ class StabilityVisualizer:
 
     def __init__(self,
                  output_directory: str = "../reports/stability_reports",
-                 config: Optional[VisualizationConfig] = None):
+                 config: VisualizationConfig | None = None):
         """
         Initialize the stability visualizer.
-        
+
         Args:
             output_directory: Directory for saving reports and visualizations
             config: Visualization configuration
@@ -95,15 +95,15 @@ class StabilityVisualizer:
         self.logger = logging.getLogger(__name__)
 
     def create_degradation_dashboard(self,
-                                   patterns: List[DegradationPattern],
+                                   patterns: list[DegradationPattern],
                                    time_window_days: int = 30) -> str:
         """
         Create interactive degradation pattern dashboard.
-        
+
         Args:
             patterns: List of degradation patterns
             time_window_days: Time window for analysis
-            
+
         Returns:
             Path to saved dashboard HTML file
         """
@@ -261,7 +261,7 @@ class StabilityVisualizer:
         return str(dashboard_path)
 
     def create_reliability_trends_plot(self,
-                                     reliability_data: List[ComponentReliability],
+                                     reliability_data: list[ComponentReliability],
                                      time_window_days: int = 90) -> str:
         """Create reliability trends visualization."""
 
@@ -376,7 +376,7 @@ class StabilityVisualizer:
         return str(plot_path)
 
     def create_maintenance_schedule_chart(self,
-                                        tasks: List[MaintenanceTask],
+                                        tasks: list[MaintenanceTask],
                                         time_horizon_days: int = 90) -> str:
         """Create maintenance schedule Gantt chart."""
 
@@ -439,8 +439,8 @@ class StabilityVisualizer:
         return str(chart_path)
 
     def create_component_health_heatmap(self,
-                                      patterns: List[DegradationPattern],
-                                      reliability_data: List[ComponentReliability]) -> str:
+                                      patterns: list[DegradationPattern],
+                                      reliability_data: list[ComponentReliability]) -> str:
         """Create component health status heatmap."""
 
         # Collect component health data
@@ -524,7 +524,7 @@ class StabilityVisualizer:
         self.logger.info(f"Component health heatmap saved to {heatmap_path}")
         return str(heatmap_path)
 
-    def create_failure_prediction_plot(self, patterns: List[DegradationPattern]) -> str:
+    def create_failure_prediction_plot(self, patterns: list[DegradationPattern]) -> str:
         """Create failure prediction timeline plot."""
 
         predictions = []
@@ -582,9 +582,9 @@ class StabilityVisualizer:
         return str(plot_path)
 
     def generate_stability_report(self,
-                                patterns: List[DegradationPattern],
-                                reliability_data: List[ComponentReliability],
-                                maintenance_tasks: List[MaintenanceTask],
+                                patterns: list[DegradationPattern],
+                                reliability_data: list[ComponentReliability],
+                                maintenance_tasks: list[MaintenanceTask],
                                 include_plots: bool = True) -> str:
         """Generate comprehensive stability report."""
 
@@ -671,9 +671,9 @@ class StabilityVisualizer:
         return severity_scores.get(severity, 0)
 
     def _generate_executive_summary(self,
-                                  patterns: List[DegradationPattern],
-                                  reliability_data: List[ComponentReliability],
-                                  maintenance_tasks: List[MaintenanceTask]) -> Dict[str, Any]:
+                                  patterns: list[DegradationPattern],
+                                  reliability_data: list[ComponentReliability],
+                                  maintenance_tasks: list[MaintenanceTask]) -> dict[str, Any]:
         """Generate executive summary for stability report."""
 
         # Count patterns by severity
@@ -713,7 +713,7 @@ class StabilityVisualizer:
             ]
         }
 
-    def _analyze_degradation_patterns(self, patterns: List[DegradationPattern]) -> Dict[str, Any]:
+    def _analyze_degradation_patterns(self, patterns: list[DegradationPattern]) -> dict[str, Any]:
         """Analyze degradation patterns for report."""
 
         if not patterns:
@@ -748,7 +748,7 @@ class StabilityVisualizer:
             'most_affected_component': max(component_counts, key=component_counts.get) if component_counts else None
         }
 
-    def _analyze_reliability_data(self, reliability_data: List[ComponentReliability]) -> Dict[str, Any]:
+    def _analyze_reliability_data(self, reliability_data: list[ComponentReliability]) -> dict[str, Any]:
         """Analyze reliability data for report."""
 
         if not reliability_data:
@@ -784,7 +784,7 @@ class StabilityVisualizer:
             ]
         }
 
-    def _analyze_maintenance_schedule(self, maintenance_tasks: List[MaintenanceTask]) -> Dict[str, Any]:
+    def _analyze_maintenance_schedule(self, maintenance_tasks: list[MaintenanceTask]) -> dict[str, Any]:
         """Analyze maintenance schedule for report."""
 
         if not maintenance_tasks:
@@ -826,9 +826,9 @@ class StabilityVisualizer:
         }
 
     def _generate_recommendations(self,
-                                patterns: List[DegradationPattern],
-                                reliability_data: List[ComponentReliability],
-                                maintenance_tasks: List[MaintenanceTask]) -> List[str]:
+                                patterns: list[DegradationPattern],
+                                reliability_data: list[ComponentReliability],
+                                maintenance_tasks: list[MaintenanceTask]) -> list[str]:
         """Generate actionable recommendations."""
 
         recommendations = []

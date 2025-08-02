@@ -5,7 +5,7 @@ This module provides comprehensive analysis capabilities for tracking Q-learning
 policy development over training episodes, including action frequency analysis,
 stability metrics, and convergence detection.
 
-User Story 1.2.2: Policy Evolution Tracking  
+User Story 1.2.2: Policy Evolution Tracking
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -41,11 +41,11 @@ class PolicySnapshot:
 
     episode: int
     policy: np.ndarray  # Best action for each state
-    q_table: Optional[np.ndarray]
-    action_frequencies: Dict[int, int]  # Action -> frequency count
+    q_table: np.ndarray | None
+    action_frequencies: dict[int, int]  # Action -> frequency count
     policy_entropy: float
     state_coverage: float  # Percentage of states with valid actions
-    performance_reward: Optional[float]  # Episode reward if available
+    performance_reward: float | None  # Episode reward if available
     timestamp: str
 
 
@@ -56,23 +56,23 @@ class PolicyEvolutionMetrics:
     # Evolution tracking
     total_episodes: int
     snapshots_count: int
-    episode_range: Tuple[int, int]
+    episode_range: tuple[int, int]
 
     # Policy stability metrics
-    policy_changes: List[int]  # Number of policy changes per episode
+    policy_changes: list[int]  # Number of policy changes per episode
     stability_score: float  # 0-1, higher = more stable
     stability_status: PolicyStability
-    convergence_episode: Optional[int]  # Episode where policy converged
+    convergence_episode: int | None  # Episode where policy converged
 
     # Action analysis
-    action_diversity_evolution: List[float]  # Action diversity over time
-    dominant_actions: Dict[int, float]  # Action -> percentage usage
+    action_diversity_evolution: list[float]  # Action diversity over time
+    dominant_actions: dict[int, float]  # Action -> percentage usage
     action_preference_changes: int  # Total action preference changes
 
     # Learning progress
-    learning_velocity: List[float]  # Rate of policy change over episodes
-    performance_trend: List[float]  # Performance/reward trend if available
-    exploration_decay: List[float]  # Exploration rate decay over time
+    learning_velocity: list[float]  # Rate of policy change over episodes
+    performance_trend: list[float]  # Performance/reward trend if available
+    exploration_decay: list[float]  # Exploration rate decay over time
 
     # Metadata
     analysis_timestamp: str
@@ -84,13 +84,13 @@ class PolicyEvolutionTracker:
     def __init__(self, models_directory: str = "q_learning_models"):
         """
         Initialize policy evolution tracker.
-        
+
         Args:
             models_directory: Directory containing Q-table snapshots
         """
         self.models_dir = Path(models_directory)
-        self.policy_snapshots: List[PolicySnapshot] = []
-        self.evolution_cache: Dict[str, PolicyEvolutionMetrics] = {}
+        self.policy_snapshots: list[PolicySnapshot] = []
+        self.evolution_cache: dict[str, PolicyEvolutionMetrics] = {}
 
         # Analysis parameters
         self.stability_threshold = 0.95  # Threshold for stable policy
@@ -100,15 +100,15 @@ class PolicyEvolutionTracker:
     def load_policy_snapshots_from_files(
         self,
         file_pattern: str = "*qtable*.pkl",
-        max_snapshots: Optional[int] = None
+        max_snapshots: int | None = None
     ) -> int:
         """
         Load policy snapshots from Q-table files in chronological order.
-        
+
         Args:
             file_pattern: File pattern to match Q-table files
             max_snapshots: Maximum number of snapshots to load
-            
+
         Returns:
             Number of snapshots loaded
         """
@@ -139,7 +139,7 @@ class PolicyEvolutionTracker:
         self,
         file_path: Path,
         episode: int
-    ) -> Optional[PolicySnapshot]:
+    ) -> PolicySnapshot | None:
         """Create policy snapshot from Q-table file."""
         try:
             # Load Q-table
@@ -165,7 +165,7 @@ class PolicyEvolutionTracker:
 
             # Calculate action frequencies
             unique_actions, counts = np.unique(policy, return_counts=True)
-            action_frequencies = dict(zip(unique_actions.astype(int), counts.astype(int)))
+            action_frequencies = dict(zip(unique_actions.astype(int), counts.astype(int), strict=False))
 
             # Calculate policy entropy
             policy_entropy = self._calculate_policy_entropy(q_table)
@@ -221,7 +221,7 @@ class PolicyEvolutionTracker:
         self,
         file_path: Path,
         data: Any
-    ) -> Optional[float]:
+    ) -> float | None:
         """Extract performance/reward information from file or metadata."""
         # Try to extract from dictionary data
         if isinstance(data, dict):
@@ -250,10 +250,10 @@ class PolicyEvolutionTracker:
 
         return None
 
-    def analyze_policy_evolution(self) -> Optional[PolicyEvolutionMetrics]:
+    def analyze_policy_evolution(self) -> PolicyEvolutionMetrics | None:
         """
         Analyze policy evolution across all loaded snapshots.
-        
+
         Returns:
             Comprehensive policy evolution metrics
         """
@@ -291,7 +291,7 @@ class PolicyEvolutionTracker:
         total_actions = len(all_actions)
         dominant_actions = {
             int(action): float(count / total_actions)
-            for action, count in zip(unique_actions, counts)
+            for action, count in zip(unique_actions, counts, strict=False)
         }
 
         # Count action preference changes
@@ -328,8 +328,8 @@ class PolicyEvolutionTracker:
 
     def _calculate_stability_score(
         self,
-        policy_changes: List[int],
-        snapshots: List[PolicySnapshot]
+        policy_changes: list[int],
+        snapshots: list[PolicySnapshot]
     ) -> float:
         """Calculate policy stability score (0-1, higher = more stable)."""
         if not policy_changes or not snapshots:
@@ -349,7 +349,7 @@ class PolicyEvolutionTracker:
     def _determine_stability_status(
         self,
         stability_score: float,
-        policy_changes: List[int]
+        policy_changes: list[int]
     ) -> PolicyStability:
         """Determine policy stability status based on metrics."""
         if stability_score >= self.stability_threshold:
@@ -366,7 +366,7 @@ class PolicyEvolutionTracker:
         else:
             return PolicyStability.UNSTABLE
 
-    def _detect_oscillation(self, changes: List[int]) -> bool:
+    def _detect_oscillation(self, changes: list[int]) -> bool:
         """Detect if policy changes show oscillating pattern."""
         if len(changes) < 4:
             return False
@@ -390,7 +390,7 @@ class PolicyEvolutionTracker:
 
         return any(osc_pattern in pattern_str for osc_pattern in oscillation_patterns)
 
-    def _detect_convergence_episode(self, policy_changes: List[int]) -> Optional[int]:
+    def _detect_convergence_episode(self, policy_changes: list[int]) -> int | None:
         """Detect episode where policy converged (stable for convergence_window episodes)."""
         if len(policy_changes) < self.convergence_window:
             return None
@@ -405,7 +405,7 @@ class PolicyEvolutionTracker:
 
         return None
 
-    def _count_action_preference_changes(self, snapshots: List[PolicySnapshot]) -> int:
+    def _count_action_preference_changes(self, snapshots: list[PolicySnapshot]) -> int:
         """Count significant changes in action preferences over time."""
         if len(snapshots) < 2:
             return 0
@@ -428,7 +428,7 @@ class PolicyEvolutionTracker:
 
         return max(snapshot.action_frequencies.items(), key=lambda x: x[1])[0]
 
-    def _calculate_learning_velocity(self, policy_changes: List[int]) -> List[float]:
+    def _calculate_learning_velocity(self, policy_changes: list[int]) -> list[float]:
         """Calculate learning velocity (rate of policy change) over time."""
         if len(policy_changes) < 2:
             return []
@@ -452,7 +452,7 @@ class PolicyEvolutionTracker:
 
         return velocity
 
-    def _calculate_exploration_decay(self, entropy_evolution: List[float]) -> List[float]:
+    def _calculate_exploration_decay(self, entropy_evolution: list[float]) -> list[float]:
         """Calculate exploration decay rate over time."""
         if len(entropy_evolution) < 2:
             return []
@@ -473,10 +473,10 @@ class PolicyEvolutionTracker:
 
         return decay_rates
 
-    def get_action_frequency_matrix(self) -> Optional[pd.DataFrame]:
+    def get_action_frequency_matrix(self) -> pd.DataFrame | None:
         """
         Get action frequency matrix showing action usage across episodes.
-        
+
         Returns:
             DataFrame with episodes as rows and actions as columns
         """
@@ -501,13 +501,13 @@ class PolicyEvolutionTracker:
 
         return pd.DataFrame(frequency_data)
 
-    def get_policy_comparison_matrix(self, reference_episode: int) -> Optional[np.ndarray]:
+    def get_policy_comparison_matrix(self, reference_episode: int) -> np.ndarray | None:
         """
         Get policy comparison matrix showing similarity to reference episode.
-        
+
         Args:
             reference_episode: Episode to use as reference
-            
+
         Returns:
             Similarity matrix (episodes x states)
         """
@@ -543,7 +543,7 @@ class PolicyEvolutionTracker:
     ) -> None:
         """
         Export policy evolution analysis to CSV file.
-        
+
         Args:
             metrics: Policy evolution metrics
             output_file: Output file path

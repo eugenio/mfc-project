@@ -12,7 +12,6 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 import pandas as pd
 import uvicorn
@@ -40,8 +39,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global variables
-ssl_config: Optional[SSLConfig] = None
-ssl_context_manager: Optional[SSLContextManager] = None
+ssl_config: SSLConfig | None = None
+ssl_context_manager: SSLContextManager | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -82,11 +81,11 @@ security = HTTPBearer(auto_error=False)
 class SimulationStatus(BaseModel):
     """Simulation status response model"""
     is_running: bool
-    start_time: Optional[datetime] = None
-    duration_hours: Optional[float] = None
-    current_time_hours: Optional[float] = None
-    progress_percent: Optional[float] = None
-    output_directory: Optional[str] = None
+    start_time: datetime | None = None
+    duration_hours: float | None = None
+    current_time_hours: float | None = None
+    progress_percent: float | None = None
+    output_directory: str | None = None
 
 class SimulationConfig(BaseModel):
     """Simulation configuration model"""
@@ -95,9 +94,9 @@ class SimulationConfig(BaseModel):
     electrode_area_m2: float = Field(gt=0, description="Electrode area per cell in m²")
     target_concentration: float = Field(gt=0, description="Target substrate concentration in mM")
     use_pretrained: bool = Field(default=True, description="Use pre-trained Q-table")
-    learning_rate: Optional[float] = Field(default=0.1, ge=0.01, le=1.0)
-    epsilon_initial: Optional[float] = Field(default=0.4, ge=0.1, le=1.0)
-    discount_factor: Optional[float] = Field(default=0.95, ge=0.8, le=0.99)
+    learning_rate: float | None = Field(default=0.1, ge=0.01, le=1.0)
+    epsilon_initial: float | None = Field(default=0.4, ge=0.1, le=1.0)
+    discount_factor: float | None = Field(default=0.95, ge=0.8, le=0.99)
 
 class SimulationData(BaseModel):
     """Simulation data response model"""
@@ -106,7 +105,7 @@ class SimulationData(BaseModel):
     reservoir_concentration: float
     outlet_concentration: float
     total_power: float
-    biofilm_thicknesses: List[float]
+    biofilm_thicknesses: list[float]
     substrate_addition_rate: float
     q_action: int
     epsilon: float
@@ -118,14 +117,14 @@ class PerformanceMetrics(BaseModel):
     control_effectiveness_2mM: float
     mean_power: float
     total_substrate_added: float
-    energy_efficiency: Optional[float] = None
-    stability_score: Optional[float] = None
+    energy_efficiency: float | None = None
+    stability_score: float | None = None
 
 class AlertConfig(BaseModel):
     """Alert configuration model"""
     parameter: str
-    threshold_min: Optional[float] = None
-    threshold_max: Optional[float] = None
+    threshold_min: float | None = None
+    threshold_max: float | None = None
     enabled: bool = True
     email_notify: bool = False
 
@@ -258,7 +257,7 @@ async def stop_simulation(user=Depends(get_current_user)):
         logger.error(f"Failed to stop simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/data/latest", response_model=List[SimulationData])
+@app.get("/data/latest", response_model=list[SimulationData])
 async def get_latest_data(limit: int = 100):
     """Get latest simulation data points"""
     try:
@@ -312,7 +311,7 @@ async def get_latest_data(limit: int = 100):
         raise HTTPException(status_code=500, detail="Failed to retrieve simulation data")
 
 @app.get("/data/export/{format}")
-async def export_data(format: str, simulation_id: Optional[str] = None):
+async def export_data(format: str, simulation_id: str | None = None):
     """Export simulation data in various formats"""
     if format not in ["csv", "json", "excel", "hdf5"]:
         raise HTTPException(status_code=400, detail="Unsupported export format")
@@ -415,7 +414,7 @@ async def get_alert_config():
     return {"alerts": default_alerts}
 
 @app.post("/alerts/config")
-async def update_alert_config(alerts: List[AlertConfig], user=Depends(get_current_user)):
+async def update_alert_config(alerts: list[AlertConfig], user=Depends(get_current_user)):
     """Update alert configuration"""
     try:
         # In actual implementation, save to database or file
@@ -456,8 +455,8 @@ async def get_system_info():
 
 def run_dashboard_api(
     host: str = "0.0.0.0",
-    port: Optional[int] = None,
-    ssl_config_override: Optional[SSLConfig] = None,
+    port: int | None = None,
+    ssl_config_override: SSLConfig | None = None,
     debug: bool = False
 ):
     """Run the FastAPI dashboard with SSL support"""

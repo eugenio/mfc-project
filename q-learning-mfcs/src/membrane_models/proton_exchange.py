@@ -14,7 +14,7 @@ Created: 2025-07-27
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -64,7 +64,7 @@ class PEMParameters(MembraneParameters):
 class ProtonExchangeMembrane(BaseMembraneModel):
     """
     Proton exchange membrane model with comprehensive transport mechanisms.
-    
+
     Features:
     - Proton transport via Grotthuss and vehicle mechanisms
     - Water management and electro-osmotic drag
@@ -121,13 +121,13 @@ class ProtonExchangeMembrane(BaseMembraneModel):
     def calculate_water_content(self, water_activity: float = 1.0) -> float:
         """
         Calculate membrane water content using sorption isotherm.
-        
+
         For Nafion: λ = 0.043 + 17.81*a - 39.85*a² + 36.0*a³ (for a < 1)
                     λ = 14 + 1.4*(a - 1) (for a > 1, liquid water)
-        
+
         Args:
             water_activity: Water activity (0-1 for vapor, >1 for liquid)
-        
+
         Returns:
             Water content (mol H2O/mol SO3H)
         """
@@ -160,17 +160,17 @@ class ProtonExchangeMembrane(BaseMembraneModel):
 
         return float(lambda_water)
 
-    def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
-                                   water_content: Optional[float] = None) -> float:
+    def calculate_ionic_conductivity(self, temperature: float | None = None,
+                                   water_content: float | None = None) -> float:
         """
         Calculate proton conductivity with temperature and water dependencies.
-        
+
         σ = σ_ref * exp(Ea/R * (1/T_ref - 1/T)) * f(λ)
-        
+
         Args:
             temperature: Temperature (K)
             water_content: Water content (mol H2O/mol SO3H)
-        
+
         Returns:
             Ionic conductivity (S/m)
         """
@@ -210,15 +210,15 @@ class ProtonExchangeMembrane(BaseMembraneModel):
 
         return float(conductivity)
 
-    def calculate_electro_osmotic_drag(self, water_content: Optional[float] = None) -> float:
+    def calculate_electro_osmotic_drag(self, water_content: float | None = None) -> float:
         """
         Calculate electro-osmotic drag coefficient.
-        
+
         n_drag = 2.5 * λ/22 for Nafion
-        
+
         Args:
             water_content: Water content (mol H2O/mol SO3H)
-        
+
         Returns:
             Drag coefficient (H2O/H+)
         """
@@ -237,16 +237,16 @@ class ProtonExchangeMembrane(BaseMembraneModel):
     def calculate_water_flux(self, current_density: float,
                            water_activity_anode: float,
                            water_activity_cathode: float,
-                           pressure_difference: float = 0.0) -> Dict[str, float]:
+                           pressure_difference: float = 0.0) -> dict[str, float]:
         """
         Calculate water flux including all transport mechanisms.
-        
+
         Args:
             current_density: Current density (A/m²)
             water_activity_anode: Water activity at anode
             water_activity_cathode: Water activity at cathode
             pressure_difference: Pressure difference (Pa)
-        
+
         Returns:
             Dictionary with water fluxes (mol/m²/s)
         """
@@ -295,12 +295,12 @@ class ProtonExchangeMembrane(BaseMembraneModel):
                                    current_density: float) -> float:
         """
         Calculate methanol crossover for DMFC applications.
-        
+
         Args:
             methanol_conc_anode: Methanol concentration at anode (mol/m³)
             methanol_conc_cathode: Methanol concentration at cathode (mol/m³)
             current_density: Current density (A/m²)
-        
+
         Returns:
             Methanol flux (mol/m²/s)
         """
@@ -318,13 +318,13 @@ class ProtonExchangeMembrane(BaseMembraneModel):
 
         return float(total_flux)
 
-    def calculate_degradation_rate(self, operating_conditions: Dict[str, float]) -> float:
+    def calculate_degradation_rate(self, operating_conditions: dict[str, float]) -> float:
         """
         Calculate membrane degradation rate based on operating conditions.
-        
+
         Args:
             operating_conditions: Dict with temperature, RH, potential, etc.
-        
+
         Returns:
             Degradation rate (h⁻¹)
         """
@@ -357,12 +357,12 @@ class ProtonExchangeMembrane(BaseMembraneModel):
                               partial_pressure_cathode: float) -> float:
         """
         Calculate gas crossover with water content effects.
-        
+
         Args:
             gas_type: Type of gas
             partial_pressure_anode: Anode side partial pressure (Pa)
             partial_pressure_cathode: Cathode side partial pressure (Pa)
-        
+
         Returns:
             Gas flux (mol/m²/s)
         """
@@ -402,16 +402,16 @@ class ProtonExchangeMembrane(BaseMembraneModel):
     def simulate_humidity_cycling(self, n_cycles: int,
                                 RH_high: float = 100.0,
                                 RH_low: float = 30.0,
-                                cycle_time: float = 1.0) -> Dict[str, Any]:
+                                cycle_time: float = 1.0) -> dict[str, Any]:
         """
         Simulate effects of humidity cycling on membrane.
-        
+
         Args:
             n_cycles: Number of RH cycles
             RH_high: High RH value (%)
             RH_low: Low RH value (%)
             cycle_time: Time per cycle (hours)
-        
+
         Returns:
             Degradation metrics
         """
@@ -448,7 +448,7 @@ class ProtonExchangeMembrane(BaseMembraneModel):
             'final_conductivity_S_cm': float(final_conductivity / 100)
         }
 
-    def get_cost_analysis(self) -> Dict[str, float]:
+    def get_cost_analysis(self) -> dict[str, float]:
         """Calculate membrane cost analysis."""
         area_m2 = self.area
 
@@ -477,7 +477,7 @@ class ProtonExchangeMembrane(BaseMembraneModel):
             'thickness_um': self.thickness * 1e6
         }
 
-    def get_pem_properties(self) -> Dict[str, Any]:
+    def get_pem_properties(self) -> dict[str, Any]:
         """Get comprehensive PEM properties."""
         base_properties = self.get_transport_properties()
 
@@ -501,12 +501,12 @@ def create_nafion_membrane(thickness_um: float = 183.0,  # Nafion 117
                           temperature_C: float = 30.0) -> ProtonExchangeMembrane:
     """
     Create a Nafion membrane with standard properties.
-    
+
     Args:
         thickness_um: Membrane thickness in micrometers
         area_cm2: Membrane area in cm²
         temperature_C: Operating temperature in °C
-    
+
     Returns:
         Configured Nafion membrane
     """
@@ -544,13 +544,13 @@ def create_speek_membrane(degree_sulfonation: float = 0.7,
                          temperature_C: float = 30.0) -> ProtonExchangeMembrane:
     """
     Create a SPEEK membrane with specified degree of sulfonation.
-    
+
     Args:
         degree_sulfonation: DS value (0-1)
         thickness_um: Membrane thickness in micrometers
         area_cm2: Membrane area in cm²
         temperature_C: Operating temperature in °C
-    
+
     Returns:
         Configured SPEEK membrane
     """

@@ -818,25 +818,25 @@ def render_literature_validation_page():
     with st.expander("ℹ️ Literature Validation Guide"):
         st.markdown("""
         **How Literature Validation Works:**
-        
+
         **🔍 Parameter Validation Process:**
         1. Compare your values against literature ranges
         2. Check confidence levels based on citation quality
         3. Receive recommendations for questionable parameters
         4. Get direct links to supporting literature
-        
+
         **📊 Validation Status Meanings:**
         - **✅ Validated**: Parameter within typical literature range (high confidence)
         - **⚠️ Questionable**: Within literature range but outside typical values
         - **❌ Outlier**: Outside known literature range - requires justification
-        
+
         **📚 Citation Quality Scoring:**
         - **5.0**: Seminal works, comprehensive reviews, high-impact journals
         - **4.0**: Solid experimental studies, well-cited papers
         - **3.0**: Good studies with limitations, conference papers
         - **2.0**: Preliminary studies, limited scope
         - **1.0**: Abstract-only, unverified sources
-        
+
         **💡 Best Practices:**
         - Validate all key parameters before simulation
         - Pay attention to confidence levels and recommendations

@@ -16,7 +16,6 @@ import numpy as np
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-
 from path_config import get_figure_path
 
 # Set style for better-looking plots
@@ -349,18 +348,18 @@ def create_comprehensive_performance_plots():
     # Create metrics text
     metrics_text = f"""
     PERFORMANCE SUMMARY
-    
+
     Total Energy: {total_energy:.2f} Wh
     Average Power: {avg_power:.3f} W
     Maximum Power: {max_power:.3f} W
     Minimum Power: {min_power:.3f} W
     Power Std Dev: {power_std:.3f} W
     Final Efficiency: {final_efficiency:.1%}
-    
+
     Simulation Time: 100 hours
     Real Time: 0.5 seconds
     Speedup: 709,917x
-    
+
     Cells Active: 5/5
     Cell Reversals: 0
     Maintenance Events: 0

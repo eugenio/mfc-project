@@ -779,32 +779,32 @@ def render_ml_optimization_page():
 
         with col1:
             if selected_method == OptimizationMethod.BAYESIAN:
-                acquisition_function = st.selectbox(
+                st.selectbox(
                     "Acquisition Function",
                     ["Expected Improvement", "Upper Confidence Bound", "Probability of Improvement"]
                 )
-                kernel_type = st.selectbox("GP Kernel", ["RBF", "Matern", "Linear"])
+                st.selectbox("GP Kernel", ["RBF", "Matern", "Linear"])
 
             elif selected_method == OptimizationMethod.NSGA_II:
-                population_size = st.number_input("Population Size", 10, 100, 20)
-                crossover_prob = st.slider("Crossover Probability", 0.0, 1.0, 0.9)
+                st.number_input("Population Size", 10, 100, 20)
+                st.slider("Crossover Probability", 0.0, 1.0, 0.9)
 
             elif selected_method == OptimizationMethod.NEURAL_SURROGATE:
-                network_architecture = st.selectbox("Architecture", ["MLP", "CNN", "ResNet"])
-                training_epochs = st.number_input("Training Epochs", 10, 1000, 100)
+                st.selectbox("Architecture", ["MLP", "CNN", "ResNet"])
+                st.number_input("Training Epochs", 10, 1000, 100)
 
             elif selected_method == OptimizationMethod.Q_LEARNING:
-                learning_rate = st.slider("Learning Rate", 0.01, 1.0, 0.1)
-                epsilon_start = st.slider("Initial Exploration", 0.0, 1.0, 0.9)
+                st.slider("Learning Rate", 0.01, 1.0, 0.1)
+                st.slider("Initial Exploration", 0.0, 1.0, 0.9)
 
         with col2:
-            random_seed = st.number_input("Random Seed", 0, 9999, 42)
-            parallel_evaluations = st.checkbox("Parallel Evaluations", value=True)
-            save_checkpoints = st.checkbox("Save Checkpoints", value=True)
+            st.number_input("Random Seed", 0, 9999, 42)
+            st.checkbox("Parallel Evaluations", value=True)
+            st.checkbox("Save Checkpoints", value=True)
 
         with col3:
-            convergence_tol = st.number_input("Convergence Tolerance", 1e-6, 1e-2, 1e-4, format="%.1e")
-            early_stopping = st.checkbox("Early Stopping", value=True)
+            st.number_input("Convergence Tolerance", 1e-6, 1e-2, 1e-4, format="%.1e")
+            st.checkbox("Early Stopping", value=True)
 
     # Run optimization
     st.subheader("🚀 Run Optimization")
@@ -824,7 +824,7 @@ def render_ml_optimization_page():
             )
 
         with col2:
-            save_results = st.checkbox("Save Results", value=True)
+            st.checkbox("Save Results", value=True)
 
         with col3:
             real_time_plots = st.checkbox("Real-time Plots", value=False)
@@ -838,7 +838,7 @@ def render_ml_optimization_page():
                 st.write(f"🔄 Maximum {max_iterations} iterations")
 
                 if real_time_plots:
-                    placeholder = st.empty()
+                    st.empty()
 
                 result = optimizer.run_optimization(
                     selected_method, objectives, parameter_bounds, max_iterations
@@ -918,27 +918,27 @@ def render_ml_optimization_page():
     with st.expander("ℹ️ Optimization Methods Guide"):
         st.markdown("""
         **When to Use Each Method:**
-        
+
         **🔍 Bayesian Optimization**
         - Best for: Expensive simulations, continuous parameters, <20 dimensions
         - Use when: Function evaluations take significant time
         - Avoid when: Many local optima, high-dimensional spaces
-        
+
         **🧬 NSGA-II Multi-Objective**
         - Best for: Multiple conflicting objectives, mixed parameter types
         - Use when: Need to explore trade-offs between objectives
         - Avoid when: Single objective, very expensive evaluations
-        
+
         **🧠 Neural Network Surrogate**
         - Best for: High-dimensional problems, complex response surfaces
         - Use when: Have existing data, complex parameter interactions
         - Avoid when: Limited training data, simple functions
-        
+
         **🎮 Q-Learning Reinforcement**
         - Best for: Sequential decisions, learning from exploration
         - Use when: Environment changes, want adaptive behavior
         - Avoid when: Continuous spaces, immediate convergence needed
-        
+
         **💡 Tips:**
         - Start with Bayesian for most problems
         - Use NSGA-II for multiple objectives

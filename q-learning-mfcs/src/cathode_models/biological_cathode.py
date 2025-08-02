@@ -15,7 +15,7 @@ Created: 2025-07-26
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 import numpy as np
@@ -84,7 +84,7 @@ class BiologicalParameters:
 class BiologicalCathodeModel(BaseCathodeModel):
     """
     Biological cathode model with parametrizable biofilm dynamics.
-    
+
     Features:
     - Monod kinetics for microbial growth
     - Dynamic biofilm thickness evolution
@@ -94,7 +94,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
     - Long-term performance prediction
     """
 
-    def __init__(self, parameters: CathodeParameters, bio_params: Optional[BiologicalParameters] = None):
+    def __init__(self, parameters: CathodeParameters, bio_params: BiologicalParameters | None = None):
         self.bio_params = bio_params or BiologicalParameters()
         super().__init__(parameters)
 
@@ -148,11 +148,11 @@ class BiologicalCathodeModel(BaseCathodeModel):
     def calculate_monod_growth_rate(self, oxygen_conc: float, electrode_potential: float) -> float:
         """
         Calculate microbial growth rate using Monod kinetics.
-        
+
         Args:
             oxygen_conc: Oxygen concentration in mol/L
             electrode_potential: Electrode potential in V
-        
+
         Returns:
             Growth rate in h⁻¹
         """
@@ -174,7 +174,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
     def update_biofilm_dynamics(self, dt_hours: float, oxygen_conc: float, electrode_potential: float):
         """
         Update biofilm thickness and biomass density over time.
-        
+
         Args:
             dt_hours: Time step in hours
             oxygen_conc: Oxygen concentration in mol/L
@@ -209,14 +209,14 @@ class BiologicalCathodeModel(BaseCathodeModel):
         self._setup_biofilm_parameters()
 
     def calculate_current_density(self, overpotential: float,
-                                oxygen_conc: Optional[float] = None) -> float:
+                                oxygen_conc: float | None = None) -> float:
         """
         Calculate current density with biofilm-mediated electron transfer.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Current density in A/m²
         """
@@ -264,7 +264,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
         return current_density
 
     def calculate_performance_metrics(self, operating_overpotential: float,
-                                    oxygen_conc: Optional[float] = None) -> Dict[str, float]:
+                                    oxygen_conc: float | None = None) -> dict[str, float]:
         """Calculate standard performance metrics (compatibility with base class)."""
         current_density = self.calculate_current_density(operating_overpotential, oxygen_conc)
         current = current_density * self.area_m2
@@ -293,7 +293,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
         }
 
     def calculate_biofilm_performance_metrics(self, operating_overpotential: float,
-                                            oxygen_conc: Optional[float] = None) -> Dict[str, float]:
+                                            oxygen_conc: float | None = None) -> dict[str, float]:
         """Calculate biofilm-specific performance metrics."""
 
         current_density = self.calculate_current_density(operating_overpotential, oxygen_conc)
@@ -332,16 +332,16 @@ class BiologicalCathodeModel(BaseCathodeModel):
         }
 
     def predict_long_term_performance(self, simulation_days: int = 30,
-                                    oxygen_conc: Optional[float] = None,
-                                    electrode_potential: float = 0.4) -> Dict[str, Any]:
+                                    oxygen_conc: float | None = None,
+                                    electrode_potential: float = 0.4) -> dict[str, Any]:
         """
         Predict long-term biofilm development and performance.
-        
+
         Args:
             simulation_days: Number of days to simulate
             oxygen_conc: Oxygen concentration in mol/L
             electrode_potential: Electrode potential in V
-        
+
         Returns:
             Dictionary with time-series predictions
         """
@@ -397,7 +397,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
             'time_to_steady_state_days': float(simulation_days * 0.8)  # Approximate
         }
 
-    def estimate_economic_analysis(self) -> Dict[str, float]:
+    def estimate_economic_analysis(self) -> dict[str, float]:
         """Economic analysis for biological cathode."""
 
         # Installation costs
@@ -426,7 +426,7 @@ class BiologicalCathodeModel(BaseCathodeModel):
             'maintenance_cost_factor': self.bio_params.maintenance_cost_factor
         }
 
-    def get_all_parameters(self) -> Dict[str, Any]:
+    def get_all_parameters(self) -> dict[str, Any]:
         """Get all configurable biological cathode parameters."""
         base_params = super().get_model_info()
 
@@ -478,10 +478,10 @@ def create_biological_cathode(area_cm2: float = 1.0,
                             ph: float = 7.0,
                             oxygen_mg_L: float = 8.0,
                             initial_thickness_um: float = 1.0,
-                            custom_bio_params: Optional[Dict[str, float]] = None) -> BiologicalCathodeModel:
+                            custom_bio_params: dict[str, float] | None = None) -> BiologicalCathodeModel:
     """
     Create biological cathode with configurable parameters.
-    
+
     Args:
         area_cm2: Cathode area in cm²
         temperature_C: Operating temperature in °C
@@ -489,7 +489,7 @@ def create_biological_cathode(area_cm2: float = 1.0,
         oxygen_mg_L: Dissolved oxygen in mg/L
         initial_thickness_um: Initial biofilm thickness in μm
         custom_bio_params: Custom biological parameters
-    
+
     Returns:
         Configured BiologicalCathodeModel
     """

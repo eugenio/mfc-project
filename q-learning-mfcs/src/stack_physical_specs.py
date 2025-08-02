@@ -1,5 +1,5 @@
 """
-Calculate and display the physical dimensions and characteristics 
+Calculate and display the physical dimensions and characteristics
 of the 5-cell MFC stack based on simulation parameters.
 """
 

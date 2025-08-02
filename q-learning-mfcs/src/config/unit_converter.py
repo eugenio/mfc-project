@@ -10,7 +10,6 @@ Last Modified: 2025-07-31
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -22,7 +21,7 @@ class UnitDefinition:
     dimension: str  # e.g., 'current_density', 'concentration', 'length'
     si_conversion_factor: float  # Factor to convert to SI base unit
     si_unit: str  # SI base unit
-    common_aliases: Optional[List[str]] = None
+    common_aliases: list[str] | None = None
 
     def __post_init__(self):
         if self.common_aliases is None:
@@ -37,7 +36,7 @@ class UnitConverter:
         self.units = self._define_units()
         self.dimension_map = self._create_dimension_map()
 
-    def _define_units(self) -> Dict[str, UnitDefinition]:
+    def _define_units(self) -> dict[str, UnitDefinition]:
         """Define all supported units and their conversion factors."""
 
         units = {
@@ -108,9 +107,9 @@ class UnitConverter:
 
         return units
 
-    def _create_dimension_map(self) -> Dict[str, List[str]]:
+    def _create_dimension_map(self) -> dict[str, list[str]]:
         """Create mapping from dimensions to units."""
-        dimension_map: Dict[str, List[str]] = {}
+        dimension_map: dict[str, list[str]] = {}
 
         for unit_symbol, unit_def in self.units.items():
             if unit_def.dimension not in dimension_map:
@@ -119,13 +118,13 @@ class UnitConverter:
 
         return dimension_map
 
-    def normalize_unit(self, unit_str: str) -> Optional[str]:
+    def normalize_unit(self, unit_str: str) -> str | None:
         """
         Normalize unit string to standard format.
-        
+
         Args:
             unit_str: Unit string (may have variations)
-            
+
         Returns:
             Normalized unit string or None if not recognized
         """
@@ -149,15 +148,15 @@ class UnitConverter:
 
         return None
 
-    def convert(self, value: float, from_unit: str, to_unit: str) -> Optional[float]:
+    def convert(self, value: float, from_unit: str, to_unit: str) -> float | None:
         """
         Convert value from one unit to another.
-        
+
         Args:
             value: Numeric value to convert
             from_unit: Source unit
             to_unit: Target unit
-            
+
         Returns:
             Converted value or None if conversion not possible
         """
@@ -181,13 +180,13 @@ class UnitConverter:
 
         return converted_value
 
-    def get_compatible_units(self, unit: str) -> List[str]:
+    def get_compatible_units(self, unit: str) -> list[str]:
         """
         Get list of units compatible for conversion with given unit.
-        
+
         Args:
             unit: Reference unit
-            
+
         Returns:
             List of compatible unit symbols
         """
@@ -198,14 +197,14 @@ class UnitConverter:
         dimension = self.units[unit_norm].dimension
         return self.dimension_map.get(dimension, [])
 
-    def validate_unit(self, unit: str, expected_dimension: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    def validate_unit(self, unit: str, expected_dimension: str | None = None) -> tuple[bool, str | None]:
         """
         Validate unit string and optionally check dimension.
-        
+
         Args:
             unit: Unit string to validate
             expected_dimension: Expected dimension (optional)
-            
+
         Returns:
             Tuple of (is_valid, normalized_unit)
         """
@@ -223,12 +222,12 @@ class UnitConverter:
     def format_value_with_unit(self, value: float, unit: str, precision: int = 3) -> str:
         """
         Format value with unit for display.
-        
+
         Args:
             value: Numeric value
             unit: Unit string
             precision: Number of significant figures
-            
+
         Returns:
             Formatted string
         """
@@ -240,14 +239,14 @@ class UnitConverter:
 
         return f"{formatted} {unit}"
 
-    def suggest_unit_for_dimension(self, dimension: str, prefer_common: bool = True) -> Optional[str]:
+    def suggest_unit_for_dimension(self, dimension: str, prefer_common: bool = True) -> str | None:
         """
         Suggest appropriate unit for given dimension.
-        
+
         Args:
             dimension: Dimension type
             prefer_common: Prefer commonly used units
-            
+
         Returns:
             Suggested unit or None
         """

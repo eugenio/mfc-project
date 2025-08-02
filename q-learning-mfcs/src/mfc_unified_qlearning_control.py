@@ -14,7 +14,6 @@ import pickle
 import time
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,10 +31,10 @@ gpu_accelerator = get_gpu_accelerator()
 GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class UnifiedQLearningController:
-    def __init__(self, config: Optional[QLearningConfig] = None, target_outlet_conc: Optional[float] = None):
+    def __init__(self, config: QLearningConfig | None = None, target_outlet_conc: float | None = None):
         """
         Advanced Q-Learning controller for unified flow + substrate concentration control
-        
+
         Args:
             config: Q-learning configuration object
             target_outlet_conc: Target outlet concentration (mmol/L), overrides config if provided
@@ -130,7 +129,7 @@ class UnifiedQLearningController:
     def select_action(self, state, current_flow_rate, current_inlet_conc):
         """
         Select dual action using advanced epsilon-greedy with action constraints
-        
+
         Returns:
             action_idx: Index of selected action
             new_flow_rate: New flow rate (L/h)
@@ -1062,12 +1061,12 @@ class MFCUnifiedQLearningSimulation:
         summary_text = f"""
         UNIFIED Q-LEARNING CONTROL
         Advanced Single-Agent Dual Control
-        
+
         Energy Performance:
         Total Energy: {total_energy:.1f} Wh
         Average Power: {avg_power:.3f} W
         Final Power: {self.stack_powers[-1]:.3f} W
-        
+
         Unified Control Results:
         Final Flow: {final_flow_rate:.1f} mL/h
         Final Inlet: {final_inlet_conc:.2f} mmol/L
@@ -1075,12 +1074,12 @@ class MFCUnifiedQLearningSimulation:
         Target: {self.unified_controller.target_outlet_conc:.1f} mmol/L
         Final Error: {final_error:.3f} mmol/L
         Control RMSE: {rmse:.3f}
-        
+
         Q-Learning Stats:
         Total Reward: {control_stats['total_reward']:.1f}
         Q-Table Size: {control_stats['q_table_size']} states
         Final ε: {control_stats['exploration_rate']:.3f}
-        
+
         UNIFIED ADVANTAGES:
         ✓ Single Intelligent Agent
         ✓ Coordinated Dual Control

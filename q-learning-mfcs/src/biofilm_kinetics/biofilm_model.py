@@ -8,7 +8,7 @@ and environmental compensation.
 
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -47,7 +47,7 @@ except ImportError:
 class BiofilmKineticsModel:
     """
     Comprehensive biofilm kinetics model with species and substrate selection.
-    
+
     Features:
     - Species selection: G. sulfurreducens, S. oneidensis, mixed cultures
     - Substrate selection: acetate, lactate (default)
@@ -58,12 +58,12 @@ class BiofilmKineticsModel:
 
     def __init__(self, species: str = 'mixed', substrate: str = 'lactate',
                  use_gpu: bool = True, temperature: float = 303.0, ph: float = 7.0,
-                 species_config: Optional[SpeciesMetabolicConfig] = None,
-                 biofilm_config: Optional[BiofilmKineticsConfig] = None,
-                 substrate_config: Optional[ComprehensiveSubstrateConfig] = None):
+                 species_config: SpeciesMetabolicConfig | None = None,
+                 biofilm_config: BiofilmKineticsConfig | None = None,
+                 substrate_config: ComprehensiveSubstrateConfig | None = None):
         """
         Initialize biofilm kinetics model.
-        
+
         Args:
             species: Species type ('geobacter', 'shewanella', 'mixed')
             substrate: Substrate type ('acetate', 'lactate')
@@ -202,11 +202,11 @@ class BiofilmKineticsModel:
                                          anode_potential: float) -> float:
         """
         Calculate growth rate using Nernst-Monod kinetics.
-        
+
         Args:
             substrate_conc: Substrate concentration (mmol/L)
             anode_potential: Anode potential (V)
-            
+
         Returns:
             Specific growth rate (1/h)
         """
@@ -233,11 +233,11 @@ class BiofilmKineticsModel:
                                       surface_area: float) -> float:
         """
         Calculate stochastic cell attachment using probability matrix.
-        
+
         Args:
             cell_density: Planktonic cell density (cells/m³)
             surface_area: Available surface area (m²)
-            
+
         Returns:
             Attachment rate (cells/(m²·h))
         """
@@ -266,11 +266,11 @@ class BiofilmKineticsModel:
                                         biomass_density: float) -> float:
         """
         Calculate current density from biofilm parameters.
-        
+
         Args:
             thickness: Biofilm thickness (μm)
             biomass_density: Biomass density (kg/m³)
-            
+
         Returns:
             Current density (A/m²)
         """
@@ -295,11 +295,11 @@ class BiofilmKineticsModel:
                                       biomass: float) -> float:
         """
         Calculate substrate consumption rate.
-        
+
         Args:
             growth_rate: Specific growth rate (1/h)
             biomass: Biomass concentration (kg/m³)
-            
+
         Returns:
             Substrate consumption rate (mmol/(L·h))
         """
@@ -315,11 +315,11 @@ class BiofilmKineticsModel:
                                       shewanella_current: float) -> float:
         """
         Calculate synergy effect in mixed cultures.
-        
+
         Args:
             geobacter_current: Current from G. sulfurreducens (A/m²)
             shewanella_current: Current from S. oneidensis (A/m²)
-            
+
         Returns:
             Enhanced total current with synergy (A/m²)
         """
@@ -342,15 +342,15 @@ class BiofilmKineticsModel:
         return enhanced_current
 
     def step_biofilm_dynamics(self, dt: float, anode_potential: float,
-                            substrate_supply: float = 0.0) -> Dict[str, float]:
+                            substrate_supply: float = 0.0) -> dict[str, float]:
         """
         Step biofilm dynamics forward by time dt.
-        
+
         Args:
             dt: Time step (h)
             anode_potential: Anode potential (V)
             substrate_supply: Substrate supply rate (mmol/(L·h))
-            
+
         Returns:
             Dictionary of state variables and outputs
         """
@@ -417,7 +417,7 @@ class BiofilmKineticsModel:
             'anode_potential': anode_potential
         }
 
-    def get_model_parameters(self) -> Dict[str, Any]:
+    def get_model_parameters(self) -> dict[str, Any]:
         """Get current model parameters for inspection."""
         import copy
         return {
@@ -430,11 +430,11 @@ class BiofilmKineticsModel:
             'gpu_available': self.gpu_available
         }
 
-    def set_environmental_conditions(self, temperature: Optional[float] = None,
-                                   ph: Optional[float] = None):
+    def set_environmental_conditions(self, temperature: float | None = None,
+                                   ph: float | None = None):
         """
         Update environmental conditions and recompute parameters.
-        
+
         Args:
             temperature: New temperature (K)
             ph: New pH
@@ -450,7 +450,7 @@ class BiofilmKineticsModel:
     def calculate_theoretical_maximum_current(self) -> float:
         """
         Calculate theoretical maximum current density.
-        
+
         Returns:
             Maximum theoretical current density (A/m²)
         """
@@ -464,7 +464,7 @@ class BiofilmKineticsModel:
 
         return theoretical_current
 
-    def get_mass_balance_equations(self) -> Dict[str, str]:
+    def get_mass_balance_equations(self) -> dict[str, str]:
         """Get mass balance equations for current configuration."""
         return {
             'substrate_equation': self.substrate_db.get_mass_balance_equation(self.substrate),

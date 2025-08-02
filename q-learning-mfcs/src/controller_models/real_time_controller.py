@@ -10,9 +10,10 @@ import queue
 import threading
 import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -64,7 +65,7 @@ class ControlTask:
     last_execution: float = 0.0
     next_execution: float = 0.0
     deadline_violations: int = 0
-    execution_history: List[float] = field(default_factory=list)
+    execution_history: list[float] = field(default_factory=list)
     enabled: bool = True
 
 
@@ -72,12 +73,12 @@ class ControlTask:
 class ControlLoop:
     """Control loop configuration"""
     loop_id: str
-    input_channels: List[int]   # ADC channels for inputs
-    output_channels: List[int]  # DAC channels for outputs
+    input_channels: list[int]   # ADC channels for inputs
+    output_channels: list[int]  # DAC channels for outputs
     control_algorithm: str      # PID, Q-learning, etc.
     setpoint: float
-    gains: Dict[str, float]     # Control gains (Kp, Ki, Kd, etc.)
-    limits: Dict[str, Tuple[float, float]]  # Output limits
+    gains: dict[str, float]     # Control gains (Kp, Ki, Kd, etc.)
+    limits: dict[str, tuple[float, float]]  # Output limits
     enabled: bool = True
 
     # State variables
@@ -97,16 +98,16 @@ class ControllerMeasurement:
     jitter_ms: float
     deadline_violations_recent: int
     interrupt_count: int
-    task_execution_times: Dict[str, float]
-    active_control_loops: List[str]
+    task_execution_times: dict[str, float]
+    active_control_loops: list[str]
     safety_state: str
-    fault_flags: List[str]
+    fault_flags: list[str]
 
 
 class RealTimeController:
     """
     Real-time controller for MFC Q-learning execution
-    
+
     Provides deterministic control loops, interrupt handling, and timing constraints
     for executing trained Q-learning models in real-time MFC control applications.
     """
@@ -358,7 +359,7 @@ class RealTimeController:
                     logger.error(f"Control loop {loop_id} execution error: {e}")
                     self._handle_controller_fault(f"CONTROL_LOOP_ERROR_{loop_id}")
 
-    def _execute_pid_control(self, loop: ControlLoop, inputs: Dict[int, float]) -> float:
+    def _execute_pid_control(self, loop: ControlLoop, inputs: dict[int, float]) -> float:
         """Execute PID control algorithm"""
         # Get process variable (assume first input channel)
         if not inputs:
@@ -399,7 +400,7 @@ class RealTimeController:
 
         return output
 
-    def _execute_qlearning_control(self, loop: ControlLoop, inputs: Dict[int, float]) -> float:
+    def _execute_qlearning_control(self, loop: ControlLoop, inputs: dict[int, float]) -> float:
         """Execute Q-learning control algorithm"""
         # This would interface with the ModelInferenceEngine
         # For now, implement a simple placeholder
@@ -546,7 +547,7 @@ class RealTimeController:
                 fault_flags=self.fault_flags.copy()
             )
 
-    def get_timing_analysis(self) -> Dict[str, Any]:
+    def get_timing_analysis(self) -> dict[str, Any]:
         """Get detailed timing analysis"""
         return self.timing_analyzer.get_analysis()
 
@@ -571,7 +572,7 @@ class TimingAnalyzer:
             'execution_time_ms': execution_time_ms
         })
 
-    def get_analysis(self) -> Dict[str, Any]:
+    def get_analysis(self) -> dict[str, Any]:
         """Get comprehensive timing analysis"""
         analysis = {
             'tasks': {},
@@ -605,7 +606,7 @@ class TimingAnalyzer:
         return analysis
 
 
-def create_standard_real_time_controllers() -> Dict[str, RealTimeController]:
+def create_standard_real_time_controllers() -> dict[str, RealTimeController]:
     """Create standard real-time controller configurations"""
 
     # High-performance real-time controller

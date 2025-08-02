@@ -10,7 +10,7 @@ Created: 2025-07-26
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -34,7 +34,7 @@ class CathodeParameters:
 class BaseCathodeModel(ABC):
     """
     Abstract base class for cathode models in MFC simulations.
-    
+
     Provides common functionality for all cathode types including:
     - Butler-Volmer kinetics framework
     - Temperature dependency
@@ -55,16 +55,16 @@ class BaseCathodeModel(ABC):
         """Setup cathode-specific kinetic parameters. Must be implemented by subclasses."""
         pass
 
-    def calculate_equilibrium_potential(self, oxygen_conc: Optional[float] = None, ph: Optional[float] = None) -> float:
+    def calculate_equilibrium_potential(self, oxygen_conc: float | None = None, ph: float | None = None) -> float:
         """
         Calculate equilibrium potential for O2/H2O reaction using Nernst equation.
-        
+
         O2 + 4H+ + 4e- -> 2H2O
-        
+
         Args:
             oxygen_conc: Oxygen concentration in mol/L
             ph: Solution pH
-        
+
         Returns:
             Equilibrium potential in V vs SHE
         """
@@ -95,16 +95,16 @@ class BaseCathodeModel(ABC):
         return float(equilibrium_potential)
 
     def calculate_overpotential(self, cathode_potential: float,
-                              oxygen_conc: Optional[float] = None,
-                              ph: Optional[float] = None) -> float:
+                              oxygen_conc: float | None = None,
+                              ph: float | None = None) -> float:
         """
         Calculate cathode overpotential.
-        
+
         Args:
             cathode_potential: Applied cathode potential in V
             oxygen_conc: Oxygen concentration in mol/L
             ph: Solution pH
-        
+
         Returns:
             Overpotential in V (positive = overpotential for reduction)
         """
@@ -114,29 +114,29 @@ class BaseCathodeModel(ABC):
 
     @abstractmethod
     def calculate_current_density(self, overpotential: float,
-                                oxygen_conc: Optional[float] = None) -> float:
+                                oxygen_conc: float | None = None) -> float:
         """
         Calculate current density using Butler-Volmer kinetics.
         Must be implemented by specific cathode models.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Current density in A/m²
         """
         pass
 
     def calculate_current(self, overpotential: float,
-                         oxygen_conc: Optional[float] = None) -> float:
+                         oxygen_conc: float | None = None) -> float:
         """
         Calculate total cathode current.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Current in A
         """
@@ -144,14 +144,14 @@ class BaseCathodeModel(ABC):
         return current_density * self.area_m2
 
     def calculate_power_loss(self, overpotential: float,
-                           oxygen_conc: Optional[float] = None) -> float:
+                           oxygen_conc: float | None = None) -> float:
         """
         Calculate power loss at the cathode.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Power loss in W (always positive)
         """
@@ -161,14 +161,14 @@ class BaseCathodeModel(ABC):
         return power_loss
 
     def calculate_oxygen_consumption_rate(self, overpotential: float,
-                                        oxygen_conc: Optional[float] = None) -> float:
+                                        oxygen_conc: float | None = None) -> float:
         """
         Calculate oxygen consumption rate based on current.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Oxygen consumption rate in mol/s
         """
@@ -189,10 +189,10 @@ class BaseCathodeModel(ABC):
         self.area_m2 = new_area_m2
         self.params.area_m2 = new_area_m2
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """
         Get model information and current parameters.
-        
+
         Returns:
             Dictionary with model information
         """
@@ -230,14 +230,14 @@ class ButlerVolmerKinetics:
                                 concentration_ratio: float = 1.0) -> float:
         """
         Calculate current density using Butler-Volmer equation.
-        
+
         Args:
             exchange_current_density: Exchange current density in A/m²
             transfer_coefficient: Charge transfer coefficient (typically 0.5)
             overpotential: Overpotential in V (positive for cathodic overpotential)
             temperature_K: Temperature in K
             concentration_ratio: C_O2/C_O2_ref
-        
+
         Returns:
             Current density in A/m² (positive for cathodic current)
         """
@@ -265,13 +265,13 @@ class ButlerVolmerKinetics:
                               concentration_ratio: float = 1.0) -> float:
         """
         Calculate current density using Tafel equation (high overpotential approximation).
-        
+
         Args:
             exchange_current_density: Exchange current density in A/m²
             tafel_slope: Tafel slope in V/decade
             overpotential: Overpotential in V
             concentration_ratio: C_O2/C_O2_ref
-        
+
         Returns:
             Current density in A/m²
         """

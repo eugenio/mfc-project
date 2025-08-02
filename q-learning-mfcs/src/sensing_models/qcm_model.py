@@ -22,7 +22,7 @@ import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -85,9 +85,9 @@ class QCMMeasurement:
 class SauerbreyModel:
     """
     Classical Sauerbrey equation for rigid film mass determination.
-    
+
     Δf = -Cf × Δm/A
-    
+
     Where:
     - Δf: Frequency shift (Hz)
     - Cf: Mass sensitivity constant (Hz·cm²/μg)
@@ -178,11 +178,11 @@ class SauerbreyModel:
     def calculate_mass_from_frequency(self, frequency_shift: float, area: float = 1.0) -> float:
         """
         Calculate mass change from frequency shift.
-        
+
         Args:
             frequency_shift: Frequency shift (Hz, negative for mass addition)
             area: Active electrode area (cm²)
-            
+
         Returns:
             Mass per unit area (ng/cm²)
         """
@@ -193,10 +193,10 @@ class SauerbreyModel:
     def calculate_frequency_from_mass(self, mass_per_area: float) -> float:
         """
         Calculate frequency shift from mass change.
-        
+
         Args:
             mass_per_area: Mass per unit area (ng/cm²)
-            
+
         Returns:
             Frequency shift (Hz)
         """
@@ -206,11 +206,11 @@ class SauerbreyModel:
     def estimate_thickness(self, mass_per_area: float, density: float) -> float:
         """
         Estimate film thickness from mass.
-        
+
         Args:
             mass_per_area: Mass per unit area (ng/cm²)
             density: Film density (g/cm³)
-            
+
         Returns:
             Thickness (μm)
         """
@@ -224,7 +224,7 @@ class SauerbreyModel:
         thickness_cm = mass_g_per_cm2 / density
         return thickness_cm * 1e4  # Convert to μm
 
-    def get_model_parameters(self) -> Dict[str, Any]:
+    def get_model_parameters(self) -> dict[str, Any]:
         """Get model parameters summary."""
         return {
             'crystal_type': self.crystal_type.value,
@@ -240,7 +240,7 @@ class SauerbreyModel:
 class ViscoelasticModel:
     """
     Viscoelastic model for soft biofilm QCM analysis.
-    
+
     For viscoelastic films, the Sauerbrey equation is not valid.
     This model uses the Voigt model with complex shear modulus.
     """
@@ -257,17 +257,17 @@ class ViscoelasticModel:
 
     def calculate_viscoelastic_correction(self, frequency: float, shear_modulus: float,
                                         viscosity: float, density: float,
-                                        thickness: float) -> Tuple[float, float]:
+                                        thickness: float) -> tuple[float, float]:
         """
         Calculate viscoelastic correction factors.
-        
+
         Args:
             frequency: QCM frequency (Hz)
             shear_modulus: Film shear modulus (Pa)
             viscosity: Film viscosity (Pa·s)
             density: Film density (kg/m³)
             thickness: Film thickness (m)
-            
+
         Returns:
             Tuple of (frequency_correction, dissipation_change)
         """
@@ -300,15 +300,15 @@ class ViscoelasticModel:
         return freq_correction, dissipation_change
 
     def correct_sauerbrey_mass(self, sauerbrey_mass: float, frequency: float,
-                              biofilm_properties: Dict[str, float]) -> float:
+                              biofilm_properties: dict[str, float]) -> float:
         """
         Apply viscoelastic correction to Sauerbrey mass calculation.
-        
+
         Args:
             sauerbrey_mass: Mass from Sauerbrey equation (ng/cm²)
             frequency: QCM frequency (Hz)
             biofilm_properties: Dictionary of biofilm properties
-            
+
         Returns:
             Corrected mass (ng/cm²)
         """
@@ -334,7 +334,7 @@ class ViscoelasticModel:
 class QCMModel:
     """
     Complete QCM model for biofilm mass sensing in MFCs.
-    
+
     Features:
     - Sauerbrey and viscoelastic mass calculations
     - Species-specific biofilm properties
@@ -350,7 +350,7 @@ class QCMModel:
                  use_gpu: bool = True):
         """
         Initialize QCM model.
-        
+
         Args:
             crystal_type: QCM crystal specification
             electrode_type: Electrode material
@@ -450,13 +450,13 @@ class QCMModel:
                            temperature: float = 303.0, time_hours: float = 0.0) -> QCMMeasurement:
         """
         Simulate QCM measurement for given biofilm state.
-        
+
         Args:
             biofilm_mass: Total biofilm mass (μg)
             biofilm_thickness: Biofilm thickness (μm)
             temperature: Temperature (K)
             time_hours: Measurement time (hours)
-            
+
         Returns:
             QCM measurement data
         """
@@ -536,13 +536,13 @@ class QCMModel:
 
         return measurement
 
-    def estimate_biofilm_properties(self, measurement: QCMMeasurement) -> Dict[str, float]:
+    def estimate_biofilm_properties(self, measurement: QCMMeasurement) -> dict[str, float]:
         """
         Estimate biofilm properties from QCM measurement.
-        
+
         Args:
             measurement: QCM measurement data
-            
+
         Returns:
             Dictionary of estimated biofilm properties
         """
@@ -583,10 +583,10 @@ class QCMModel:
             'q_factor': measurement.quality_factor
         }
 
-    def calibrate_for_biofilm(self, reference_data: List[Tuple[float, float, QCMMeasurement]]):
+    def calibrate_for_biofilm(self, reference_data: list[tuple[float, float, QCMMeasurement]]):
         """
         Calibrate QCM for specific biofilm type.
-        
+
         Args:
             reference_data: List of (known_mass, known_thickness, measurement) tuples
         """
@@ -631,7 +631,7 @@ class QCMModel:
 
         print(f"QCM baseline reset to {self.baseline_frequency:.1f} Hz")
 
-    def get_measurement_summary(self) -> Dict[str, Any]:
+    def get_measurement_summary(self) -> dict[str, Any]:
         """Get summary of current QCM measurement state."""
         return {
             'crystal_type': self.crystal_type.value,
@@ -650,13 +650,13 @@ class QCMModel:
             'gpu_available': self.gpu_available
         }
 
-    def get_frequency_stability_metrics(self, window_hours: float = 1.0) -> Dict[str, float]:
+    def get_frequency_stability_metrics(self, window_hours: float = 1.0) -> dict[str, float]:
         """
         Calculate frequency stability metrics over specified time window.
-        
+
         Args:
             window_hours: Time window for stability analysis
-            
+
         Returns:
             Dictionary of stability metrics
         """

@@ -14,7 +14,7 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -42,7 +42,7 @@ class EnhancedCertificateManager(CertificateManager):
         super().__init__(config)
         self.notification_config = self._load_notification_config()
 
-    def _load_notification_config(self) -> Dict:
+    def _load_notification_config(self) -> dict:
         """Load email notification configuration"""
         config_file = Path("/etc/mfc/notification-config.json")
         default_config = {
@@ -65,7 +65,7 @@ class EnhancedCertificateManager(CertificateManager):
 
         return default_config
 
-    def check_certificate_expiry(self) -> Tuple[bool, Optional[datetime], int]:
+    def check_certificate_expiry(self) -> tuple[bool, datetime | None, int]:
         """
         Check certificate expiry and return detailed information
         Returns: (needs_renewal, expiry_date, days_until_expiry)
@@ -136,9 +136,9 @@ This is an automated message from the MFC Monitoring System.
         except Exception as e:
             logger.error(f"Failed to send notification: {e}")
 
-    def monitor_certificate(self) -> Dict[str, Any]:
+    def monitor_certificate(self) -> dict[str, Any]:
         """Monitor certificate status and return comprehensive report"""
-        report: Dict[str, Any] = {
+        report: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "domain": self.config.domain,
             "certificate_exists": False,
@@ -214,7 +214,7 @@ This is an automated message from the MFC Monitoring System.
             logger.warning(f"Could not check cron job: {e}")
             return False
 
-    def renew_certificate_if_needed(self) -> Tuple[bool, str]:
+    def renew_certificate_if_needed(self) -> tuple[bool, str]:
         """Renew certificate if needed"""
         needs_renewal, expiry_date, days_until_expiry = self.check_certificate_expiry()
 
@@ -305,7 +305,7 @@ This is an automated message from the MFC Monitoring System.
             logger.error(f"Error removing monitoring cron: {e}")
             return False
 
-def print_certificate_report(report: Dict):
+def print_certificate_report(report: dict):
     """Print formatted certificate report"""
     print("\n" + "="*60)
     print("MFC SSL Certificate Status Report")

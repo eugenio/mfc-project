@@ -22,12 +22,7 @@ from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import (
     Any,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
     Protocol,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -117,14 +112,14 @@ class MaintenanceResource:
     resource_id: str
     resource_type: ResourceType
     name: str
-    availability_schedule: Dict[str, List[Tuple[datetime, datetime]]] = field(default_factory=dict)
+    availability_schedule: dict[str, list[tuple[datetime, datetime]]] = field(default_factory=dict)
     cost_per_hour: float = 0.0
     cost_per_use: float = 0.0
     capacity: int = 1
     current_utilization: float = 0.0
     location: str = ""
-    qualifications: List[str] = field(default_factory=list)
-    maintenance_requirements: List[str] = field(default_factory=list)
+    qualifications: list[str] = field(default_factory=list)
+    maintenance_requirements: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate resource data."""
@@ -139,7 +134,7 @@ class MaintenanceResource:
         self,
         start_time: datetime,
         end_time: datetime,
-        day_of_week: Optional[str] = None
+        day_of_week: str | None = None
     ) -> bool:
         """Check if resource is available during specified time period."""
         if day_of_week is None:
@@ -173,10 +168,10 @@ class MaintenanceTask:
     description: str = ""
 
     # Scheduling information
-    scheduled_start: Optional[datetime] = None
-    scheduled_end: Optional[datetime] = None
-    actual_start: Optional[datetime] = None
-    actual_end: Optional[datetime] = None
+    scheduled_start: datetime | None = None
+    scheduled_end: datetime | None = None
+    actual_start: datetime | None = None
+    actual_end: datetime | None = None
     duration_estimate: timedelta = field(default=timedelta(hours=1))
 
     # Status and progress
@@ -184,12 +179,12 @@ class MaintenanceTask:
     progress_percentage: float = 0.0
 
     # Resource requirements
-    required_resources: List[str] = field(default_factory=list)  # Resource IDs
-    assigned_resources: List[str] = field(default_factory=list)  # Assigned resource IDs
+    required_resources: list[str] = field(default_factory=list)  # Resource IDs
+    assigned_resources: list[str] = field(default_factory=list)  # Assigned resource IDs
 
     # Dependencies
-    prerequisite_tasks: List[str] = field(default_factory=list)  # Task IDs
-    dependent_tasks: List[str] = field(default_factory=list)  # Task IDs
+    prerequisite_tasks: list[str] = field(default_factory=list)  # Task IDs
+    dependent_tasks: list[str] = field(default_factory=list)  # Task IDs
 
     # Cost and impact
     estimated_cost: float = 0.0
@@ -198,13 +193,13 @@ class MaintenanceTask:
     reliability_impact: float = 0.0  # Impact on system reliability (0-1)
 
     # Recurrence
-    recurrence_interval: Optional[timedelta] = None
-    last_performed: Optional[datetime] = None
-    next_due: Optional[datetime] = None
+    recurrence_interval: timedelta | None = None
+    last_performed: datetime | None = None
+    next_due: datetime | None = None
 
     # Documentation
-    work_instructions: List[str] = field(default_factory=list)
-    safety_requirements: List[str] = field(default_factory=list)
+    work_instructions: list[str] = field(default_factory=list)
+    safety_requirements: list[str] = field(default_factory=list)
     completion_notes: str = ""
 
     # Metadata
@@ -236,7 +231,7 @@ class MaintenanceTask:
             # If no last performed date, schedule for now + interval
             self.next_due = datetime.now() + self.recurrence_interval
 
-    def is_overdue(self, current_time: Optional[datetime] = None) -> bool:
+    def is_overdue(self, current_time: datetime | None = None) -> bool:
         """Check if task is overdue."""
         if not self.next_due:
             return False
@@ -246,8 +241,8 @@ class MaintenanceTask:
 
     def mark_completed(
         self,
-        completion_time: Optional[datetime] = None,
-        actual_cost: Optional[float] = None,
+        completion_time: datetime | None = None,
+        actual_cost: float | None = None,
         notes: str = ""
     ) -> None:
         """Mark task as completed."""
@@ -266,7 +261,7 @@ class MaintenanceTask:
         self.last_performed = completion_time
         self._update_next_due_date()
 
-    def estimate_effort(self) -> Dict[str, float]:
+    def estimate_effort(self) -> dict[str, float]:
         """Estimate effort required for this task."""
         base_hours = self.duration_estimate.total_seconds() / 3600
 
@@ -296,7 +291,7 @@ class MaintenanceTask:
             'complexity_factor': complexity_multiplier
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert task to dictionary format."""
         return {
             'task_id': self.task_id,
@@ -338,16 +333,16 @@ class MaintenanceSchedule:
     """Represents a complete maintenance schedule."""
     schedule_id: str
     schedule_name: str
-    tasks: List[MaintenanceTask] = field(default_factory=list)
-    resources: List[MaintenanceResource] = field(default_factory=list)
+    tasks: list[MaintenanceTask] = field(default_factory=list)
+    resources: list[MaintenanceResource] = field(default_factory=list)
     schedule_start: datetime = field(default_factory=datetime.now)
-    schedule_end: Optional[datetime] = None
+    schedule_end: datetime | None = None
     optimization_objective: str = "cost_minimize"  # cost_minimize, downtime_minimize, reliability_maximize
 
     # Schedule metrics
     total_estimated_cost: float = 0.0
     total_estimated_downtime: float = 0.0
-    resource_utilization: Dict[str, float] = field(default_factory=dict)
+    resource_utilization: dict[str, float] = field(default_factory=dict)
     schedule_efficiency: float = 0.0
 
     # Metadata
@@ -370,7 +365,7 @@ class MaintenanceSchedule:
         self.total_estimated_downtime = sum(task.downtime_impact for task in self.tasks)
 
         # Calculate resource utilization
-        resource_hours: DefaultDict[str, float] = defaultdict(float)
+        resource_hours: defaultdict[str, float] = defaultdict(float)
         total_schedule_hours = (self.schedule_end - self.schedule_start).total_seconds() / 3600 if self.schedule_end else 168  # Default to 1 week
 
         for task in self.tasks:
@@ -400,11 +395,11 @@ class MaintenanceSchedule:
             return True
         return False
 
-    def get_tasks_by_priority(self, priority: MaintenancePriority) -> List[MaintenanceTask]:
+    def get_tasks_by_priority(self, priority: MaintenancePriority) -> list[MaintenanceTask]:
         """Get tasks with specified priority."""
         return [task for task in self.tasks if task.priority == priority]
 
-    def get_overdue_tasks(self, current_time: Optional[datetime] = None) -> List[MaintenanceTask]:
+    def get_overdue_tasks(self, current_time: datetime | None = None) -> list[MaintenanceTask]:
         """Get overdue tasks."""
         return [task for task in self.tasks if task.is_overdue(current_time)]
 
@@ -412,7 +407,7 @@ class MaintenanceSchedule:
         self,
         start_time: datetime,
         end_time: datetime
-    ) -> List[MaintenanceTask]:
+    ) -> list[MaintenanceTask]:
         """Get tasks scheduled within specified timeframe."""
         return [
             task for task in self.tasks
@@ -420,7 +415,7 @@ class MaintenanceSchedule:
             task.scheduled_start >= start_time and task.scheduled_end <= end_time
         ]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert schedule to dictionary format."""
         return {
             'schedule_id': self.schedule_id,
@@ -456,9 +451,9 @@ class MaintenanceScheduler(Protocol):
 
     def create_schedule(
         self,
-        tasks: List[MaintenanceTask],
-        resources: Optional[List[MaintenanceResource]] = None,
-        constraints: Optional[Dict[str, Any]] = None,
+        tasks: list[MaintenanceTask],
+        resources: list[MaintenanceResource] | None = None,
+        constraints: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> MaintenanceSchedule:
         """Create optimized maintenance schedule."""
@@ -484,7 +479,7 @@ class BaseMaintenanceScheduler(ABC):
         max_daily_tasks: int = 8
     ) -> None:
         """Initialize maintenance scheduler.
-        
+
         Args:
             optimization_method: Method for schedule optimization
             default_buffer_time: Default buffer time between tasks
@@ -502,9 +497,9 @@ class BaseMaintenanceScheduler(ABC):
     @abstractmethod
     def create_schedule(
         self,
-        tasks: List[MaintenanceTask],
-        resources: Optional[List[MaintenanceResource]] = None,
-        constraints: Optional[Dict[str, Any]] = None,
+        tasks: list[MaintenanceTask],
+        resources: list[MaintenanceResource] | None = None,
+        constraints: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> MaintenanceSchedule:
         """Create optimized maintenance schedule."""
@@ -520,9 +515,9 @@ class BaseMaintenanceScheduler(ABC):
         """Optimize existing maintenance schedule."""
         pass
 
-    def validate_schedule(self, schedule: MaintenanceSchedule) -> Dict[str, Any]:
+    def validate_schedule(self, schedule: MaintenanceSchedule) -> dict[str, Any]:
         """Validate schedule for conflicts and constraints."""
-        validation_results: Dict[str, Any] = {
+        validation_results: dict[str, Any] = {
             'is_valid': True,
             'conflicts': [],
             'warnings': [],
@@ -595,10 +590,10 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
         optimization_method: str = "greedy",
         default_buffer_time: timedelta = timedelta(hours=1),
         max_daily_tasks: int = 8,
-        priority_weights: Optional[Dict[str, float]] = None
+        priority_weights: dict[str, float] | None = None
     ) -> None:
         """Initialize greedy scheduler.
-        
+
         Args:
             optimization_method: Method for schedule optimization
             default_buffer_time: Default buffer time between tasks
@@ -616,19 +611,19 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
 
     def create_schedule(
         self,
-        tasks: List[MaintenanceTask],
-        resources: Optional[List[MaintenanceResource]] = None,
-        constraints: Optional[Dict[str, Any]] = None,
+        tasks: list[MaintenanceTask],
+        resources: list[MaintenanceResource] | None = None,
+        constraints: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> MaintenanceSchedule:
         """Create optimized maintenance schedule using greedy algorithm.
-        
+
         Args:
             tasks: List of maintenance tasks to schedule
             resources: Available maintenance resources
             constraints: Scheduling constraints
             **kwargs: Additional scheduling parameters
-            
+
         Returns:
             Optimized maintenance schedule
         """
@@ -649,7 +644,7 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
 
             # Schedule tasks greedily
             current_time = kwargs.get('start_time', datetime.now())
-            resource_schedules: DefaultDict[str, List[Tuple[datetime, datetime, str]]] = defaultdict(list)  # Track when each resource is busy
+            resource_schedules: defaultdict[str, list[tuple[datetime, datetime, str]]] = defaultdict(list)  # Track when each resource is busy
 
             for task in prioritized_tasks:
                 # Find best time slot for this task
@@ -698,12 +693,12 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
         **kwargs: Any
     ) -> MaintenanceSchedule:
         """Optimize existing maintenance schedule.
-        
+
         Args:
             schedule: Existing maintenance schedule
             objective: Optimization objective
             **kwargs: Additional optimization parameters
-            
+
         Returns:
             Optimized maintenance schedule
         """
@@ -756,9 +751,9 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
 
     def _prioritize_tasks(
         self,
-        tasks: List[MaintenanceTask],
-        resources: Optional[List[MaintenanceResource]] = None
-    ) -> List[MaintenanceTask]:
+        tasks: list[MaintenanceTask],
+        resources: list[MaintenanceResource] | None = None
+    ) -> list[MaintenanceTask]:
         """Prioritize tasks based on multiple criteria."""
         task_scores = []
 
@@ -774,7 +769,7 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
     def _calculate_priority_score(
         self,
         task: MaintenanceTask,
-        resources: Optional[List[MaintenanceResource]] = None
+        resources: list[MaintenanceResource] | None = None
     ) -> float:
         """Calculate priority score for a task."""
         score = 0.0
@@ -815,9 +810,9 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
         self,
         task: MaintenanceTask,
         earliest_start: datetime,
-        resource_schedules: Dict[str, List[Tuple[datetime, datetime, str]]],
-        resources: Optional[List[MaintenanceResource]] = None
-    ) -> Optional[datetime]:
+        resource_schedules: dict[str, list[tuple[datetime, datetime, str]]],
+        resources: list[MaintenanceResource] | None = None
+    ) -> datetime | None:
         """Find the best time slot for scheduling a task."""
         # Check if task has prerequisites
         latest_prereq_end = earliest_start
@@ -849,8 +844,8 @@ class GreedyMaintenanceScheduler(BaseMaintenanceScheduler):
         task: MaintenanceTask,
         start_time: datetime,
         end_time: datetime,
-        resource_schedules: Dict[str, List[Tuple[datetime, datetime, str]]],
-        resources: Optional[List[MaintenanceResource]] = None
+        resource_schedules: dict[str, list[tuple[datetime, datetime, str]]],
+        resources: list[MaintenanceResource] | None = None
     ) -> bool:
         """Check if all required resources are available during time slot."""
         for resource_id in task.required_resources:
@@ -886,7 +881,7 @@ def create_greedy_scheduler(
     )
 
 
-def create_sample_maintenance_tasks() -> List[MaintenanceTask]:
+def create_sample_maintenance_tasks() -> list[MaintenanceTask]:
     """Create sample maintenance tasks for testing."""
     tasks = []
 
@@ -945,7 +940,7 @@ def create_sample_maintenance_tasks() -> List[MaintenanceTask]:
     return tasks
 
 
-def create_sample_resources() -> List[MaintenanceResource]:
+def create_sample_resources() -> list[MaintenanceResource]:
     """Create sample maintenance resources for testing."""
     resources = []
 

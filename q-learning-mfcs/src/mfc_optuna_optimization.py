@@ -3,7 +3,7 @@
 MFC Unified Q-Learning Hyperparameter Optimization with Optuna
 ==============================================================
 
-This module implements automated hyperparameter optimization for the MFC 
+This module implements automated hyperparameter optimization for the MFC
 unified Q-learning controller using Optuna framework. It systematically
 explores the parameter space to find optimal reward function weights and
 control parameters.
@@ -26,7 +26,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import numpy as np
 import optuna
@@ -44,11 +43,11 @@ class MFCOptunaOptimizer:
                  n_trials: int = 100,
                  n_jobs: int = 4,
                  study_name: str = "mfc_optimization",
-                 storage: Optional[str] = None,
+                 storage: str | None = None,
                  timeout: int = 3600):  # 1 hour timeout per trial
         """
         Initialize Optuna optimizer
-        
+
         Args:
             n_trials: Number of optimization trials
             n_jobs: Number of parallel jobs
@@ -87,13 +86,13 @@ class MFCOptunaOptimizer:
         )
         self.logger = logging.getLogger(__name__)
 
-    def define_search_space(self, trial) -> Dict:
+    def define_search_space(self, trial) -> dict:
         """
         Define hyperparameter search space for Optuna
-        
+
         Args:
             trial: Optuna trial object
-            
+
         Returns:
             Dictionary of hyperparameters to optimize
         """
@@ -146,13 +145,13 @@ class MFCOptunaOptimizer:
 
         return params
 
-    def create_modified_simulation(self, params: Dict) -> MFCUnifiedQLearningSimulation:
+    def create_modified_simulation(self, params: dict) -> MFCUnifiedQLearningSimulation:
         """
         Create MFC simulation with optimized parameters
-        
+
         Args:
             params: Optimized hyperparameters
-            
+
         Returns:
             Modified MFC simulation instance
         """
@@ -303,7 +302,7 @@ class MFCOptunaOptimizer:
 
         return sim
 
-    def update_action_space(self, sim, params: Dict):
+    def update_action_space(self, sim, params: dict):
         """Update action space based on optimized parameters"""
 
         # Create optimized flow actions
@@ -334,10 +333,10 @@ class MFCOptunaOptimizer:
     def objective(self, trial) -> float:
         """
         Objective function for Optuna optimization
-        
+
         Args:
             trial: Optuna trial object
-            
+
         Returns:
             Objective value to minimize (lower is better)
         """
@@ -421,7 +420,7 @@ class MFCOptunaOptimizer:
     def run_optimization(self) -> optuna.Study:
         """
         Run the complete optimization process
-        
+
         Returns:
             Completed Optuna study
         """
@@ -556,14 +555,14 @@ class MFCOptunaOptimizer:
 
         print("\n" + "="*80)
 
-    def get_top_configurations(self, study: optuna.Study, n_configs: int = 14) -> List[Dict]:
+    def get_top_configurations(self, study: optuna.Study, n_configs: int = 14) -> list[dict]:
         """
         Extract top N configurations from completed study
-        
+
         Args:
             study: Completed Optuna study
             n_configs: Number of top configurations to extract
-            
+
         Returns:
             List of parameter dictionaries for top configurations
         """
@@ -586,13 +585,13 @@ class MFCOptunaOptimizer:
 
         return top_configs
 
-    def run_extended_validation(self, configs: List[Dict]) -> List[Dict]:
+    def run_extended_validation(self, configs: list[dict]) -> list[dict]:
         """
         Run extended 600-hour simulations on top configurations in parallel
-        
+
         Args:
             configs: List of configuration dictionaries
-            
+
         Returns:
             List of validation results
         """
@@ -651,14 +650,14 @@ class MFCOptunaOptimizer:
 
         return validation_results
 
-    def _run_single_extended_validation(self, config: Dict, config_num: int) -> Dict:
+    def _run_single_extended_validation(self, config: dict, config_num: int) -> dict:
         """
         Run single extended validation simulation
-        
+
         Args:
             config: Configuration dictionary
             config_num: Configuration number for logging
-            
+
         Returns:
             Validation result dictionary
         """
@@ -786,7 +785,7 @@ class MFCOptunaOptimizer:
             self.logger.error(f"Extended validation {config_num} failed: {str(e)}")
             raise
 
-    def _apply_parameters_to_simulation(self, sim, params: Dict):
+    def _apply_parameters_to_simulation(self, sim, params: dict):
         """Apply optimized parameters to simulation (reuse optimization logic)"""
         # This reuses the same parameter application logic from create_modified_simulation
         # but without recreating the simulation object
@@ -893,7 +892,7 @@ class MFCOptunaOptimizer:
         # Apply action space
         self.update_action_space(sim, params)
 
-    def _save_validation_results(self, validation_results: List[Dict]):
+    def _save_validation_results(self, validation_results: list[dict]):
         """Save extended validation results"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -917,7 +916,7 @@ class MFCOptunaOptimizer:
 
         self.logger.info(f"Extended validation results saved to: {validation_file}")
 
-    def _print_validation_summary(self, validation_results: List[Dict]):
+    def _print_validation_summary(self, validation_results: list[dict]):
         """Print comprehensive validation summary"""
         print("\n" + "="*80)
         print("EXTENDED VALIDATION RESULTS (600 HOURS)")

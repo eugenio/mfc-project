@@ -8,21 +8,30 @@ This example demonstrates advanced configuration features including:
 - Transport mechanism configuration
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from config.biological_config import (
-    BacterialSpecies, MetabolicReactionConfig,
-    KineticParameters, LiteratureReference, get_shewanella_config
-)
-from config.substrate_config import (
-    SubstrateType, SubstrateDegradationPathway,
-    SubstrateKineticsConfig, SubstrateTransportConfig, get_lactate_config
+    BacterialSpecies,
+    KineticParameters,
+    LiteratureReference,
+    MetabolicReactionConfig,
+    get_shewanella_config,
 )
 from config.biological_validation import (
-    validate_species_metabolic_config, validate_comprehensive_substrate_config
+    validate_comprehensive_substrate_config,
+    validate_species_metabolic_config,
 )
+from config.substrate_config import (
+    SubstrateDegradationPathway,
+    SubstrateKineticsConfig,
+    SubstrateTransportConfig,
+    SubstrateType,
+    get_lactate_config,
+)
+
 
 def create_enhanced_shewanella_lactate_config():
     """

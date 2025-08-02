@@ -2,7 +2,7 @@
 """
 Advanced Q-Learning Visualization Components
 
-This module provides specialized visualization components for Q-learning 
+This module provides specialized visualization components for Q-learning
 algorithm analysis in MFC systems, designed for researchers and practitioners
 studying reinforcement learning applications.
 
@@ -30,7 +30,6 @@ import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -57,7 +56,7 @@ class QLearningVisualizationConfig:
     colormap: str = "RdYlBu_r"
     show_values: bool = True
     interpolation: str = "nearest"
-    figure_size: Tuple[int, int] = (12, 8)
+    figure_size: tuple[int, int] = (12, 8)
     font_size: int = 10
     show_policy_arrows: bool = True
     animation_speed: float = 0.5
@@ -68,7 +67,7 @@ class QLearningVisualizer:
 
     def __init__(self, config: QLearningVisualizationConfig = QLearningVisualizationConfig()):
         """Initialize Q-learning visualizer.
-        
+
         Args:
             config: Visualization configuration
         """
@@ -87,7 +86,7 @@ class QLearningVisualizer:
             color: white;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
+
         .qlearning-header {
             font-size: 24px;
             font-weight: bold;
@@ -96,7 +95,7 @@ class QLearningVisualizer:
             border-bottom: 2px solid rgba(255,255,255,0.3);
             padding-bottom: 10px;
         }
-        
+
         .metric-highlight {
             background: rgba(255,255,255,0.2);
             border-radius: 10px;
@@ -104,7 +103,7 @@ class QLearningVisualizer:
             margin: 10px 0;
             text-align: center;
         }
-        
+
         .convergence-indicator {
             font-size: 18px;
             font-weight: bold;
@@ -113,17 +112,17 @@ class QLearningVisualizer:
             text-align: center;
             margin: 10px 0;
         }
-        
+
         .convergence-good {
             background-color: #27AE60;
             color: white;
         }
-        
+
         .convergence-poor {
             background-color: #E74C3C;
             color: white;
         }
-        
+
         .convergence-moderate {
             background-color: #F39C12;
             color: white;
@@ -133,19 +132,19 @@ class QLearningVisualizer:
 
     def render_qlearning_dashboard(
         self,
-        q_table: Optional[np.ndarray] = None,
-        training_history: Optional[Dict[str, List[float]]] = None,
-        current_policy: Optional[np.ndarray] = None,
+        q_table: np.ndarray | None = None,
+        training_history: dict[str, list[float]] | None = None,
+        current_policy: np.ndarray | None = None,
         title: str = "Q-Learning Analysis Dashboard"
-    ) -> Dict[str, go.Figure]:
+    ) -> dict[str, go.Figure]:
         """Render comprehensive Q-learning analysis dashboard.
-        
+
         Args:
             q_table: Current Q-table values
             training_history: Dictionary with training metrics history
             current_policy: Current policy derived from Q-table
             title: Dashboard title
-            
+
         Returns:
             Dictionary of generated figures
         """
@@ -188,10 +187,10 @@ class QLearningVisualizer:
 
     def _render_qtable_analysis(self, q_table: np.ndarray) -> go.Figure:
         """Render Q-table heatmap and analysis.
-        
+
         Args:
             q_table: Q-table array with shape (n_states, n_actions)
-            
+
         Returns:
             Plotly figure for Q-table visualization
         """
@@ -284,10 +283,10 @@ class QLearningVisualizer:
 
     def _calculate_convergence_score(self, q_table: np.ndarray) -> float:
         """Calculate convergence score for Q-table.
-        
+
         Args:
             q_table: Q-table array
-            
+
         Returns:
             Convergence score between 0 and 1
         """
@@ -314,12 +313,12 @@ class QLearningVisualizer:
         # Convergence score: higher when actions are clearly differentiated
         return float(np.mean(relative_diffs))
 
-    def _render_learning_curves(self, training_history: Dict[str, List[float]]) -> go.Figure:
+    def _render_learning_curves(self, training_history: dict[str, list[float]]) -> go.Figure:
         """Render learning curves and training progress.
-        
+
         Args:
             training_history: Dictionary with training metrics
-            
+
         Returns:
             Plotly figure for learning curves
         """
@@ -400,7 +399,7 @@ class QLearningVisualizer:
 
         return fig
 
-    def _display_learning_statistics(self, training_history: Dict[str, List[float]]):
+    def _display_learning_statistics(self, training_history: dict[str, list[float]]):
         """Display learning statistics and insights."""
         st.markdown("#### 📊 Learning Statistics")
 
@@ -441,14 +440,14 @@ class QLearningVisualizer:
     def _render_policy_visualization(
         self,
         policy: np.ndarray,
-        q_table: Optional[np.ndarray] = None
+        q_table: np.ndarray | None = None
     ) -> go.Figure:
         """Render policy visualization with action preferences.
-        
+
         Args:
             policy: Policy array with preferred actions per state
             q_table: Optional Q-table for additional analysis
-            
+
         Returns:
             Plotly figure for policy visualization
         """
@@ -511,10 +510,10 @@ class QLearningVisualizer:
 
     def _calculate_policy_confidence(self, q_table: np.ndarray) -> np.ndarray:
         """Calculate confidence scores for policy decisions.
-        
+
         Args:
             q_table: Q-table array
-            
+
         Returns:
             Array of confidence scores per state
         """
@@ -538,7 +537,7 @@ class QLearningVisualizer:
 
         return confidence
 
-    def _display_policy_analysis(self, policy: np.ndarray, q_table: Optional[np.ndarray]):
+    def _display_policy_analysis(self, policy: np.ndarray, q_table: np.ndarray | None):
         """Display policy analysis and insights."""
         st.markdown("#### 🔍 Policy Analysis")
 
@@ -582,15 +581,15 @@ class QLearningVisualizer:
 
     def _render_performance_metrics(
         self,
-        q_table: Optional[np.ndarray],
-        training_history: Optional[Dict[str, List[float]]]
+        q_table: np.ndarray | None,
+        training_history: dict[str, list[float]] | None
     ) -> go.Figure:
         """Render comprehensive performance metrics dashboard.
-        
+
         Args:
             q_table: Q-table array
             training_history: Training history dictionary
-            
+
         Returns:
             Plotly figure for performance metrics
         """
@@ -685,7 +684,7 @@ class QLearningVisualizer:
         # Convert to exploration estimate (0 = no exploration, 1 = full exploration)
         return min(normalized_range, 1.0)
 
-    def _render_performance_trends(self, training_history: Dict[str, List[float]]):
+    def _render_performance_trends(self, training_history: dict[str, list[float]]):
         """Render performance trends over training."""
         st.markdown("#### 📈 Performance Trends")
 
@@ -731,8 +730,8 @@ class QLearningVisualizer:
 
     def _render_performance_recommendations(
         self,
-        q_table: Optional[np.ndarray],
-        training_history: Optional[Dict[str, List[float]]]
+        q_table: np.ndarray | None,
+        training_history: dict[str, list[float]] | None
     ):
         """Render performance improvement recommendations."""
         st.markdown("#### 💡 Performance Recommendations")
@@ -774,12 +773,12 @@ class QLearningVisualizer:
 
 # Utility functions for Q-learning visualization
 
-def load_qtable_from_file(file_path: str) -> Optional[np.ndarray]:
+def load_qtable_from_file(file_path: str) -> np.ndarray | None:
     """Load Q-table from file (pickle or numpy format).
-    
+
     Args:
         file_path: Path to Q-table file
-        
+
     Returns:
         Q-table array or None if loading fails
     """
@@ -805,7 +804,7 @@ def load_qtable_from_file(file_path: str) -> Optional[np.ndarray]:
 
 def save_visualization_config(config: QLearningVisualizationConfig, file_path: str):
     """Save visualization configuration to file.
-    
+
     Args:
         config: Visualization configuration
         file_path: Output file path
@@ -830,9 +829,9 @@ def save_visualization_config(config: QLearningVisualizationConfig, file_path: s
     except Exception as e:
         st.error(f"Failed to save configuration: {e}")
 
-def create_demo_qlearning_data() -> Tuple[np.ndarray, Dict[str, List[float]], np.ndarray]:
+def create_demo_qlearning_data() -> tuple[np.ndarray, dict[str, list[float]], np.ndarray]:
     """Create demo Q-learning data for testing visualizations.
-    
+
     Returns:
         Tuple of (q_table, training_history, policy)
     """
@@ -854,7 +853,7 @@ def create_demo_qlearning_data() -> Tuple[np.ndarray, Dict[str, List[float]], np
     }
 
     # Convert to lists with explicit float conversion
-    training_history: Dict[str, List[float]] = {k: [float(x) for x in v.tolist()] for k, v in training_data.items()}
+    training_history: dict[str, list[float]] = {k: [float(x) for x in v.tolist()] for k, v in training_data.items()}
 
     # Create policy with explicit type
     policy = np.argmax(q_table, axis=1).astype(np.int64)

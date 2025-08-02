@@ -25,12 +25,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
     Protocol,
-    Tuple,
-    Type,
     TypeVar,
     Union,
 )
@@ -44,8 +39,8 @@ logger = logging.getLogger(__name__)
 # Type aliases
 DataValue = Union[float, int, str, bool, datetime, np.number]
 TimestampType = Union[datetime, pd.Timestamp, float, int]
-DataRecord = Dict[str, DataValue]
-QueryResult = Union[pd.DataFrame, List[DataRecord], Dict[str, Any]]
+DataRecord = dict[str, DataValue]
+QueryResult = Union[pd.DataFrame, list[DataRecord], dict[str, Any]]
 
 # Generic types
 T = TypeVar('T')
@@ -114,11 +109,11 @@ class DataSchema:
     """Schema definition for data validation."""
     schema_name: str
     schema_version: str
-    fields: Dict[str, Dict[str, Any]]  # field_name -> {type, required, constraints}
+    fields: dict[str, dict[str, Any]]  # field_name -> {type, required, constraints}
     created_at: datetime = field(default_factory=datetime.now)
     description: str = ""
 
-    def validate_record(self, record: DataRecord) -> Tuple[bool, List[str]]:
+    def validate_record(self, record: DataRecord) -> tuple[bool, list[str]]:
         """Validate a data record against this schema."""
         errors = []
 
@@ -149,7 +144,7 @@ class DataSchema:
 
         return len(errors) == 0, errors
 
-    def _is_compatible_type(self, value: Any, expected_type: Type) -> bool:
+    def _is_compatible_type(self, value: Any, expected_type: type) -> bool:
         """Check if value is compatible with expected type."""
         if expected_type is float:
             return isinstance(value, (int, float, np.number))
@@ -165,8 +160,8 @@ class DataSchema:
         self,
         field_name: str,
         value: Any,
-        constraints: Dict[str, Any]
-    ) -> List[str]:
+        constraints: dict[str, Any]
+    ) -> list[str]:
         """Validate field constraints."""
         errors = []
 
@@ -201,7 +196,7 @@ class DataQualityReport:
 
     # Temporal quality
     temporal_coverage: timedelta = field(default=timedelta())
-    temporal_gaps: List[Tuple[datetime, datetime]] = field(default_factory=list)
+    temporal_gaps: list[tuple[datetime, datetime]] = field(default_factory=list)
     sampling_rate_consistency: float = 0.0
 
     # Value quality
@@ -221,8 +216,8 @@ class DataQualityReport:
     quality_level: DataQuality = DataQuality.ACCEPTABLE
 
     # Issues and recommendations
-    quality_issues: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    quality_issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
     # Metadata
     assessment_timestamp: datetime = field(default_factory=datetime.now)
@@ -246,7 +241,7 @@ class DataQualityReport:
 
         # Weight different aspects of quality
         weights = [0.3, 0.3, 0.2, 0.2]
-        self.overall_quality_score = sum(score * weight for score, weight in zip(scores, weights))
+        self.overall_quality_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
     def _determine_quality_level(self) -> None:
         """Determine quality level based on overall score."""
@@ -278,7 +273,7 @@ class DataQualityReport:
         if self.sampling_rate_consistency < 0.8:
             self.recommendations.append("Improve sampling rate consistency")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary format."""
         return {
             'total_records': self.total_records,
@@ -312,7 +307,7 @@ class DataStorage(Protocol):
 
     def store_data(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data: pd.DataFrame | list[DataRecord] | DataRecord,
         data_type: DataType,
         **kwargs: Any
     ) -> bool:
@@ -322,8 +317,8 @@ class DataStorage(Protocol):
     def retrieve_data(
         self,
         data_type: DataType,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         **kwargs: Any
     ) -> QueryResult:
         """Retrieve data."""
@@ -332,7 +327,7 @@ class DataStorage(Protocol):
     def delete_data(
         self,
         data_type: DataType,
-        conditions: Optional[Dict[str, Any]] = None,
+        conditions: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> bool:
         """Delete data."""
@@ -344,12 +339,12 @@ class BaseDataStorage(ABC):
 
     def __init__(
         self,
-        storage_path: Union[str, Path],
+        storage_path: str | Path,
         compression: bool = True,
         backup_enabled: bool = True
     ) -> None:
         """Initialize data storage.
-        
+
         Args:
             storage_path: Path for data storage
             compression: Enable data compression
@@ -372,7 +367,7 @@ class BaseDataStorage(ABC):
     @abstractmethod
     def store_data(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data: pd.DataFrame | list[DataRecord] | DataRecord,
         data_type: DataType,
         **kwargs: Any
     ) -> bool:
@@ -383,8 +378,8 @@ class BaseDataStorage(ABC):
     def retrieve_data(
         self,
         data_type: DataType,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         **kwargs: Any
     ) -> QueryResult:
         """Retrieve data."""
@@ -394,13 +389,13 @@ class BaseDataStorage(ABC):
     def delete_data(
         self,
         data_type: DataType,
-        conditions: Optional[Dict[str, Any]] = None,
+        conditions: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> bool:
         """Delete data."""
         pass
 
-    def create_backup(self, backup_path: Optional[Path] = None) -> bool:
+    def create_backup(self, backup_path: Path | None = None) -> bool:
         """Create backup of stored data."""
         if not self.backup_enabled:
             return False
@@ -426,13 +421,13 @@ class SQLiteDataStorage(BaseDataStorage):
 
     def __init__(
         self,
-        storage_path: Union[str, Path],
+        storage_path: str | Path,
         compression: bool = True,
         backup_enabled: bool = True,
         database_name: str = "mfc_stability_data.db"
     ) -> None:
         """Initialize SQLite data storage.
-        
+
         Args:
             storage_path: Path for data storage
             compression: Enable data compression
@@ -467,17 +462,17 @@ class SQLiteDataStorage(BaseDataStorage):
 
                 # Create indices for better query performance
                 cursor.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_timestamp 
+                    CREATE INDEX IF NOT EXISTS idx_timestamp
                     ON mfc_data(timestamp)
                 """)
 
                 cursor.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_data_type_timestamp 
+                    CREATE INDEX IF NOT EXISTS idx_data_type_timestamp
                     ON mfc_data(data_type, timestamp)
                 """)
 
                 cursor.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_component_metric 
+                    CREATE INDEX IF NOT EXISTS idx_component_metric
                     ON mfc_data(component_id, metric_name)
                 """)
 
@@ -522,17 +517,17 @@ class SQLiteDataStorage(BaseDataStorage):
 
     def store_data(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data: pd.DataFrame | list[DataRecord] | DataRecord,
         data_type: DataType,
         **kwargs: Any
     ) -> bool:
         """Store data in SQLite database.
-        
+
         Args:
             data: Data to store
             data_type: Type of data being stored
             **kwargs: Additional storage parameters
-            
+
         Returns:
             True if storage successful, False otherwise
         """
@@ -563,7 +558,7 @@ class SQLiteDataStorage(BaseDataStorage):
                     metadata_json = json.dumps(metadata_fields) if metadata_fields else None
 
                     cursor.execute("""
-                        INSERT INTO mfc_data 
+                        INSERT INTO mfc_data
                         (timestamp, data_type, component_id, metric_name, value, unit, quality_score, metadata)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
@@ -588,18 +583,18 @@ class SQLiteDataStorage(BaseDataStorage):
     def retrieve_data(
         self,
         data_type: DataType,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         **kwargs: Any
     ) -> QueryResult:
         """Retrieve data from SQLite database.
-        
+
         Args:
             data_type: Type of data to retrieve
             start_time: Start time for data retrieval
             end_time: End time for data retrieval
             **kwargs: Additional query parameters
-            
+
         Returns:
             Query results as DataFrame
         """
@@ -653,16 +648,16 @@ class SQLiteDataStorage(BaseDataStorage):
     def delete_data(
         self,
         data_type: DataType,
-        conditions: Optional[Dict[str, Any]] = None,
+        conditions: dict[str, Any] | None = None,
         **kwargs: Any
     ) -> bool:
         """Delete data from SQLite database.
-        
+
         Args:
             data_type: Type of data to delete
             conditions: Deletion conditions
             **kwargs: Additional deletion parameters
-            
+
         Returns:
             True if deletion successful, False otherwise
         """
@@ -694,8 +689,8 @@ class SQLiteDataStorage(BaseDataStorage):
 
     def _normalize_data_input(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord]
-    ) -> List[DataRecord]:
+        data: pd.DataFrame | list[DataRecord] | DataRecord
+    ) -> list[DataRecord]:
         """Normalize data input to list of records."""
         if isinstance(data, pd.DataFrame):
             return data.to_dict('records')
@@ -712,12 +707,12 @@ class MFCDataManager:
 
     def __init__(
         self,
-        storage: Optional[DataStorage] = None,
-        schema_registry: Optional[Dict[DataType, DataSchema]] = None,
-        quality_thresholds: Optional[Dict[str, float]] = None
+        storage: DataStorage | None = None,
+        schema_registry: dict[DataType, DataSchema] | None = None,
+        quality_thresholds: dict[str, float] | None = None
     ) -> None:
         """Initialize MFC data manager.
-        
+
         Args:
             storage: Data storage implementation
             schema_registry: Registry of data schemas
@@ -732,7 +727,7 @@ class MFCDataManager:
         """Setup logging for the data manager."""
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def _create_default_schemas(self) -> Dict[DataType, DataSchema]:
+    def _create_default_schemas(self) -> dict[DataType, DataSchema]:
         """Create default data schemas for MFC data types."""
         schemas = {}
 
@@ -768,7 +763,7 @@ class MFCDataManager:
 
         return schemas
 
-    def _create_default_thresholds(self) -> Dict[str, float]:
+    def _create_default_thresholds(self) -> dict[str, float]:
         """Create default quality assessment thresholds."""
         return {
             'completeness_threshold': 0.95,
@@ -781,19 +776,19 @@ class MFCDataManager:
 
     def store_data(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord],
+        data: pd.DataFrame | list[DataRecord] | DataRecord,
         data_type: DataType,
         validate: bool = True,
         **kwargs: Any
-    ) -> Tuple[bool, List[str]]:
+    ) -> tuple[bool, list[str]]:
         """Store data with optional validation.
-        
+
         Args:
             data: Data to store
             data_type: Type of data being stored
             validate: Whether to validate data before storage
             **kwargs: Additional storage parameters
-            
+
         Returns:
             Tuple of (success, validation_errors)
         """
@@ -832,18 +827,18 @@ class MFCDataManager:
     def retrieve_data(
         self,
         data_type: DataType,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         **kwargs: Any
     ) -> QueryResult:
         """Retrieve data from storage.
-        
+
         Args:
             data_type: Type of data to retrieve
             start_time: Start time for data retrieval
             end_time: End time for data retrieval
             **kwargs: Additional query parameters
-            
+
         Returns:
             Retrieved data
         """
@@ -858,17 +853,17 @@ class MFCDataManager:
 
     def assess_data_quality(
         self,
-        data: Union[pd.DataFrame, DataType],
-        time_range: Optional[Tuple[datetime, datetime]] = None,
+        data: pd.DataFrame | DataType,
+        time_range: tuple[datetime, datetime] | None = None,
         **kwargs: Any
     ) -> DataQualityReport:
         """Assess quality of data.
-        
+
         Args:
             data: Data to assess or data type to retrieve and assess
             time_range: Time range for assessment
             **kwargs: Additional assessment parameters
-            
+
         Returns:
             Data quality assessment report
         """
@@ -1038,8 +1033,8 @@ class MFCDataManager:
 
     def _normalize_data_for_validation(
         self,
-        data: Union[pd.DataFrame, List[DataRecord], DataRecord]
-    ) -> List[DataRecord]:
+        data: pd.DataFrame | list[DataRecord] | DataRecord
+    ) -> list[DataRecord]:
         """Normalize data for validation."""
         if isinstance(data, pd.DataFrame):
             return data.to_dict('records')
@@ -1053,14 +1048,14 @@ class MFCDataManager:
     def export_data(
         self,
         data_type: DataType,
-        output_path: Union[str, Path],
+        output_path: str | Path,
         format_type: StorageFormat = StorageFormat.CSV,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         **kwargs: Any
     ) -> bool:
         """Export data to external format.
-        
+
         Args:
             data_type: Type of data to export
             output_path: Path for exported data
@@ -1068,7 +1063,7 @@ class MFCDataManager:
             start_time: Start time for data export
             end_time: End time for data export
             **kwargs: Additional export parameters
-            
+
         Returns:
             True if export successful, False otherwise
         """

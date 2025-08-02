@@ -44,11 +44,11 @@ def setup_gpu_acceleration():
 def calculate_maintenance_requirements(total_substrate_consumed_mmol, simulation_hours):
     """
     Calculate maintenance requirements for substrate and buffer reservoirs.
-    
+
     Args:
         total_substrate_consumed_mmol: Total substrate consumed (mmol)
         simulation_hours: Total simulation duration (hours)
-        
+
     Returns:
         Dictionary with maintenance schedule and requirements
     """

@@ -33,9 +33,10 @@ Literature References:
 
 import logging
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -121,9 +122,9 @@ class StatisticalTest:
     test_type: HypothesisType
     alpha: float = 0.05
     alternative: str = "two-sided"  # "two-sided", "less", "greater"
-    correction_method: Optional[str] = None  # "bonferroni", "holm", "fdr_bh"
+    correction_method: str | None = None  # "bonferroni", "holm", "fdr_bh"
     bootstrap_samples: int = 1000
-    effect_size_type: Optional[EffectSizeType] = None
+    effect_size_type: EffectSizeType | None = None
 
     def __post_init__(self):
         """Validate test configuration."""
@@ -141,14 +142,14 @@ class TestResult:
     test_name: str
     statistic: float
     p_value: float
-    degrees_of_freedom: Optional[float] = None
-    critical_value: Optional[float] = None
-    confidence_interval: Optional[Tuple[float, float]] = None
-    effect_size: Optional[float] = None
-    effect_size_interpretation: Optional[str] = None
-    power: Optional[float] = None
-    sample_size: Optional[int] = None
-    assumptions_met: Optional[Dict[str, bool]] = None
+    degrees_of_freedom: float | None = None
+    critical_value: float | None = None
+    confidence_interval: tuple[float, float] | None = None
+    effect_size: float | None = None
+    effect_size_interpretation: str | None = None
+    power: float | None = None
+    sample_size: int | None = None
+    assumptions_met: dict[str, bool] | None = None
     test_description: str = ""
 
     @property
@@ -170,7 +171,7 @@ class DescriptiveStatistics:
     n: int
     mean: float
     median: float
-    mode: Optional[float]
+    mode: float | None
     std: float
     variance: float
     min_value: float
@@ -186,26 +187,26 @@ class DescriptiveStatistics:
     coefficient_of_variation: float
     mad: float  # Median Absolute Deviation
     trimmed_mean: float
-    geometric_mean: Optional[float]
-    harmonic_mean: Optional[float]
+    geometric_mean: float | None
+    harmonic_mean: float | None
 
     # Confidence intervals
-    mean_ci_95: Tuple[float, float]
-    median_ci_95: Optional[Tuple[float, float]] = None
+    mean_ci_95: tuple[float, float]
+    median_ci_95: tuple[float, float] | None = None
 
     # Distribution characteristics
-    normality_p_value: Optional[float] = None
+    normality_p_value: float | None = None
     outliers_count: int = 0
-    outliers_indices: List[int] = field(default_factory=list)
+    outliers_indices: list[int] = field(default_factory=list)
 
 
 class StatisticalAnalyzer:
     """Main framework for statistical analysis."""
 
-    def __init__(self, alpha: float = 0.05, random_seed: Optional[int] = None):
+    def __init__(self, alpha: float = 0.05, random_seed: int | None = None):
         """
         Initialize statistical analyzer.
-        
+
         Args:
             alpha: Significance level for tests
             random_seed: Random seed for reproducibility
@@ -221,11 +222,11 @@ class StatisticalAnalyzer:
                              confidence_level: float = 0.95) -> DescriptiveStatistics:
         """
         Calculate comprehensive descriptive statistics.
-        
+
         Args:
             data: Input data array
             confidence_level: Confidence level for intervals
-            
+
         Returns:
             Descriptive statistics
         """
@@ -330,17 +331,17 @@ class StatisticalAnalyzer:
 
     def hypothesis_test(self, test_config: StatisticalTest,
                        data1: np.ndarray,
-                       data2: Optional[np.ndarray] = None,
+                       data2: np.ndarray | None = None,
                        **kwargs) -> TestResult:
         """
         Perform hypothesis test.
-        
+
         Args:
             test_config: Test configuration
             data1: First data sample
             data2: Second data sample (if applicable)
             **kwargs: Additional test parameters
-            
+
         Returns:
             Test results
         """
@@ -557,17 +558,17 @@ class StatisticalAnalyzer:
             test_description=desc
         )
 
-    def multiple_comparisons(self, data: List[np.ndarray],
-                           group_names: Optional[List[str]] = None,
-                           method: str = "tukey") -> Dict[str, Any]:
+    def multiple_comparisons(self, data: list[np.ndarray],
+                           group_names: list[str] | None = None,
+                           method: str = "tukey") -> dict[str, Any]:
         """
         Perform multiple comparisons between groups.
-        
+
         Args:
             data: List of data arrays for each group
             group_names: Names of groups
             method: Multiple comparison method ("tukey", "bonferroni", "holm")
-            
+
         Returns:
             Multiple comparison results
         """
@@ -640,27 +641,27 @@ class StatisticalAnalyzer:
                 else:
                     rejected, p_corrected, _, _ = multipletests(all_p_values, method='fdr_bh')
 
-                for i, (comp, p_corr, is_rejected) in enumerate(zip(comparisons, p_corrected, rejected)):
+                for i, (comp, p_corr, is_rejected) in enumerate(zip(comparisons, p_corrected, rejected, strict=False)):
                     comp_key = f"{comp[0]}_vs_{comp[1]}"
                     results['pairwise_comparisons'][comp_key]['p_value_corrected'] = p_corr
                     results['pairwise_comparisons'][comp_key]['significant'] = is_rejected
 
         return results
 
-    def bootstrap_test(self, data1: np.ndarray, data2: Optional[np.ndarray] = None,
+    def bootstrap_test(self, data1: np.ndarray, data2: np.ndarray | None = None,
                       statistic_func: Callable = np.mean,
                       n_bootstrap: int = 1000,
-                      confidence_level: float = 0.95) -> Dict[str, Any]:
+                      confidence_level: float = 0.95) -> dict[str, Any]:
         """
         Perform bootstrap hypothesis test.
-        
+
         Args:
             data1: First sample
             data2: Second sample (optional)
             statistic_func: Function to calculate test statistic
             n_bootstrap: Number of bootstrap samples
             confidence_level: Confidence level for intervals
-            
+
         Returns:
             Bootstrap test results
         """
@@ -730,14 +731,14 @@ class DistributionAnalyzer:
             self.distributions = []
 
     def fit_distributions(self, data: np.ndarray,
-                         distributions: Optional[List] = None) -> Dict[str, Any]:
+                         distributions: list | None = None) -> dict[str, Any]:
         """
         Fit multiple distributions to data and compare goodness of fit.
-        
+
         Args:
             data: Input data
             distributions: List of distributions to test
-            
+
         Returns:
             Distribution fitting results
         """
@@ -814,13 +815,13 @@ class TimeSeriesAnalyzer:
         """Initialize time series analyzer."""
         self.logger = logging.getLogger(__name__)
 
-    def stationarity_tests(self, data: np.ndarray) -> Dict[str, Any]:
+    def stationarity_tests(self, data: np.ndarray) -> dict[str, Any]:
         """
         Test stationarity of time series.
-        
+
         Args:
             data: Time series data
-            
+
         Returns:
             Stationarity test results
         """
@@ -857,7 +858,7 @@ class TimeSeriesAnalyzer:
 
         return results
 
-    def _basic_stationarity_tests(self, data: np.ndarray) -> Dict[str, Any]:
+    def _basic_stationarity_tests(self, data: np.ndarray) -> dict[str, Any]:
         """Basic stationarity tests without statsmodels."""
         data_clean = np.asarray(data)[~np.isnan(data)]
 
@@ -887,14 +888,14 @@ class TimeSeriesAnalyzer:
 
         return results
 
-    def trend_analysis(self, data: np.ndarray, time_index: Optional[np.ndarray] = None) -> Dict[str, Any]:
+    def trend_analysis(self, data: np.ndarray, time_index: np.ndarray | None = None) -> dict[str, Any]:
         """
         Analyze trend in time series.
-        
+
         Args:
             data: Time series data
             time_index: Time index (optional)
-            
+
         Returns:
             Trend analysis results
         """
@@ -924,7 +925,7 @@ class TimeSeriesAnalyzer:
 
         return results
 
-    def _mann_kendall_test(self, data: np.ndarray) -> Dict[str, Any]:
+    def _mann_kendall_test(self, data: np.ndarray) -> dict[str, Any]:
         """Simplified Mann-Kendall trend test."""
         n = len(data)
         s = 0
@@ -966,12 +967,12 @@ def calculate_effect_size(data1: np.ndarray, data2: np.ndarray,
                          effect_type: EffectSizeType = EffectSizeType.COHENS_D) -> float:
     """
     Calculate effect size between two groups.
-    
+
     Args:
         data1: First group data
         data2: Second group data
         effect_type: Type of effect size to calculate
-        
+
     Returns:
         Effect size value
     """
@@ -1005,11 +1006,11 @@ def calculate_effect_size(data1: np.ndarray, data2: np.ndarray,
 def interpret_effect_size(effect_size: float, effect_type: EffectSizeType = EffectSizeType.COHENS_D) -> str:
     """
     Interpret effect size magnitude.
-    
+
     Args:
         effect_size: Effect size value
         effect_type: Type of effect size
-        
+
     Returns:
         Interpretation string
     """
@@ -1043,13 +1044,13 @@ def power_analysis(effect_size: float, sample_size: int, alpha: float = 0.05,
                   test_type: str = "two_sample_t") -> float:
     """
     Calculate statistical power for a given effect size and sample size.
-    
+
     Args:
         effect_size: Expected effect size
         sample_size: Total sample size
         alpha: Significance level
         test_type: Type of statistical test
-        
+
     Returns:
         Statistical power (1 - β)
     """

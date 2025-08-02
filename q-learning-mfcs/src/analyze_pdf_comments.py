@@ -9,17 +9,16 @@ import sys
 from pathlib import Path
 
 import fitz  # PyMuPDF
-
 from path_config import get_simulation_data_path
 
 
 def analyze_pdf_annotations(pdf_path):
     """
     Analyze PDF file for annotations, comments, and metadata.
-    
+
     Args:
         pdf_path (str): Path to the PDF file
-        
+
     Returns:
         dict: Analysis results containing annotations, metadata, and text content
     """

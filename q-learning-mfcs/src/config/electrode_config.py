@@ -19,7 +19,7 @@ Literature References:
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ElectrodeMaterial(Enum):
@@ -62,8 +62,8 @@ class MaterialProperties:
     attachment_energy: float  # kJ/mol - microbial attachment energy
 
     # Surface area properties
-    specific_surface_area: Optional[float] = None  # m²/m³ - for porous materials
-    porosity: Optional[float] = None  # dimensionless - void fraction for porous materials
+    specific_surface_area: float | None = None  # m²/m³ - for porous materials
+    porosity: float | None = None  # dimensionless - void fraction for porous materials
 
     # Literature reference
     reference: str = "User specified"
@@ -76,15 +76,15 @@ class ElectrodeGeometrySpec:
     geometry_type: ElectrodeGeometry
 
     # Dimensions (in meters)
-    length: Optional[float] = None  # m
-    width: Optional[float] = None   # m
-    height: Optional[float] = None  # m
-    diameter: Optional[float] = None  # m
-    thickness: Optional[float] = None  # m
+    length: float | None = None  # m
+    width: float | None = None   # m
+    height: float | None = None  # m
+    diameter: float | None = None  # m
+    thickness: float | None = None  # m
 
     # For custom geometries
-    projected_area: Optional[float] = None  # m² - manually specified
-    total_surface_area: Optional[float] = None  # m² - manually specified
+    projected_area: float | None = None  # m² - manually specified
+    total_surface_area: float | None = None  # m² - manually specified
 
     def calculate_projected_area(self) -> float:
         """Calculate projected area based on geometry type."""
@@ -223,7 +223,7 @@ class ElectrodeConfiguration:
 
         return base_coefficient * conductance_factor * resistance_factor
 
-    def get_configuration_summary(self) -> Dict[str, Any]:
+    def get_configuration_summary(self) -> dict[str, Any]:
         """Get a summary of electrode configuration for display."""
         return {
             'material': self.material.value,
@@ -328,18 +328,18 @@ MATERIAL_PROPERTIES_DATABASE = {
 def create_electrode_config(
     material: ElectrodeMaterial,
     geometry_type: ElectrodeGeometry,
-    dimensions: Dict[str, float],
-    custom_properties: Optional[MaterialProperties] = None
+    dimensions: dict[str, float],
+    custom_properties: MaterialProperties | None = None
 ) -> ElectrodeConfiguration:
     """
     Create an electrode configuration with specified material and geometry.
-    
+
     Args:
         material: Electrode material type
         geometry_type: Electrode geometry type
         dimensions: Dictionary of dimensions (length, width, height, diameter, thickness)
         custom_properties: Custom material properties (optional)
-    
+
     Returns:
         Complete electrode configuration
     """

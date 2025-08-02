@@ -2,10 +2,18 @@
 Create GitLab issue for mypy type checking errors
 """
 
-from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueType, IssueSeverity, IssueUrgency
+from gitlab_issue_manager import (
+    GitLabIssueManager,
+    IssueData,
+    IssueSeverity,
+    IssueType,
+    IssueUrgency,
+)
+
+
 def create_mypy_issue():
     """Create the mypy type checking issue"""
-    
+
     description = """## Type Checking Issue Summary
 
 MyPy analysis of the stability analysis system revealed **175 type errors** across 6 files that need to be addressed for production-quality code.
@@ -116,34 +124,34 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         labels=["type-checking", "code-quality", "mypy", "enhancement", "stability", "maintenance"],
         component="stability"
     )
-    
+
     try:
         # Create issue manager
         issue_manager = GitLabIssueManager()
-        
+
         # Create the issue
         print("🚀 Creating GitLab issue for mypy type checking errors...")
         created_issue = issue_manager.create_issue(issue_data)
-        
+
         print("\n✅ Successfully created GitLab issue:")
         print(f"   📝 Title: {created_issue['title']}")
         print(f"   🔗 URL: {created_issue['web_url']}")
         print(f"   🆔 Issue ID: #{created_issue['iid']}")
         print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
         print(f"   📊 State: {created_issue['state']}")
-        
+
         print("\n📋 MyPy type checking issue now tracked in GitLab")
         print("🎯 175 type errors identified across 6 stability analysis files")
-        
+
         return created_issue
-        
+
     except Exception as e:
         print(f"❌ Error creating GitLab issue: {e}")
         return None
 
 if __name__ == "__main__":
     result = create_mypy_issue()
-    
+
     if result:
         print("\n🎯 Next Steps:")
         print("1. GitLab issue created for comprehensive type checking fixes")

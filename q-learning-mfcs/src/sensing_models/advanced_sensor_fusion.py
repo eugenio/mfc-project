@@ -3,7 +3,7 @@ Advanced Sensor Fusion with Predictive Capabilities
 
 Phase 2 enhancement of the MFC sensor fusion system with:
 - Predictive Kalman filtering with multi-step ahead predictions
-- Advanced statistical fault detection and isolation  
+- Advanced statistical fault detection and isolation
 - Adaptive model parameters based on learning biofilm dynamics
 - Machine learning-enhanced state estimation
 - Biofilm growth pattern recognition and prediction
@@ -15,8 +15,8 @@ Last Modified: 2025-07-31
 import logging
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 import numpy as np
 
@@ -73,7 +73,7 @@ class AnomalyDetection:
     timestamp: float
     anomaly_score: float  # 0-1, higher means more anomalous
     anomaly_type: str  # 'sensor_drift', 'measurement_outlier', 'pattern_change'
-    affected_sensors: List[str]  # ['eis', 'qcm', 'fusion']
+    affected_sensors: list[str]  # ['eis', 'qcm', 'fusion']
     severity: str  # 'low', 'medium', 'high', 'critical'
     confidence: float  # Detection confidence (0-1)
     recommended_action: str  # Suggested response
@@ -87,23 +87,23 @@ class BiofimGrowthPattern:
     growth_rate_um_per_hour: float
     pattern_confidence: float  # 0-1
     predicted_next_phase: str
-    phase_transition_time_hours: Optional[float]
+    phase_transition_time_hours: float | None
     characteristic_time_constant: float  # Hours
 
 
 class AdvancedKalmanFilter(KalmanFilter):
     """
     Enhanced Kalman filter with predictive capabilities and adaptive parameters.
-    
+
     Extended state vector: [thickness, biomass, conductivity, d_thickness/dt, d_biomass/dt, d_conductivity/dt]
     Includes adaptive noise covariance and multi-step prediction.
     """
 
-    def __init__(self, dt: float = 0.1, config: Optional[SensorConfig] = None,
+    def __init__(self, dt: float = 0.1, config: SensorConfig | None = None,
                  prediction_horizon: int = 10, enable_adaptation: bool = True):
         """
         Initialize advanced Kalman filter.
-        
+
         Args:
             dt: Time step (hours)
             config: Optional sensor configuration
@@ -183,10 +183,10 @@ class AdvancedKalmanFilter(KalmanFilter):
     def predict_multi_step(self, steps: int) -> PredictiveState:
         """
         Multi-step ahead prediction with uncertainty propagation.
-        
+
         Args:
             steps: Number of time steps to predict ahead
-            
+
         Returns:
             Predicted state with confidence intervals
         """
@@ -307,7 +307,7 @@ class AdvancedKalmanFilter(KalmanFilter):
                                         validate_predictions: bool = True):
         """
         Update filter and validate previous predictions.
-        
+
         Args:
             measurements: [eis_thickness, qcm_thickness, eis_conductivity]
             measurement_uncertainties: Uncertainties for each measurement
@@ -448,7 +448,7 @@ class AdvancedKalmanFilter(KalmanFilter):
 class StatisticalAnomalyDetector:
     """
     Advanced statistical anomaly detection for sensor measurements and fusion results.
-    
+
     Uses multiple detection methods:
     - Isolation Forest for outlier detection
     - Statistical process control (SPC) charts
@@ -459,7 +459,7 @@ class StatisticalAnomalyDetector:
     def __init__(self, window_size: int = 50, sensitivity: float = 0.95):
         """
         Initialize anomaly detector.
-        
+
         Args:
             window_size: Size of sliding window for analysis
             sensitivity: Detection sensitivity (0-1, higher = more sensitive)
@@ -497,7 +497,7 @@ class StatisticalAnomalyDetector:
 
         logger.info(f"Statistical anomaly detector initialized (sensitivity={sensitivity})")
 
-    def update_baseline(self, measurements: List[FusedMeasurement]) -> None:
+    def update_baseline(self, measurements: list[FusedMeasurement]) -> None:
         """Update statistical baseline from historical measurements."""
         if len(measurements) < 10:
             return
@@ -539,13 +539,13 @@ class StatisticalAnomalyDetector:
                     f"{self.baseline_stats['thickness_std']:.2f}, "
                     f"agreement={self.baseline_stats['agreement_mean']:.3f}")
 
-    def detect_anomalies(self, current_measurement: FusedMeasurement) -> List[AnomalyDetection]:
+    def detect_anomalies(self, current_measurement: FusedMeasurement) -> list[AnomalyDetection]:
         """
         Detect anomalies in current measurement.
-        
+
         Args:
             current_measurement: Latest fused measurement
-            
+
         Returns:
             List of detected anomalies
         """
@@ -587,7 +587,7 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def _detect_spc_anomalies(self, measurement: FusedMeasurement) -> List[AnomalyDetection]:
+    def _detect_spc_anomalies(self, measurement: FusedMeasurement) -> list[AnomalyDetection]:
         """Detect statistical process control anomalies."""
         anomalies = []
 
@@ -644,7 +644,7 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def _detect_sensor_drift(self) -> List[AnomalyDetection]:
+    def _detect_sensor_drift(self) -> list[AnomalyDetection]:
         """Detect gradual sensor drift using trend analysis."""
         anomalies = []
 
@@ -705,7 +705,7 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def _detect_pattern_changes(self) -> List[AnomalyDetection]:
+    def _detect_pattern_changes(self) -> list[AnomalyDetection]:
         """Detect sudden changes in measurement patterns."""
         anomalies = []
 
@@ -755,7 +755,7 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def _detect_cross_validation_anomalies(self, measurement: FusedMeasurement) -> List[AnomalyDetection]:
+    def _detect_cross_validation_anomalies(self, measurement: FusedMeasurement) -> list[AnomalyDetection]:
         """Detect anomalies in cross-validation between sensors."""
         anomalies = []
 
@@ -790,7 +790,7 @@ class StatisticalAnomalyDetector:
 
         return anomalies
 
-    def get_anomaly_summary(self) -> Dict[str, Any]:
+    def get_anomaly_summary(self) -> dict[str, Any]:
         """Get summary of recent anomaly detection results."""
         if not self.anomaly_history:
             return {'no_anomalies': True}
@@ -838,7 +838,7 @@ class StatisticalAnomalyDetector:
 class AdvancedSensorFusion(SensorFusion):
     """
     Phase 2 enhanced sensor fusion with predictive capabilities and advanced fault detection.
-    
+
     Combines the base sensor fusion functionality with:
     - Advanced Kalman filtering with multi-step predictions
     - Statistical anomaly detection and fault isolation
@@ -849,12 +849,12 @@ class AdvancedSensorFusion(SensorFusion):
     def __init__(self, method: FusionMethod = FusionMethod.KALMAN_FILTER,
                  species: BacterialSpecies = BacterialSpecies.MIXED,
                  use_gpu: bool = True,
-                 config: Optional[SensorConfig] = None,
+                 config: SensorConfig | None = None,
                  prediction_horizon: int = 10,
                  enable_anomaly_detection: bool = True):
         """
         Initialize advanced sensor fusion system.
-        
+
         Args:
             method: Fusion algorithm to use
             species: Bacterial species for calibration
@@ -903,21 +903,21 @@ class AdvancedSensorFusion(SensorFusion):
     def fuse_measurements_with_prediction(self,
                                         eis_measurement: EISMeasurement,
                                         qcm_measurement: QCMMeasurement,
-                                        eis_properties: Dict[str, float],
-                                        qcm_properties: Dict[str, float],
+                                        eis_properties: dict[str, float],
+                                        qcm_properties: dict[str, float],
                                         time_hours: float = 0.0,
-                                        predict_steps: int = 5) -> Tuple[FusedMeasurement, Optional[PredictiveState], List[AnomalyDetection]]:
+                                        predict_steps: int = 5) -> tuple[FusedMeasurement, PredictiveState | None, list[AnomalyDetection]]:
         """
         Enhanced fusion with prediction and anomaly detection.
-        
+
         Args:
             eis_measurement: EIS measurement data
-            qcm_measurement: QCM measurement data  
+            qcm_measurement: QCM measurement data
             eis_properties: Biofilm properties from EIS
             qcm_properties: Biofilm properties from QCM
             time_hours: Measurement timestamp
             predict_steps: Number of steps to predict ahead
-            
+
         Returns:
             Tuple of (fused_measurement, prediction, anomalies)
         """
@@ -959,7 +959,7 @@ class AdvancedSensorFusion(SensorFusion):
 
         return fused_measurement, prediction, anomalies
 
-    def analyze_biofilm_growth_pattern(self) -> Optional[BiofimGrowthPattern]:
+    def analyze_biofilm_growth_pattern(self) -> BiofimGrowthPattern | None:
         """Analyze current biofilm growth pattern."""
         if isinstance(self.kalman_filter, AdvancedKalmanFilter):
             try:
@@ -971,10 +971,10 @@ class AdvancedSensorFusion(SensorFusion):
                 return None
         return None
 
-    def get_system_health_assessment(self) -> Dict[str, Any]:
+    def get_system_health_assessment(self) -> dict[str, Any]:
         """Comprehensive system health assessment."""
         health_assessment = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': datetime.now(UTC).isoformat(),
             'overall_health_score': self.advanced_metrics['system_health_score'],
             'component_health': {},
             'recommendations': []
@@ -1039,7 +1039,7 @@ class AdvancedSensorFusion(SensorFusion):
             time_span = max(1.0, self.anomaly_history[-1].timestamp - self.anomaly_history[0].timestamp)
             self.advanced_metrics['anomaly_detection_rate'] = len(self.anomaly_history) / time_span
 
-    def export_advanced_diagnostics(self) -> Dict[str, Any]:
+    def export_advanced_diagnostics(self) -> dict[str, Any]:
         """Export comprehensive diagnostics for analysis."""
         diagnostics = {
             'fusion_diagnostics': self.get_fusion_summary(),
@@ -1088,13 +1088,13 @@ class AdvancedSensorFusion(SensorFusion):
         return diagnostics
 
 
-def create_advanced_sensor_fusion(config: Optional[SensorConfig] = None) -> AdvancedSensorFusion:
+def create_advanced_sensor_fusion(config: SensorConfig | None = None) -> AdvancedSensorFusion:
     """
     Factory function to create advanced sensor fusion system with optimal settings.
-    
+
     Args:
         config: Optional sensor configuration
-        
+
     Returns:
         Configured AdvancedSensorFusion instance
     """

@@ -21,11 +21,12 @@ import logging
 import smtplib
 import sqlite3
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -36,14 +37,14 @@ logger = logging.getLogger(__name__)
 class AlertThreshold:
     """Defines a threshold for a specific parameter."""
     parameter: str
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
-    critical_min: Optional[float] = None
-    critical_max: Optional[float] = None
+    min_value: float | None = None
+    max_value: float | None = None
+    critical_min: float | None = None
+    critical_max: float | None = None
     unit: str = ""
     enabled: bool = True
 
-    def check_value(self, value: float) -> Tuple[str, bool]:
+    def check_value(self, value: float) -> tuple[str, bool]:
         """
         Check if value violates threshold.
         Returns: (severity, is_violation)
@@ -69,7 +70,7 @@ class AlertThreshold:
 @dataclass
 class Alert:
     """Represents an alert event."""
-    id: Optional[int] = None
+    id: int | None = None
     timestamp: datetime = None
     parameter: str = ""
     value: float = 0.0
@@ -77,8 +78,8 @@ class Alert:
     severity: str = "warning"  # warning, critical
     message: str = ""
     acknowledged: bool = False
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[datetime] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
     escalated: bool = False
     escalation_level: int = 0
 
@@ -137,12 +138,12 @@ class AlertDatabase:
             """)
 
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_alerts_timestamp 
+                CREATE INDEX IF NOT EXISTS idx_alerts_timestamp
                 ON alerts(timestamp)
             """)
 
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_alerts_parameter 
+                CREATE INDEX IF NOT EXISTS idx_alerts_parameter
                 ON alerts(parameter)
             """)
 
@@ -165,14 +166,14 @@ class AlertDatabase:
             return cursor.lastrowid
 
     def get_recent_alerts(self, hours: int = 24,
-                         parameter: Optional[str] = None,
-                         unacknowledged_only: bool = False) -> List[Alert]:
+                         parameter: str | None = None,
+                         unacknowledged_only: bool = False) -> list[Alert]:
         """Get recent alerts from the database."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
 
             query = f"""
-                SELECT * FROM alerts 
+                SELECT * FROM alerts
                 WHERE timestamp > datetime('now', '-{hours} hours')
             """
 
@@ -211,8 +212,8 @@ class AlertDatabase:
         """Acknowledge an alert."""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                UPDATE alerts 
-                SET acknowledged = 1, 
+                UPDATE alerts
+                SET acknowledged = 1,
                     acknowledged_by = ?,
                     acknowledged_at = ?
                 WHERE id = ?
@@ -233,7 +234,7 @@ class AlertDatabase:
                 threshold.enabled
             ))
 
-    def get_thresholds(self) -> Dict[str, AlertThreshold]:
+    def get_thresholds(self) -> dict[str, AlertThreshold]:
         """Get all configured thresholds."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -258,7 +259,7 @@ class AlertDatabase:
 class EmailNotificationService:
     """Handles email notifications for alerts."""
 
-    def __init__(self, smtp_config: Dict[str, Any]):
+    def __init__(self, smtp_config: dict[str, Any]):
         self.smtp_server = smtp_config.get('server', 'localhost')
         self.smtp_port = smtp_config.get('port', 587)
         self.username = smtp_config.get('username', '')
@@ -266,7 +267,7 @@ class EmailNotificationService:
         self.from_email = smtp_config.get('from_email', 'mfc-alerts@system.local')
         self.use_tls = smtp_config.get('use_tls', True)
 
-    def send_alert_email(self, recipients: List[str], alert: Alert):
+    def send_alert_email(self, recipients: list[str], alert: Alert):
         """Send an alert notification email."""
         try:
             msg = MIMEMultipart()
@@ -313,13 +314,13 @@ class AlertManager:
     """Main alert management system."""
 
     def __init__(self, db_path: str = "alerts.db",
-                 email_config: Optional[Dict[str, Any]] = None):
+                 email_config: dict[str, Any] | None = None):
         self.db = AlertDatabase(db_path)
         self.thresholds = self.db.get_thresholds()
         self.email_service = EmailNotificationService(email_config) if email_config else None
 
         # Alert callbacks
-        self.alert_callbacks: List[Callable[[Alert], None]] = []
+        self.alert_callbacks: list[Callable[[Alert], None]] = []
 
         # Escalation tracking
         self.escalation_tracker = defaultdict(list)
@@ -352,7 +353,7 @@ class AlertManager:
         self.db.save_threshold(threshold)
         logger.info(f"Threshold updated for {parameter}")
 
-    def check_value(self, parameter: str, value: float) -> Optional[Alert]:
+    def check_value(self, parameter: str, value: float) -> Alert | None:
         """Check if a value violates thresholds and create alert if needed."""
         if parameter not in self.thresholds:
             return None
@@ -471,7 +472,7 @@ class AlertManager:
         """Register a callback for alert notifications."""
         self.alert_callbacks.append(callback)
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """Get all unacknowledged alerts."""
         return self.db.get_recent_alerts(hours=24*7, unacknowledged_only=True)
 
@@ -481,11 +482,11 @@ class AlertManager:
         logger.info(f"Alert {alert_id} acknowledged by {user}")
 
     def get_alert_history(self, hours: int = 24,
-                         parameter: Optional[str] = None) -> List[Alert]:
+                         parameter: str | None = None) -> list[Alert]:
         """Get alert history."""
         return self.db.get_recent_alerts(hours, parameter)
 
-    def export_alert_config(self) -> Dict[str, Any]:
+    def export_alert_config(self) -> dict[str, Any]:
         """Export current alert configuration."""
         return {
             "thresholds": {
@@ -508,7 +509,7 @@ class AlertManager:
             }
         }
 
-    def import_alert_config(self, config: Dict[str, Any]):
+    def import_alert_config(self, config: dict[str, Any]):
         """Import alert configuration."""
         # Import thresholds
         for param, threshold_data in config.get("thresholds", {}).items():

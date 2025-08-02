@@ -10,9 +10,10 @@ Created: 2025-07-31
 import json
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any
 
 from config.qlearning_config import QLearningConfig
 from config.sensor_config import SensorConfig
@@ -24,10 +25,10 @@ logger = logging.getLogger(__name__)
 class SimulationRunner:
     """Enhanced simulation runner with chronology tracking."""
 
-    def __init__(self, output_dir: Union[str, Path] = "simulation_outputs"):
+    def __init__(self, output_dir: str | Path = "simulation_outputs"):
         """
         Initialize simulation runner.
-        
+
         Args:
             output_dir: Directory for simulation outputs
         """
@@ -37,17 +38,17 @@ class SimulationRunner:
 
     def run_simulation_with_tracking(self,
                                    simulation_name: str,
-                                   simulation_func: Callable[[], Dict[str, Any]],
+                                   simulation_func: Callable[[], dict[str, Any]],
                                    description: str = "",
                                    duration_hours: float = 0.0,
-                                   qlearning_config: Optional[QLearningConfig] = None,
-                                   sensor_config: Optional[SensorConfig] = None,
-                                   parameters: Optional[Dict[str, Any]] = None,
-                                   tags: Optional[list] = None,
-                                   enable_browser_download: bool = True) -> Dict[str, Any]:
+                                   qlearning_config: QLearningConfig | None = None,
+                                   sensor_config: SensorConfig | None = None,
+                                   parameters: dict[str, Any] | None = None,
+                                   tags: list | None = None,
+                                   enable_browser_download: bool = True) -> dict[str, Any]:
         """
         Run simulation with full chronology tracking and browser download support.
-        
+
         Args:
             simulation_name: Name of the simulation
             simulation_func: Function that runs the simulation and returns results
@@ -58,7 +59,7 @@ class SimulationRunner:
             parameters: Additional parameters
             tags: Tags for categorization
             enable_browser_download: Whether to prepare files for browser download
-            
+
         Returns:
             Enhanced results dictionary with chronology info
         """
@@ -132,7 +133,7 @@ class SimulationRunner:
 
         return enhanced_results
 
-    def _extract_results_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_results_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Extract key metrics for chronology summary."""
         summary = {}
 
@@ -167,18 +168,18 @@ class SimulationRunner:
 
     def _prepare_browser_download_files(self,
                                       entry_id: str,
-                                      results: Dict[str, Any],
-                                      qlearning_config: Optional[QLearningConfig] = None,
-                                      sensor_config: Optional[SensorConfig] = None) -> Dict[str, str]:
+                                      results: dict[str, Any],
+                                      qlearning_config: QLearningConfig | None = None,
+                                      sensor_config: SensorConfig | None = None) -> dict[str, str]:
         """
         Prepare files for browser download instead of fixed locations.
-        
+
         Args:
             entry_id: Simulation entry ID
             results: Simulation results
             qlearning_config: Q-learning configuration
             sensor_config: Sensor configuration
-            
+
         Returns:
             Dictionary mapping file types to relative paths
         """
@@ -227,7 +228,7 @@ class SimulationRunner:
 
         return download_files
 
-    def _export_time_series_csv(self, time_series: Dict[str, Any], output_path: Path) -> Optional[Path]:
+    def _export_time_series_csv(self, time_series: dict[str, Any], output_path: Path) -> Path | None:
         """Export time series data to CSV format."""
         try:
             import pandas as pd
@@ -280,7 +281,7 @@ class SimulationRunner:
             logger.error(f"Failed to export time series CSV: {e}")
             return None
 
-    def _create_summary_report(self, entry_id: str, results: Dict[str, Any], output_path: Path) -> Optional[Path]:
+    def _create_summary_report(self, entry_id: str, results: dict[str, Any], output_path: Path) -> Path | None:
         """Create a human-readable summary report."""
         try:
             with open(output_path, 'w') as f:
@@ -343,18 +344,18 @@ class SimulationRunner:
 
 
 def quick_simulation_with_chronology(simulation_name: str,
-                                   simulation_func: Callable[[], Dict[str, Any]],
+                                   simulation_func: Callable[[], dict[str, Any]],
                                    description: str = "",
-                                   tags: Optional[list] = None) -> Dict[str, Any]:
+                                   tags: list | None = None) -> dict[str, Any]:
     """
     Quick utility function to run simulation with chronology tracking.
-    
+
     Args:
         simulation_name: Name of the simulation
         simulation_func: Function that returns simulation results
         description: Description of the simulation
         tags: Tags for categorization
-        
+
     Returns:
         Enhanced simulation results
     """

@@ -8,7 +8,7 @@ enhanced biofilm monitoring with cross-validation capabilities.
 
 Based on:
 - PMC10485796: Real-time impedance biofilm monitoring
-- PMC10452506: EIS biofilm sensing comprehensive review  
+- PMC10452506: EIS biofilm sensing comprehensive review
 - PMC8875675: QCM with impedance analysis
 - Frontiers Microbiol. 2022: EIS in microbial fuel cells
 """
@@ -19,11 +19,9 @@ import numpy as np
 matplotlib.use('Agg')
 import json
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from path_config import get_figure_path, get_simulation_data_path
 
 
@@ -117,8 +115,8 @@ class EISBiofilmModel:
 
         return Z
 
-    def impedance_to_biofilm_thickness(self, impedance_data: Dict,
-                                     calibration_curve: Optional[Dict] = None) -> float:
+    def impedance_to_biofilm_thickness(self, impedance_data: dict,
+                                     calibration_curve: dict | None = None) -> float:
         """Estimate biofilm thickness from impedance spectrum"""
 
         # Use characteristic frequency (1 kHz typical for biofilms)
@@ -171,7 +169,7 @@ class CombinedEISQCMSensor:
 
     def simulate_eis_measurement(self, true_thickness_um: float,
                                 biomass_density: float = 1100.0,
-                                add_noise: bool = True) -> Dict:
+                                add_noise: bool = True) -> dict:
         """Simulate EIS measurement for given biofilm thickness"""
         p = self.eis_params
 
@@ -210,7 +208,7 @@ class CombinedEISQCMSensor:
             'impedance_change_percent': ((Z_100Hz - Z_1kHz) / Z_100Hz) * 100
         }
 
-    def correlate_with_qcm(self, eis_data: Dict, qcm_thickness: float) -> Dict:
+    def correlate_with_qcm(self, eis_data: dict, qcm_thickness: float) -> dict:
         """Correlate EIS measurements with QCM thickness measurements"""
 
         # Estimate thickness from EIS
@@ -240,8 +238,8 @@ class CombinedEISQCMSensor:
             'measurement_confidence': min(correlation_r2, validation_score)
         }
 
-    def adaptive_thickness_estimation(self, eis_data: Dict, qcm_thickness: float,
-                                    confidence_threshold: float = 0.7) -> Dict:
+    def adaptive_thickness_estimation(self, eis_data: dict, qcm_thickness: float,
+                                    confidence_threshold: float = 0.7) -> dict:
         """Adaptive thickness estimation using both EIS and QCM"""
 
         # Get individual estimates
@@ -274,7 +272,7 @@ class CombinedEISQCMSensor:
             'qcm_contribution': qcm_thickness
         }
 
-    def update_calibration(self, eis_data: Dict, reference_thickness: float):
+    def update_calibration(self, eis_data: dict, reference_thickness: float):
         """Update EIS-QCM cross-calibration based on measurements"""
 
         # Store measurement for calibration
@@ -329,7 +327,7 @@ def create_eis_qcm_correlation_analysis(duration_hours: int = 200):
     }
 
     print("Simulating EIS-QCM measurements...")
-    for i, (t, thick_true, thick_qcm) in enumerate(zip(time_hours, thickness_true, thickness_qcm)):
+    for i, (t, thick_true, thick_qcm) in enumerate(zip(time_hours, thickness_true, thickness_qcm, strict=False)):
 
         # Simulate EIS measurement
         eis_data = combined_sensor.simulate_eis_measurement(thick_true)
@@ -359,7 +357,7 @@ def create_eis_qcm_correlation_analysis(duration_hours: int = 200):
 
     return results
 
-def create_comprehensive_visualization(results: Dict):
+def create_comprehensive_visualization(results: dict):
     """Create comprehensive EIS-QCM correlation visualization"""
 
     plt.figure(figsize=(16, 12))
@@ -473,7 +471,7 @@ EIS-QCM CORRELATION ANALYSIS SUMMARY
 
 Measurement Accuracy (RMSE):
 • QCM Method:      {rmse_qcm:.2f} μm
-• EIS Method:      {rmse_eis:.2f} μm  
+• EIS Method:      {rmse_eis:.2f} μm
 • Combined Method: {rmse_combined:.2f} μm
 
 Cross-Correlation:

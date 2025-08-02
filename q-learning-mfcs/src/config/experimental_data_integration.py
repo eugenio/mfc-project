@@ -29,11 +29,12 @@ import json
 import logging
 import sqlite3
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -99,27 +100,27 @@ class ExperimentalDataset:
     """Container for experimental dataset with metadata."""
     name: str
     data: pd.DataFrame
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     # Data quality information
     quality_score: float = 0.0
-    quality_issues: List[str] = field(default_factory=list)
+    quality_issues: list[str] = field(default_factory=list)
 
     # Measurement information
-    measurement_units: Dict[str, str] = field(default_factory=dict)
-    measurement_uncertainty: Dict[str, float] = field(default_factory=dict)
-    sampling_frequency: Optional[float] = None  # Hz
+    measurement_units: dict[str, str] = field(default_factory=dict)
+    measurement_uncertainty: dict[str, float] = field(default_factory=dict)
+    sampling_frequency: float | None = None  # Hz
 
     # Temporal information
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration: Optional[timedelta] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    duration: timedelta | None = None
 
     # Experimental conditions
-    experimental_conditions: Dict[str, Any] = field(default_factory=dict)
+    experimental_conditions: dict[str, Any] = field(default_factory=dict)
 
     # Processing history
-    processing_history: List[str] = field(default_factory=list)
+    processing_history: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Initialize derived properties."""
@@ -138,8 +139,8 @@ class CalibrationResult:
     """Results of model calibration against experimental data."""
     method: CalibrationMethod
     dataset_name: str
-    calibrated_parameters: Dict[str, float]
-    parameter_uncertainties: Dict[str, float]
+    calibrated_parameters: dict[str, float]
+    parameter_uncertainties: dict[str, float]
 
     # Goodness of fit metrics
     r_squared: float
@@ -153,16 +154,16 @@ class CalibrationResult:
     standardized_residuals: np.ndarray
 
     # Uncertainty quantification
-    parameter_covariance: Optional[np.ndarray] = None
-    prediction_bands: Optional[Dict[str, Tuple[np.ndarray, np.ndarray]]] = None
+    parameter_covariance: np.ndarray | None = None
+    prediction_bands: dict[str, tuple[np.ndarray, np.ndarray]] | None = None
 
     # Validation metrics
-    cross_validation_score: Optional[float] = None
-    validation_residuals: Optional[np.ndarray] = None
+    cross_validation_score: float | None = None
+    validation_residuals: np.ndarray | None = None
 
     # Metadata
     calibration_time: float = 0.0
-    convergence_info: Dict[str, Any] = field(default_factory=dict)
+    convergence_info: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -184,17 +185,17 @@ class DataLoader:
             '.parquet': self._load_parquet
         }
 
-    def load_data(self, file_path: Union[str, Path],
-                  format: Optional[DataFormat] = None,
+    def load_data(self, file_path: str | Path,
+                  format: DataFormat | None = None,
                   **kwargs) -> ExperimentalDataset:
         """
         Load experimental data from file.
-        
+
         Args:
             file_path: Path to data file
             format: Data format (auto-detected if None)
             **kwargs: Format-specific loading parameters
-            
+
         Returns:
             Experimental dataset
         """
@@ -298,14 +299,14 @@ class DataPreprocessor:
         self.logger = logging.getLogger(__name__)
 
     def preprocess_dataset(self, dataset: ExperimentalDataset,
-                          operations: List[str] = None) -> ExperimentalDataset:
+                          operations: list[str] = None) -> ExperimentalDataset:
         """
         Apply preprocessing operations to dataset.
-        
+
         Args:
             dataset: Input experimental dataset
             operations: List of preprocessing operations
-            
+
         Returns:
             Preprocessed dataset
         """
@@ -436,7 +437,7 @@ class DataPreprocessor:
 
         return np.mean(scores) if scores else 0.0
 
-    def _identify_quality_issues(self, data: pd.DataFrame) -> List[str]:
+    def _identify_quality_issues(self, data: pd.DataFrame) -> list[str]:
         """Identify data quality issues."""
         issues = []
 
@@ -467,15 +468,15 @@ class ModelCalibrator:
         """Initialize model calibrator."""
         self.logger = logging.getLogger(__name__)
 
-    def calibrate_model(self, model_function: Callable[[np.ndarray], Dict[str, float]],
+    def calibrate_model(self, model_function: Callable[[np.ndarray], dict[str, float]],
                        dataset: ExperimentalDataset,
-                       parameters_to_calibrate: List[str],
-                       parameter_bounds: Dict[str, Tuple[float, float]],
+                       parameters_to_calibrate: list[str],
+                       parameter_bounds: dict[str, tuple[float, float]],
                        method: CalibrationMethod = CalibrationMethod.LEAST_SQUARES,
                        **kwargs) -> CalibrationResult:
         """
         Calibrate model parameters against experimental data.
-        
+
         Args:
             model_function: Model function to calibrate
             dataset: Experimental dataset for calibration
@@ -483,7 +484,7 @@ class ModelCalibrator:
             parameter_bounds: Bounds for each parameter
             method: Calibration method
             **kwargs: Method-specific parameters
-            
+
         Returns:
             Calibration results
         """
@@ -523,16 +524,16 @@ class ModelCalibrator:
 
     def _least_squares_calibration(self, model_function: Callable,
                                   exp_data: pd.DataFrame,
-                                  parameters_to_calibrate: List[str],
-                                  parameter_bounds: Dict[str, Tuple[float, float]],
-                                  output_variables: List[str],
+                                  parameters_to_calibrate: list[str],
+                                  parameter_bounds: dict[str, tuple[float, float]],
+                                  output_variables: list[str],
                                   **kwargs) -> CalibrationResult:
         """Least squares parameter calibration."""
         from scipy.optimize import differential_evolution
 
         # Define objective function
         def objective(params):
-            param_dict = dict(zip(parameters_to_calibrate, params))
+            param_dict = dict(zip(parameters_to_calibrate, params, strict=False))
 
             total_error = 0.0
             for _, row in exp_data.iterrows():
@@ -562,7 +563,7 @@ class ModelCalibrator:
             self.logger.warning("Calibration optimization did not converge")
 
         # Calculate goodness of fit metrics
-        calibrated_params = dict(zip(parameters_to_calibrate, result.x))
+        calibrated_params = dict(zip(parameters_to_calibrate, result.x, strict=False))
 
         # Generate predictions with calibrated parameters
         predictions = []
@@ -616,9 +617,9 @@ class ModelCalibrator:
 
     def _bayesian_calibration(self, model_function: Callable,
                             exp_data: pd.DataFrame,
-                            parameters_to_calibrate: List[str],
-                            parameter_bounds: Dict[str, Tuple[float, float]],
-                            output_variables: List[str],
+                            parameters_to_calibrate: list[str],
+                            parameter_bounds: dict[str, tuple[float, float]],
+                            output_variables: list[str],
                             **kwargs) -> CalibrationResult:
         """Bayesian parameter calibration using MCMC."""
         # This would use the BayesianInference class from uncertainty_quantification
@@ -641,9 +642,9 @@ class ModelCalibrator:
 
     def _maximum_likelihood_calibration(self, model_function: Callable,
                                       exp_data: pd.DataFrame,
-                                      parameters_to_calibrate: List[str],
-                                      parameter_bounds: Dict[str, Tuple[float, float]],
-                                      output_variables: List[str],
+                                      parameters_to_calibrate: list[str],
+                                      parameter_bounds: dict[str, tuple[float, float]],
+                                      output_variables: list[str],
                                       **kwargs) -> CalibrationResult:
         """Maximum likelihood parameter calibration."""
         # Similar to least squares but with likelihood maximization
@@ -663,7 +664,7 @@ class ModelCalibrator:
             standardized_residuals=np.array([])
         )
 
-    def _create_parameter_array(self, param_dict: Dict[str, float],
+    def _create_parameter_array(self, param_dict: dict[str, float],
                               data_row: pd.Series) -> np.ndarray:
         """Create parameter array for model evaluation."""
         # This would need to be customized based on the specific model structure
@@ -684,18 +685,18 @@ class ModelCalibrator:
 class ExperimentalDataManager:
     """Main experimental data management and integration system."""
 
-    def __init__(self, data_directory: Optional[Union[str, Path]] = None):
+    def __init__(self, data_directory: str | Path | None = None):
         """
         Initialize experimental data manager.
-        
+
         Args:
             data_directory: Directory containing experimental data files
         """
         self.data_directory = Path(data_directory) if data_directory else Path("experimental_data")
         self.data_directory.mkdir(parents=True, exist_ok=True)
 
-        self.datasets: Dict[str, ExperimentalDataset] = {}
-        self.calibration_results: Dict[str, CalibrationResult] = {}
+        self.datasets: dict[str, ExperimentalDataset] = {}
+        self.calibration_results: dict[str, CalibrationResult] = {}
 
         # Initialize components
         self.loader = DataLoader()
@@ -704,19 +705,19 @@ class ExperimentalDataManager:
 
         self.logger = logging.getLogger(__name__)
 
-    def load_experimental_data(self, file_path: Union[str, Path],
-                             dataset_name: Optional[str] = None,
+    def load_experimental_data(self, file_path: str | Path,
+                             dataset_name: str | None = None,
                              preprocess: bool = True,
                              **kwargs) -> str:
         """
         Load experimental data from file.
-        
+
         Args:
             file_path: Path to data file
             dataset_name: Name for dataset (auto-generated if None)
             preprocess: Whether to apply preprocessing
             **kwargs: Loading parameters
-            
+
         Returns:
             Dataset name
         """
@@ -741,13 +742,13 @@ class ExperimentalDataManager:
 
     def calibrate_model_against_data(self, dataset_name: str,
                                    model_function: Callable,
-                                   parameters_to_calibrate: List[str],
-                                   parameter_bounds: Dict[str, Tuple[float, float]],
+                                   parameters_to_calibrate: list[str],
+                                   parameter_bounds: dict[str, tuple[float, float]],
                                    method: CalibrationMethod = CalibrationMethod.LEAST_SQUARES,
                                    **kwargs) -> str:
         """
         Calibrate model against experimental dataset.
-        
+
         Args:
             dataset_name: Name of experimental dataset
             model_function: Model function to calibrate
@@ -755,7 +756,7 @@ class ExperimentalDataManager:
             parameter_bounds: Parameter bounds
             method: Calibration method
             **kwargs: Method-specific parameters
-            
+
         Returns:
             Calibration result identifier
         """
@@ -779,7 +780,7 @@ class ExperimentalDataManager:
 
         return result_id
 
-    def get_dataset_summary(self, dataset_name: str) -> Dict[str, Any]:
+    def get_dataset_summary(self, dataset_name: str) -> dict[str, Any]:
         """Get summary statistics for dataset."""
         if dataset_name not in self.datasets:
             raise ValueError(f"Dataset not found: {dataset_name}")
@@ -804,7 +805,7 @@ class ExperimentalDataManager:
 
         return summary
 
-    def compare_calibration_results(self, result_ids: List[str]) -> pd.DataFrame:
+    def compare_calibration_results(self, result_ids: list[str]) -> pd.DataFrame:
         """Compare multiple calibration results."""
         comparison_data = []
 
@@ -833,7 +834,7 @@ class ExperimentalDataManager:
         return pd.DataFrame(comparison_data)
 
     def export_calibration_results(self, result_id: str,
-                                 output_path: Union[str, Path]) -> None:
+                                 output_path: str | Path) -> None:
         """Export calibration results to file."""
         if result_id not in self.calibration_results:
             raise ValueError(f"Calibration result not found: {result_id}")
@@ -865,17 +866,17 @@ class ExperimentalDataManager:
 
         self.logger.info(f"Calibration results exported to: {output_path}")
 
-    def list_datasets(self) -> List[str]:
+    def list_datasets(self) -> list[str]:
         """List all loaded datasets."""
         return list(self.datasets.keys())
 
-    def list_calibration_results(self) -> List[str]:
+    def list_calibration_results(self) -> list[str]:
         """List all calibration results."""
         return list(self.calibration_results.keys())
 
 
 # Utility functions for experimental data integration
-def calculate_model_validation_metrics(observed: np.ndarray, predicted: np.ndarray) -> Dict[str, float]:
+def calculate_model_validation_metrics(observed: np.ndarray, predicted: np.ndarray) -> dict[str, float]:
     """Calculate comprehensive model validation metrics."""
     metrics = {}
 
@@ -902,7 +903,7 @@ def calculate_model_validation_metrics(observed: np.ndarray, predicted: np.ndarr
     return metrics
 
 
-def detect_change_points(time_series: np.ndarray, method: str = 'pelt') -> List[int]:
+def detect_change_points(time_series: np.ndarray, method: str = 'pelt') -> list[int]:
     """Detect change points in time series data."""
     if not HAS_SCIPY:
         warnings.warn("SciPy required for change point detection")
@@ -930,7 +931,7 @@ def detect_change_points(time_series: np.ndarray, method: str = 'pelt') -> List[
 
 def align_time_series(ts1: pd.DataFrame, ts2: pd.DataFrame,
                      time_col: str = 'timestamp',
-                     method: str = 'nearest') -> Tuple[pd.DataFrame, pd.DataFrame]:
+                     method: str = 'nearest') -> tuple[pd.DataFrame, pd.DataFrame]:
     """Align two time series datasets."""
     if time_col not in ts1.columns or time_col not in ts2.columns:
         raise ValueError(f"Time column '{time_col}' not found in both datasets")

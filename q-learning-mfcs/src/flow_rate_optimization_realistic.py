@@ -11,9 +11,8 @@ matplotlib.use('Agg')
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize_scalar
-
 from path_config import get_figure_path
+from scipy.optimize import minimize_scalar
 
 
 @dataclass

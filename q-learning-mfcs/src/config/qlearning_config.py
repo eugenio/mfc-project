@@ -4,7 +4,6 @@ Replaces hardcoded values in Q-learning controllers and optimization algorithms.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
 
 from .electrode_config import DEFAULT_GRAPHITE_PLATE_CONFIG, ElectrodeConfiguration
 
@@ -116,7 +115,7 @@ class QLearningConfig:
     substrate_max: float = 50.0  # Maximum substrate concentration (mM)
 
     # Time-based state bins
-    time_bins: List[int] = field(default_factory=lambda: [200, 500, 800, 1000])
+    time_bins: list[int] = field(default_factory=lambda: [200, 500, 800, 1000])
 
     # Enhanced controller state space (sensor-integrated)
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins
@@ -140,8 +139,8 @@ class QLearningConfig:
     sensor_agreement_bins: int = 4  # Sensor agreement bins
 
     # Action space configuration
-    flow_rate_actions: List[int] = field(default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
-    substrate_actions: List[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
+    flow_rate_actions: list[int] = field(default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
+    substrate_actions: list[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
 
     # Substrate control thresholds (configurable) - unified target concentrations
     substrate_target_concentration: float = 25.0  # Universal target concentration for all areas (mM)
@@ -173,7 +172,7 @@ class QLearningConfig:
 
     # Electrode configurations (comprehensive material and geometry)
     anode_config: ElectrodeConfiguration = field(default_factory=lambda: DEFAULT_GRAPHITE_PLATE_CONFIG)
-    cathode_config: Optional[ElectrodeConfiguration] = None  # If None, uses same as anode
+    cathode_config: ElectrodeConfiguration | None = None  # If None, uses same as anode
 
     # Legacy electrode areas (calculated from configurations, for backward compatibility)
     anode_area_per_cell: float = field(init=False)  # Calculated from anode_config
@@ -219,14 +218,14 @@ class QLearningConfig:
     biofilm_physics: BiofilmPhysicsConfig = field(default_factory=BiofilmPhysicsConfig)
 
     # Unified controller action spaces
-    unified_flow_actions: List[int] = field(default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4])
+    unified_flow_actions: list[int] = field(default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4])
 
     # Advanced state space configurations
     outlet_error_bins: int = 8  # Outlet error bins
-    outlet_error_range: Tuple[float, float] = (-10.0, 10.0)  # Error range (mM)
+    outlet_error_range: tuple[float, float] = (-10.0, 10.0)  # Error range (mM)
 
     flow_rate_bins: int = 6  # Flow rate bins
-    flow_rate_range: Tuple[float, float] = (5.0, 50.0)  # Flow rate range (mL/h)
+    flow_rate_range: tuple[float, float] = (5.0, 50.0)  # Flow rate range (mL/h)
 
     # Sensor integration parameters
     sensor_weight: float = 0.3  # Weight for sensor data in decision making
@@ -270,26 +269,26 @@ class StateSpaceConfig:
 
     # Basic state space
     power_bins: int = 8
-    power_range: Tuple[float, float] = (0.0, 2.0)
+    power_range: tuple[float, float] = (0.0, 2.0)
 
     biofilm_bins: int = 6
-    biofilm_range: Tuple[float, float] = (0.0, 1.0)
+    biofilm_range: tuple[float, float] = (0.0, 1.0)
 
     substrate_bins: int = 8
-    substrate_range: Tuple[float, float] = (0.0, 50.0)
+    substrate_range: tuple[float, float] = (0.0, 50.0)
 
     # Enhanced state space with sensors
     sensor_state_bins: int = 12  # Combined sensor state bins
 
     # Substrate sensor state configuration - unified ranges around target concentration
     reservoir_substrate_bins: int = 8  # Reservoir substrate concentration bins
-    reservoir_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM)
+    reservoir_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM)
 
     cell_substrate_bins: int = 6  # Per-cell substrate concentration bins
-    cell_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
+    cell_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
 
     outlet_substrate_bins: int = 6  # Outlet substrate concentration bins
-    outlet_substrate_range: Tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
+    outlet_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
 
     # EIS sensor state configuration
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins

@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 import yaml
 
@@ -62,9 +62,9 @@ class ConfigProfile:
     """Configuration profile containing all system configurations."""
 
     # Core configurations
-    biological: Optional[Dict[str, Any]] = None
-    control: Optional[ControlSystemConfig] = None
-    visualization: Optional[VisualizationConfig] = None
+    biological: dict[str, Any] | None = None
+    control: ControlSystemConfig | None = None
+    visualization: VisualizationConfig | None = None
 
     # Profile metadata
     profile_name: str = "default"
@@ -74,12 +74,12 @@ class ConfigProfile:
     updated_at: datetime = field(default_factory=datetime.now)
 
     # Profile inheritance
-    inherits_from: Optional[str] = None  # Parent profile name
-    override_keys: List[str] = field(default_factory=list)  # Keys that override parent
+    inherits_from: str | None = None  # Parent profile name
+    override_keys: list[str] = field(default_factory=list)  # Keys that override parent
 
     # Environment and context
     environment: str = "development"  # development, testing, production
-    context: Dict[str, Any] = field(default_factory=dict)  # Additional context
+    context: dict[str, Any] = field(default_factory=dict)  # Additional context
 
     def update_timestamp(self):
         """Update the profile timestamp."""
@@ -93,13 +93,13 @@ class ConfigValidator(ABC):
     def validate(self, config: Any) -> bool:
         """
         Validate configuration.
-        
+
         Args:
             config: Configuration to validate
-            
+
         Returns:
             bool: True if valid
-            
+
         Raises:
             ConfigurationValidationError: If configuration is invalid
         """
@@ -109,7 +109,7 @@ class ConfigValidator(ABC):
 class BiologicalConfigValidator(ConfigValidator):
     """Validator for biological configurations."""
 
-    def validate(self, config: Dict[str, Any]) -> bool:
+    def validate(self, config: dict[str, Any]) -> bool:
         """Validate biological configuration dictionary."""
         if not isinstance(config, dict):
             raise ConfigurationValidationError("Biological config must be a dictionary")
@@ -157,16 +157,16 @@ class ConfigMerger:
     """Utility class for merging configurations."""
 
     @staticmethod
-    def merge_dicts(base: Dict[str, Any], override: Dict[str, Any],
-                   deep_merge: bool = True) -> Dict[str, Any]:
+    def merge_dicts(base: dict[str, Any], override: dict[str, Any],
+                   deep_merge: bool = True) -> dict[str, Any]:
         """
         Merge two dictionaries with optional deep merging.
-        
+
         Args:
             base: Base dictionary
             override: Override dictionary
             deep_merge: Whether to perform deep merging
-            
+
         Returns:
             Merged dictionary
         """
@@ -190,11 +190,11 @@ class ConfigMerger:
                       override_profile: ConfigProfile) -> ConfigProfile:
         """
         Merge two configuration profiles.
-        
+
         Args:
             base_profile: Base profile
             override_profile: Override profile
-            
+
         Returns:
             Merged profile
         """
@@ -227,21 +227,21 @@ class ConfigMerger:
 class ConfigManager:
     """Central configuration management system."""
 
-    def __init__(self, config_directory: Optional[str] = None):
+    def __init__(self, config_directory: str | None = None):
         """
         Initialize configuration manager.
-        
+
         Args:
             config_directory: Directory containing configuration files
         """
         self.config_directory = Path(config_directory or "configs")
-        self.profiles: Dict[str, ConfigProfile] = {}
-        self.validators: Dict[str, ConfigValidator] = {
+        self.profiles: dict[str, ConfigProfile] = {}
+        self.validators: dict[str, ConfigValidator] = {
             'biological': BiologicalConfigValidator(),
             'control': ControlConfigValidator(),
             'visualization': VisualizationConfigValidator()
         }
-        self.current_profile: Optional[str] = None
+        self.current_profile: str | None = None
         self.cache_enabled = True
         self.logger = logging.getLogger(__name__)
 
@@ -268,14 +268,14 @@ class ConfigManager:
                               file_path: str) -> ConfigProfile:
         """
         Load configuration profile from file.
-        
+
         Args:
             profile_name: Name of the profile
             file_path: Path to configuration file
-            
+
         Returns:
             Loaded configuration profile
-            
+
         Raises:
             ConfigurationLoadError: If loading fails
         """
@@ -311,7 +311,7 @@ class ConfigManager:
             raise ConfigurationLoadError(f"Failed to load profile {profile_name}: {e}")
 
     def _create_profile_from_dict(self, profile_name: str,
-                                 config_data: Dict[str, Any]) -> ConfigProfile:
+                                 config_data: dict[str, Any]) -> ConfigProfile:
         """Create configuration profile from dictionary."""
         profile = ConfigProfile(profile_name=profile_name)
 
@@ -348,7 +348,7 @@ class ConfigManager:
 
         return profile
 
-    def _dict_to_control_config(self, control_data: Dict[str, Any]) -> ControlSystemConfig:
+    def _dict_to_control_config(self, control_data: dict[str, Any]) -> ControlSystemConfig:
         """Convert dictionary to ControlSystemConfig."""
         # This is a simplified conversion - can be enhanced for full dataclass conversion
         from .control_config import ControlSystemConfig
@@ -362,7 +362,7 @@ class ConfigManager:
 
         return config
 
-    def _dict_to_visualization_config(self, viz_data: Dict[str, Any]) -> VisualizationConfig:
+    def _dict_to_visualization_config(self, viz_data: dict[str, Any]) -> VisualizationConfig:
         """Convert dictionary to VisualizationConfig."""
         from .visualization_config import VisualizationConfig
 
@@ -379,12 +379,12 @@ class ConfigManager:
                            file_path: str, format: str = "yaml") -> None:
         """
         Save configuration profile to file.
-        
+
         Args:
             profile_name: Name of profile to save
             file_path: Output file path
             format: File format ("yaml" or "json")
-            
+
         Raises:
             ConfigurationError: If profile doesn't exist or saving fails
         """
@@ -432,13 +432,13 @@ class ConfigManager:
     def validate_profile(self, profile: ConfigProfile) -> bool:
         """
         Validate configuration profile.
-        
+
         Args:
             profile: Profile to validate
-            
+
         Returns:
             bool: True if valid
-            
+
         Raises:
             ConfigurationValidationError: If validation fails
         """
@@ -463,13 +463,13 @@ class ConfigManager:
     def get_profile(self, profile_name: str) -> ConfigProfile:
         """
         Get configuration profile by name.
-        
+
         Args:
             profile_name: Name of profile to retrieve
-            
+
         Returns:
             Configuration profile
-            
+
         Raises:
             ConfigurationError: If profile doesn't exist
         """
@@ -488,10 +488,10 @@ class ConfigManager:
     def set_current_profile(self, profile_name: str) -> None:
         """
         Set the current active profile.
-        
+
         Args:
             profile_name: Name of profile to activate
-            
+
         Raises:
             ConfigurationError: If profile doesn't exist
         """
@@ -501,10 +501,10 @@ class ConfigManager:
         self.current_profile = profile_name
         self.logger.info(f"Set current profile to: {profile_name}")
 
-    def get_current_profile(self) -> Optional[ConfigProfile]:
+    def get_current_profile(self) -> ConfigProfile | None:
         """
         Get the current active profile.
-        
+
         Returns:
             Current profile or None if not set
         """
@@ -513,20 +513,20 @@ class ConfigManager:
         return None
 
     def create_profile(self, profile_name: str,
-                      biological: Optional[Dict[str, Any]] = None,
-                      control: Optional[ControlSystemConfig] = None,
-                      visualization: Optional[VisualizationConfig] = None,
-                      inherits_from: Optional[str] = None) -> ConfigProfile:
+                      biological: dict[str, Any] | None = None,
+                      control: ControlSystemConfig | None = None,
+                      visualization: VisualizationConfig | None = None,
+                      inherits_from: str | None = None) -> ConfigProfile:
         """
         Create a new configuration profile.
-        
+
         Args:
             profile_name: Name of the new profile
             biological: Biological configuration
             control: Control system configuration
             visualization: Visualization configuration
             inherits_from: Parent profile name for inheritance
-            
+
         Returns:
             Created profile
         """
@@ -550,10 +550,10 @@ class ConfigManager:
     def delete_profile(self, profile_name: str) -> None:
         """
         Delete a configuration profile.
-        
+
         Args:
             profile_name: Name of profile to delete
-            
+
         Raises:
             ConfigurationError: If profile doesn't exist or is currently active
         """
@@ -566,27 +566,27 @@ class ConfigManager:
         del self.profiles[profile_name]
         self.logger.info(f"Deleted profile: {profile_name}")
 
-    def list_profiles(self) -> List[str]:
+    def list_profiles(self) -> list[str]:
         """
         Get list of available profile names.
-        
+
         Returns:
             List of profile names
         """
         return list(self.profiles.keys())
 
     def get_configuration(self, config_type: str,
-                         profile_name: Optional[str] = None) -> Any:
+                         profile_name: str | None = None) -> Any:
         """
         Get specific configuration from profile.
-        
+
         Args:
             config_type: Type of configuration ("biological", "control", "visualization")
             profile_name: Profile name (uses current if None)
-            
+
         Returns:
             Requested configuration
-            
+
         Raises:
             ConfigurationError: If profile or configuration doesn't exist
         """
@@ -607,15 +607,15 @@ class ConfigManager:
             raise ConfigurationError(f"Unknown configuration type: {config_type}")
 
     def update_configuration(self, config_type: str, config: Any,
-                           profile_name: Optional[str] = None) -> None:
+                           profile_name: str | None = None) -> None:
         """
         Update specific configuration in profile.
-        
+
         Args:
             config_type: Type of configuration to update
             config: New configuration
             profile_name: Profile name (uses current if None)
-            
+
         Raises:
             ConfigurationError: If profile doesn't exist
         """
@@ -646,16 +646,16 @@ class ConfigManager:
 
 
 # Global configuration manager instance
-_config_manager: Optional[ConfigManager] = None
+_config_manager: ConfigManager | None = None
 
 
-def get_config_manager(config_directory: Optional[str] = None) -> ConfigManager:
+def get_config_manager(config_directory: str | None = None) -> ConfigManager:
     """
     Get global configuration manager instance.
-    
+
     Args:
         config_directory: Configuration directory (only used on first call)
-        
+
     Returns:
         ConfigManager instance
     """

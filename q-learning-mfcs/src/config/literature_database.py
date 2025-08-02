@@ -11,7 +11,7 @@ Last Modified: 2025-07-31
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class ParameterCategory(Enum):
@@ -34,7 +34,7 @@ class LiteratureReference:
     year: int
     volume: str
     pages: str
-    doi: Optional[str] = None
+    doi: str | None = None
 
     def format_citation(self, style: str = "apa") -> str:
         """Format citation in specified style."""
@@ -64,10 +64,10 @@ class ParameterInfo:
     typical_value: float
     min_value: float
     max_value: float
-    recommended_range: Tuple[float, float]
+    recommended_range: tuple[float, float]
     category: ParameterCategory
-    references: List[LiteratureReference]
-    notes: Optional[str] = None
+    references: list[LiteratureReference]
+    notes: str | None = None
 
     def is_within_recommended_range(self, value: float) -> bool:
         """Check if value is within recommended range."""
@@ -94,7 +94,7 @@ class LiteratureDatabase:
         """Initialize literature database with parameter information."""
         self.parameters = self._initialize_parameter_database()
 
-    def _initialize_parameter_database(self) -> Dict[str, ParameterInfo]:
+    def _initialize_parameter_database(self) -> dict[str, ParameterInfo]:
         """Initialize the parameter database with literature values."""
 
         # Literature references
@@ -366,22 +366,22 @@ class LiteratureDatabase:
 
         return parameters
 
-    def get_parameter(self, name: str) -> Optional[ParameterInfo]:
+    def get_parameter(self, name: str) -> ParameterInfo | None:
         """Get parameter information by name."""
         return self.parameters.get(name)
 
-    def get_parameters_by_category(self, category: ParameterCategory) -> List[ParameterInfo]:
+    def get_parameters_by_category(self, category: ParameterCategory) -> list[ParameterInfo]:
         """Get all parameters in a specific category."""
         return [param for param in self.parameters.values() if param.category == category]
 
-    def validate_parameter_value(self, name: str, value: float) -> Dict[str, Any]:
+    def validate_parameter_value(self, name: str, value: float) -> dict[str, Any]:
         """
         Validate a parameter value against literature recommendations.
-        
+
         Args:
             name: Parameter name
             value: Parameter value to validate
-            
+
         Returns:
             Dictionary with validation results
         """
@@ -395,7 +395,7 @@ class LiteratureDatabase:
 
         status = param.get_validation_status(value)
 
-        validation_result: Dict[str, Any] = {
+        validation_result: dict[str, Any] = {
             "status": status,
             "parameter": param,
             "value": value,
@@ -418,11 +418,11 @@ class LiteratureDatabase:
 
         return validation_result
 
-    def get_all_categories(self) -> List[ParameterCategory]:
+    def get_all_categories(self) -> list[ParameterCategory]:
         """Get all available parameter categories."""
         return list(ParameterCategory)
 
-    def search_parameters(self, query: str) -> List[ParameterInfo]:
+    def search_parameters(self, query: str) -> list[ParameterInfo]:
         """Search parameters by name, symbol, or description."""
         query_lower = query.lower()
         results = []
@@ -435,7 +435,7 @@ class LiteratureDatabase:
 
         return results
 
-    def get_citation_list(self, format_style: str = "apa") -> List[str]:
+    def get_citation_list(self, format_style: str = "apa") -> list[str]:
         """Get formatted citation list for all references."""
         all_refs = set()
         for param in self.parameters.values():

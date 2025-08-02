@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -61,8 +61,8 @@ class PerformanceMetric:
 class AlertRule:
     """Alert rule configuration."""
     parameter: str
-    threshold_min: Optional[float] = None
-    threshold_max: Optional[float] = None
+    threshold_min: float | None = None
+    threshold_max: float | None = None
     level: AlertLevel = AlertLevel.WARNING
     message_template: str = "{parameter} is {value:.2f} (threshold: {threshold})"
     enabled: bool = True
@@ -71,7 +71,7 @@ class AlertRule:
 @dataclass
 class DashboardLayout:
     """Dashboard layout configuration."""
-    panel_positions: Dict[str, Dict[str, Any]]
+    panel_positions: dict[str, dict[str, Any]]
     refresh_interval: int = 5  # seconds
     max_data_points: int = 1000
     auto_scroll: bool = True
@@ -83,10 +83,10 @@ class LiveDataGenerator:
     In production, this would connect to actual sensors/controllers.
     """
 
-    def __init__(self, base_config: Dict[str, Any]):
+    def __init__(self, base_config: dict[str, Any]):
         self.base_config = base_config
         self.start_time = datetime.now()
-        self.data_history: List[PerformanceMetric] = []
+        self.data_history: list[PerformanceMetric] = []
 
     def generate_realistic_data(self, cell_id: str = "Cell_01") -> PerformanceMetric:
         """Generate realistic MFC performance data."""
@@ -136,7 +136,7 @@ class LiveDataGenerator:
             cell_id=cell_id
         )
 
-    def get_historical_data(self, hours: int = 24) -> List[PerformanceMetric]:
+    def get_historical_data(self, hours: int = 24) -> list[PerformanceMetric]:
         """Generate historical data for specified time period."""
         historical_data = []
         start_time = datetime.now() - timedelta(hours=hours)
@@ -160,10 +160,10 @@ class AlertManager:
     """Manages alert rules and notifications."""
 
     def __init__(self):
-        self.rules: List[AlertRule] = self._get_default_rules()
-        self.active_alerts: List[Dict[str, Any]] = []
+        self.rules: list[AlertRule] = self._get_default_rules()
+        self.active_alerts: list[dict[str, Any]] = []
 
-    def _get_default_rules(self) -> List[AlertRule]:
+    def _get_default_rules(self) -> list[AlertRule]:
         """Get default alert rules based on MFC literature."""
         return [
             AlertRule(
@@ -203,7 +203,7 @@ class AlertManager:
             )
         ]
 
-    def check_alerts(self, metric: PerformanceMetric) -> List[Dict[str, Any]]:
+    def check_alerts(self, metric: PerformanceMetric) -> list[dict[str, Any]]:
         """Check current metric against all alert rules."""
         new_alerts = []
 
@@ -243,13 +243,13 @@ class AlertManager:
 
         return new_alerts
 
-    def add_alerts(self, alerts: List[Dict[str, Any]]):
+    def add_alerts(self, alerts: list[dict[str, Any]]):
         """Add new alerts to active list."""
         self.active_alerts.extend(alerts)
         # Keep only recent alerts (last 100)
         self.active_alerts = self.active_alerts[-100:]
 
-    def get_active_alerts(self, level: Optional[AlertLevel] = None) -> List[Dict[str, Any]]:
+    def get_active_alerts(self, level: AlertLevel | None = None) -> list[dict[str, Any]]:
         """Get active alerts, optionally filtered by level."""
         if level is None:
             return self.active_alerts

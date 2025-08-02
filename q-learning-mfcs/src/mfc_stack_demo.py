@@ -13,7 +13,6 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from mfc_stack_simulation import MFCStack, MFCStackQLearningController
 
 

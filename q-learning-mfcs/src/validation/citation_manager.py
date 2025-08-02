@@ -11,7 +11,7 @@ import re
 import warnings
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from .literature_validation import LiteratureReference
 from .pubmed_connector import PubMedArticle
@@ -23,7 +23,7 @@ class Citation:
     """Container for formatted citation information."""
 
     pmid: str = ""
-    authors: List[str] = field(default_factory=list)
+    authors: list[str] = field(default_factory=list)
     title: str = ""
     journal: str = ""
     year: int = 0
@@ -171,14 +171,14 @@ class CitationReport:
     parameter_value: float
     units: str
     validation_status: str
-    citations: List[Citation] = field(default_factory=list)
-    quality_scores: List[QualityScore] = field(default_factory=list)
-    report_metadata: Dict[str, Any] = field(default_factory=dict)
+    citations: list[Citation] = field(default_factory=list)
+    quality_scores: list[QualityScore] = field(default_factory=list)
+    report_metadata: dict[str, Any] = field(default_factory=dict)
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 class CitationManager:
     """
     Comprehensive citation management system.
-    
+
     Handles citation formatting, bibliography generation, and
     reporting for literature validation in MFC systems.
     """
@@ -254,7 +254,7 @@ class CitationManager:
 
         return citation
 
-    def format_citations(self, citations: List[Citation], style: str = "apa") -> List[str]:
+    def format_citations(self, citations: list[Citation], style: str = "apa") -> list[str]:
         """Format list of citations in specified style."""
 
         formatted = []
@@ -272,7 +272,7 @@ class CitationManager:
 
         return formatted
 
-    def generate_bibliography(self, pmids: List[str] = None, style: str = "apa") -> str:
+    def generate_bibliography(self, pmids: list[str] = None, style: str = "apa") -> str:
         """Generate bibliography for specified citations."""
 
         if pmids is None:
@@ -300,9 +300,9 @@ class CitationManager:
 
     def create_parameter_report(self, parameter_name: str, parameter_value: float,
                               units: str, validation_status: str,
-                              articles: List[PubMedArticle] = None,
-                              references: List[LiteratureReference] = None,
-                              quality_scores: List[QualityScore] = None) -> CitationReport:
+                              articles: list[PubMedArticle] = None,
+                              references: list[LiteratureReference] = None,
+                              quality_scores: list[QualityScore] = None) -> CitationReport:
         """Create comprehensive citation report for parameter validation."""
 
         citations = []
@@ -361,7 +361,7 @@ class CitationManager:
         self.reports.append(report)
         return report
 
-    def generate_validation_report(self, reports: List[CitationReport] = None,
+    def generate_validation_report(self, reports: list[CitationReport] = None,
                                  output_format: str = "markdown") -> str:
         """Generate comprehensive validation report with citations."""
 
@@ -381,7 +381,7 @@ class CitationManager:
             warnings.warn(f"Unknown output format: {output_format}. Using markdown.")
             return self._generate_markdown_report(reports)
 
-    def _generate_markdown_report(self, reports: List[CitationReport]) -> str:
+    def _generate_markdown_report(self, reports: list[CitationReport]) -> str:
         """Generate markdown validation report."""
 
         report = "# MFC Parameter Validation Report\n\n"
@@ -447,7 +447,7 @@ class CitationManager:
 
         return report
 
-    def _generate_html_report(self, reports: List[CitationReport]) -> str:
+    def _generate_html_report(self, reports: list[CitationReport]) -> str:
         """Generate HTML validation report."""
 
         html = """
@@ -511,7 +511,7 @@ class CitationManager:
 
         return html
 
-    def _generate_json_report(self, reports: List[CitationReport]) -> str:
+    def _generate_json_report(self, reports: list[CitationReport]) -> str:
         """Generate JSON validation report."""
 
         report_data = {
@@ -537,7 +537,7 @@ class CitationManager:
 
         return json.dumps(report_data, indent=2, default=str)
 
-    def export_bibtex_file(self, filepath: str, pmids: List[str] = None):
+    def export_bibtex_file(self, filepath: str, pmids: list[str] = None):
         """Export citations to BibTeX file."""
 
         if pmids is None:
@@ -558,7 +558,7 @@ class CitationManager:
 
         print(f"📚 BibTeX file exported to: {filepath}")
 
-    def get_citation_statistics(self) -> Dict[str, Any]:
+    def get_citation_statistics(self) -> dict[str, Any]:
         """Get comprehensive citation statistics."""
 
         if not self.citations:

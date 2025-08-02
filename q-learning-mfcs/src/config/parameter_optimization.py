@@ -28,10 +28,10 @@ Literature References:
 import logging
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -99,22 +99,22 @@ class OptimizationResult:
     # Optimization metadata
     method: OptimizationMethod
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     total_evaluations: int = 0
-    convergence_history: List[float] = field(default_factory=list)
+    convergence_history: list[float] = field(default_factory=list)
 
     # Best solution
-    best_parameters: Optional[np.ndarray] = None
-    best_objective_values: Optional[Dict[str, float]] = None
-    best_overall_score: Optional[float] = None
+    best_parameters: np.ndarray | None = None
+    best_objective_values: dict[str, float] | None = None
+    best_overall_score: float | None = None
 
     # Pareto frontier (for multi-objective optimization)
-    pareto_parameters: Optional[np.ndarray] = None
-    pareto_objectives: Optional[np.ndarray] = None
+    pareto_parameters: np.ndarray | None = None
+    pareto_objectives: np.ndarray | None = None
 
     # All evaluated points
-    all_parameters: List[np.ndarray] = field(default_factory=list)
-    all_objectives: List[Dict[str, float]] = field(default_factory=list)
+    all_parameters: list[np.ndarray] = field(default_factory=list)
+    all_objectives: list[dict[str, float]] = field(default_factory=list)
 
     # Convergence information
     converged: bool = False
@@ -140,12 +140,12 @@ class ParameterOptimizer(ABC):
     """Abstract base class for parameter optimizers."""
 
     def __init__(self, parameter_space: ParameterSpace,
-                 objectives: List[OptimizationObjective],
-                 constraints: Optional[List[OptimizationConstraint]] = None,
-                 random_seed: Optional[int] = None):
+                 objectives: list[OptimizationObjective],
+                 constraints: list[OptimizationConstraint] | None = None,
+                 random_seed: int | None = None):
         """
         Initialize parameter optimizer.
-        
+
         Args:
             parameter_space: Parameter space definition
             objectives: List of optimization objectives
@@ -162,31 +162,31 @@ class ParameterOptimizer(ABC):
             np.random.seed(random_seed)
 
     @abstractmethod
-    def optimize(self, objective_function: Callable[[np.ndarray], Dict[str, float]],
+    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
                 max_evaluations: int = 100,
                 **kwargs) -> OptimizationResult:
         """
         Perform parameter optimization.
-        
+
         Args:
             objective_function: Function to optimize
             max_evaluations: Maximum number of function evaluations
             **kwargs: Method-specific parameters
-            
+
         Returns:
             Optimization results
         """
         pass
 
     def _evaluate_objectives(self, parameters: np.ndarray,
-                           objective_function: Callable) -> Dict[str, float]:
+                           objective_function: Callable) -> dict[str, float]:
         """
         Evaluate objectives for given parameters.
-        
+
         Args:
             parameters: Parameter values
             objective_function: Objective function
-            
+
         Returns:
             Dictionary of objective values
         """
@@ -201,10 +201,10 @@ class ParameterOptimizer(ABC):
     def _check_constraints(self, parameters: np.ndarray) -> bool:
         """
         Check if parameters satisfy all constraints.
-        
+
         Args:
             parameters: Parameter values
-            
+
         Returns:
             True if all constraints are satisfied
         """
@@ -221,13 +221,13 @@ class ParameterOptimizer(ABC):
                 return False
         return True
 
-    def _calculate_overall_score(self, objective_values: Dict[str, float]) -> float:
+    def _calculate_overall_score(self, objective_values: dict[str, float]) -> float:
         """
         Calculate overall optimization score from multiple objectives.
-        
+
         Args:
             objective_values: Dictionary of objective values
-            
+
         Returns:
             Combined score
         """
@@ -245,14 +245,14 @@ class BayesianOptimizer(ParameterOptimizer):
     """Bayesian optimization using Gaussian Processes."""
 
     def __init__(self, parameter_space: ParameterSpace,
-                 objectives: List[OptimizationObjective],
-                 constraints: Optional[List[OptimizationConstraint]] = None,
+                 objectives: list[OptimizationObjective],
+                 constraints: list[OptimizationConstraint] | None = None,
                  acquisition_function: str = "expected_improvement",
                  kernel_type: str = "matern",
-                 random_seed: Optional[int] = None):
+                 random_seed: int | None = None):
         """
         Initialize Bayesian optimizer.
-        
+
         Args:
             parameter_space: Parameter space definition
             objectives: List of optimization objectives
@@ -268,21 +268,21 @@ class BayesianOptimizer(ParameterOptimizer):
         if not HAS_SKLEARN:
             raise ImportError("Scikit-learn required for Bayesian optimization")
 
-    def optimize(self, objective_function: Callable[[np.ndarray], Dict[str, float]],
+    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
                 max_evaluations: int = 100,
                 n_initial_points: int = 10,
                 acquisition_optimizer: str = "lbfgs",
                 **kwargs) -> OptimizationResult:
         """
         Perform Bayesian optimization.
-        
+
         Args:
             objective_function: Function to optimize
             max_evaluations: Maximum number of function evaluations
             n_initial_points: Number of initial random points
             acquisition_optimizer: Optimizer for acquisition function
             **kwargs: Additional parameters
-            
+
         Returns:
             Optimization results
         """
@@ -427,7 +427,7 @@ class BayesianOptimizer(ParameterOptimizer):
         Z = improvement / (std + 1e-9)
         return norm.cdf(Z)
 
-    def _check_convergence(self, history: List[float],
+    def _check_convergence(self, history: list[float],
                           window: int = 10, threshold: float = 1e-6) -> bool:
         """Check convergence based on improvement history."""
         if len(history) < window:
@@ -444,16 +444,16 @@ class GeneticOptimizer(ParameterOptimizer):
     """Genetic Algorithm optimizer."""
 
     def __init__(self, parameter_space: ParameterSpace,
-                 objectives: List[OptimizationObjective],
-                 constraints: Optional[List[OptimizationConstraint]] = None,
+                 objectives: list[OptimizationObjective],
+                 constraints: list[OptimizationConstraint] | None = None,
                  population_size: int = 50,
                  crossover_rate: float = 0.8,
                  mutation_rate: float = 0.1,
                  selection_method: str = "tournament",
-                 random_seed: Optional[int] = None):
+                 random_seed: int | None = None):
         """
         Initialize Genetic Algorithm optimizer.
-        
+
         Args:
             parameter_space: Parameter space definition
             objectives: List of optimization objectives
@@ -470,21 +470,21 @@ class GeneticOptimizer(ParameterOptimizer):
         self.mutation_rate = mutation_rate
         self.selection_method = selection_method
 
-    def optimize(self, objective_function: Callable[[np.ndarray], Dict[str, float]],
+    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
                 max_evaluations: int = 1000,
-                max_generations: Optional[int] = None,
+                max_generations: int | None = None,
                 elite_size: int = 2,
                 **kwargs) -> OptimizationResult:
         """
         Perform genetic algorithm optimization.
-        
+
         Args:
             objective_function: Function to optimize
             max_evaluations: Maximum number of function evaluations
             max_generations: Maximum number of generations (optional)
             elite_size: Number of elite individuals to preserve
             **kwargs: Additional parameters
-            
+
         Returns:
             Optimization results
         """
@@ -627,7 +627,7 @@ class GeneticOptimizer(ParameterOptimizer):
                                   replace=True, p=probabilities)
         return selected
 
-    def _crossover(self, parent1: np.ndarray, parent2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _crossover(self, parent1: np.ndarray, parent2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Uniform crossover operation."""
         mask = np.random.random(len(parent1)) < 0.5
         child1 = np.where(mask, parent1, parent2)
@@ -659,7 +659,7 @@ class GeneticOptimizer(ParameterOptimizer):
             clipped[i] = np.clip(clipped[i], param.bounds.min_value, param.bounds.max_value)
         return clipped
 
-    def _check_convergence(self, history: List[float],
+    def _check_convergence(self, history: list[float],
                           window: int = 20, threshold: float = 1e-8) -> bool:
         """Check convergence based on fitness improvement."""
         if len(history) < window:
@@ -675,13 +675,13 @@ class GradientOptimizer(ParameterOptimizer):
     """Gradient-based optimizer using scipy methods."""
 
     def __init__(self, parameter_space: ParameterSpace,
-                 objectives: List[OptimizationObjective],
-                 constraints: Optional[List[OptimizationConstraint]] = None,
+                 objectives: list[OptimizationObjective],
+                 constraints: list[OptimizationConstraint] | None = None,
                  method: str = "L-BFGS-B",
-                 random_seed: Optional[int] = None):
+                 random_seed: int | None = None):
         """
         Initialize gradient-based optimizer.
-        
+
         Args:
             parameter_space: Parameter space definition
             objectives: List of optimization objectives
@@ -695,19 +695,19 @@ class GradientOptimizer(ParameterOptimizer):
         if not HAS_SCIPY:
             raise ImportError("SciPy required for gradient-based optimization")
 
-    def optimize(self, objective_function: Callable[[np.ndarray], Dict[str, float]],
+    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
                 max_evaluations: int = 1000,
                 n_restarts: int = 5,
                 **kwargs) -> OptimizationResult:
         """
         Perform gradient-based optimization.
-        
+
         Args:
             objective_function: Function to optimize
             max_evaluations: Maximum number of function evaluations
             n_restarts: Number of random restarts
             **kwargs: Additional parameters for scipy.optimize.minimize
-            
+
         Returns:
             Optimization results
         """
@@ -789,10 +789,10 @@ class GradientOptimizer(ParameterOptimizer):
 def calculate_pareto_frontier(objectives: np.ndarray) -> np.ndarray:
     """
     Calculate Pareto frontier from multi-objective results.
-    
+
     Args:
         objectives: Array of objective values (n_points x n_objectives)
-        
+
     Returns:
         Boolean array indicating Pareto optimal points
     """
@@ -812,11 +812,11 @@ def calculate_pareto_frontier(objectives: np.ndarray) -> np.ndarray:
 def hypervolume_indicator(pareto_front: np.ndarray, reference_point: np.ndarray) -> float:
     """
     Calculate hypervolume indicator for multi-objective optimization.
-    
+
     Args:
         pareto_front: Pareto frontier points
         reference_point: Reference point for hypervolume calculation
-        
+
     Returns:
         Hypervolume value
     """

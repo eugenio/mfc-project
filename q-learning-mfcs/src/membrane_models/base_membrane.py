@@ -17,7 +17,7 @@ Created: 2025-07-27
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -90,7 +90,7 @@ class IonTransportMechanisms:
 class BaseMembraneModel(ABC):
     """
     Abstract base class for membrane models in MFC simulations.
-    
+
     Provides common functionality for all membrane types:
     - Multi-ion transport calculations
     - Selectivity and permeability
@@ -129,15 +129,15 @@ class BaseMembraneModel(ABC):
                                     potential_gradient: float) -> float:
         """
         Calculate ion flux using Nernst-Planck equation.
-        
+
         J = -D * (dC/dx) - z * F * D * C * (dφ/dx) / (R*T) + C * v
-        
+
         Args:
             ion: Ion type
             concentration_anode: Anode side concentration (mol/m³)
             concentration_cathode: Cathode side concentration (mol/m³)
             potential_gradient: Electric potential gradient (V/m)
-        
+
         Returns:
             Ion flux (mol/m²/s)
         """
@@ -171,15 +171,15 @@ class BaseMembraneModel(ABC):
 
         return total_flux
 
-    def calculate_donnan_potential(self, ion_concentrations_anode: Dict[IonType, float],
-                                  ion_concentrations_cathode: Dict[IonType, float]) -> float:
+    def calculate_donnan_potential(self, ion_concentrations_anode: dict[IonType, float],
+                                  ion_concentrations_cathode: dict[IonType, float]) -> float:
         """
         Calculate Donnan potential at membrane interfaces.
-        
+
         Args:
             ion_concentrations_anode: Ion concentrations at anode (mol/m³)
             ion_concentrations_cathode: Ion concentrations at cathode (mol/m³)
-        
+
         Returns:
             Donnan potential (V)
         """
@@ -215,11 +215,11 @@ class BaseMembraneModel(ABC):
                                  primary_ion: IonType) -> float:
         """
         Calculate water transport through electro-osmotic drag.
-        
+
         Args:
             current_density: Current density (A/m²)
             primary_ion: Primary charge carrier ion
-        
+
         Returns:
             Water flux (mol/m²/s)
         """
@@ -246,11 +246,11 @@ class BaseMembraneModel(ABC):
                                   pressure_difference: float) -> float:
         """
         Calculate gas permeability through membrane.
-        
+
         Args:
             gas_type: Type of gas ("O2", "H2", "CO2", etc.)
             pressure_difference: Pressure difference (Pa)
-        
+
         Returns:
             Gas flux (mol/m²/s)
         """
@@ -286,13 +286,13 @@ class BaseMembraneModel(ABC):
 
         return float(gas_flux)
 
-    def calculate_membrane_resistance(self, ionic_conductivity: Optional[float] = None) -> float:
+    def calculate_membrane_resistance(self, ionic_conductivity: float | None = None) -> float:
         """
         Calculate membrane resistance including degradation effects.
-        
+
         Args:
             ionic_conductivity: Override conductivity (S/m)
-        
+
         Returns:
             Membrane resistance (Ω)
         """
@@ -313,14 +313,14 @@ class BaseMembraneModel(ABC):
                             concentration_ratio: float = 1.0) -> float:
         """
         Calculate membrane selectivity between two ions.
-        
+
         Selectivity = (P1/P2) * (D1/D2) * (K1/K2)
-        
+
         Args:
             ion1: First ion type
             ion2: Second ion type
             concentration_ratio: C1/C2 ratio
-        
+
         Returns:
             Selectivity coefficient
         """
@@ -353,18 +353,18 @@ class BaseMembraneModel(ABC):
         return float(selectivity)
 
     def calculate_transport_number(self, ion: IonType,
-                                  all_ion_concentrations: Dict[IonType, float],
+                                  all_ion_concentrations: dict[IonType, float],
                                   current_density: float) -> float:
         """
         Calculate transport number for specific ion.
-        
+
         t_i = |z_i| * u_i * C_i / Σ(|z_j| * u_j * C_j)
-        
+
         Args:
             ion: Ion of interest
             all_ion_concentrations: All ion concentrations (mol/m³)
             current_density: Current density (A/m²)
-        
+
         Returns:
             Transport number (0-1)
         """
@@ -397,23 +397,23 @@ class BaseMembraneModel(ABC):
         return float(transport_number)
 
     @abstractmethod
-    def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
-                                   water_content: Optional[float] = None) -> float:
+    def calculate_ionic_conductivity(self, temperature: float | None = None,
+                                   water_content: float | None = None) -> float:
         """
         Calculate ionic conductivity specific to membrane type.
-        
+
         Args:
             temperature: Temperature (K)
             water_content: Water content (mol H2O/mol functional group)
-        
+
         Returns:
             Ionic conductivity (S/m)
         """
         pass
 
-    def update_operating_conditions(self, temperature: Optional[float] = None,
-                                  pressure_anode: Optional[float] = None,
-                                  pressure_cathode: Optional[float] = None):
+    def update_operating_conditions(self, temperature: float | None = None,
+                                  pressure_anode: float | None = None,
+                                  pressure_cathode: float | None = None):
         """Update membrane operating conditions."""
         if temperature is not None:
             self.temperature = temperature
@@ -437,14 +437,14 @@ class BaseMembraneModel(ABC):
         self.params.fouling_resistance += additional_resistance
 
     def get_performance_metrics(self, current_density: float,
-                              ion_concentrations: Dict[IonType, float]) -> Dict[str, float]:
+                              ion_concentrations: dict[IonType, float]) -> dict[str, float]:
         """
         Calculate comprehensive membrane performance metrics.
-        
+
         Args:
             current_density: Operating current density (A/m²)
             ion_concentrations: Ion concentrations (mol/m³)
-        
+
         Returns:
             Dictionary of performance metrics
         """
@@ -479,7 +479,7 @@ class BaseMembraneModel(ABC):
             **transport_numbers
         }
 
-    def get_transport_properties(self) -> Dict[str, Any]:
+    def get_transport_properties(self) -> dict[str, Any]:
         """Get all transport properties for inspection."""
         properties = {
             'membrane_type': self.__class__.__name__,

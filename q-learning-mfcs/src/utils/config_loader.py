@@ -7,16 +7,15 @@ Loads configuration from .env file and environment variables.
 
 import os
 from pathlib import Path
-from typing import Dict, Optional
 
 
-def load_env_file(env_path: Optional[str] = None) -> Dict[str, str]:
+def load_env_file(env_path: str | None = None) -> dict[str, str]:
     """
     Load environment variables from .env file.
-    
+
     Args:
         env_path: Path to .env file. If None, searches for .env in project root.
-    
+
     Returns:
         Dictionary of environment variables
     """
@@ -65,7 +64,7 @@ def load_env_file(env_path: Optional[str] = None) -> Dict[str, str]:
 def setup_gitlab_config() -> bool:
     """
     Setup GitLab configuration from .env file.
-    
+
     Returns:
         True if configuration was loaded successfully
     """
@@ -90,10 +89,10 @@ def setup_gitlab_config() -> bool:
 
     return config_loaded
 
-def get_gitlab_config() -> Dict[str, Optional[str]]:
+def get_gitlab_config() -> dict[str, str | None]:
     """
     Get current GitLab configuration.
-    
+
     Returns:
         Dictionary with GitLab configuration
     """
@@ -106,7 +105,7 @@ def get_gitlab_config() -> Dict[str, Optional[str]]:
 def validate_gitlab_config() -> bool:
     """
     Validate GitLab configuration.
-    
+
     Returns:
         True if configuration is valid
     """

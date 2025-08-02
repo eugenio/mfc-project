@@ -21,7 +21,6 @@ Literature References:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Tuple
 
 
 class ControlMode(Enum):
@@ -69,7 +68,7 @@ class PIDConfig:
 
     # Adaptive parameters
     enable_gain_scheduling: bool = False  # Enable gain scheduling
-    operating_point_gains: Dict[float, Tuple[float, float, float]] = field(default_factory=dict)
+    operating_point_gains: dict[float, tuple[float, float, float]] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validate PID configuration parameters."""
@@ -198,9 +197,9 @@ class AdvancedControlConfig:
     substrate_utilization_max: float = 50.0  # Maximum substrate utilization
 
     # Action discretization
-    flow_rate_adjustments: List[float] = field(default_factory=lambda:
+    flow_rate_adjustments: list[float] = field(default_factory=lambda:
         [-12.0, -10.0, -5.0, -2.0, -1.0, 0.0, 1.0, 2.0, 5.0, 6.0])
-    substrate_actions: List[float] = field(default_factory=lambda:
+    substrate_actions: list[float] = field(default_factory=lambda:
         [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
 
     # Multi-objective weights
@@ -222,7 +221,7 @@ class AdvancedControlConfig:
     stability_target_outlet_concentration: float = 12.0  # Target outlet concentration
 
     # Time phase discretization (hours)
-    time_phase_hours: List[int] = field(default_factory=lambda: [200, 500, 800, 1000])
+    time_phase_hours: list[int] = field(default_factory=lambda: [200, 500, 800, 1000])
 
 
 @dataclass
@@ -339,13 +338,13 @@ def get_precision_control_config() -> ControlSystemConfig:
 def validate_control_config(config: ControlSystemConfig) -> bool:
     """
     Validate control system configuration.
-    
+
     Args:
         config: Control system configuration to validate
-        
+
     Returns:
         bool: True if configuration is valid
-        
+
     Raises:
         ValueError: If configuration is invalid
     """

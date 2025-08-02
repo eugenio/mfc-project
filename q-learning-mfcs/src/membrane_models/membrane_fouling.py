@@ -13,7 +13,7 @@ Created: 2025-07-27
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 import jax.numpy as jnp
 import numpy as np
@@ -66,7 +66,7 @@ class FoulingParameters:
 class FoulingModel:
     """
     Comprehensive membrane fouling model.
-    
+
     Models multiple fouling mechanisms and their interactions:
     - Biological fouling with biofilm dynamics
     - Chemical precipitation and scaling
@@ -107,12 +107,12 @@ class FoulingModel:
                                 current_density: float = 0.0) -> float:
         """
         Calculate biofilm growth using Monod kinetics.
-        
+
         Args:
             dt_hours: Time step (hours)
             nutrient_conc: Nutrient concentration (mol/L)
             current_density: Current density (A/m²)
-        
+
         Returns:
             Biofilm thickness change (m)
         """
@@ -150,16 +150,16 @@ class FoulingModel:
 
         return thickness_change
 
-    def calculate_chemical_fouling(self, dt_hours: float, ion_concentrations: Dict[str, float],
+    def calculate_chemical_fouling(self, dt_hours: float, ion_concentrations: dict[str, float],
                                  temperature: float) -> float:
         """
         Calculate chemical fouling (precipitation, scaling).
-        
+
         Args:
             dt_hours: Time step (hours)
             ion_concentrations: Ion concentrations (mol/L)
             temperature: Temperature (K)
-        
+
         Returns:
             Chemical layer thickness change (m)
         """
@@ -199,12 +199,12 @@ class FoulingModel:
                                  flow_velocity: float) -> float:
         """
         Calculate particle deposition fouling.
-        
+
         Args:
             dt_hours: Time step (hours)
             particle_concentration: Particle concentration (kg/m³)
             flow_velocity: Flow velocity (m/s)
-        
+
         Returns:
             Particle layer thickness change (m)
         """
@@ -243,11 +243,11 @@ class FoulingModel:
     def calculate_thermal_degradation(self, dt_hours: float, temperature: float) -> float:
         """
         Calculate thermal degradation.
-        
+
         Args:
             dt_hours: Time step (hours)
             temperature: Temperature (K)
-        
+
         Returns:
             Degradation increment
         """
@@ -267,12 +267,12 @@ class FoulingModel:
                                      oxidizing_species: float = 0.0) -> float:
         """
         Calculate chemical degradation.
-        
+
         Args:
             dt_hours: Time step (hours)
             ph: Solution pH
             oxidizing_species: Concentration of oxidizing species (mol/L)
-        
+
         Returns:
             Degradation increment
         """
@@ -289,13 +289,13 @@ class FoulingModel:
 
         return degradation_increment
 
-    def calculate_total_resistance(self, membrane_resistance: float) -> Dict[str, float]:
+    def calculate_total_resistance(self, membrane_resistance: float) -> dict[str, float]:
         """
         Calculate total membrane resistance including fouling.
-        
+
         Args:
             membrane_resistance: Clean membrane resistance (Ω·m²)
-        
+
         Returns:
             Resistance breakdown
         """
@@ -338,10 +338,10 @@ class FoulingModel:
             'fouling_resistance_fraction': float((R_total - membrane_resistance) / membrane_resistance)
         }
 
-    def update_fouling(self, dt_hours: float, operating_conditions: Dict[str, Any]):
+    def update_fouling(self, dt_hours: float, operating_conditions: dict[str, Any]):
         """
         Update all fouling mechanisms.
-        
+
         Args:
             dt_hours: Time step (hours)
             operating_conditions: Operating conditions dictionary
@@ -387,16 +387,16 @@ class FoulingModel:
         self.fouling_history.append(fouling_state)
 
     def predict_fouling_trajectory(self, simulation_hours: float,
-                                 operating_conditions: Dict[str, Any],
-                                 time_step: float = 1.0) -> Dict[str, Any]:
+                                 operating_conditions: dict[str, Any],
+                                 time_step: float = 1.0) -> dict[str, Any]:
         """
         Predict fouling development over time.
-        
+
         Args:
             simulation_hours: Total simulation time (hours)
             operating_conditions: Operating conditions
             time_step: Time step for simulation (hours)
-        
+
         Returns:
             Fouling trajectory data
         """
@@ -454,13 +454,13 @@ class FoulingModel:
             'resistance_increase_factor': float(resistance_array[-1] / base_resistance)
         }
 
-    def get_cleaning_effectiveness(self, cleaning_method: str) -> Dict[str, float]:
+    def get_cleaning_effectiveness(self, cleaning_method: str) -> dict[str, float]:
         """
         Calculate cleaning effectiveness for different methods.
-        
+
         Args:
             cleaning_method: Cleaning method type
-        
+
         Returns:
             Cleaning effectiveness metrics
         """
@@ -537,7 +537,7 @@ class FoulingModel:
             'downtime_hours': effectiveness['downtime_hours']
         }
 
-    def get_fouling_status(self) -> Dict[str, Any]:
+    def get_fouling_status(self) -> dict[str, Any]:
         """Get current fouling status."""
         total_fouling_thickness = (self.biofilm_thickness +
                                  self.chemical_layer_thickness +
@@ -581,11 +581,11 @@ def calculate_fouling_resistance(fouling_thickness: float,
                                fouling_conductivity: float) -> float:
     """
     Calculate resistance of a fouling layer.
-    
+
     Args:
         fouling_thickness: Thickness of fouling layer (m)
         fouling_conductivity: Conductivity of fouling layer (S/m)
-    
+
     Returns:
         Fouling resistance (Ω·m²)
     """

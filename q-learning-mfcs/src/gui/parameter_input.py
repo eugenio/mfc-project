@@ -2,7 +2,7 @@
 Literature-Referenced Parameter Input Component
 
 This module provides scientific parameter input forms with literature citations,
-real-time validation, and visual indicators for parameter ranges based on 
+real-time validation, and visual indicators for parameter ranges based on
 peer-reviewed research.
 
 User Story 1.1.1: Literature-Referenced Parameter Input
@@ -12,7 +12,7 @@ Last Modified: 2025-07-31
 
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -54,16 +54,16 @@ class ParameterInputComponent:
         if 'show_performance_metrics' not in st.session_state:
             st.session_state.show_performance_metrics = False
 
-    def render_parameter_input_form(self) -> Dict[str, Any]:
+    def render_parameter_input_form(self) -> dict[str, Any]:
         """
         Render the main parameter input form with literature validation.
-        
+
         Returns:
             Dictionary of validated parameter values and metadata
         """
         st.header("🔬 Scientific Parameter Configuration")
         st.markdown("""
-        Configure MFC parameters with literature-validated ranges and citations. 
+        Configure MFC parameters with literature-validated ranges and citations.
         All parameters are backed by peer-reviewed research for scientific rigor.
         """)
 
@@ -231,7 +231,7 @@ class ParameterInputComponent:
             'warnings': validation_result.warnings
         }
 
-    def _render_validation_indicator(self, validation: Dict[str, Any]):
+    def _render_validation_indicator(self, validation: dict[str, Any]):
         """Render visual validation indicator."""
         status = validation['status']
 
@@ -637,7 +637,7 @@ class ParameterInputComponent:
         else:
             st.error("🐌 Validation performance needs improvement")
 
-    def _create_validated_config(self) -> Optional[QLearningConfig]:
+    def _create_validated_config(self) -> QLearningConfig | None:
         """Create a validated QLearningConfig from current parameter values."""
         if not st.session_state.parameter_values:
             return None

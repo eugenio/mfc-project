@@ -9,7 +9,6 @@ and experimental data.
 import os
 import sys
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -45,7 +44,7 @@ class MembraneProperties:
 class MembraneTransport:
     """
     Comprehensive membrane transport model for MFC applications.
-    
+
     Features:
     - Oxygen crossover calculations with concentration gradients
     - Proton conductivity with temperature and humidity effects
@@ -57,7 +56,7 @@ class MembraneTransport:
     def __init__(self, membrane_grade: str = "Nafion-117", use_gpu: bool = True):
         """
         Initialize membrane transport model.
-        
+
         Args:
             membrane_grade: Nafion membrane grade ("Nafion-117", "Nafion-115", "Nafion-212")
             use_gpu: Enable GPU acceleration
@@ -137,13 +136,13 @@ class MembraneTransport:
                                  temperature: float = 303.0, pressure: float = 101325.0) -> float:
         """
         Calculate oxygen crossover flux through membrane.
-        
+
         Args:
             anode_o2_conc: Oxygen concentration at anode (mol/m³)
             cathode_o2_conc: Oxygen concentration at cathode (mol/m³)
             temperature: Temperature (K)
             pressure: Pressure (Pa)
-            
+
         Returns:
             Oxygen flux (mol/m²/s)
         """
@@ -176,11 +175,11 @@ class MembraneTransport:
                                     relative_humidity: float = 100.0) -> float:
         """
         Calculate proton conductivity with temperature and humidity corrections.
-        
+
         Args:
             temperature: Temperature (K)
             relative_humidity: Relative humidity (%)
-            
+
         Returns:
             Proton conductivity (S/cm)
         """
@@ -201,12 +200,12 @@ class MembraneTransport:
                                     relative_humidity: float = 100.0) -> float:
         """
         Calculate membrane resistance.
-        
+
         Args:
             area: Membrane area (m²)
             temperature: Temperature (K)
             relative_humidity: Relative humidity (%)
-            
+
         Returns:
             Membrane resistance (Ω)
         """
@@ -227,12 +226,12 @@ class MembraneTransport:
                                 relative_humidity: float = 100.0) -> float:
         """
         Calculate water transport rate through electro-osmotic drag.
-        
+
         Args:
             current_density: Current density (A/m²)
             temperature: Temperature (K)
             relative_humidity: Relative humidity (%)
-            
+
         Returns:
             Water flux (mol/m²/s)
         """
@@ -257,13 +256,13 @@ class MembraneTransport:
                                relative_humidity: float = 100.0) -> float:
         """
         Calculate potential drop across membrane.
-        
+
         Args:
             current_density: Current density (A/m²)
             area: Membrane area (m²)
             temperature: Temperature (K)
             relative_humidity: Relative humidity (%)
-            
+
         Returns:
             Potential drop (V)
         """
@@ -279,12 +278,12 @@ class MembraneTransport:
                                         substrate_flux: float) -> float:
         """
         Calculate efficiency loss due to oxygen crossover.
-        
+
         Args:
             oxygen_flux: Oxygen crossover flux (mol/m²/s)
             area: Membrane area (m²)
             substrate_flux: Substrate consumption flux (mol/m²/s)
-            
+
         Returns:
             Efficiency loss fraction (0-1)
         """
@@ -307,7 +306,7 @@ class MembraneTransport:
 
         return min(1.0, max(0.0, efficiency_loss))
 
-    def get_mass_transport_equations(self) -> Dict[str, str]:
+    def get_mass_transport_equations(self) -> dict[str, str]:
         """Get mass transport equations for documentation."""
         return {
             "oxygen_flux": r"J_{O_2} = P_{O_2} \cdot \frac{C_{cathode} - C_{anode}}{L}",
@@ -317,7 +316,7 @@ class MembraneTransport:
             "potential_drop": r"\Delta V = j \cdot A \cdot R_{mem}"
         }
 
-    def get_membrane_properties(self) -> Dict[str, float]:
+    def get_membrane_properties(self) -> dict[str, float]:
         """Get current membrane properties for inspection."""
         return {
             "grade": self.membrane_grade,
@@ -336,13 +335,13 @@ class MembraneTransport:
                                   relative_humidity: float = 100.0) -> float:
         """
         Calculate optimal membrane thickness for target resistance.
-        
+
         Args:
             target_resistance: Target membrane resistance (Ω)
             area: Membrane area (m²)
             temperature: Temperature (K)
             relative_humidity: Relative humidity (%)
-            
+
         Returns:
             Optimal thickness (μm)
         """
@@ -358,11 +357,11 @@ class MembraneTransport:
     def calculate_crossover_current_loss(self, oxygen_crossover: float, area: float) -> float:
         """
         Calculate current loss due to oxygen crossover.
-        
+
         Args:
             oxygen_crossover: Oxygen flux (mol/m²/s)
             area: Membrane area (m²)
-            
+
         Returns:
             Current loss (A)
         """

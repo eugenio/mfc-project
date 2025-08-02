@@ -13,7 +13,7 @@ Created: 2025-08-01
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import pandas as pd
 
@@ -46,12 +46,12 @@ class FBAResult:
     """Container for Flux Balance Analysis results."""
 
     objective_value: float
-    fluxes: Dict[str, float]
-    shadow_prices: Dict[str, float]
-    reduced_costs: Dict[str, float]
+    fluxes: dict[str, float]
+    shadow_prices: dict[str, float]
+    reduced_costs: dict[str, float]
     status: str
 
-    def get_active_reactions(self, threshold: float = 1e-6) -> List[str]:
+    def get_active_reactions(self, threshold: float = 1e-6) -> list[str]:
         """Get reactions with non-zero flux."""
         return [rxn_id for rxn_id, flux in self.fluxes.items()
                 if abs(flux) > threshold]
@@ -68,10 +68,10 @@ class FBAResult:
 class FVAResult:
     """Container for Flux Variability Analysis results."""
 
-    minimum_fluxes: Dict[str, float]
-    maximum_fluxes: Dict[str, float]
+    minimum_fluxes: dict[str, float]
+    maximum_fluxes: dict[str, float]
 
-    def get_variable_reactions(self, threshold: float = 1e-6) -> List[str]:
+    def get_variable_reactions(self, threshold: float = 1e-6) -> list[str]:
         """Get reactions with variable flux ranges."""
         variable = []
         for rxn_id in self.minimum_fluxes:
@@ -93,17 +93,17 @@ class FVAResult:
 class COBRAModelWrapper:
     """
     Wrapper for COBRApy models with MFC-specific functionality.
-    
+
     Provides unified interface for loading models from various sources
     and performing constraint-based analysis.
     """
 
-    def __init__(self, model: Optional[Any] = None):
+    def __init__(self, model: Any | None = None):
         if not COBRA_AVAILABLE:
             raise ImportError("COBRApy is required. Install with: pixi install -e gsm-research")
 
         self.model = model
-        self.original_bounds: Dict[str, Dict[str, float]] = {}  # Store original reaction bounds
+        self.original_bounds: dict[str, dict[str, float]] = {}  # Store original reaction bounds
         self._cache_original_bounds()
 
     def _cache_original_bounds(self):
@@ -119,11 +119,11 @@ class COBRAModelWrapper:
     def from_bigg(cls, model_id: str, cache_dir: str = "data/bigg_models") -> 'COBRAModelWrapper':
         """
         Load model from BiGG database.
-        
+
         Args:
             model_id: BiGG model ID (e.g., 'iJO1366', 'iML1515')
             cache_dir: Directory to cache downloaded models
-            
+
         Returns:
             COBRAModelWrapper instance
         """
@@ -168,10 +168,10 @@ class COBRAModelWrapper:
     def from_modelseed(cls, model_id: str) -> 'COBRAModelWrapper':
         """
         Load model from ModelSEED using Mackinac.
-        
+
         Args:
             model_id: ModelSEED model ID
-            
+
         Returns:
             COBRAModelWrapper instance
         """
@@ -184,14 +184,14 @@ class COBRAModelWrapper:
 
         return cls(model)
 
-    def optimize(self, objective: Optional[Union[str, Dict[str, float]]] = None) -> FBAResult:
+    def optimize(self, objective: str | dict[str, float] | None = None) -> FBAResult:
         """
         Perform Flux Balance Analysis (FBA).
-        
+
         Args:
             objective: Reaction ID or dict of {reaction_id: coefficient}
                       If None, uses model's current objective
-            
+
         Returns:
             FBAResult object with optimization results
         """
@@ -221,15 +221,15 @@ class COBRAModelWrapper:
             status=solution.status
         )
 
-    def flux_variability_analysis(self, reactions: Optional[List[str]] = None,
+    def flux_variability_analysis(self, reactions: list[str] | None = None,
                                  fraction_of_optimum: float = 0.9) -> FVAResult:
         """
         Perform Flux Variability Analysis (FVA).
-        
+
         Args:
             reactions: List of reaction IDs to analyze (None = all)
             fraction_of_optimum: Fraction of optimal objective to maintain
-            
+
         Returns:
             FVAResult object
         """
@@ -255,7 +255,7 @@ class COBRAModelWrapper:
     def parsimonious_fba(self) -> FBAResult:
         """
         Perform parsimonious FBA (minimize total flux).
-        
+
         Returns:
             FBAResult object
         """
@@ -275,10 +275,10 @@ class COBRAModelWrapper:
             status=solution.status
         )
 
-    def set_media_conditions(self, media: Dict[str, float]):
+    def set_media_conditions(self, media: dict[str, float]):
         """
         Set media conditions by adjusting exchange reaction bounds.
-        
+
         Args:
             media: Dict of {metabolite_id: max_uptake_rate}
                   Negative values indicate uptake
@@ -300,7 +300,7 @@ class COBRAModelWrapper:
     def set_oxygen_availability(self, oxygen_uptake: float):
         """
         Set oxygen availability.
-        
+
         Args:
             oxygen_uptake: Maximum oxygen uptake rate (negative for uptake)
         """
@@ -317,13 +317,13 @@ class COBRAModelWrapper:
         else:
             logger.warning("No oxygen exchange reaction found")
 
-    def knock_out_genes(self, gene_ids: List[str]) -> FBAResult:
+    def knock_out_genes(self, gene_ids: list[str]) -> FBAResult:
         """
         Perform gene knockout analysis.
-        
+
         Args:
             gene_ids: List of gene IDs to knock out
-            
+
         Returns:
             FBAResult after knockouts
         """
@@ -353,7 +353,7 @@ class COBRAModelWrapper:
             status=solution.status
         )
 
-    def get_model_statistics(self) -> Dict[str, Any]:
+    def get_model_statistics(self) -> dict[str, Any]:
         """Get statistics about the loaded model."""
         if not self.model:
             return {}
@@ -367,7 +367,7 @@ class COBRAModelWrapper:
             'solver': self.model.solver.interface.__name__ if self.model.solver else 'Unknown'
         }
 
-    def find_electron_transfer_reactions(self) -> List[str]:
+    def find_electron_transfer_reactions(self) -> list[str]:
         """Find reactions involved in electron transfer."""
         if not self.model:
             return []
@@ -384,7 +384,7 @@ class COBRAModelWrapper:
 
         return et_reactions
 
-    def get_exchange_reactions(self) -> Dict[str, Dict[str, float]]:
+    def get_exchange_reactions(self) -> dict[str, dict[str, float]]:
         """Get all exchange reactions and their bounds."""
         if not self.model:
             return {}

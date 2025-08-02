@@ -17,7 +17,6 @@ from collections import deque
 import matplotlib.pyplot as plt
 import numpy as np
 from odes import MFCModel
-
 from path_config import get_figure_path, get_simulation_data_path
 
 

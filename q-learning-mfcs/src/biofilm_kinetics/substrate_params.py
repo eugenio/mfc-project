@@ -6,7 +6,6 @@ and their utilization by exoelectrogenic bacteria.
 """
 
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -42,7 +41,7 @@ class SubstrateParameters:
         self._substrates = self._load_substrate_parameters()
         self._default_substrate = 'lactate'  # As specified in requirements
 
-    def _load_substrate_parameters(self) -> Dict[str, SubstrateProperties]:
+    def _load_substrate_parameters(self) -> dict[str, SubstrateProperties]:
         """Load substrate-specific parameters."""
 
         # Acetate parameters (preferred by G. sulfurreducens)
@@ -97,13 +96,13 @@ class SubstrateParameters:
     def get_substrate_properties(self, substrate: str) -> SubstrateProperties:
         """
         Get properties for specified substrate.
-        
+
         Args:
             substrate: Substrate name ('acetate', 'lactate')
-            
+
         Returns:
             SubstrateProperties object
-            
+
         Raises:
             ValueError: If substrate not recognized
         """
@@ -121,13 +120,13 @@ class SubstrateParameters:
                                  ph: float = 7.0, temperature: float = 298.15) -> float:
         """
         Calculate Nernst potential for substrate at given conditions.
-        
+
         Args:
             substrate: Substrate name
             concentration: Substrate concentration (mol/L)
             ph: Solution pH
             temperature: Temperature (K)
-            
+
         Returns:
             Nernst potential (V)
         """
@@ -164,11 +163,11 @@ class SubstrateParameters:
     def calculate_theoretical_current(self, substrate: str, consumption_rate: float) -> float:
         """
         Calculate theoretical current from substrate consumption rate.
-        
+
         Args:
             substrate: Substrate name
             consumption_rate: Consumption rate (mol/(m³·h))
-            
+
         Returns:
             Theoretical current density (A/m²)
         """
@@ -186,12 +185,12 @@ class SubstrateParameters:
                            current_ph: float) -> float:
         """
         Apply pH correction to kinetic parameters.
-        
+
         Args:
             substrate: Substrate name
             value: Parameter value to correct
             current_ph: Current pH
-            
+
         Returns:
             pH-corrected value
         """
@@ -203,13 +202,13 @@ class SubstrateParameters:
 
         return value * ph_correction
 
-    def get_stoichiometric_coefficients(self, substrate: str) -> Dict[str, float]:
+    def get_stoichiometric_coefficients(self, substrate: str) -> dict[str, float]:
         """
         Get stoichiometric coefficients for substrate oxidation.
-        
+
         Args:
             substrate: Substrate name
-            
+
         Returns:
             Dictionary of stoichiometric coefficients
         """
@@ -241,10 +240,10 @@ class SubstrateParameters:
     def get_mass_balance_equation(self, substrate: str) -> str:
         """
         Get mass balance equation string for substrate.
-        
+
         Args:
             substrate: Substrate name
-            
+
         Returns:
             LaTeX-formatted mass balance equation
         """

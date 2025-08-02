@@ -19,7 +19,6 @@ Literature References:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 
@@ -110,7 +109,7 @@ class ColorSchemeConfig:
     """Color scheme configuration for different visualization contexts."""
 
     # Primary colors for main data series
-    primary_colors: List[str] = field(default_factory=lambda: [
+    primary_colors: list[str] = field(default_factory=lambda: [
         "#2E86AB",  # Blue
         "#A23B72",  # Purple
         "#F18F01",  # Orange
@@ -122,7 +121,7 @@ class ColorSchemeConfig:
     ])
 
     # Scientific publication colors (publication ready)
-    scientific_colors: List[str] = field(default_factory=lambda: [
+    scientific_colors: list[str] = field(default_factory=lambda: [
         "#1f77b4",  # Blue
         "#ff7f0e",  # Orange
         "#2ca02c",  # Green
@@ -134,7 +133,7 @@ class ColorSchemeConfig:
     ])
 
     # Colorblind-friendly palette (Wong, 2011)
-    colorblind_colors: List[str] = field(default_factory=lambda: [
+    colorblind_colors: list[str] = field(default_factory=lambda: [
         "#0173B2",  # Blue
         "#DE8F05",  # Orange
         "#029E73",  # Green
@@ -146,7 +145,7 @@ class ColorSchemeConfig:
     ])
 
     # High contrast colors for presentations
-    high_contrast_colors: List[str] = field(default_factory=lambda: [
+    high_contrast_colors: list[str] = field(default_factory=lambda: [
         "#000000",  # Black
         "#E69F00",  # Orange
         "#56B4E9",  # Sky blue
@@ -158,7 +157,7 @@ class ColorSchemeConfig:
     ])
 
     # Grayscale colors
-    grayscale_colors: List[str] = field(default_factory=lambda: [
+    grayscale_colors: list[str] = field(default_factory=lambda: [
         "#000000",  # Black
         "#404040",  # Dark gray
         "#808080",  # Medium gray
@@ -225,8 +224,8 @@ class LayoutConfig:
     # Subplot configuration
     n_rows: int = 2  # Number of subplot rows
     n_cols: int = 2  # Number of subplot columns
-    subplot_width_ratios: Optional[List[float]] = None  # Width ratios for subplots
-    subplot_height_ratios: Optional[List[float]] = None  # Height ratios for subplots
+    subplot_width_ratios: list[float] | None = None  # Width ratios for subplots
+    subplot_height_ratios: list[float] | None = None  # Height ratios for subplots
 
     # Spacing configuration
     horizontal_spacing: float = 0.3  # Horizontal spacing between subplots
@@ -244,7 +243,7 @@ class LayoutConfig:
 
     # Title and labels
     main_title: str = ""  # Main figure title
-    subplot_titles: List[str] = field(default_factory=list)  # Individual subplot titles
+    subplot_titles: list[str] = field(default_factory=list)  # Individual subplot titles
 
     # Axis configuration
     share_x_axis: bool = False  # Share x-axis across subplots
@@ -256,8 +255,8 @@ class LayoutConfig:
 
     # Limits configuration
     auto_limits: bool = True  # Automatically determine axis limits
-    x_limits: Optional[Tuple[float, float]] = None  # Manual x-axis limits
-    y_limits: Optional[Tuple[float, float]] = None  # Manual y-axis limits
+    x_limits: tuple[float, float] | None = None  # Manual x-axis limits
+    y_limits: tuple[float, float] | None = None  # Manual y-axis limits
 
 
 @dataclass
@@ -418,14 +417,14 @@ def get_colorblind_friendly_config() -> VisualizationConfig:
 
 # Utility functions for color management
 
-def get_colors_for_scheme(scheme: ColorScheme, color_config: ColorSchemeConfig) -> List[str]:
+def get_colors_for_scheme(scheme: ColorScheme, color_config: ColorSchemeConfig) -> list[str]:
     """
     Get color list for specified color scheme.
-    
+
     Args:
         scheme: Color scheme type
         color_config: Color scheme configuration
-        
+
     Returns:
         List of color strings
     """
@@ -448,7 +447,7 @@ def get_colors_for_scheme(scheme: ColorScheme, color_config: ColorSchemeConfig) 
 def apply_style_config(style_config: PlotStyleConfig) -> None:
     """
     Apply plot style configuration to matplotlib.
-    
+
     Args:
         style_config: Plot style configuration
     """
@@ -474,13 +473,13 @@ def apply_style_config(style_config: PlotStyleConfig) -> None:
 def validate_visualization_config(config: VisualizationConfig) -> bool:
     """
     Validate visualization configuration.
-    
+
     Args:
         config: Visualization configuration to validate
-        
+
     Returns:
         bool: True if configuration is valid
-        
+
     Raises:
         ValueError: If configuration is invalid
     """

@@ -3,8 +3,9 @@
 Compare Q-learning vs PID substrate control results
 """
 
-import pandas as pd
 import matplotlib
+import pandas as pd
+
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np

@@ -8,7 +8,7 @@ parameter validation for electrode properties.
 Created: 2025-08-01
 """
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -32,7 +32,7 @@ class ElectrodeValidationResult:
     units: str
     validation_result: ValidationResult
     quality_score: float = 0.0
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 @dataclass
 class ElectrodeValidationReport:
@@ -41,15 +41,15 @@ class ElectrodeValidationReport:
     electrode_name: str
     material: ElectrodeMaterial
     geometry: ElectrodeGeometry
-    validation_results: List[ElectrodeValidationResult] = field(default_factory=list)
+    validation_results: list[ElectrodeValidationResult] = field(default_factory=list)
     overall_validation_score: float = 0.0
-    critical_issues: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    citation_report: Optional[CitationReport] = None
+    critical_issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
+    citation_report: CitationReport | None = None
 class ElectrodeValidationIntegrator:
     """
     Integration layer between electrode configuration and validation framework.
-    
+
     Provides real-time validation of electrode parameters against literature
     and generates comprehensive validation reports.
     """
@@ -72,7 +72,7 @@ class ElectrodeValidationIntegrator:
             'warning': 0.4,   # Below this = needs review
         }
 
-    def _define_parameter_mappings(self) -> Dict[str, Dict[str, Any]]:
+    def _define_parameter_mappings(self) -> dict[str, dict[str, Any]]:
         """Define mappings between electrode parameters and literature search terms."""
 
         return {
@@ -139,13 +139,13 @@ class ElectrodeValidationIntegrator:
                                    organism: str = "mixed culture") -> ElectrodeValidationResult:
         """
         Validate a single electrode parameter against literature.
-        
+
         Args:
             parameter_name: Name of the parameter to validate
             value: Parameter value to validate
             material: Electrode material context
             organism: Target organism for validation
-            
+
         Returns:
             ElectrodeValidationResult with validation analysis
         """
@@ -222,11 +222,11 @@ class ElectrodeValidationIntegrator:
                                        organism: str = "mixed culture") -> ElectrodeValidationReport:
         """
         Validate complete electrode configuration.
-        
+
         Args:
             config: ElectrodeConfiguration to validate
             organism: Target organism for validation
-            
+
         Returns:
             ElectrodeValidationReport with comprehensive analysis
         """
@@ -312,7 +312,7 @@ class ElectrodeValidationIntegrator:
             citation_report=citation_report
         )
 
-    def _get_material_search_terms(self, material: ElectrodeMaterial) -> List[str]:
+    def _get_material_search_terms(self, material: ElectrodeMaterial) -> list[str]:
         """Get material-specific search terms."""
 
         material_terms = {
@@ -329,7 +329,7 @@ class ElectrodeValidationIntegrator:
         return material_terms.get(material, ['electrode material'])
 
     def _get_material_recommendations(self, parameter_name: str, value: float,
-                                    material: ElectrodeMaterial) -> List[str]:
+                                    material: ElectrodeMaterial) -> list[str]:
         """Get material-specific parameter recommendations."""
 
         recommendations = []
@@ -361,7 +361,7 @@ class ElectrodeValidationIntegrator:
 
         return recommendations
 
-    def generate_validation_summary(self, reports: List[ElectrodeValidationReport]) -> Dict[str, Any]:
+    def generate_validation_summary(self, reports: list[ElectrodeValidationReport]) -> dict[str, Any]:
         """Generate summary of multiple electrode validations."""
 
         if not reports:
@@ -501,7 +501,7 @@ class ElectrodeValidationIntegrator:
 
         return md
 
-    def _report_to_dict(self, report: ElectrodeValidationReport) -> Dict[str, Any]:
+    def _report_to_dict(self, report: ElectrodeValidationReport) -> dict[str, Any]:
         """Convert validation report to dictionary."""
 
         return {

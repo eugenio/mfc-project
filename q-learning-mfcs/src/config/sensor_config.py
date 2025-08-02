@@ -5,7 +5,6 @@ Replaces hardcoded values in EIS, QCM, and sensor fusion models.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Tuple, Union
 
 
 class FusionMethod(Enum):
@@ -21,7 +20,7 @@ class EISConfig:
     """Electrochemical Impedance Spectroscopy (EIS) sensor configuration."""
 
     # Frequency range and measurement parameters
-    frequency_range: Tuple[float, float] = (100.0, 1e6)  # Hz
+    frequency_range: tuple[float, float] = (100.0, 1e6)  # Hz
     n_frequency_points: int = 50  # Number of frequency points
     measurement_amplitude: float = 0.010  # V, measurement amplitude
 
@@ -56,7 +55,7 @@ class EISConfig:
     drift_rate: float = 0.001  # per measurement
 
     # Calibration parameters by species
-    species_calibration: Dict[str, Dict[str, Union[float, Tuple[float, float]]]] = field(default_factory=lambda: {
+    species_calibration: dict[str, dict[str, float | tuple[float, float]]] = field(default_factory=lambda: {
         'geobacter': {
             'thickness_slope': 150.0,
             'thickness_intercept': 2000.0,
@@ -106,9 +105,9 @@ class QCMConfig:
     viscosity_correction_scaling: float = 5.0  # Correction scaling
 
     # Mass measurement parameters
-    mass_range: Tuple[float, float] = (0.0, 1000.0)  # ng/cm²
-    frequency_shift_range: Tuple[float, float] = (0.0, 500.0)  # Hz
-    dissipation_range: Tuple[float, float] = (0.0, 0.01)  # Dissipation factor
+    mass_range: tuple[float, float] = (0.0, 1000.0)  # ng/cm²
+    frequency_shift_range: tuple[float, float] = (0.0, 500.0)  # Hz
+    dissipation_range: tuple[float, float] = (0.0, 0.01)  # Dissipation factor
 
     # Electrode configuration
     electrode_area: float = 0.196e-4  # m² (5mm diameter electrode, 0.196 cm²)
@@ -193,7 +192,7 @@ class SensorFusionConfig:
     fwhm_to_sigma_conversion: float = 2.355  # FWHM to sigma conversion
 
     # Species-specific density and porosity
-    species_properties: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+    species_properties: dict[str, dict[str, float]] = field(default_factory=lambda: {
         'geobacter': {
             'density': 1.15,  # g/cm³
             'porosity': 0.7
@@ -212,13 +211,13 @@ class SensorFusionConfig:
 
     # Confidence calculation parameters
     confidence_weight_balance: float = 1.0  # Weight balance factor
-    status_scores: Dict[str, float] = field(default_factory=lambda: {
+    status_scores: dict[str, float] = field(default_factory=lambda: {
         'good': 1.0,
         'degraded': 0.6,
         'failed': 0.1
     })
 
-    confidence_weights: Dict[str, float] = field(default_factory=lambda: {
+    confidence_weights: dict[str, float] = field(default_factory=lambda: {
         'agreement': 0.5,
         'balance': 0.2,
         'status': 0.3

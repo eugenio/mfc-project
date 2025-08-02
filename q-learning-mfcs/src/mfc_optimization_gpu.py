@@ -544,17 +544,17 @@ class MFCOptimizationSimulation:
 
         summary_text = f"""
         TIME-DEPENDENT OPTIMIZATION
-        
+
         Total Energy: {total_energy:.1f} Wh
         Average Power: {avg_power:.3f} W
         Final Power: {self.stack_powers[-1]:.3f} W
-        
+
         Final Flow Rate: {final_flow_rate:.1f} mL/h
         Substrate Utilization: {final_utilization:.2f}%
-        
+
         Avg Biofilm Deviation: {avg_biofilm_dev:.3f}
         Final Objective Value: {self.objective_values[-1]:.3f}
-        
+
         CONTROL STRATEGY:
         ✓ Time as Independent Variable
         ✓ Flow Rate Time-Dependent

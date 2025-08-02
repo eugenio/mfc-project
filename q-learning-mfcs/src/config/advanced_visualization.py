@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -128,8 +128,8 @@ class PlotConfiguration:
     line_width: float = 2.0
 
     # Layout options
-    figure_size: Tuple[float, float] = (12.0, 8.0)
-    subplot_layout: Optional[Tuple[int, int]] = None
+    figure_size: tuple[float, float] = (12.0, 8.0)
+    subplot_layout: tuple[int, int] | None = None
 
     # Interaction options
     interaction_mode: InteractionMode = InteractionMode.STATIC
@@ -153,16 +153,16 @@ class VisualizationResult:
 
     # Plot information
     plot_type: PlotType
-    figure_path: Optional[str] = None
-    interactive_plot: Optional[Any] = None  # Plotly figure or matplotlib figure
+    figure_path: str | None = None
+    interactive_plot: Any | None = None  # Plotly figure or matplotlib figure
 
     # Data used in visualization
-    data_summary: Dict[str, Any] = field(default_factory=dict)
-    statistical_tests: Dict[str, Any] = field(default_factory=dict)
+    data_summary: dict[str, Any] = field(default_factory=dict)
+    statistical_tests: dict[str, Any] = field(default_factory=dict)
 
     # Metadata
     creation_time: datetime = field(default_factory=datetime.now)
-    configuration: Optional[PlotConfiguration] = None
+    configuration: PlotConfiguration | None = None
 
     # Performance metrics
     rendering_time: float = 0.0
@@ -175,7 +175,7 @@ class AdvancedVisualizer(ABC):
     def __init__(self, config: VisualizationConfig):
         """
         Initialize advanced visualizer.
-        
+
         Args:
             config: Visualization configuration
         """
@@ -200,19 +200,19 @@ class AdvancedVisualizer(ABC):
                    **kwargs) -> VisualizationResult:
         """
         Create visualization plot.
-        
+
         Args:
             data: Data to visualize
             plot_config: Plot configuration
             **kwargs: Additional plotting parameters
-            
+
         Returns:
             Visualization result
         """
         pass
 
     def _prepare_data(self, data: pd.DataFrame,
-                     required_columns: List[str]) -> pd.DataFrame:
+                     required_columns: list[str]) -> pd.DataFrame:
         """Prepare and validate data for visualization."""
         # Check required columns
         missing_columns = [col for col in required_columns if col not in data.columns]
@@ -227,7 +227,7 @@ class AdvancedVisualizer(ABC):
 
         return clean_data
 
-    def _apply_color_scheme(self, n_colors: int = 10) -> List[str]:
+    def _apply_color_scheme(self, n_colors: int = 10) -> list[str]:
         """Generate colors based on configuration."""
         if self.config.color_scheme_type == "scientific":
             return plt.cm.tab10(np.linspace(0, 1, n_colors)) if HAS_MATPLOTLIB else ['blue', 'red', 'green']
@@ -273,8 +273,8 @@ class MultiDimensionalPlotter(AdvancedVisualizer):
     def _create_3d_scatter(self, data: pd.DataFrame,
                           config: PlotConfiguration,
                           x_col: str, y_col: str, z_col: str,
-                          color_col: Optional[str] = None,
-                          size_col: Optional[str] = None) -> Any:
+                          color_col: str | None = None,
+                          size_col: str | None = None) -> Any:
         """Create 3D scatter plot."""
         if not HAS_MATPLOTLIB:
             raise ImportError("Matplotlib required for 3D plotting")
@@ -352,8 +352,8 @@ class MultiDimensionalPlotter(AdvancedVisualizer):
 
     def _create_parallel_coordinates(self, data: pd.DataFrame,
                                    config: PlotConfiguration,
-                                   columns: List[str],
-                                   class_column: Optional[str] = None) -> Any:
+                                   columns: list[str],
+                                   class_column: str | None = None) -> Any:
         """Create parallel coordinates plot."""
         clean_data = self._prepare_data(data, columns)
 
@@ -407,8 +407,8 @@ class MultiDimensionalPlotter(AdvancedVisualizer):
 
     def _create_radar_chart(self, data: pd.DataFrame,
                            config: PlotConfiguration,
-                           columns: List[str],
-                           group_column: Optional[str] = None) -> Any:
+                           columns: list[str],
+                           group_column: str | None = None) -> Any:
         """Create radar/spider chart."""
         if not HAS_MATPLOTLIB:
             raise ImportError("Matplotlib required for radar charts")
@@ -502,9 +502,9 @@ class InteractiveAnalyzer(AdvancedVisualizer):
     def _create_interactive_scatter(self, data: pd.DataFrame,
                                   config: PlotConfiguration,
                                   x_col: str, y_col: str,
-                                  color_col: Optional[str] = None,
-                                  size_col: Optional[str] = None,
-                                  hover_cols: Optional[List[str]] = None) -> go.Figure:
+                                  color_col: str | None = None,
+                                  size_col: str | None = None,
+                                  hover_cols: list[str] | None = None) -> go.Figure:
         """Create interactive scatter plot with hover information."""
         clean_data = self._prepare_data(data, [x_col, y_col])
 
@@ -555,8 +555,8 @@ class InteractiveAnalyzer(AdvancedVisualizer):
     def _create_animated_time_series(self, data: pd.DataFrame,
                                    config: PlotConfiguration,
                                    time_col: str,
-                                   value_cols: List[str],
-                                   group_col: Optional[str] = None) -> go.Figure:
+                                   value_cols: list[str],
+                                   group_col: str | None = None) -> go.Figure:
         """Create animated time series plot."""
         clean_data = self._prepare_data(data, [time_col] + value_cols)
 
@@ -668,7 +668,7 @@ class StatisticalVisualizer(AdvancedVisualizer):
 
     def _create_correlation_matrix(self, data: pd.DataFrame,
                                  config: PlotConfiguration,
-                                 columns: Optional[List[str]] = None) -> Any:
+                                 columns: list[str] | None = None) -> Any:
         """Create correlation matrix heatmap."""
         if not HAS_MATPLOTLIB:
             raise ImportError("Matplotlib required for correlation matrix")
@@ -734,7 +734,7 @@ class StatisticalVisualizer(AdvancedVisualizer):
         ax2 = axes[0, 1]
         box_data = [clean_data[clean_data[group_col] == group][value_col] for group in groups]
         bp = ax2.boxplot(box_data, labels=groups, patch_artist=True)
-        for patch, color in zip(bp['boxes'], colors):
+        for patch, color in zip(bp['boxes'], colors, strict=False):
             patch.set_facecolor(color)
             patch.set_alpha(config.alpha)
         ax2.set_title('Box Plot Comparison')
@@ -810,7 +810,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
     """Model and experiment comparison visualization tools."""
 
     def create_optimization_comparison(self,
-                                     results: List[OptimizationResult],
+                                     results: list[OptimizationResult],
                                      config: PlotConfiguration) -> VisualizationResult:
         """Compare multiple optimization results."""
         if not HAS_MATPLOTLIB:
@@ -880,7 +880,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         )
 
     def create_uncertainty_comparison(self,
-                                    results: List[UncertaintyResult],
+                                    results: list[UncertaintyResult],
                                     config: PlotConfiguration) -> VisualizationResult:
         """Compare uncertainty quantification results."""
         if not HAS_MATPLOTLIB:
@@ -970,17 +970,17 @@ class ComparisonAnalyzer(AdvancedVisualizer):
 
 
 # Utility functions for advanced visualization
-def create_pareto_frontier_plot(optimization_results: List[OptimizationResult],
-                               objective_names: List[str],
+def create_pareto_frontier_plot(optimization_results: list[OptimizationResult],
+                               objective_names: list[str],
                                config: PlotConfiguration) -> VisualizationResult:
     """
     Create Pareto frontier visualization for multi-objective optimization.
-    
+
     Args:
         optimization_results: List of optimization results
         objective_names: Names of objectives to plot
         config: Plot configuration
-        
+
     Returns:
         Visualization result with Pareto frontier plot
     """
@@ -1050,15 +1050,15 @@ def create_pareto_frontier_plot(optimization_results: List[OptimizationResult],
     )
 
 
-def create_sensitivity_tornado_plot(sensitivity_indices: Dict[str, float],
+def create_sensitivity_tornado_plot(sensitivity_indices: dict[str, float],
                                   config: PlotConfiguration) -> VisualizationResult:
     """
     Create tornado plot for sensitivity analysis.
-    
+
     Args:
         sensitivity_indices: Dictionary of parameter names to sensitivity values
         config: Plot configuration
-        
+
     Returns:
         Visualization result with tornado plot
     """
@@ -1078,7 +1078,7 @@ def create_sensitivity_tornado_plot(sensitivity_indices: Dict[str, float],
     bars = ax.barh(params, values, color=colors, alpha=config.alpha)
 
     # Add value labels on bars
-    for i, (bar, value) in enumerate(zip(bars, values)):
+    for i, (bar, value) in enumerate(zip(bars, values, strict=False)):
         ax.text(value + (0.01 if value >= 0 else -0.01), i, f'{value:.3f}',
                ha='left' if value >= 0 else 'right', va='center')
 

@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -39,7 +38,7 @@ class QTableMetrics:
     """Comprehensive Q-table metrics."""
 
     # Basic structure metrics
-    shape: Tuple[int, ...]
+    shape: tuple[int, ...]
     total_states: int
     total_actions: int
     non_zero_values: int
@@ -69,7 +68,7 @@ class QTableMetrics:
 
     # Metadata
     analysis_timestamp: str
-    file_path: Optional[str] = None
+    file_path: str | None = None
 
 
 @dataclass
@@ -99,12 +98,12 @@ class QTableAnalyzer:
     def __init__(self, models_directory: str = "q_learning_models"):
         """
         Initialize Q-table analyzer.
-        
+
         Args:
             models_directory: Directory containing Q-table pickle files
         """
         self.models_dir = Path(models_directory)
-        self.analysis_cache: Dict[str, QTableMetrics] = {}
+        self.analysis_cache: dict[str, QTableMetrics] = {}
 
         # Convergence thresholds
         self.convergence_thresholds = {
@@ -113,13 +112,13 @@ class QTableAnalyzer:
             'divergence_threshold': 0.3
         }
 
-    def load_qtable(self, file_path: Union[str, Path]) -> Optional[np.ndarray]:
+    def load_qtable(self, file_path: str | Path) -> np.ndarray | None:
         """
         Load Q-table from pickle file.
-        
+
         Args:
             file_path: Path to pickle file
-            
+
         Returns:
             Q-table as numpy array
         """
@@ -155,11 +154,11 @@ class QTableAnalyzer:
     def calculate_convergence_score(self, qtable: np.ndarray, window_size: int = 10) -> float:
         """
         Calculate convergence score based on Q-value stability.
-        
+
         Args:
             qtable: Q-table array
             window_size: Window size for stability calculation
-            
+
         Returns:
             Convergence score between 0 and 1
         """
@@ -196,10 +195,10 @@ class QTableAnalyzer:
     def calculate_policy_entropy(self, qtable: np.ndarray) -> float:
         """
         Calculate policy entropy (measure of action selection diversity).
-        
+
         Args:
             qtable: Q-table array
-            
+
         Returns:
             Policy entropy
         """
@@ -228,13 +227,13 @@ class QTableAnalyzer:
 
         return total_entropy / max(valid_states, 1)
 
-    def calculate_exploration_coverage(self, qtable: np.ndarray) -> Tuple[float, int, int]:
+    def calculate_exploration_coverage(self, qtable: np.ndarray) -> tuple[float, int, int]:
         """
         Calculate exploration coverage metrics.
-        
+
         Args:
             qtable: Q-table array
-            
+
         Returns:
             Tuple of (coverage_ratio, visited_states, unvisited_states)
         """
@@ -257,10 +256,10 @@ class QTableAnalyzer:
     def determine_convergence_status(self, metrics: QTableMetrics) -> ConvergenceStatus:
         """
         Determine convergence status based on metrics.
-        
+
         Args:
             metrics: Q-table metrics
-            
+
         Returns:
             Convergence status
         """
@@ -279,13 +278,13 @@ class QTableAnalyzer:
         else:
             return ConvergenceStatus.UNKNOWN
 
-    def analyze_qtable(self, file_path: Union[str, Path]) -> Optional[QTableMetrics]:
+    def analyze_qtable(self, file_path: str | Path) -> QTableMetrics | None:
         """
         Perform comprehensive analysis of a Q-table.
-        
+
         Args:
             file_path: Path to Q-table pickle file
-            
+
         Returns:
             Q-table metrics or None if analysis failed
         """
@@ -366,14 +365,14 @@ class QTableAnalyzer:
             logger.error(f"Error analyzing Q-table {file_path}: {e}")
             return None
 
-    def compare_qtables(self, file_path1: Union[str, Path], file_path2: Union[str, Path]) -> Optional[QTableComparison]:
+    def compare_qtables(self, file_path1: str | Path, file_path2: str | Path) -> QTableComparison | None:
         """
         Compare two Q-tables and analyze evolution.
-        
+
         Args:
             file_path1: Path to first Q-table
             file_path2: Path to second Q-table
-            
+
         Returns:
             Comparison results or None if comparison failed
         """
@@ -438,13 +437,13 @@ class QTableAnalyzer:
             logger.error(f"Error comparing Q-tables: {e}")
             return None
 
-    def get_available_qtables(self, pattern: str = "*.pkl") -> List[Path]:
+    def get_available_qtables(self, pattern: str = "*.pkl") -> list[Path]:
         """
         Get list of available Q-table files.
-        
+
         Args:
             pattern: File pattern to match
-            
+
         Returns:
             List of Q-table file paths
         """
@@ -457,13 +456,13 @@ class QTableAnalyzer:
 
         return qtable_files
 
-    def batch_analyze_qtables(self, file_paths: Optional[List[Path]] = None) -> Dict[str, QTableMetrics]:
+    def batch_analyze_qtables(self, file_paths: list[Path] | None = None) -> dict[str, QTableMetrics]:
         """
         Analyze multiple Q-tables in batch.
-        
+
         Args:
             file_paths: List of file paths to analyze (if None, analyze all available)
-            
+
         Returns:
             Dictionary mapping file paths to metrics
         """
@@ -480,10 +479,10 @@ class QTableAnalyzer:
 
         return results
 
-    def export_analysis_results(self, results: Dict[str, QTableMetrics], output_file: str):
+    def export_analysis_results(self, results: dict[str, QTableMetrics], output_file: str):
         """
         Export analysis results to CSV file.
-        
+
         Args:
             results: Analysis results dictionary
             output_file: Output CSV file path

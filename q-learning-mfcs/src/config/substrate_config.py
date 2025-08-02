@@ -4,7 +4,6 @@ Includes detailed substrate properties, kinetics, and environmental effects.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 from .biological_config import (
     LITERATURE_REFERENCES,
@@ -23,14 +22,14 @@ class SubstrateKineticsConfig:
     half_saturation_constant: float  # mmol/L - Monod half-saturation constant
 
     # Inhibition kinetics
-    substrate_inhibition_constant: Optional[float] = None  # mmol/L - substrate inhibition
-    product_inhibition: Dict[str, float] = field(default_factory=dict)  # {product: Ki}
-    competitive_inhibition: Dict[str, float] = field(default_factory=dict)  # {inhibitor: Ki}
+    substrate_inhibition_constant: float | None = None  # mmol/L - substrate inhibition
+    product_inhibition: dict[str, float] = field(default_factory=dict)  # {product: Ki}
+    competitive_inhibition: dict[str, float] = field(default_factory=dict)  # {inhibitor: Ki}
 
     # Environmental effects
     temperature_coefficient: float = 1.07  # Q10 temperature coefficient
     ph_optimum: float = 7.0
-    ph_tolerance_range: Tuple[float, float] = (6.0, 8.0)
+    ph_tolerance_range: tuple[float, float] = (6.0, 8.0)
 
     # Thermodynamic parameters
     activation_energy: float = 50.0  # kJ/mol - Arrhenius activation energy
@@ -38,7 +37,7 @@ class SubstrateKineticsConfig:
     entropy_change: float = -0.15  # kJ/mol/K - reaction entropy
 
     # Literature reference
-    reference: Optional[LiteratureReference] = None
+    reference: LiteratureReference | None = None
 
 
 @dataclass
@@ -49,8 +48,8 @@ class SubstrateDegradationPathway:
     substrate: SubstrateType
 
     # Degradation steps
-    intermediates: List[str]  # Intermediate metabolites
-    final_products: List[str]  # Final products
+    intermediates: list[str]  # Intermediate metabolites
+    final_products: list[str]  # Final products
 
     # Stoichiometry
     substrate_stoichiometry: float = 1.0  # moles substrate consumed
@@ -63,11 +62,11 @@ class SubstrateDegradationPathway:
     co2_yield: float = 2.0  # moles CO2 per substrate
 
     # Pathway regulation
-    regulatory_metabolites: Dict[str, str] = field(default_factory=dict)  # {metabolite: effect}
-    allosteric_effectors: Dict[str, float] = field(default_factory=dict)  # {effector: factor}
+    regulatory_metabolites: dict[str, str] = field(default_factory=dict)  # {metabolite: effect}
+    allosteric_effectors: dict[str, float] = field(default_factory=dict)  # {effector: factor}
 
     # Environmental conditions for optimal pathway flux
-    optimal_conditions: Dict[str, float] = field(default_factory=lambda: {
+    optimal_conditions: dict[str, float] = field(default_factory=lambda: {
         'temperature': 303.0,  # K
         'ph': 7.0,
         'ionic_strength': 0.1,  # M
@@ -91,11 +90,11 @@ class SubstrateTransportConfig:
     pmf_cost: float = 1.0  # Protons per substrate (if applicable)
 
     # Regulation
-    transport_regulation: Dict[str, float] = field(default_factory=dict)  # {regulator: effect}
+    transport_regulation: dict[str, float] = field(default_factory=dict)  # {regulator: effect}
 
     # Competition with other substrates
-    competitive_substrates: List[str] = field(default_factory=list)
-    competition_factors: Dict[str, float] = field(default_factory=dict)
+    competitive_substrates: list[str] = field(default_factory=list)
+    competition_factors: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -125,17 +124,17 @@ class ComprehensiveSubstrateConfig:
     diffusion_coefficient_biofilm: float = 5.0e-6  # cm²/s in biofilm
 
     # Biodegradation kinetics (species-specific)
-    species_kinetics: Dict[BacterialSpecies, SubstrateKineticsConfig] = field(default_factory=dict)
+    species_kinetics: dict[BacterialSpecies, SubstrateKineticsConfig] = field(default_factory=dict)
 
     # Degradation pathways
-    degradation_pathways: List[SubstrateDegradationPathway] = field(default_factory=list)
+    degradation_pathways: list[SubstrateDegradationPathway] = field(default_factory=list)
 
     # Transport configuration
     transport_config: SubstrateTransportConfig = field(default_factory=SubstrateTransportConfig)
 
     # Toxicity and inhibition
-    toxicity_threshold: Optional[float] = None  # mmol/L - toxic concentration
-    inhibitory_effects: Dict[str, float] = field(default_factory=dict)  # {process: IC50}
+    toxicity_threshold: float | None = None  # mmol/L - toxic concentration
+    inhibitory_effects: dict[str, float] = field(default_factory=dict)  # {process: IC50}
 
     # Environmental fate
     biodegradability: float = 1.0  # Fraction biodegradable (0-1)
@@ -143,11 +142,11 @@ class ComprehensiveSubstrateConfig:
     half_life_anaerobic: float = 720.0  # hours - anaerobic biodegradation half-life
 
     # Analytical properties
-    detection_methods: List[str] = field(default_factory=list)
+    detection_methods: list[str] = field(default_factory=list)
     quantification_limit: float = 0.001  # mmol/L - analytical detection limit
 
     # Literature references
-    references: List[LiteratureReference] = field(default_factory=list)
+    references: list[LiteratureReference] = field(default_factory=list)
 
 
 # Pre-configured substrate configurations

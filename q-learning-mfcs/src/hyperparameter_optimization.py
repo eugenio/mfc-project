@@ -11,7 +11,7 @@ import json
 import os
 import sys
 import tempfile
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import numpy as np
 import optuna
@@ -30,7 +30,7 @@ from mfc_recirculation_control import run_mfc_simulation
 class SubstrateControlObjective:
     """
     Objective function for optimizing Q-learning hyperparameters.
-    
+
     Evaluates substrate control performance over shorter simulation periods
     to enable efficient optimization while maintaining relevance to 1000h runs.
     """
@@ -41,7 +41,7 @@ class SubstrateControlObjective:
                  tolerance: float = 2.0):
         """
         Initialize optimization objective.
-        
+
         Args:
             duration_hours: Simulation duration for evaluation (shorter for speed)
             target_concentration: Target substrate concentration (mM)
@@ -51,13 +51,13 @@ class SubstrateControlObjective:
         self.target_concentration = target_concentration
         self.tolerance = tolerance
 
-    def __call__(self, config: Dict[str, Any]) -> Dict[str, float]:
+    def __call__(self, config: dict[str, Any]) -> dict[str, float]:
         """
         Evaluate Q-learning configuration performance.
-        
+
         Args:
             config: Ray Tune configuration dictionary
-            
+
         Returns:
             Dictionary with optimization metrics
         """
@@ -111,7 +111,7 @@ class SubstrateControlObjective:
                 "final_concentration": 0.0
             }
 
-    def _build_qlearning_config(self, config: Dict[str, Any]) -> QLearningConfig:
+    def _build_qlearning_config(self, config: dict[str, Any]) -> QLearningConfig:
         """Build QLearningConfig from optimization parameters."""
 
         # Create reward weights with optimized parameters
@@ -139,7 +139,7 @@ class SubstrateControlObjective:
 
         return qlearning_config
 
-    def _calculate_performance_metrics(self, results: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_performance_metrics(self, results: dict[str, Any]) -> dict[str, float]:
         """Calculate optimization metrics from simulation results."""
 
         # Extract time series data
@@ -195,10 +195,10 @@ class SubstrateControlObjective:
         }
 
 
-def setup_optimization_search_space() -> Dict[str, Any]:
+def setup_optimization_search_space() -> dict[str, Any]:
     """
     Define the hyperparameter search space for Bayesian optimization.
-    
+
     Based on analysis of current Q-learning performance issues, focuses on:
     - Learning rate and exploration parameters
     - Reward/penalty balance for substrate control
@@ -234,16 +234,16 @@ def run_bayesian_optimization(
     max_concurrent_trials: int = 4,
     duration_hours: int = 200,
     target_concentration: float = 25.0
-) -> Tuple[Dict[str, Any], str]:
+) -> tuple[dict[str, Any], str]:
     """
     Run Bayesian optimization to find optimal Q-learning hyperparameters.
-    
+
     Args:
         num_samples: Number of trials to run
         max_concurrent_trials: Maximum parallel trials
         duration_hours: Simulation duration per trial
         target_concentration: Target substrate concentration
-        
+
     Returns:
         Tuple of (best_config, results_path)
     """
@@ -340,13 +340,13 @@ def run_bayesian_optimization(
     return best_config, results_file
 
 
-def apply_optimized_config(best_config: Dict[str, Any]) -> QLearningConfig:
+def apply_optimized_config(best_config: dict[str, Any]) -> QLearningConfig:
     """
     Apply optimized hyperparameters to create production Q-learning configuration.
-    
+
     Args:
         best_config: Optimized hyperparameters from Bayesian optimization
-        
+
     Returns:
         QLearningConfig with optimized parameters
     """
@@ -380,7 +380,7 @@ def apply_optimized_config(best_config: Dict[str, Any]) -> QLearningConfig:
 if __name__ == "__main__":
     """
     Run Q-learning hyperparameter optimization.
-    
+
     Usage:
         python hyperparameter_optimization.py [num_samples] [concurrent_trials]
     """

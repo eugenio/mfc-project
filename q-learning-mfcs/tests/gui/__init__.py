@@ -18,9 +18,9 @@ __author__ = "MFC Q-Learning Project"
 
 # Import main test classes for convenience
 try:
-    from .test_gui_simple import SimpleGUITester
     from .test_gui_browser import StreamlitGUITester
-    
+    from .test_gui_simple import SimpleGUITester
+
     __all__ = ['SimpleGUITester', 'StreamlitGUITester']
 except ImportError:
     # Handle missing dependencies gracefully

@@ -14,7 +14,6 @@ import os
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from path_config import get_figure_path, get_simulation_data_path
 
 # Set style for professional plots
@@ -120,7 +119,7 @@ def create_biofilm_health_comparison(unified_df, non_unified_df, recirculation_d
     ax2.axhline(y=0.5, color='gray', linestyle='--', alpha=0.7, label='Survival Minimum')
 
     # Add value labels on bars
-    for bar, value in zip(bars, final_biofilms):
+    for bar, value in zip(bars, final_biofilms, strict=False):
         height = bar.get_height()
         ax2.text(bar.get_x() + bar.get_width()/2., height + 0.02,
                 f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
@@ -148,7 +147,7 @@ def create_biofilm_health_comparison(unified_df, non_unified_df, recirculation_d
                 linestyle=':', alpha=0.8, label=f'Average ({recirculation_df["avg_biofilm"].iloc[-1]:.3f})')
 
     # Add value labels
-    for bar, value in zip(bars, cell_biofilms):
+    for bar, value in zip(bars, cell_biofilms, strict=False):
         height = bar.get_height()
         ax3.text(bar.get_x() + bar.get_width()/2., height + 0.005,
                 f'{value:.3f}', ha='center', va='bottom', fontsize=9)
@@ -234,7 +233,7 @@ def create_substrate_management_comparison(unified_df, non_unified_df, recircula
                 alpha=0.8, label=f'Average ({np.mean(cell_concentrations):.1f})')
 
     # Add value labels
-    for bar, value in zip(bars, cell_concentrations):
+    for bar, value in zip(bars, cell_concentrations, strict=False):
         height = bar.get_height()
         ax2.text(bar.get_x() + bar.get_width()/2., height + 0.2,
                 f'{value:.1f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
@@ -263,7 +262,7 @@ def create_substrate_management_comparison(unified_df, non_unified_df, recircula
     bars = ax3.bar(model_names, final_utilizations, color=colors, alpha=0.7, edgecolor='black', linewidth=2)
 
     # Add value labels
-    for bar, value in zip(bars, final_utilizations):
+    for bar, value in zip(bars, final_utilizations, strict=False):
         height = bar.get_height()
         ax3.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                 f'{value:.2f}%', ha='center', va='bottom', fontweight='bold')
@@ -534,14 +533,14 @@ def create_breakthrough_analysis_plot(unified_df, non_unified_df, recirculation_
 
     bars = ax4.bar(models, biofilm_health, color=colors, edgecolor='black', linewidth=2)
     # Set individual alpha values
-    for bar, alpha in zip(bars, alphas):
+    for bar, alpha in zip(bars, alphas, strict=False):
         bar.set_alpha(alpha)
     ax4.axhline(y=1.3, color='gold', linestyle='--', linewidth=3, label='OPTIMAL TARGET')
     ax4.axhline(y=0.5, color='red', linestyle=':', linewidth=2, alpha=0.7, label='SURVIVAL MINIMUM')
 
     # Add value labels and status
     statuses = ['STARVED', 'HEALTHY', 'THRIVING']
-    for bar, value, status in zip(bars, biofilm_health, statuses):
+    for bar, value, status in zip(bars, biofilm_health, statuses, strict=False):
         height = bar.get_height()
         ax4.text(bar.get_x() + bar.get_width()/2., height + 0.05,
                 f'{value:.3f}\n{status}', ha='center', va='bottom',

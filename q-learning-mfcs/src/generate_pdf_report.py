@@ -384,7 +384,7 @@ def create_simulation_results(pdf):
     phases = [(0, 10, 'Init'), (10, 50, 'Optimization'), (50, 80, 'Adaptation'), (80, 100, 'Stability')]
     colors = ['#FFE5B4', '#C8E6C9', '#FFCDD2', '#E1BEE7']
 
-    for (start, end, label), color in zip(phases, colors):
+    for (start, end, label), color in zip(phases, colors, strict=False):
         ax1.axvspan(start, end, alpha=0.3, color=color)
         ax1.text((start + end) / 2, max(power_profile) * 0.9, label,
                 ha='center', va='center', fontsize=8, fontweight='bold')
@@ -458,7 +458,7 @@ def create_simulation_results(pdf):
     ax4.grid(True, alpha=0.3)
 
     # Add score labels
-    for bar, score in zip(bars, performance_scores):
+    for bar, score in zip(bars, performance_scores, strict=False):
         ax4.text(bar.get_x() + bar.get_width()/2., score + 0.02,
                 f'{score:.2f}', ha='center', va='bottom', fontweight='bold')
 

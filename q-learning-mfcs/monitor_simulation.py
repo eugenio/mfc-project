@@ -3,11 +3,12 @@
 Monitor the progress of the comprehensive MFC simulation.
 """
 
-import os
-import json
-import time
 import glob
+import json
+import os
+import time
 from datetime import timedelta
+
 
 def find_latest_simulation():
     """Find the latest simulation directory."""
@@ -45,7 +46,7 @@ def monitor_progress():
             # Check progress file
             if os.path.exists(progress_file):
                 try:
-                    with open(progress_file, 'r') as f:
+                    with open(progress_file) as f:
                         progress = json.load(f)
 
                     # Only show update if it's new
@@ -89,7 +90,7 @@ def monitor_progress():
     # Show final status
     if os.path.exists(progress_file):
         try:
-            with open(progress_file, 'r') as f:
+            with open(progress_file) as f:
                 final_progress = json.load(f)
             print(f"\nFinal status: {final_progress['progress_percent']:.1f}% complete")
         except (FileNotFoundError, json.JSONDecodeError, KeyError):

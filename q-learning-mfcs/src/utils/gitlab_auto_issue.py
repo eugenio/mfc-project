@@ -8,7 +8,7 @@ It integrates with the main GitLab integration to provide seamless issue managem
 
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .gitlab_integration import create_bug_issue, create_enhancement_issue
 
@@ -37,13 +37,13 @@ class AutoIssueDetector:
             'low': ['minor', 'nice to have', 'when possible', 'low priority', 'someday']
         }
 
-    def analyze_description(self, description: str) -> Dict[str, Any]:
+    def analyze_description(self, description: str) -> dict[str, Any]:
         """
         Analyze a text description to determine if it's a bug or feature request.
-        
+
         Args:
             description: Text description from user
-        
+
         Returns:
             Dictionary with analysis results
         """
@@ -90,14 +90,14 @@ class AutoIssueDetector:
         }
 
     def create_issue_from_description(self, description: str,
-                                    force_type: Optional[str] = None) -> Optional[int]:
+                                    force_type: str | None = None) -> int | None:
         """
         Automatically create a GitLab issue from a description.
-        
+
         Args:
             description: User's description of the issue/feature
             force_type: Force issue type ('bug' or 'enhancement')
-        
+
         Returns:
             Issue ID if created successfully, None otherwise
         """
@@ -125,7 +125,7 @@ class AutoIssueDetector:
 
         return None
 
-    def _create_bug_from_analysis(self, analysis: Dict[str, Any]) -> Optional[int]:
+    def _create_bug_from_analysis(self, analysis: dict[str, Any]) -> int | None:
         """Create a bug issue from analysis results."""
 
         # Parse description for structured information
@@ -152,7 +152,7 @@ class AutoIssueDetector:
             environment=environment
         )
 
-    def _create_enhancement_from_analysis(self, analysis: Dict[str, Any]) -> Optional[int]:
+    def _create_enhancement_from_analysis(self, analysis: dict[str, Any]) -> int | None:
         """Create an enhancement issue from analysis results."""
 
         # Try to extract todo items from description
@@ -188,26 +188,26 @@ class AutoIssueDetector:
 # Global instance
 auto_detector = AutoIssueDetector()
 
-def auto_create_issue(description: str, force_type: Optional[str] = None) -> Optional[int]:
+def auto_create_issue(description: str, force_type: str | None = None) -> int | None:
     """
     Convenience function to automatically create an issue from description.
-    
+
     Args:
         description: User's description
         force_type: Force issue type ('bug' or 'enhancement')
-    
+
     Returns:
         Issue ID if created, None otherwise
     """
     return auto_detector.create_issue_from_description(description, force_type)
 
-def analyze_user_input(description: str) -> Dict[str, Any]:
+def analyze_user_input(description: str) -> dict[str, Any]:
     """
     Convenience function to analyze user input without creating an issue.
-    
+
     Args:
         description: User's description
-    
+
     Returns:
         Analysis results
     """

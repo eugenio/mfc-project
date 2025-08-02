@@ -494,7 +494,7 @@ def render_gsm_integration_page():
                 help="Choose a metabolic pathway to analyze in detail"
             )
 
-            analysis_type = st.radio(
+            st.radio(
                 "Analysis Type",
                 ["Flux Distribution", "Bottleneck Analysis", "Regulatory Targets"],
                 help="Type of pathway analysis to perform"
@@ -579,17 +579,17 @@ def render_gsm_integration_page():
             col_a, col_b = st.columns(2)
 
             with col_a:
-                max_substrate_cost = st.slider("Max Substrate Cost ($/L)", 0.1, 10.0, 2.0)
-                ph_range = st.slider("pH Range", 5.0, 9.0, (6.5, 8.0))
+                st.slider("Max Substrate Cost ($/L)", 0.1, 10.0, 2.0)
+                st.slider("pH Range", 5.0, 9.0, (6.5, 8.0))
 
             with col_b:
-                temp_range = st.slider("Temperature Range (°C)", 15.0, 45.0, (25.0, 35.0))
-                max_power_requirement = st.slider("Max Power Requirement (W)", 0.1, 5.0, 1.0)
+                st.slider("Temperature Range (°C)", 15.0, 45.0, (25.0, 35.0))
+                st.slider("Max Power Requirement (W)", 0.1, 5.0, 1.0)
 
         with col2:
             st.write("**Run Optimization:**")
 
-            optimization_method = st.selectbox(
+            st.selectbox(
                 "Method",
                 ["Genetic Algorithm", "Particle Swarm", "Simulated Annealing", "Gradient Descent"]
             )
@@ -684,27 +684,27 @@ def render_gsm_integration_page():
     with st.expander("ℹ️ GSM Integration Guide"):
         st.markdown("""
         **How GSM Integration Works:**
-        
+
         **🧬 Model Selection:**
         - Choose organism-specific metabolic models
         - Models include detailed reaction networks and gene associations
         - Each model represents validated metabolic capabilities
-        
+
         **⚡ Flux Balance Analysis (FBA):**
         - Constraint-based analysis of metabolic fluxes
         - Predicts optimal flux distributions under given conditions
         - Identifies metabolic bottlenecks and optimization targets
-        
+
         **🔍 Pathway Analysis:**
         - Detailed analysis of specific metabolic pathways
         - Identifies rate-limiting steps and regulatory points
         - Suggests genetic or environmental modifications
-        
+
         **⚙️ Current Optimization:**
         - Integrates metabolic predictions with electrode performance
         - Optimizes substrate concentrations and operating conditions
         - Provides organism-specific parameter recommendations
-        
+
         **💡 Best Practices:**
         - Start with organism-specific models when available
         - Consider multiple objective functions in FBA

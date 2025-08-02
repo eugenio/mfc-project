@@ -6,11 +6,18 @@ Supports YAML and JSON formats with validation.
 import json
 import logging
 from dataclasses import asdict, is_dataclass
+from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 import yaml
 
+from .electrode_config import (
+    ElectrodeConfiguration,
+    ElectrodeGeometry,
+    ElectrodeMaterial,
+    MaterialProperties,
+)
 from .parameter_validation import validate_qlearning_config, validate_sensor_config
 from .qlearning_config import QLearningConfig, QLearningRewardWeights, StateSpaceConfig
 from .sensor_config import (
@@ -28,10 +35,10 @@ logger = logging.getLogger(__name__)
 def convert_values_for_serialization(obj: Any) -> Any:
     """
     Convert values recursively for serialization compatibility.
-    
+
     Args:
         obj: Object to convert
-        
+
     Returns:
         Converted object
     """
@@ -41,36 +48,46 @@ def convert_values_for_serialization(obj: Any) -> Any:
         return {key: convert_values_for_serialization(value) for key, value in obj.items()}
     elif isinstance(obj, list):
         return [convert_values_for_serialization(item) for item in obj]
-    elif isinstance(obj, FusionMethod):
+    elif isinstance(obj, Enum):
         return obj.value
     return obj
 
 
-def dataclass_to_dict(obj: Any) -> Dict[str, Any]:
+def dataclass_to_dict(obj: Any) -> dict[str, Any]:
     """
     Convert dataclass to dictionary recursively.
-    
+
     Args:
         obj: Dataclass object or nested structure
-        
+
     Returns:
         Dictionary representation
     """
     if is_dataclass(obj) and not isinstance(obj, type):
-        result = asdict(obj)
+        # Custom dict factory to handle enums
+        def enum_dict_factory(field_list):
+            result = {}
+            for k, v in field_list:
+                if isinstance(v, Enum):
+                    result[k] = v.value
+                else:
+                    result[k] = v
+            return result
+
+        result = asdict(obj, dict_factory=enum_dict_factory)
         # Recursively convert all values for serialization
         return convert_values_for_serialization(result)
     return obj
 
 
-def convert_lists_to_tuples_for_dataclass(data: Dict[str, Any], dataclass_type: type) -> Dict[str, Any]:
+def convert_lists_to_tuples_for_dataclass(data: dict[str, Any], dataclass_type: type) -> dict[str, Any]:
     """
     Convert lists back to tuples for fields that expect tuples.
-    
+
     Args:
         data: Dictionary with configuration data
         dataclass_type: Target dataclass type
-        
+
     Returns:
         Dictionary with tuples restored
     """
@@ -96,14 +113,14 @@ def convert_lists_to_tuples_for_dataclass(data: Dict[str, Any], dataclass_type: 
     return data
 
 
-def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
+def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:
     """
     Convert dictionary to dataclass instance.
-    
+
     Args:
         data: Dictionary with configuration data
         dataclass_type: Target dataclass type
-        
+
     Returns:
         Dataclass instance
     """
@@ -125,6 +142,35 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
         if 'state_space' in data and isinstance(data['state_space'], dict):
             state_data = convert_lists_to_tuples_for_dataclass(data['state_space'], StateSpaceConfig)
             data['state_space'] = StateSpaceConfig(**state_data)
+
+        # Handle electrode configurations
+        if 'anode_config' in data and isinstance(data['anode_config'], dict):
+            anode = data['anode_config']
+            if 'material' in anode and isinstance(anode['material'], str):
+                anode['material'] = ElectrodeMaterial(anode['material'])
+            if 'geometry' in anode and isinstance(anode['geometry'], dict):
+                geom = anode['geometry']
+                if 'geometry_type' in geom and isinstance(geom['geometry_type'], str):
+                    geom['geometry_type'] = ElectrodeGeometry(geom['geometry_type'])
+                from .electrode_config import ElectrodeGeometrySpec
+                anode['geometry'] = ElectrodeGeometrySpec(**geom)
+            if "material_properties" in anode and isinstance(anode["material_properties"], dict):
+                anode["material_properties"] = MaterialProperties(**anode["material_properties"])
+            data['anode_config'] = ElectrodeConfiguration(**anode)
+
+        if 'cathode_config' in data and isinstance(data['cathode_config'], dict):
+            cathode = data['cathode_config']
+            if 'material' in cathode and isinstance(cathode['material'], str):
+                cathode['material'] = ElectrodeMaterial(cathode['material'])
+            if 'geometry' in cathode and isinstance(cathode['geometry'], dict):
+                geom = cathode['geometry']
+                if 'geometry_type' in geom and isinstance(geom['geometry_type'], str):
+                    geom['geometry_type'] = ElectrodeGeometry(geom['geometry_type'])
+                from .electrode_config import ElectrodeGeometrySpec
+                cathode['geometry'] = ElectrodeGeometrySpec(**geom)
+            if "material_properties" in cathode and isinstance(cathode["material_properties"], dict):
+                cathode["material_properties"] = MaterialProperties(**cathode["material_properties"])
+            data['cathode_config'] = ElectrodeConfiguration(**cathode)
     elif dataclass_type == SensorConfig:
         # Handle FusionMethod enum at the SensorConfig level
         if 'fusion_method' in data and isinstance(data['fusion_method'], str):
@@ -142,17 +188,17 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
     return dataclass_type(**data)
 
 
-def save_config(config: Union[QLearningConfig, SensorConfig],
-                filepath: Union[str, Path],
+def save_config(config: QLearningConfig | SensorConfig,
+                filepath: str | Path,
                 format: str = 'yaml') -> None:
     """
     Save configuration to file.
-    
+
     Args:
         config: Configuration object to save
         filepath: Output file path
         format: File format ('yaml' or 'json')
-        
+
     Raises:
         ValueError: If format is not supported
         ConfigValidationError: If configuration is invalid
@@ -185,18 +231,18 @@ def save_config(config: Union[QLearningConfig, SensorConfig],
     logger.info(f"Configuration saved to {filepath}")
 
 
-def load_config(filepath: Union[str, Path],
-                config_type: type) -> Union[QLearningConfig, SensorConfig]:
+def load_config(filepath: str | Path,
+                config_type: type) -> QLearningConfig | SensorConfig:
     """
     Load configuration from file.
-    
+
     Args:
         filepath: Configuration file path
         config_type: Expected configuration type (QLearningConfig or SensorConfig)
-        
+
     Returns:
         Configuration object
-        
+
     Raises:
         FileNotFoundError: If file doesn't exist
         ValueError: If file format is not supported
@@ -230,15 +276,15 @@ def load_config(filepath: Union[str, Path],
     return config
 
 
-def merge_configs(base_config: Union[QLearningConfig, SensorConfig],
-                  override_dict: Dict[str, Any]) -> Union[QLearningConfig, SensorConfig]:
+def merge_configs(base_config: QLearningConfig | SensorConfig,
+                  override_dict: dict[str, Any]) -> QLearningConfig | SensorConfig:
     """
     Merge configuration with override values.
-    
+
     Args:
         base_config: Base configuration object
         override_dict: Dictionary with values to override
-        
+
     Returns:
         New configuration object with merged values
     """

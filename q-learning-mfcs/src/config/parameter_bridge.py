@@ -12,7 +12,7 @@ Last Modified: 2025-07-31
 
 import copy
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .literature_database import LITERATURE_DB
 from .qlearning_config import DEFAULT_QLEARNING_CONFIG, QLearningConfig
@@ -26,7 +26,7 @@ class ParameterMappingRule:
     config_attribute: str  # Attribute path in configuration (e.g., 'learning_rate' or 'reward_weights.power_weight')
     conversion_factor: float = 1.0  # Conversion factor if units differ
     validation_required: bool = True  # Whether to validate against literature ranges
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ParameterBridge:
@@ -37,7 +37,7 @@ class ParameterBridge:
         self.literature_db = LITERATURE_DB
         self.mapping_rules = self._define_mapping_rules()
 
-    def _define_mapping_rules(self) -> Dict[str, ParameterMappingRule]:
+    def _define_mapping_rules(self) -> dict[str, ParameterMappingRule]:
         """Define mapping rules between literature parameters and config attributes."""
 
         rules = {
@@ -114,14 +114,14 @@ class ParameterBridge:
 
         return rules
 
-    def validate_parameter_with_literature(self, config_key: str, value: float) -> Dict[str, Any]:
+    def validate_parameter_with_literature(self, config_key: str, value: float) -> dict[str, Any]:
         """
         Validate a configuration parameter against literature ranges.
-        
+
         Args:
             config_key: Configuration parameter key
             value: Parameter value to validate
-            
+
         Returns:
             Validation result dictionary
         """
@@ -153,13 +153,13 @@ class ParameterBridge:
 
         return validation
 
-    def create_literature_validated_config(self, parameter_values: Dict[str, float]) -> Tuple[QLearningConfig, Dict[str, Any]]:
+    def create_literature_validated_config(self, parameter_values: dict[str, float]) -> tuple[QLearningConfig, dict[str, Any]]:
         """
         Create a Q-learning configuration from literature-validated parameters.
-        
+
         Args:
             parameter_values: Dictionary of literature parameter values
-            
+
         Returns:
             Tuple of (validated config, validation results)
         """
@@ -221,13 +221,13 @@ class ParameterBridge:
 
         return current_obj
 
-    def extract_literature_parameters_from_config(self, config: QLearningConfig) -> Dict[str, float]:
+    def extract_literature_parameters_from_config(self, config: QLearningConfig) -> dict[str, float]:
         """
         Extract literature parameter values from an existing configuration.
-        
+
         Args:
             config: Q-learning configuration
-            
+
         Returns:
             Dictionary of literature parameter values
         """
@@ -244,10 +244,10 @@ class ParameterBridge:
 
         return literature_params
 
-    def get_parameter_mapping_info(self) -> Dict[str, Dict[str, Any]]:
+    def get_parameter_mapping_info(self) -> dict[str, dict[str, Any]]:
         """
         Get information about parameter mappings for documentation.
-        
+
         Returns:
             Dictionary with mapping information
         """
@@ -270,18 +270,18 @@ class ParameterBridge:
 
         return mapping_info
 
-    def validate_entire_config(self, config: QLearningConfig) -> Dict[str, Any]:
+    def validate_entire_config(self, config: QLearningConfig) -> dict[str, Any]:
         """
         Validate an entire configuration against literature parameters.
-        
+
         Args:
             config: Q-learning configuration to validate
-            
+
         Returns:
             Complete validation report
         """
         literature_params = self.extract_literature_parameters_from_config(config)
-        validation_report: Dict[str, Any] = {
+        validation_report: dict[str, Any] = {
             'overall_status': 'valid',
             'parameter_results': {},
             'summary': {
@@ -319,13 +319,13 @@ class ParameterBridge:
 
         return validation_report
 
-    def suggest_parameter_improvements(self, config: QLearningConfig) -> List[Dict[str, Any]]:
+    def suggest_parameter_improvements(self, config: QLearningConfig) -> list[dict[str, Any]]:
         """
         Suggest improvements to configuration parameters based on literature.
-        
+
         Args:
             config: Current configuration
-            
+
         Returns:
             List of improvement suggestions
         """

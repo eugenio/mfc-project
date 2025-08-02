@@ -14,7 +14,7 @@ Created: 2025-07-27
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -69,7 +69,7 @@ class AEMParameters(MembraneParameters):
 class AnionExchangeMembrane(BaseMembraneModel):
     """
     Anion exchange membrane model with comprehensive transport mechanisms.
-    
+
     Features:
     - Hydroxide ion transport as primary charge carrier
     - Bicarbonate/carbonate competition and carbonation
@@ -149,12 +149,12 @@ class AnionExchangeMembrane(BaseMembraneModel):
     def calculate_water_content(self, water_activity: float = 1.0) -> float:
         """
         Calculate AEM water content.
-        
+
         AEMs typically have lower water uptake than PEMs.
-        
+
         Args:
             water_activity: Water activity (0-1)
-        
+
         Returns:
             Water content (mol H2O/mol functional group)
         """
@@ -170,15 +170,15 @@ class AnionExchangeMembrane(BaseMembraneModel):
         self.params.water_content = lambda_water
         return float(lambda_water)
 
-    def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
-                                   water_content: Optional[float] = None) -> float:
+    def calculate_ionic_conductivity(self, temperature: float | None = None,
+                                   water_content: float | None = None) -> float:
         """
         Calculate ionic conductivity accounting for carbonation.
-        
+
         Args:
             temperature: Temperature (K)
             water_content: Water content
-        
+
         Returns:
             Ionic conductivity (S/m)
         """
@@ -220,7 +220,7 @@ class AnionExchangeMembrane(BaseMembraneModel):
                           exposure_time: float = 0.0):
         """
         Update membrane carbonation from CO2 exposure.
-        
+
         Args:
             co2_partial_pressure: CO2 partial pressure (Pa)
             exposure_time: Exposure time (hours)
@@ -246,14 +246,14 @@ class AnionExchangeMembrane(BaseMembraneModel):
         # Update carbonate fraction (max 1.0)
         self.carbonate_fraction = min(1.0, self.carbonate_fraction + new_carbonate)
 
-    def calculate_ph_gradient_effect(self, ph_anode: float, ph_cathode: float) -> Dict[str, float]:
+    def calculate_ph_gradient_effect(self, ph_anode: float, ph_cathode: float) -> dict[str, float]:
         """
         Calculate effects of pH gradient across membrane.
-        
+
         Args:
             ph_anode: Anode pH
             ph_cathode: Cathode pH
-        
+
         Returns:
             pH gradient effects
         """
@@ -292,17 +292,17 @@ class AnionExchangeMembrane(BaseMembraneModel):
                                   current_density: float) -> float:
         """
         Calculate AEM degradation rate.
-        
+
         Main mechanisms:
         - Hofmann elimination (high T, high pH)
         - Nucleophilic substitution
         - Oxidative degradation
-        
+
         Args:
             temperature: Temperature (K)
             ph: Local pH
             current_density: Current density (A/m²)
-        
+
         Returns:
             Degradation rate (h⁻¹)
         """
@@ -333,18 +333,18 @@ class AnionExchangeMembrane(BaseMembraneModel):
 
         return float(degradation_rate)
 
-    def simulate_co2_mitigation(self, operating_conditions: Dict[str, Any]) -> Dict[str, float]:
+    def simulate_co2_mitigation(self, operating_conditions: dict[str, Any]) -> dict[str, float]:
         """
         Simulate CO2 mitigation strategies.
-        
+
         Strategies:
         1. CO2 removal from inlet air
         2. High pH operation
         3. Pulsed operation
-        
+
         Args:
             operating_conditions: Operating parameters
-        
+
         Returns:
             Mitigation effectiveness metrics
         """
@@ -399,17 +399,17 @@ class AnionExchangeMembrane(BaseMembraneModel):
 
     def calculate_water_balance(self, current_density: float,
                               rh_anode: float,
-                              rh_cathode: float) -> Dict[str, float]:
+                              rh_cathode: float) -> dict[str, float]:
         """
         Calculate water balance in AEM.
-        
+
         AEMs have higher water drag than PEMs.
-        
+
         Args:
             current_density: Current density (A/m²)
             rh_anode: Anode relative humidity (%)
             rh_cathode: Cathode relative humidity (%)
-        
+
         Returns:
             Water transport fluxes
         """
@@ -454,15 +454,15 @@ class AnionExchangeMembrane(BaseMembraneModel):
 
     def get_stability_assessment(self, operating_hours: float,
                                average_temperature: float,
-                               average_ph: float) -> Dict[str, float]:
+                               average_ph: float) -> dict[str, float]:
         """
         Assess AEM stability and remaining lifetime.
-        
+
         Args:
             operating_hours: Hours of operation
             average_temperature: Average temperature (K)
             average_ph: Average pH
-        
+
         Returns:
             Stability metrics
         """
@@ -505,7 +505,7 @@ class AnionExchangeMembrane(BaseMembraneModel):
             'membrane_type': self.aem_params.membrane_type
         }
 
-    def get_aem_properties(self) -> Dict[str, Any]:
+    def get_aem_properties(self) -> dict[str, Any]:
         """Get comprehensive AEM properties."""
         base_properties = self.get_transport_properties()
 
@@ -532,14 +532,14 @@ def create_aem_membrane(membrane_type: str = "Quaternary Ammonium",
                        ion_exchange_capacity: float = 2.0) -> AnionExchangeMembrane:
     """
     Create an anion exchange membrane.
-    
+
     Args:
         membrane_type: Type of AEM chemistry
         thickness_um: Membrane thickness in micrometers
         area_cm2: Membrane area in cm²
         temperature_C: Operating temperature in °C
         ion_exchange_capacity: IEC in mol/kg
-    
+
     Returns:
         Configured AEM
     """

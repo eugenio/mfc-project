@@ -2,9 +2,9 @@
 """
 Degradation Detection Module for MFC Systems
 
-This module provides comprehensive degradation detection and analysis for 
-Microbial Fuel Cell (MFC) systems, including early warning detection, 
-degradation trend analysis, component health monitoring, and predictive 
+This module provides comprehensive degradation detection and analysis for
+Microbial Fuel Cell (MFC) systems, including early warning detection,
+degradation trend analysis, component health monitoring, and predictive
 degradation modeling.
 
 Author: MFC Analysis Team
@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
+from typing import Any, Protocol, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 # Type aliases
-TimeSeriesData = Union[pd.Series, np.ndarray, List[float]]
+TimeSeriesData = Union[pd.Series, np.ndarray, list[float]]
 Timestamp = Union[datetime, pd.Timestamp, float]
 DegradationValue = Union[float, np.floating]
 HealthScore = Union[float, np.floating]
@@ -127,9 +127,9 @@ class DegradationEvent:
     current_value: float  # Current degraded value
     trend_slope: float  # Trend slope indicating degradation direction
     detection_method: DetectionMethod
-    additional_metrics: Dict[str, float] = field(default_factory=dict)
-    root_cause_analysis: Optional[str] = None
-    recommended_actions: List[str] = field(default_factory=list)
+    additional_metrics: dict[str, float] = field(default_factory=dict)
+    root_cause_analysis: str | None = None
+    recommended_actions: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate degradation event data."""
@@ -145,7 +145,7 @@ class DegradationEvent:
             return 0.0
         return abs(self.baseline_value - self.current_value) / self.baseline_value
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary format."""
         return {
             'detection_time': self.detection_time.isoformat(),
@@ -197,12 +197,12 @@ class DegradationMetrics:
     anomaly_severity: float = 0.0  # Average severity of anomalies
 
     # Change point detection
-    change_points_detected: List[Tuple[float, float]] = field(default_factory=list)  # (time, magnitude)
+    change_points_detected: list[tuple[float, float]] = field(default_factory=list)  # (time, magnitude)
     significant_changes: int = 0
-    last_significant_change: Optional[datetime] = None
+    last_significant_change: datetime | None = None
 
     # Predictive metrics
-    predicted_failure_time: Optional[datetime] = None
+    predicted_failure_time: datetime | None = None
     prediction_confidence: float = 0.0
     remaining_useful_life: float = float('inf')  # Hours
 
@@ -246,7 +246,7 @@ class DegradationMetrics:
 
         # Use weighted average (biofilm is most critical)
         weights = [0.4, 0.3, 0.3]
-        self.system_health_score = sum(score * weight for score, weight in zip(component_scores, weights))
+        self.system_health_score = sum(score * weight for score, weight in zip(component_scores, weights, strict=False))
 
         # Update overall health score
         self.overall_health_score = min(self.system_health_score, self.overall_health_score)
@@ -264,7 +264,7 @@ class DegradationMetrics:
         else:
             return DegradationSeverity.CRITICAL
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary format."""
         return {
             'overall_health_score': self.overall_health_score,
@@ -308,9 +308,9 @@ class DegradationDetector(Protocol):
     def detect_degradation(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
-    ) -> Tuple[DegradationMetrics, List[DegradationEvent]]:
+    ) -> tuple[DegradationMetrics, list[DegradationEvent]]:
         """Detect degradation in time series data."""
         ...
 
@@ -319,7 +319,7 @@ class DegradationDetector(Protocol):
         current_time: float,
         prediction_horizon: float,
         **kwargs: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Predict future degradation."""
         ...
 
@@ -329,12 +329,12 @@ class BaseDegradationDetector(ABC):
 
     def __init__(
         self,
-        thresholds: Optional[DegradationThresholds] = None,
+        thresholds: DegradationThresholds | None = None,
         min_data_points: int = 30,
         detection_confidence_threshold: float = 0.7
     ) -> None:
         """Initialize degradation detector.
-        
+
         Args:
             thresholds: Custom degradation thresholds
             min_data_points: Minimum data points required for analysis
@@ -344,7 +344,7 @@ class BaseDegradationDetector(ABC):
         self.min_data_points = min_data_points
         self.detection_confidence_threshold = detection_confidence_threshold
         self.baseline_established = False
-        self.baseline_stats: Dict[str, float] = {}
+        self.baseline_stats: dict[str, float] = {}
         self._setup_logging()
 
     def _setup_logging(self) -> None:
@@ -355,9 +355,9 @@ class BaseDegradationDetector(ABC):
     def detect_degradation(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
-    ) -> Tuple[DegradationMetrics, List[DegradationEvent]]:
+    ) -> tuple[DegradationMetrics, list[DegradationEvent]]:
         """Detect degradation in time series data."""
         pass
 
@@ -367,16 +367,16 @@ class BaseDegradationDetector(ABC):
         current_time: float,
         prediction_horizon: float,
         **kwargs: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Predict future degradation."""
         pass
 
     def validate_data(self, data: TimeSeriesData) -> bool:
         """Validate input data quality.
-        
+
         Args:
             data: Time series data to validate
-            
+
         Returns:
             True if data is valid, False otherwise
         """
@@ -403,13 +403,13 @@ class BaseDegradationDetector(ABC):
         self,
         baseline_data: TimeSeriesData,
         **kwargs: Any
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Establish baseline statistics for degradation detection.
-        
+
         Args:
             baseline_data: Baseline time series data
             **kwargs: Additional parameters
-            
+
         Returns:
             Dictionary of baseline statistics
         """
@@ -445,12 +445,12 @@ class BaseDegradationDetector(ABC):
         component_type: str = "general"
     ) -> float:
         """Calculate health score based on current vs baseline performance.
-        
+
         Args:
             current_value: Current performance value
             baseline_value: Baseline performance value
             component_type: Type of component for specific calculations
-            
+
         Returns:
             Health score between 0 and 1
         """
@@ -479,13 +479,13 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
 
     def __init__(
         self,
-        thresholds: Optional[DegradationThresholds] = None,
+        thresholds: DegradationThresholds | None = None,
         min_data_points: int = 50,
         detection_confidence_threshold: float = 0.7,
         control_chart_type: str = "cusum"  # Options: cusum, ewma, shewhart
     ) -> None:
         """Initialize statistical degradation detector.
-        
+
         Args:
             thresholds: Custom degradation thresholds
             min_data_points: Minimum data points required
@@ -494,22 +494,22 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         """
         super().__init__(thresholds, min_data_points, detection_confidence_threshold)
         self.control_chart_type = control_chart_type
-        self.control_limits: Dict[str, float] = {}
+        self.control_limits: dict[str, float] = {}
         self.trend_window = self.thresholds.trend_detection_window
 
     def detect_degradation(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
-    ) -> Tuple[DegradationMetrics, List[DegradationEvent]]:
+    ) -> tuple[DegradationMetrics, list[DegradationEvent]]:
         """Perform statistical degradation detection.
-        
+
         Args:
             data: Time series data to analyze
             timestamps: Optional timestamps for data points
             **kwargs: Additional analysis parameters
-            
+
         Returns:
             Tuple of (DegradationMetrics, List[DegradationEvent])
         """
@@ -531,7 +531,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             method_used=DetectionMethod.STATISTICAL_PROCESS_CONTROL
         )
 
-        degradation_events: List[DegradationEvent] = []
+        degradation_events: list[DegradationEvent] = []
 
         # Perform trend analysis
         trend_results = self._analyze_trends(data_array, timestamps)
@@ -589,14 +589,14 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         current_time: float,
         prediction_horizon: float,
         **kwargs: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Predict future degradation using statistical models.
-        
+
         Args:
             current_time: Current system time
             prediction_horizon: Time horizon for prediction
             **kwargs: Additional prediction parameters
-            
+
         Returns:
             Dictionary with prediction results
         """
@@ -624,7 +624,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
 
         # Identify predicted degradation events
         predicted_events = []
-        for i, (time_point, health_score) in enumerate(zip(time_points, predicted_health_scores)):
+        for i, (time_point, health_score) in enumerate(zip(time_points, predicted_health_scores, strict=False)):
             if health_score < 0.8 and i > 0:  # Degradation threshold
                 if predicted_health_scores[i-1] >= 0.8:  # First time below threshold
                     severity = self._determine_severity_from_health_score(health_score)
@@ -640,7 +640,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         prediction_confidence = max(0.0, min(1.0, trend_consistency))
 
         return {
-            'predicted_health_scores': list(zip(time_points.tolist(), predicted_health_scores)),
+            'predicted_health_scores': list(zip(time_points.tolist(), predicted_health_scores, strict=False)),
             'predicted_degradation_events': predicted_events,
             'confidence': prediction_confidence,
             'prediction_horizon': prediction_horizon,
@@ -651,8 +651,8 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     def _analyze_trends(
         self,
         data: np.ndarray,
-        timestamps: Optional[Sequence[Timestamp]] = None
-    ) -> Dict[str, float]:
+        timestamps: Sequence[Timestamp] | None = None
+    ) -> dict[str, float]:
         """Analyze trends at different time scales."""
         n = len(data)
 
@@ -686,7 +686,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             'acceleration': acceleration
         }
 
-    def _detect_anomalies(self, data: np.ndarray) -> Dict[str, float]:
+    def _detect_anomalies(self, data: np.ndarray) -> dict[str, float]:
         """Detect anomalies using statistical methods."""
         # Calculate z-scores
         mean_val = np.mean(data)
@@ -714,8 +714,8 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
     def _detect_change_points(
         self,
         data: np.ndarray,
-        timestamps: Optional[Sequence[Timestamp]] = None
-    ) -> Dict[str, Any]:
+        timestamps: Sequence[Timestamp] | None = None
+    ) -> dict[str, Any]:
         """Detect change points in the data."""
         # Simple change point detection using CUSUM
         try:
@@ -776,7 +776,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
                 'last_change': None
             }
 
-    def _calculate_component_health_scores(self, data: np.ndarray) -> Dict[str, float]:
+    def _calculate_component_health_scores(self, data: np.ndarray) -> dict[str, float]:
         """Calculate health scores for different MFC components."""
         if not self.baseline_established:
             return {'biofilm': 1.0, 'electrode': 1.0, 'membrane': 1.0}
@@ -801,7 +801,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             'membrane': float(membrane_health * stability_factor)
         }
 
-    def _calculate_degradation_percentages(self, data: np.ndarray) -> Dict[str, float]:
+    def _calculate_degradation_percentages(self, data: np.ndarray) -> dict[str, float]:
         """Calculate degradation percentages for different metrics."""
         if not self.baseline_established:
             return {'power': 0.0, 'efficiency': 0.0, 'stability': 0.0}
@@ -845,7 +845,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
 
         return max(0.0, float(normalized_rate))  # Only positive degradation rates
 
-    def _predict_failure(self, data: np.ndarray) -> Dict[str, Any]:
+    def _predict_failure(self, data: np.ndarray) -> dict[str, Any]:
         """Predict failure time and remaining useful life."""
         try:
             current_trend = np.polyfit(np.arange(len(data)), data, 1)[0]
@@ -913,8 +913,8 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
         self,
         data: np.ndarray,
         metrics: DegradationMetrics,
-        timestamps: Optional[Sequence[Timestamp]] = None
-    ) -> List[DegradationEvent]:
+        timestamps: Sequence[Timestamp] | None = None
+    ) -> list[DegradationEvent]:
         """Generate degradation events based on analysis results."""
         events = []
 
@@ -1024,7 +1024,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
             recommended_actions=["Investigate anomalous behavior", "Check system parameters"]
         )
 
-    def _generate_recommendations(self, metrics: DegradationMetrics) -> List[str]:
+    def _generate_recommendations(self, metrics: DegradationMetrics) -> list[str]:
         """Generate maintenance recommendations based on degradation metrics."""
         recommendations = []
 
@@ -1051,7 +1051,7 @@ class StatisticalDegradationDetector(BaseDegradationDetector):
 
 # Factory functions
 def create_statistical_degradation_detector(
-    thresholds: Optional[DegradationThresholds] = None,
+    thresholds: DegradationThresholds | None = None,
     **kwargs: Any
 ) -> StatisticalDegradationDetector:
     """Create a statistical degradation detector."""

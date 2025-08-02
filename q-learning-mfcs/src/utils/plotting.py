@@ -5,7 +5,7 @@ Supports arbitrary data length with Latin character subplot labels
 """
 
 import string
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 
@@ -38,17 +38,17 @@ class SubplotLabeler:
         return label
 
 
-def create_labeled_subplots(nrows: int, ncols: int, figsize: Tuple[float, float] = (12, 8),
-                           title: Optional[str] = None) -> Tuple[plt.Figure, List[plt.Axes], SubplotLabeler]:
+def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float] = (12, 8),
+                           title: str | None = None) -> tuple[plt.Figure, list[plt.Axes], SubplotLabeler]:
     """
     Create figure with subplots and Latin character labels
-    
+
     Args:
         nrows: Number of subplot rows
         ncols: Number of subplot columns
         figsize: Figure size (width, height)
         title: Optional figure title
-    
+
     Returns:
         fig: Matplotlib figure
         axes: Flattened list of axes
@@ -80,7 +80,7 @@ def create_labeled_subplots(nrows: int, ncols: int, figsize: Tuple[float, float]
 def add_subplot_label(ax: plt.Axes, label: str, fontsize: int = 14, fontweight: str = 'bold'):
     """
     Add Latin character label to subplot in upper left corner, outside plot area
-    
+
     Args:
         ax: Matplotlib axes object
         label: Label text (e.g., 'a', 'b', etc.)
@@ -98,7 +98,7 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
                grid: bool = True, legend: bool = True, legend_loc: str = 'best'):
     """
     Standard axis setup helper
-    
+
     Args:
         ax: Matplotlib axes object
         xlabel: X-axis label
@@ -119,12 +119,12 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
         ax.legend(loc=legend_loc)
 
 
-def plot_time_series(ax: plt.Axes, df: Any, time_col: str, y_cols: List[str],
-                    labels: Optional[List[str]] = None, colors: Optional[List[str]] = None,
-                    linestyles: Optional[List[str]] = None, linewidths: Optional[List[float]] = None):
+def plot_time_series(ax: plt.Axes, df: Any, time_col: str, y_cols: list[str],
+                    labels: list[str] | None = None, colors: list[str] | None = None,
+                    linestyles: list[str] | None = None, linewidths: list[float] | None = None):
     """
     Plot multiple time series on the same axes
-    
+
     Args:
         ax: Matplotlib axes object
         df: DataFrame with time series data
@@ -138,7 +138,7 @@ def plot_time_series(ax: plt.Axes, df: Any, time_col: str, y_cols: List[str],
     if labels is None:
         labels = y_cols
 
-    for i, (col, label) in enumerate(zip(y_cols, labels)):
+    for i, (col, label) in enumerate(zip(y_cols, labels, strict=False)):
         plot_kwargs = {'label': label}
 
         if colors and i < len(colors):
@@ -166,7 +166,7 @@ def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.0
                        facecolor: str = 'wheat', alpha: float = 0.5):
     """
     Add text annotation box to axes
-    
+
     Args:
         ax: Matplotlib axes object
         text: Text to display
@@ -192,7 +192,7 @@ def save_figure(fig: plt.Figure, filename: str, dpi: int = 300, bbox_inches: str
 def create_standard_mfc_plots(df: Any, output_prefix: str = "mfc_results"):
     """
     Example of creating standardized MFC plots
-    
+
     Args:
         df: DataFrame with MFC simulation data
         output_prefix: Prefix for output filenames
