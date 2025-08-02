@@ -1,13 +1,21 @@
 """
 Create GitLab issue for IntegratedMFCModel mfc_stack AttributeError.
 """
-from gitlab_issue_manager import GitLabIssueManager, IssueData, IssueSeverity, IssueUrgency, IssueType
+from gitlab_issue_manager import (
+    GitLabIssueManager,
+    IssueData,
+    IssueSeverity,
+    IssueType,
+    IssueUrgency,
+)
+
+
 def create_mfc_stack_issue():
     """Create the mfc_stack AttributeError issue."""
-    
+
     # Initialize GitLab issue manager
     issue_manager = GitLabIssueManager()
-    
+
     # Create issue data
     issue_data = IssueData(
         title="CRITICAL: IntegratedMFCModel missing mfc_stack attribute breaks integration tests",
@@ -21,7 +29,7 @@ AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'
 
 ## Affected Tests
 - `test_biofilm_metabolic_coupling`
-- `test_component_integration` 
+- `test_component_integration`
 - `test_edge_case_handling`
 - Multiple other integration tests expecting `mfc_stack` attribute
 
@@ -78,7 +86,7 @@ Method: `test_biofilm_metabolic_coupling`
     ^^^^^^^^^^^^^^^^^^^^
 E   AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'"""
     )
-    
+
     # Create the issue
     try:
         result = issue_manager.create_issue(issue_data)
