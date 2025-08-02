@@ -11,22 +11,25 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass
-from enum import Enum
 import logging
 from collections import deque
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Import sensor fusion components
 from sensing_models.advanced_sensor_fusion import (
-    FusedMeasurement, BiofimGrowthPattern, AnomalyDetection
+    AnomalyDetection,
+    BiofimGrowthPattern,
+    FusedMeasurement,
 )
 from sensing_models.sensor_fusion import BacterialSpecies
 
 # Configuration
 try:
-    from config import SensorConfig, QLearningConfig
+    from config import QLearningConfig, SensorConfig
 except ImportError:
     SensorConfig = None
     QLearningConfig = None

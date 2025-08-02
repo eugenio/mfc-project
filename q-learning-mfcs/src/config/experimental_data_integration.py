@@ -25,17 +25,18 @@ Literature References:
 4. Pourret, O., et al. (2008). "Bayesian Networks: A Practical Guide to Applications"
 """
 
+import json
+import logging
+import sqlite3
+import warnings
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Callable, Union
-from dataclasses import dataclass, field
-from enum import Enum
-import logging
-from pathlib import Path
-from datetime import datetime, timedelta
-import warnings
-import json
-import sqlite3
 
 # Optional dependencies
 try:
@@ -255,7 +256,7 @@ class DataLoader:
 
     def _load_json(self, file_path: Path, **kwargs) -> pd.DataFrame:
         """Load JSON file."""
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             data = json.load(f)
 
         if isinstance(data, list):
@@ -600,7 +601,7 @@ class ModelCalibrator:
             method=CalibrationMethod.LEAST_SQUARES,
             dataset_name="",
             calibrated_parameters=calibrated_params,
-            parameter_uncertainties={param: 0.0 for param in parameters_to_calibrate},  # TODO: estimate uncertainties
+            parameter_uncertainties=dict.fromkeys(parameters_to_calibrate, 0.0),  # TODO: estimate uncertainties
             r_squared=r_squared,
             rmse=rmse,
             mae=mae,
@@ -627,8 +628,8 @@ class ModelCalibrator:
         return CalibrationResult(
             method=CalibrationMethod.BAYESIAN,
             dataset_name="",
-            calibrated_parameters={param: 0.0 for param in parameters_to_calibrate},
-            parameter_uncertainties={param: 0.0 for param in parameters_to_calibrate},
+            calibrated_parameters=dict.fromkeys(parameters_to_calibrate, 0.0),
+            parameter_uncertainties=dict.fromkeys(parameters_to_calibrate, 0.0),
             r_squared=0.0,
             rmse=0.0,
             mae=0.0,
@@ -651,8 +652,8 @@ class ModelCalibrator:
         return CalibrationResult(
             method=CalibrationMethod.MAXIMUM_LIKELIHOOD,
             dataset_name="",
-            calibrated_parameters={param: 0.0 for param in parameters_to_calibrate},
-            parameter_uncertainties={param: 0.0 for param in parameters_to_calibrate},
+            calibrated_parameters=dict.fromkeys(parameters_to_calibrate, 0.0),
+            parameter_uncertainties=dict.fromkeys(parameters_to_calibrate, 0.0),
             r_squared=0.0,
             rmse=0.0,
             mae=0.0,

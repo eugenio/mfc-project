@@ -6,10 +6,11 @@ cytochromes, and other mediators used by exoelectrogenic bacteria
 for extracellular electron transfer.
 """
 
-import numpy as np
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 
 class ShuttleType(Enum):
@@ -157,9 +158,7 @@ class ElectronShuttleModel:
 
     def reset_concentrations(self):
         """Reset shuttle concentrations to initial values."""
-        self.shuttle_concentrations = {
-            shuttle_type: 0.0 for shuttle_type in ShuttleType
-        }
+        self.shuttle_concentrations = dict.fromkeys(ShuttleType, 0.0)
 
     def calculate_shuttle_production(self, species: str, biomass: float,
                                    growth_rate: float, dt: float) -> Dict[ShuttleType, float]:

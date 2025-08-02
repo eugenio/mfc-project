@@ -34,26 +34,27 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
+import copy
+import logging
+import pickle
+import time
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import copy
-import logging
-import time
-from typing import Dict, List, Any
-from dataclasses import dataclass, field
-from enum import Enum
-from collections import deque
-import pickle
-from datetime import datetime
 
 # Import Phase 2 and 3 components
 from adaptive_mfc_controller import SystemState
 from biofilm_health_monitor import HealthMetrics
-from sensing_models.sensor_fusion import BacterialSpecies
 from ml_optimization import FeatureEngineer
+from sensing_models.sensor_fusion import BacterialSpecies
 
 # Import configuration
 
@@ -477,7 +478,7 @@ class FederatedClient:
                 # Prepare batch tensors
                 features = torch.stack([d['features'] for d in batch_data]).to(self.device)
                 actions = torch.LongTensor([d['action'] for d in batch_data]).to(self.device)
-                rewards = torch.FloatTensor([d['reward'] for d in batch_data]).to(self.device)
+                torch.FloatTensor([d['reward'] for d in batch_data]).to(self.device)
 
                 # Forward pass (simplified - assumes model outputs action logits)
                 self.optimizer.zero_grad()

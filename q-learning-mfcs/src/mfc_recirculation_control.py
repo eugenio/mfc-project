@@ -8,15 +8,17 @@ Enhanced Q-learning agent with:
 4. Multi-sensor feedback control system
 """
 
-import numpy as np
-import pandas as pd
-import json
 import argparse
+import json
 import logging
 import sys
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
 
 class AnolytereservoirSystem:
     """Simulates 1L anolyte reservoir with recirculation and substrate control"""
@@ -440,7 +442,7 @@ class AdvancedQLearningFlowController:
         substrate_idx = action_idx % len(self.substrate_actions)
 
         return action_idx, flow_idx, substrate_idx
-    
+
     def choose_action(self, state):
         """Simple action selection for integrated model compatibility."""
         # Use the combined action method and return just the flow action
@@ -460,14 +462,14 @@ class AdvancedQLearningFlowController:
 
         # Decay epsilon
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-    
+
     def get_state_hash(self, inlet_conc, outlet_conc, current):
         """Generate state hash for Q-learning from system parameters."""
         # Discretize continuous values for state representation
         inlet_disc = int(inlet_conc / 5.0)  # Discretize in 5 mmol/L bins
-        outlet_disc = int(outlet_conc / 2.0)  # Discretize in 2 mmol/L bins  
+        outlet_disc = int(outlet_conc / 2.0)  # Discretize in 2 mmol/L bins
         current_disc = int(current / 0.5)  # Discretize in 0.5 A bins
-        
+
         # Create state hash
         state_hash = f"{inlet_disc}_{outlet_disc}_{current_disc}"
         return state_hash
@@ -533,7 +535,7 @@ class AdvancedQLearningFlowController:
 
     def load_checkpoint(self, filepath):
         """Load Q-learning model checkpoint from file"""
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             checkpoint = json.load(f)
 
         # Restore hyperparameters
@@ -766,7 +768,7 @@ def simulate_mfc_with_recirculation(duration_hours=100, config=None, checkpoint_
         outlet_concentration = current_conc
 
         # Get reservoir sensor readings
-        reservoir_sensors = reservoir.get_sensor_readings()
+        reservoir.get_sensor_readings()
 
         # Q-learning control for substrate addition (replaced PID controller)
         # Get current system state
@@ -974,7 +976,6 @@ def run_mfc_simulation(duration_hours, output_dir, config=None, n_cells=5,
     user_suffix_str = f"_{user_suffix}" if user_suffix else ""
 
     # Generate filenames
-    data_filename = f"{base_name}_{duration_str}_{timestamp}{user_suffix_str}_data.csv"
 
     # Setup logging if verbose
     if verbose:

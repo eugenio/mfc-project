@@ -14,16 +14,15 @@ Last Modified: 2025-07-31
 from __future__ import annotations
 
 import logging
-import numpy as np
-import pandas as pd
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import (
-    Any, Dict, List, Optional, Tuple, Union, Protocol,
-    TypeVar, Sequence
-)
+from typing import Any, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
+
+import numpy as np
+import pandas as pd
 from scipy import stats
 
 # Configure logging

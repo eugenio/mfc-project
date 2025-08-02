@@ -9,18 +9,18 @@ parameters.
 Created: 2025-08-01
 """
 
+import json
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional, Any
-import json
-import warnings
-from pathlib import Path
+
 
 @dataclass
 class LiteratureReference:
     """Container for literature reference information."""
-    
+
     authors: str
     title: str
     journal: str
@@ -32,7 +32,7 @@ class LiteratureReference:
 @dataclass
 class ParameterValidation:
     """Container for parameter validation data."""
-    
+
     parameter_name: str
     model_value: float
     units: str
@@ -51,27 +51,27 @@ class MFCLiteratureDatabase:
     Contains experimental data and literature values for all model parameters
     used in the physics, biofilm, and metabolic models.
     """
-    
+
     def __init__(self):
         self.parameter_validations = {}
         self.references = {}
         self._build_literature_database()
-    
+
     def _build_literature_database(self):
         """Build comprehensive literature database for MFC parameters."""
-        
+
         # Initialize reference database
         self._build_reference_database()
-        
+
         # Build parameter validations for each model component
         self._build_physics_validations()
         self._build_biofilm_validations()
         self._build_metabolic_validations()
         self._build_electrochemical_validations()
-    
+
     def _build_reference_database(self):
         """Build database of literature references."""
-        
+
         self.references = {
             'logan2006': LiteratureReference(
                 authors="Logan, B.E., et al.",
@@ -144,10 +144,10 @@ class MFCLiteratureDatabase:
                 doi="10.1016/S0378-1097(03)00278-7"
             )
         }
-    
+
     def _build_physics_validations(self):
         """Build physics parameter validations."""
-        
+
         # Fluid dynamics parameters
         self.parameter_validations['fluid_density'] = ParameterValidation(
             parameter_name='Fluid density',
@@ -161,7 +161,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.95,
             notes='Standard water density at MFC operating temperatures'
         )
-        
+
         self.parameter_validations['dynamic_viscosity'] = ParameterValidation(
             parameter_name='Dynamic viscosity',
             model_value=0.00089,
@@ -174,7 +174,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.90,
             notes='Temperature-dependent viscosity in typical MFC media'
         )
-        
+
         # Mass transport parameters
         self.parameter_validations['substrate_diffusivity'] = ParameterValidation(
             parameter_name='Substrate diffusivity',
@@ -188,7 +188,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.85,
             notes='Typical organic substrate diffusivity values'
         )
-        
+
         # Permeability parameters
         self.parameter_validations['electrode_permeability'] = ParameterValidation(
             parameter_name='Electrode permeability',
@@ -202,10 +202,10 @@ class MFCLiteratureDatabase:
             confidence_level=0.80,
             notes='Wide range due to electrode material variability'
         )
-    
+
     def _build_biofilm_validations(self):
         """Build biofilm parameter validations."""
-        
+
         # Biofilm growth parameters
         self.parameter_validations['max_biofilm_density'] = ParameterValidation(
             parameter_name='Maximum biofilm density',
@@ -219,7 +219,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.90,
             notes='Consistent across electroactive biofilms'
         )
-        
+
         self.parameter_validations['biofilm_yield'] = ParameterValidation(
             parameter_name='Biofilm yield coefficient',
             model_value=0.4,
@@ -232,7 +232,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.85,
             notes='Typical for electroactive bacteria'
         )
-        
+
         self.parameter_validations['decay_rate'] = ParameterValidation(
             parameter_name='Biofilm decay rate',
             model_value=0.01,
@@ -245,7 +245,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.75,
             notes='Highly dependent on operating conditions'
         )
-        
+
         self.parameter_validations['detachment_rate'] = ParameterValidation(
             parameter_name='Biofilm detachment rate',
             model_value=0.001,
@@ -258,10 +258,10 @@ class MFCLiteratureDatabase:
             confidence_level=0.70,
             notes='Strongly dependent on hydrodynamic conditions'
         )
-    
+
     def _build_metabolic_validations(self):
         """Build metabolic parameter validations."""
-        
+
         # Growth parameters
         self.parameter_validations['max_growth_rate'] = ParameterValidation(
             parameter_name='Maximum growth rate',
@@ -275,7 +275,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.95,
             notes='Shewanella oneidensis MR-1 specific values'
         )
-        
+
         self.parameter_validations['maintenance_atp'] = ParameterValidation(
             parameter_name='Maintenance ATP requirement',
             model_value=1.03,
@@ -288,7 +288,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.90,
             notes='Consistent with constraint-based models'
         )
-        
+
         self.parameter_validations['max_lactate_uptake'] = ParameterValidation(
             parameter_name='Maximum lactate uptake rate',
             model_value=4.11,
@@ -301,7 +301,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.90,
             notes='Well-characterized for Shewanella MR-1'
         )
-        
+
         self.parameter_validations['michaelis_constant'] = ParameterValidation(
             parameter_name='Michaelis constant for substrate',
             model_value=5.0,
@@ -314,10 +314,10 @@ class MFCLiteratureDatabase:
             confidence_level=0.80,
             notes='Substrate-specific Km values'
         )
-    
+
     def _build_electrochemical_validations(self):
         """Build electrochemical parameter validations."""
-        
+
         # Electron transfer parameters
         self.parameter_validations['flavin_transfer_efficiency'] = ParameterValidation(
             parameter_name='Flavin-mediated electron transfer efficiency',
@@ -331,7 +331,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.85,
             notes='Flavin-dependent electron transfer in Shewanella'
         )
-        
+
         self.parameter_validations['max_current_density'] = ParameterValidation(
             parameter_name='Maximum current density',
             model_value=2.0,
@@ -344,7 +344,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.85,
             notes='Typical for Shewanella-based MFCs'
         )
-        
+
         self.parameter_validations['electrode_potential'] = ParameterValidation(
             parameter_name='Optimal electrode potential',
             model_value=0.2,
@@ -357,7 +357,7 @@ class MFCLiteratureDatabase:
             confidence_level=0.80,
             notes='Optimal for flavin-mediated electron transfer'
         )
-        
+
         self.parameter_validations['coulombic_efficiency'] = ParameterValidation(
             parameter_name='Coulombic efficiency',
             model_value=0.30,
@@ -370,30 +370,30 @@ class MFCLiteratureDatabase:
             confidence_level=0.75,
             notes='Typical range for Shewanella MFCs'
         )
-    
+
     def validate_parameter(self, parameter_name: str) -> Dict[str, Any]:
         """Validate a specific parameter against literature values."""
-        
+
         if parameter_name not in self.parameter_validations:
             return {'error': f'Parameter {parameter_name} not found in database'}
-        
+
         validation = self.parameter_validations[parameter_name]
-        
+
         # Statistical analysis
         lit_values = np.array(validation.literature_values)
         model_value = validation.model_value
-        
+
         if len(lit_values) > 0:
             lit_mean = np.mean(lit_values)
             lit_std = np.std(lit_values)
             lit_median = np.median(lit_values)
-            
+
             # Calculate z-score
             if lit_std > 0:
                 z_score = (model_value - lit_mean) / lit_std
             else:
                 z_score = 0.0
-            
+
             # Determine validation result
             if abs(z_score) <= 2.0:
                 result_status = 'VALIDATED'
@@ -404,18 +404,18 @@ class MFCLiteratureDatabase:
             else:
                 result_status = 'NEEDS_REVIEW'
                 result_message = 'Model value outside 3 standard deviations'
-            
+
             # Check if within literature range
             lit_min, lit_max = np.min(lit_values), np.max(lit_values)
             within_range = lit_min <= model_value <= lit_max
-            
+
         else:
             lit_mean = lit_std = lit_median = lit_min = lit_max = None
             z_score = None
             within_range = None
             result_status = 'NO_DATA'
             result_message = 'No literature values available'
-        
+
         return {
             'parameter_name': validation.parameter_name,
             'model_value': model_value,
@@ -450,10 +450,10 @@ class MFCLiteratureDatabase:
             'experimental_conditions': validation.experimental_conditions,
             'notes': validation.notes
         }
-    
+
     def validate_all_parameters(self) -> Dict[str, Any]:
         """Validate all parameters in the database."""
-        
+
         results = {}
         validation_summary = {
             'total_parameters': len(self.parameter_validations),
@@ -463,13 +463,13 @@ class MFCLiteratureDatabase:
             'no_data': 0,
             'overall_confidence': 0.0
         }
-        
+
         confidence_scores = []
-        
+
         for param_name in self.parameter_validations:
             result = self.validate_parameter(param_name)
             results[param_name] = result
-            
+
             # Update summary
             status = result['validation_result']['status']
             if status == 'VALIDATED':
@@ -480,15 +480,15 @@ class MFCLiteratureDatabase:
                 validation_summary['needs_review'] += 1
             else:
                 validation_summary['no_data'] += 1
-            
+
             # Collect confidence scores
             if 'confidence_level' in result['validation_metrics']:
                 confidence_scores.append(result['validation_metrics']['confidence_level'])
-        
+
         # Calculate overall confidence
         if confidence_scores:
             validation_summary['overall_confidence'] = np.mean(confidence_scores)
-        
+
         return {
             'validation_summary': validation_summary,
             'parameter_results': results,
@@ -497,48 +497,48 @@ class MFCLiteratureDatabase:
                 'validation_date': pd.Timestamp.now().isoformat()
             }
         }
-    
+
     def export_validation_report(self, filepath: str):
         """Export comprehensive validation report."""
-        
+
         validation_results = self.validate_all_parameters()
-        
+
         with open(filepath, 'w') as f:
             json.dump(validation_results, f, indent=2, default=str)
-        
+
         print(f"📊 Validation report exported to: {filepath}")
-        
+
         return validation_results
 
 if __name__ == "__main__":
     # Example usage
     print("🔬 Phase 5: Literature Validation Framework")
     print("=" * 60)
-    
+
     # Create literature database
     lit_db = MFCLiteratureDatabase()
-    
-    print(f"Database loaded:")
+
+    print("Database loaded:")
     print(f"  Parameters: {len(lit_db.parameter_validations)}")
     print(f"  References: {len(lit_db.references)}")
-    
+
     # Validate all parameters
     print("\n📋 Running comprehensive validation...")
     results = lit_db.validate_all_parameters()
-    
+
     # Print summary
     summary = results['validation_summary']
-    print(f"\n📊 Validation Summary:")
+    print("\n📊 Validation Summary:")
     print(f"  Total parameters: {summary['total_parameters']}")
     print(f"  ✅ Validated: {summary['validated']}")
     print(f"  ⚠️  Acceptable: {summary['acceptable']}")
     print(f"  ❌ Needs review: {summary['needs_review']}")
     print(f"  📝 No data: {summary['no_data']}")
     print(f"  🎯 Overall confidence: {summary['overall_confidence']:.2f}")
-    
+
     # Export full report
     timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
     report_file = f"literature_validation_report_{timestamp}.json"
     lit_db.export_validation_report(report_file)
-    
-    print(f"\n✅ Literature validation framework completed!")
+
+    print("\n✅ Literature validation framework completed!")

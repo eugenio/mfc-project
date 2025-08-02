@@ -31,13 +31,14 @@ Literature References:
 4. Gelman, A., et al. (2013). "Bayesian Data Analysis"
 """
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import warnings
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 # Statistical dependencies
 try:
@@ -50,10 +51,10 @@ except ImportError:
 
 # Advanced statistical analysis
 try:
-    from statsmodels.stats.multicomp import pairwise_tukeyhsd, MultiComparison
-    from statsmodels.stats.anova import anova_lm
     from statsmodels.formula.api import ols
+    from statsmodels.stats.anova import anova_lm
     from statsmodels.stats.diagnostic import het_breuschpagan
+    from statsmodels.stats.multicomp import MultiComparison, pairwise_tukeyhsd
     from statsmodels.tsa.stattools import adfuller, kpss
     HAS_STATSMODELS = True
 except ImportError:
@@ -62,10 +63,10 @@ except ImportError:
 
 # Machine learning for statistical analysis
 try:
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.decomposition import PCA
     from sklearn.cluster import KMeans
+    from sklearn.decomposition import PCA
     from sklearn.metrics import silhouette_score
+    from sklearn.preprocessing import StandardScaler
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False

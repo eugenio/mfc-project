@@ -4,16 +4,16 @@ SSL/TLS Configuration Module for MFC Monitoring System
 Provides certificate management, Let's Encrypt integration, and security configuration.
 """
 
+import json
+import logging
 import os
+import socket
 import ssl
 import subprocess
-import logging
-from pathlib import Path
-from typing import Dict, Optional, Tuple, Union, Any
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
-import json
-import socket
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -335,7 +335,7 @@ def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
     # Try to load from file
     if os.path.exists(config_file):
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file) as f:
                 data = json.load(f)
             config = SSLConfig.from_dict(data)
             logger.info(f"Loaded SSL config from {config_file}")

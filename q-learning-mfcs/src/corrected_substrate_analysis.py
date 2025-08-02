@@ -3,8 +3,9 @@
 Corrected analysis of substrate utilization performance between unified and non-unified MFC models
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 
 def load_and_analyze_data():
     """Load and analyze the MFC simulation data with corrected substrate utilization calculation"""

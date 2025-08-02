@@ -26,16 +26,17 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
+import logging
+import math
+from collections import deque
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import math
-import logging
-from typing import Dict, List, Tuple, Optional, Any
-from enum import Enum
-from collections import deque
 
 # Import Phase 2 and 3 components
 from adaptive_mfc_controller import SystemState
@@ -515,8 +516,8 @@ class TransformerMFCController(nn.Module):
         Returns:
             Dictionary of outputs including actions, values, and attention weights
         """
-        batch_size = list(inputs.values())[0].size(0)
-        seq_len = list(inputs.values())[0].size(1)
+        list(inputs.values())[0].size(0)
+        list(inputs.values())[0].size(1)
 
         # Project inputs to model dimension
         projected_inputs = {}

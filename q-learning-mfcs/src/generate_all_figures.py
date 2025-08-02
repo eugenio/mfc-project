@@ -19,17 +19,21 @@ This script consolidates all figure generation functionality from the following 
 Generates individual figures (not panels) in the figures/ directory.
 """
 
+import json
 import os
 import sys
+from datetime import datetime
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import json
-from datetime import datetime
-import matplotlib
+
 matplotlib.use('Agg')  # Use non-interactive backend
+import warnings
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-import warnings
+
 warnings.filterwarnings('ignore')
 
 # Ensure directories exist
@@ -723,7 +727,7 @@ def generate_system_health():
     # Add text annotations
     for i in range(len(components)):
         for j in range(0, time_steps, 4):
-            text = ax.text(j, i, f'{health_data[i, j]:.0f}%',
+            ax.text(j, i, f'{health_data[i, j]:.0f}%',
                           ha="center", va="center", color="black", fontweight='bold')
 
     ax.set_title('MFC System Health Monitoring (24 Hours)', fontsize=16, fontweight='bold')
@@ -1057,7 +1061,7 @@ def generate_control_analysis():
     zeta = 0.7  # Damping ratio
 
     s = 1j * 2 * np.pi * 0.1 * np.arange(len(time)) / len(time)
-    H = wn**2 / (s**2 + 2*zeta*wn*s + wn**2)
+    wn**2 / (s**2 + 2*zeta*wn*s + wn**2)
 
     # Simplified step response
     response = 1 - np.exp(-zeta*wn*(time-10)) * np.cos(wn*np.sqrt(1-zeta**2)*(time-10))
@@ -1195,7 +1199,7 @@ def generate_maintenance_schedule():
     colors_map = ['white', 'lightblue', 'lightgreen', 'yellow', 'orange', 'red']
     cmap = matplotlib.colors.ListedColormap(colors_map)
 
-    im = ax3.imshow(schedule, cmap=cmap, aspect='auto', vmin=0, vmax=5)
+    ax3.imshow(schedule, cmap=cmap, aspect='auto', vmin=0, vmax=5)
 
     ax3.set_xticks(range(7))
     ax3.set_xticklabels(days)
@@ -1470,7 +1474,7 @@ def main():
 
         # Generate unified report
         print("\n📋 Generating unified Markdown report...")
-        unified_report_path = generate_unified_markdown_report()
+        generate_unified_markdown_report()
 
         # List generated files
         generated_files = [f for f in os.listdir(FIGURES_DIR) if f.endswith('.png')]
