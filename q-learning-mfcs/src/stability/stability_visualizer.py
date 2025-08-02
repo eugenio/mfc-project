@@ -232,11 +232,11 @@ class StabilityVisualizer:
                     x=pred_df['failure_time'],
                     y=pred_df['component'],
                     mode='markers',
-                    marker=dict(
-                        size=pred_df['confidence'] * 20,
-                        color=[self.severity_colors.get(s, '#999999') for s in pred_df['severity']],
-                        opacity=0.7
-                    ),
+                    marker={
+                        "size": pred_df['confidence'] * 20,
+                        "color": [self.severity_colors.get(s, '#999999') for s in pred_df['severity']],
+                        "opacity": 0.7
+                    },
                     text=pred_df['pattern_id'],
                     name="Failure Predictions"
                 ),
@@ -311,7 +311,7 @@ class StabilityVisualizer:
                         y=data['reliability'],
                         mode='lines+markers',
                         name=f"{component} Reliability",
-                        line=dict(color=self.component_colors.get(component, '#999999'))
+                        line={"color": self.component_colors.get(component, '#999999')}
                     ),
                     row=1, col=1
                 )
@@ -325,7 +325,7 @@ class StabilityVisualizer:
                         y=data['mtbf'],
                         mode='lines+markers',
                         name=f"{component} MTBF",
-                        line=dict(color=self.component_colors.get(component, '#999999'))
+                        line={"color": self.component_colors.get(component, '#999999')}
                     ),
                     row=1, col=2
                 )
@@ -451,7 +451,7 @@ class StabilityVisualizer:
         for rel_data in reliability_data:
             components.add(rel_data.component_id)
 
-        components = sorted(list(components))
+        components = sorted(components)
 
         # Create health matrix
         health_metrics = [
@@ -500,7 +500,7 @@ class StabilityVisualizer:
                 x=health_metrics,
                 y=components,
                 colorscale='RdYlGn_r',
-                colorbar=dict(title="Health Score (Higher = Worse)"),
+                colorbar={"title": "Health Score (Higher = Worse)"},
                 text=np.round(health_matrix, 3),
                 texttemplate="%{text}",
                 textfont={"size": 10}
@@ -705,7 +705,7 @@ class StabilityVisualizer:
             'total_maintenance_tasks': len(maintenance_tasks),
             'emergency_maintenance_tasks': len(emergency_tasks),
             'tasks_by_priority': priority_counts,
-            'components_analyzed': len(set(r.component_id for r in reliability_data)),
+            'components_analyzed': len({r.component_id for r in reliability_data}),
             'key_concerns': [
                 f"{len(critical_patterns)} critical degradation patterns detected" if critical_patterns else None,
                 f"{len(emergency_tasks)} emergency maintenance tasks scheduled" if emergency_tasks else None,

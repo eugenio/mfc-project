@@ -413,7 +413,7 @@ class ModelValidationFramework:
         }
 
         # Collect unique organisms
-        organisms = set(dataset.organism for dataset in self.experimental_db.datasets.values())
+        organisms = {dataset.organism for dataset in self.experimental_db.datasets.values()}
         report['validation_summary']['organisms_tested'] = list(organisms)
 
         # Example validation for each dataset (in real implementation, these would come from model runs)

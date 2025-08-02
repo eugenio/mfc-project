@@ -288,7 +288,7 @@ def create_real_time_plots(data: list[dict]) -> go.Figure | None:
             x=df['time_hours'],
             y=df['reservoir_concentration'],
             name='Reservoir',
-            line=dict(color='blue', width=2)
+            line={"color": 'blue', "width": 2}
         ),
         row=1, col=1
     )
@@ -298,7 +298,7 @@ def create_real_time_plots(data: list[dict]) -> go.Figure | None:
             x=df['time_hours'],
             y=df['outlet_concentration'],
             name='Outlet',
-            line=dict(color='red', width=2)
+            line={"color": 'red', "width": 2}
         ),
         row=1, col=1
     )
@@ -312,7 +312,7 @@ def create_real_time_plots(data: list[dict]) -> go.Figure | None:
             x=df['time_hours'],
             y=df['total_power'],
             name='Power',
-            line=dict(color='orange', width=2)
+            line={"color": 'orange', "width": 2}
         ),
         row=1, col=2
     )
@@ -324,7 +324,7 @@ def create_real_time_plots(data: list[dict]) -> go.Figure | None:
             y=df['q_action'],
             mode='markers',
             name='Actions',
-            marker=dict(color='purple', size=4)
+            marker={"color": 'purple', "size": 4}
         ),
         row=2, col=1
     )
@@ -342,7 +342,7 @@ def create_real_time_plots(data: list[dict]) -> go.Figure | None:
             x=df['time_hours'],
             y=biofilm_avg,
             name='Avg Thickness',
-            line=dict(color='brown', width=2)
+            line={"color": 'brown', "width": 2}
         ),
         row=2, col=2
     )
