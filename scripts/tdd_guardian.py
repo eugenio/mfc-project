@@ -4,6 +4,8 @@ TDD Guardian - Enforces TDD compliance
 import subprocess
 import sys
 from pathlib import Path
+
+
 def check_test_coverage():
     """Ensure test coverage is above 95%"""
     result = subprocess.run(
@@ -28,13 +30,13 @@ def check_tdd_structure():
 def main():
     """Run TDD compliance checks"""
     print("🔍 Running TDD Guardian checks...")
-    
+
     checks = [
         ("TDD project structure", check_tdd_structure),
-        ("All tests pass", check_tests_pass), 
+        ("All tests pass", check_tests_pass),
         ("Test coverage ≥95%", check_test_coverage),
     ]
-    
+
     all_passed = True
     for check_name, check_func in checks:
         if check_func():
@@ -42,7 +44,7 @@ def main():
         else:
             print(f"❌ {check_name}")
             all_passed = False
-    
+
     if all_passed:
         print("🎉 TDD compliance verified!")
         return 0
