@@ -16,8 +16,8 @@ Literature References:
 4. Erable, B. et al. (2012). "Anode materials for microbial fuel cells"
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, Any, Optional
 from enum import Enum
 import math
 
@@ -347,9 +347,10 @@ def create_electrode_config(
     if custom_properties is not None:
         material_props = custom_properties
     else:
-        material_props = MATERIAL_PROPERTIES_DATABASE.get(material)
-        if material_props is None:
+        material_props_lookup = MATERIAL_PROPERTIES_DATABASE.get(material)
+        if material_props_lookup is None:
             raise ValueError(f"No predefined properties for material {material}")
+        material_props = material_props_lookup
     
     # Create geometry specification
     geometry = ElectrodeGeometrySpec(
