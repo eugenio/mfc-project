@@ -9,10 +9,13 @@ This demo shows:
 5. Power stability maintenance
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from mfc_stack_simulation import MFCStack, MFCStackQLearningController
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from mfc_stack_simulation import MFCStack, MFCStackQLearningController
+
 
 def run_comprehensive_demo():
     """Run comprehensive MFC stack demonstration"""

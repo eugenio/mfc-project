@@ -28,24 +28,25 @@ Literature References:
 4. Hunter, J. D. (2007). "Matplotlib: A 2D Graphics Environment"
 """
 
+import logging
+import warnings
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, field
-from enum import Enum
-import logging
-from abc import ABC, abstractmethod
-from datetime import datetime
-import warnings
 
 # Core visualization dependencies
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.animation as animation
-    from matplotlib.colors import LinearSegmentedColormap, Normalize
-    from matplotlib.patches import Ellipse, Rectangle, Polygon
-    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
     import seaborn as sns
+    from matplotlib.colors import LinearSegmentedColormap, Normalize
+    from matplotlib.patches import Ellipse, Polygon, Rectangle
+    from mpl_toolkits.mplot3d import Axes3D
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
@@ -53,10 +54,10 @@ except ImportError:
 
 # Advanced plotting dependencies
 try:
-    import plotly.graph_objects as go
     import plotly.express as px
-    from plotly.subplots import make_subplots
     import plotly.figure_factory as ff
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
@@ -67,18 +68,18 @@ try:
     from scipy import stats
     from scipy.cluster.hierarchy import dendrogram, linkage
     from scipy.spatial.distance import pdist
+    from sklearn.cluster import KMeans
     from sklearn.decomposition import PCA
     from sklearn.manifold import TSNE
-    from sklearn.cluster import KMeans
     HAS_ADVANCED_STATS = True
 except ImportError:
     HAS_ADVANCED_STATS = False
     warnings.warn("Advanced statistical packages not available. Some features will be limited.")
 
 # Import configuration classes
-from .visualization_config import VisualizationConfig
 from .parameter_optimization import OptimizationResult
 from .uncertainty_quantification import UncertaintyResult
+from .visualization_config import VisualizationConfig
 
 
 class PlotType(Enum):
@@ -686,7 +687,7 @@ class StatisticalVisualizer(AdvancedVisualizer):
 
         mask = np.triu(np.ones_like(corr_matrix, dtype=bool)) if config.show_correlation_values else None
 
-        heatmap = sns.heatmap(corr_matrix,
+        sns.heatmap(corr_matrix,
                              annot=config.show_correlation_values,
                              cmap=config.color_map,
                              center=0,
@@ -837,7 +838,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         methods = [r.method.value for r in results]
         best_scores = [r.best_overall_score for r in results if r.best_overall_score is not None]
 
-        bars = ax2.bar(methods[:len(best_scores)], best_scores, color=colors[:len(best_scores)])
+        ax2.bar(methods[:len(best_scores)], best_scores, color=colors[:len(best_scores)])
         ax2.set_title('Best Objective Values')
         ax2.set_ylabel('Objective Value')
         plt.setp(ax2.get_xticklabels(), rotation=45, ha='right')
@@ -847,7 +848,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         evaluations = [r.total_evaluations for r in results]
         opt_times = [r.get_optimization_time() for r in results]
 
-        scatter = ax3.scatter(evaluations, opt_times, c=colors[:len(results)],
+        ax3.scatter(evaluations, opt_times, c=colors[:len(results)],
                             s=config.marker_size, alpha=config.alpha)
         for i, method in enumerate(methods):
             ax3.annotate(method, (evaluations[i], opt_times[i]),
@@ -866,7 +867,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
 
             if len(param_data) > 0:
                 box_data = [param_data[:, j] for j in range(min(5, n_params))]  # Limit to 5 parameters
-                bp = ax4.boxplot(box_data, labels=[f'P{j+1}' for j in range(len(box_data))])
+                ax4.boxplot(box_data, labels=[f'P{j+1}' for j in range(len(box_data))])
                 ax4.set_title('Parameter Distribution')
                 ax4.set_ylabel('Parameter Value')
 
@@ -929,7 +930,7 @@ class ComparisonAnalyzer(AdvancedVisualizer):
         comp_times = [r.computation_time for r in results]
         n_samples = [r.n_samples for r in results]
 
-        scatter = ax3.scatter(n_samples, comp_times, c=colors,
+        ax3.scatter(n_samples, comp_times, c=colors,
                             s=config.marker_size, alpha=config.alpha)
         for i, method in enumerate(methods):
             ax3.annotate(method, (n_samples[i], comp_times[i]),

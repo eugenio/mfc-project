@@ -20,8 +20,8 @@ Literature References:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
 from enum import Enum
+from typing import Dict, List, Tuple
 
 
 class ControlMode(Enum):

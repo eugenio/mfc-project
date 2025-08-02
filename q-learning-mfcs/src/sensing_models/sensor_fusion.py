@@ -19,21 +19,23 @@ Implementation includes:
 - Real-time calibration updates
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any, Union
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
-import sys
-import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # Import sensing models
-from .eis_model import EISMeasurement, BacterialSpecies
+from .eis_model import BacterialSpecies, EISMeasurement
 from .qcm_model import QCMMeasurement
 
 # Import configuration
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 try:
-    from config import SensorConfig, FusionMethod as ConfigFusionMethod
+    from config import FusionMethod as ConfigFusionMethod
+    from config import SensorConfig
 except ImportError:
     SensorConfig = None
     ConfigFusionMethod = None

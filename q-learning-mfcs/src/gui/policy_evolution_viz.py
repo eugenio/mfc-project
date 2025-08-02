@@ -10,19 +10,20 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
+from plotly.subplots import make_subplots
 
 # Import policy evolution tracker
 from analysis.policy_evolution_tracker import (
     POLICY_EVOLUTION_TRACKER,
     PolicyEvolutionMetrics,
-    PolicyStability
+    PolicyStability,
 )
 
 

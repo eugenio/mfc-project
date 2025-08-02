@@ -12,38 +12,38 @@ The sensor integration provides closed-loop control and improved
 accuracy through continuous validation of model predictions.
 """
 
-import numpy as np
-from typing import Dict, List, Any
-from dataclasses import dataclass
-import time
-import pickle
 import os
+import pickle
 import sys
+import time
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+import numpy as np
 
 # Import base integrated model
 sys.path.append(os.path.dirname(__file__))
-from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState
-
 # Import enhanced components
 from biofilm_kinetics.enhanced_biofilm_model import EnhancedBiofilmModel
+from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState
 from sensing_enhanced_q_controller import SensingEnhancedQLearningController
 
 # Import sensing models
 try:
-    from sensing_models.eis_model import EISModel, BacterialSpecies
+    from sensing_models.eis_model import BacterialSpecies, EISModel
     from sensing_models.qcm_model import QCMModel
-    from sensing_models.sensor_fusion import SensorFusion, FusionMethod
+    from sensing_models.sensor_fusion import FusionMethod, SensorFusion
     SENSING_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Sensing models not available: {e}")
     SENSING_AVAILABLE = False
 
+from gpu_acceleration import get_gpu_accelerator
 from mfc_recirculation_control import (
     AnolytereservoirSystem,
+    MFCCellWithMonitoring,
     SubstrateConcentrationController,
-    MFCCellWithMonitoring
 )
-from gpu_acceleration import get_gpu_accelerator
 from path_config import get_model_path
 
 

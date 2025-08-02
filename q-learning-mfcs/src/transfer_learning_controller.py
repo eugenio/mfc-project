@@ -21,23 +21,24 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
+import copy
+import logging
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import copy
-import logging
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass
-from enum import Enum
-from collections import defaultdict
 
 # Import Phase 2 and 3.1 components
 from adaptive_mfc_controller import SystemState
 from deep_rl_controller import DeepRLController
-from sensing_models.sensor_fusion import BacterialSpecies
 from ml_optimization import FeatureEngineer
+from sensing_models.sensor_fusion import BacterialSpecies
 
 # Import configuration
 

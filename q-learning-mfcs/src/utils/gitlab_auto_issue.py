@@ -7,35 +7,36 @@ It integrates with the main GitLab integration to provide seamless issue managem
 """
 
 import re
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 from .gitlab_integration import create_bug_issue, create_enhancement_issue
+
 
 class AutoIssueDetector:
     """
     Automatically detects bug reports and feature requests from text descriptions.
     Creates appropriate GitLab issues with structured information.
     """
-    
+
     def __init__(self):
         self.bug_keywords = [
             'bug', 'error', 'issue', 'problem', 'broken', 'not working',
             'crash', 'freeze', 'hang', 'fail', 'exception', 'stack trace',
             'incorrect', 'wrong', 'unexpected', 'malfunction'
         ]
-        
+
         self.feature_keywords = [
             'feature', 'enhancement', 'improve', 'add', 'implement',
             'suggestion', 'request', 'would like', 'could we', 'new',
             'better', 'upgrade', 'extend', 'modify', 'change'
         ]
-        
+
         self.priority_keywords = {
             'high': ['urgent', 'critical', 'important', 'asap', 'priority', 'blocking'],
             'low': ['minor', 'nice to have', 'when possible', 'low priority', 'someday']
         }
-    
+
     def analyze_description(self, description: str) -> Dict[str, Any]:
         """
         Analyze a text description to determine if it's a bug or feature request.
@@ -47,11 +48,11 @@ class AutoIssueDetector:
             Dictionary with analysis results
         """
         description_lower = description.lower()
-        
+
         # Count keyword matches
         bug_score = sum(1 for keyword in self.bug_keywords if keyword in description_lower)
         feature_score = sum(1 for keyword in self.feature_keywords if keyword in description_lower)
-        
+
         # Determine type
         if bug_score > feature_score:
             issue_type = 'bug'
@@ -62,22 +63,22 @@ class AutoIssueDetector:
         else:
             issue_type = 'unclear'
             confidence = 0.5
-        
+
         # Determine priority
         priority = 'medium'  # default
         for priority_level, keywords in self.priority_keywords.items():
             if any(keyword in description_lower for keyword in keywords):
                 priority = priority_level
                 break
-        
+
         # Extract potential title (first sentence or up to first period/newline)
         title_match = re.match(r'^([^.\n]+)', description.strip())
         suggested_title = title_match.group(1).strip() if title_match else "User reported issue"
-        
+
         # Limit title length
         if len(suggested_title) > 80:
             suggested_title = suggested_title[:77] + "..."
-        
+
         return {
             'type': issue_type,
             'confidence': confidence,
@@ -87,8 +88,8 @@ class AutoIssueDetector:
             'feature_score': feature_score,
             'description': description
         }
-    
-    def create_issue_from_description(self, description: str, 
+
+    def create_issue_from_description(self, description: str,
                                     force_type: Optional[str] = None) -> Optional[int]:
         """
         Automatically create a GitLab issue from a description.
@@ -101,48 +102,48 @@ class AutoIssueDetector:
             Issue ID if created successfully, None otherwise
         """
         analysis = self.analyze_description(description)
-        
+
         # Override type if forced
         if force_type:
             analysis['type'] = force_type
-        
+
         # Don't create if unclear and no force
         if analysis['type'] == 'unclear' and not force_type:
             print(f"⚠️  Unclear issue type (confidence: {analysis['confidence']:.2f})")
             print("Please specify if this is a 'bug' or 'enhancement'")
             return None
-        
+
         print(f"🔍 Detected {analysis['type']} with {analysis['confidence']:.2f} confidence")
         print(f"📋 Priority: {analysis['priority']}")
         print(f"📝 Title: {analysis['suggested_title']}")
-        
+
         # Create appropriate issue
         if analysis['type'] == 'bug':
             return self._create_bug_from_analysis(analysis)
         elif analysis['type'] == 'enhancement':
             return self._create_enhancement_from_analysis(analysis)
-        
+
         return None
-    
+
     def _create_bug_from_analysis(self, analysis: Dict[str, Any]) -> Optional[int]:
         """Create a bug issue from analysis results."""
-        
+
         # Parse description for structured information
         description = analysis['description']
-        
+
         # Try to extract steps to reproduce
-        steps_match = re.search(r'(?:steps?|reproduce|how to):(.*?)(?:\n\n|\n[A-Z]|$)', 
+        steps_match = re.search(r'(?:steps?|reproduce|how to):(.*?)(?:\n\n|\n[A-Z]|$)',
                                description, re.IGNORECASE | re.DOTALL)
         steps = steps_match.group(1).strip() if steps_match else None
-        
+
         # Try to extract expected behavior
-        expected_match = re.search(r'(?:expected|should):(.*?)(?:\n\n|\n[A-Z]|$)', 
+        expected_match = re.search(r'(?:expected|should):(.*?)(?:\n\n|\n[A-Z]|$)',
                                   description, re.IGNORECASE | re.DOTALL)
         expected = expected_match.group(1).strip() if expected_match else None
-        
+
         # Environment info
         environment = f"Automatically detected via Claude Code Assistant\nTimestamp: {datetime.now().isoformat()}"
-        
+
         return create_bug_issue(
             title=analysis['suggested_title'],
             description=analysis['description'],
@@ -150,17 +151,17 @@ class AutoIssueDetector:
             expected_behavior=expected,
             environment=environment
         )
-    
+
     def _create_enhancement_from_analysis(self, analysis: Dict[str, Any]) -> Optional[int]:
         """Create an enhancement issue from analysis results."""
-        
+
         # Try to extract todo items from description
         todo_patterns = [
             r'(?:todo|tasks?|steps?):\s*(.*?)(?:\n\n|\n[A-Z]|$)',
             r'(?:implement|add|create):\s*(.*?)(?:\n\n|\n[A-Z]|$)',
             r'(?:\d+\.\s+.*?)(?:\n|$)'  # Numbered lists
         ]
-        
+
         todo_list = []
         for pattern in todo_patterns:
             matches = re.findall(pattern, analysis['description'], re.IGNORECASE | re.DOTALL)
@@ -168,7 +169,7 @@ class AutoIssueDetector:
                 # Split by lines and clean up
                 lines = [line.strip() for line in match.split('\n') if line.strip()]
                 todo_list.extend(lines)
-        
+
         # Remove duplicates while preserving order
         seen = set()
         unique_todos = []
@@ -176,7 +177,7 @@ class AutoIssueDetector:
             if item not in seen:
                 seen.add(item)
                 unique_todos.append(item)
-        
+
         return create_enhancement_issue(
             title=analysis['suggested_title'],
             description=analysis['description'],
@@ -220,15 +221,15 @@ if __name__ == "__main__":
         "There's a critical bug in the simulation that causes crashes when using large electrode areas",
         "Could we add a feature to export simulation results to different formats?"
     ]
-    
+
     print("🧪 Testing Auto Issue Detection")
     print("=" * 50)
-    
+
     for i, desc in enumerate(test_descriptions, 1):
         print(f"\n{i}. Testing: {desc[:60]}...")
         analysis = analyze_user_input(desc)
         print(f"   Type: {analysis['type']} (confidence: {analysis['confidence']:.2f})")
         print(f"   Priority: {analysis['priority']}")
         print(f"   Title: {analysis['suggested_title']}")
-    
+
     print("\n✅ Auto detection test completed")

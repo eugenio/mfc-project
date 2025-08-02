@@ -10,27 +10,28 @@ This module provides real-time GPU-accelerated coupling between:
 The integration enables comprehensive MFC simulation with biological accuracy.
 """
 
+import os
+import pickle
+import sys
+import time
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any
-from dataclasses import dataclass
-import time
-import pickle
-import os
-import sys
 
 # Add paths for modules
 sys.path.append(os.path.dirname(__file__))
 from biofilm_kinetics import BiofilmKineticsModel
+from gpu_acceleration import get_gpu_accelerator
 from metabolic_model import MetabolicModel
 from mfc_recirculation_control import (
+    AdvancedQLearningFlowController,
     AnolytereservoirSystem,
-    SubstrateConcentrationController,
     MFCCellWithMonitoring,
-    AdvancedQLearningFlowController
+    SubstrateConcentrationController,
 )
-from gpu_acceleration import get_gpu_accelerator
-from path_config import get_model_path, get_simulation_data_path, get_figure_path
+from path_config import get_figure_path, get_model_path, get_simulation_data_path
 
 
 @dataclass
@@ -115,7 +116,7 @@ class IntegratedMFCModel:
         self._initialize_models()
         self._initialize_recirculation()
         self._initialize_tracking()
-        
+
         # Add compatibility layer for tests expecting mfc_stack
         self._create_mfc_stack_compatibility()
 
@@ -598,13 +599,13 @@ class IntegratedMFCModel:
                 self.reservoir = reservoir
                 self.mfc_cells = mfc_cells
                 self.n_cells = n_cells
-                
+
         self.mfc_stack = MFCStackCompatibility(
             reservoir=self.reservoir,
             mfc_cells=self.mfc_cells,
             n_cells=self.n_cells
         )
-        
+
         # Also add agent compatibility (if referenced in tests)
         if not hasattr(self, 'agent'):
             class AgentCompatibility:

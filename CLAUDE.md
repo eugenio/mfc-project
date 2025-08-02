@@ -38,3 +38,7 @@
 
 ## Environment Management
 - To enter an environment use eval "$(pixi shell-hook -e <environment-name>)"
+
+## Edit Workflow
+- You must make edits and create new files in small chunks otherwise your edit will be blocked by hooks
+- Check Edit threshold in settings files and save it to memory

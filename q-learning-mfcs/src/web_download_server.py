@@ -7,12 +7,12 @@ instead of saving to fixed locations. Integrates with the chronology system.
 Created: 2025-07-31
 """
 
+import logging
 import mimetypes
+import webbrowser
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import logging
-from datetime import datetime
-import webbrowser
 
 # Try to import streamlit for enhanced web interface
 try:
@@ -23,9 +23,9 @@ except ImportError:
 
 # Try to import FastAPI for API server
 try:
+    import uvicorn
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import FileResponse, HTMLResponse
-    import uvicorn
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False

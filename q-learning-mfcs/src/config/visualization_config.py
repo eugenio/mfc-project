@@ -18,8 +18,9 @@ Literature References:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
 from enum import Enum
+from typing import List, Optional, Tuple
+
 import matplotlib.pyplot as plt
 
 
