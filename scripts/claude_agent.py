@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Claude Agent - Autonomous TDD development using Claude API
 """
@@ -10,7 +9,6 @@ import requests
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
-
 class ClaudeAgent:
     def __init__(self):
         self.base_url = "https://api.anthropic.com/v1/messages"
@@ -150,43 +148,6 @@ class ClaudeAgent:
     def _generate_action_prompt(self, current_state: Dict, initial_prompt: str) -> str:
         """Generate prompt for next action based on current state"""
         prompt = f"""
-{initial_prompt}
-
-## Current State Analysis
-- Tests Passing: {current_state['tests_passing']}
-- Coverage: {current_state['coverage']}%
-- Timestamp: {current_state['timestamp']}
-
-"""
-        
-        if current_state.get("last_error"):
-            prompt += f"""
-## Last Error
-```
-{current_state['last_error']}
-```
-"""
-            
-        prompt += """
-## Next Action Required
-Based on the current state, provide your next TDD action. Follow these guidelines:
-
-1. If tests are failing (RED phase): Fix the failing tests
-2. If tests are passing but coverage < 95%: Add more tests (RED phase)
-3. If tests are passing and coverage >= 95%: Consider refactoring (REFACTOR phase)
-
-Provide your response in this format:
-```
-ACTION: [RED|GREEN|REFACTOR|COMPLETE]
-DESCRIPTION: Brief description of what you're doing
-CODE_CHANGES: List of specific files/changes needed
-```
-
-Execute the TDD cycle step by step.
-"""
-        
-        return prompt
-        
     def _call_claude_api(self, prompt: str) -> Optional[str]:
         """Call Claude API with the given prompt"""
         try:
@@ -308,7 +269,6 @@ Execute the TDD cycle step by step.
             
         print(f"🛑 Stop signal sent to Claude agent for {feature_name}")
         return True
-
 def main():
     """CLI interface for Claude Agent"""
     if len(sys.argv) < 3:
@@ -334,6 +294,5 @@ def main():
     else:
         print(f"❌ Unknown command: {command}")
         return 1
-
 if __name__ == "__main__":
     sys.exit(main())

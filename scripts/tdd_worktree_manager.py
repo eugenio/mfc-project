@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 TDD Worktree Manager - Manages git worktrees for TDD workflows with IDE and Claude integration
 """
@@ -10,144 +9,6 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
-
-class TDDWorktreeManager:
-    def __init__(self):
-        self.worktrees_dir = Path("worktrees")
-        self.worktrees_dir.mkdir(exist_ok=True)
-        self.scripts_dir = Path("scripts")
-        
-    def create_feature_worktree(self, feature_name: str, interactive: bool = False) -> bool:
-        """Create a new feature worktree for TDD development with optional IDE integration"""
-        branch_name = f"feature/{feature_name}"
-        worktree_path = self.worktrees_dir / f"feature-{feature_name}"
-        
-        if worktree_path.exists():
-            print(f"❌ Worktree already exists: {worktree_path}")
-            return False
-            
-        print(f"🔧 Creating TDD worktree: {worktree_path}")
-        
-        # Create worktree with new branch
-        result = subprocess.run([
-            "git", "worktree", "add", str(worktree_path), "-b", branch_name
-        ], capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            print(f"❌ Failed to create worktree: {result.stderr}")
-            return False
-            
-        # Initialize TDD state file
-        tdd_state = {
-            "created_at": datetime.now().isoformat(),
-            "feature_name": feature_name,
-            "branch_name": branch_name,
-            "tdd_phase": "READY",  # READY, RED, GREEN, REFACTOR
-            "test_count": 0,
-            "last_test_run": None,
-            "coverage_percent": 0.0,
-            "claude_agent_active": False,
-            "vscode_launched": False,
-            "cycles_completed": 0
-        }
-        
-        state_file = worktree_path / ".tdd-state"
-        with open(state_file, "w") as f:
-            json.dump(tdd_state, f, indent=2)
-            
-        # Generate Claude prompt for this feature
-        self._generate_claude_prompt(worktree_path, feature_name)
-        
-        # Copy essential files to worktree
-        self._setup_worktree_environment(worktree_path)
-            
-        print(f"✅ TDD worktree created: {worktree_path}")
-        print(f"🌿 Branch: {branch_name}")
-        
-        # Interactive IDE and Claude integration
-        if interactive:
-            launch_ide = self._prompt_ide_launch()
-            if launch_ide:
-                self._launch_vscode_and_claude(worktree_path, feature_name)
-        
-        print(f"📋 To start manually: cd {worktree_path} && pixi shell")
-        return True
-        
-    def _prompt_ide_launch(self) -> bool:
-        """Prompt user to launch VSCode and Claude agent"""
-        try:
-            response = input("🚀 Launch VSCode instance and Claude agent for this feature? [Y/n]: ").strip().lower()
-            return response in ('', 'y', 'yes')
-        except KeyboardInterrupt:
-            print("\n❌ Cancelled by user")
-            return False
-            
-    def _generate_claude_prompt(self, worktree_path: Path, feature_name: str) -> None:
-        """Generate Claude-specific prompt for the feature"""
-        prompt_content = f"""# Claude TDD Agent Prompt for Feature: {feature_name}
-
-## Mission
-You are a TDD specialist working on the feature: **{feature_name}**
-
-## Context
-- Working directory: {worktree_path}
-- Branch: feature/{feature_name}
-- TDD Methodology: RED-GREEN-REFACTOR cycle mandatory
-- Target coverage: ≥95%
-
-## Your Responsibilities
-
-### 1. TDD Cycle Enforcement
-- **RED PHASE**: Write failing tests first, ensure they fail
-- **GREEN PHASE**: Write minimal code to make tests pass
-- **REFACTOR PHASE**: Improve code while keeping tests green
-
-### 2. Feature Development Guidelines
-- Follow the exact requirements for: {feature_name}
-- Write comprehensive tests for all edge cases
-- Ensure type hints for all new code
-- Document complex logic with docstrings
-
-### 3. Code Quality Standards
-- Use Black formatting: `black .`
-- Sort imports: `isort .`
-- Pass linting: `flake8`
-- Pass type checking: `mypy src/`
-
-### 4. Progress Tracking
-- Update .tdd-state file after each TDD cycle
-- Run tests frequently: `pytest -v`
-- Monitor coverage: `pytest --cov`
-
-## Workflow Instructions
-
-1. **START**: Analyze existing codebase and understand feature requirements
-2. **DESIGN**: Plan the TDD approach for {feature_name}
-3. **IMPLEMENT**: Execute RED-GREEN-REFACTOR cycles
-4. **VALIDATE**: Ensure all tests pass and coverage ≥95%
-5. **COMPLETE**: Signal completion and generate report
-
-## Completion Criteria
-- All tests passing
-- Coverage ≥95%
-- Code quality checks pass
-- Feature fully implemented
-- Documentation updated
-
-## Communication
-- Provide progress updates every 10 minutes
-- Ask for clarification if requirements are unclear
-- Report any blockers immediately
-
-## Emergency Commands
-- Stop work: Create file `.claude-stop`
-- Pause work: Create file `.claude-pause`
-- Request help: Create file `.claude-help` with message
-
-Start working on {feature_name} following strict TDD methodology.
-Begin with analyzing the existing codebase and planning your approach.
-"""
-        
         prompt_file = worktree_path / ".claude-prompt"
         with open(prompt_file, "w") as f:
             f.write(prompt_content)
@@ -548,11 +409,425 @@ Begin with analyzing the existing codebase and planning your approach.
         
         # Save report
         report_file = reports_dir / f"feature-{feature_name}-completion.md"
-        with open(report_file, "w") as f:
-            f.write(report)
-            
-        return report
+class TDDWorktreeManager:
+    def __init__(self):
+        self.worktrees_dir = Path("worktrees")
+        self.worktrees_dir.mkdir(exist_ok=True)
+        self.scripts_dir = Path("scripts")
         
+    def create_feature_worktree(self, feature_name: str, interactive: bool = False) -> bool:
+        """Create a new feature worktree for TDD development with optional IDE integration"""
+        branch_name = f"feature/{feature_name}"
+        worktree_path = self.worktrees_dir / f"feature-{feature_name}"
+        
+        if worktree_path.exists():
+            print(f"❌ Worktree already exists: {worktree_path}")
+            return False
+            
+        print(f"🔧 Creating TDD worktree: {worktree_path}")
+        
+        # Create worktree with new branch
+        result = subprocess.run([
+            "git", "worktree", "add", str(worktree_path), "-b", branch_name
+        ], capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"❌ Failed to create worktree: {result.stderr}")
+            return False
+            
+        # Initialize TDD state file
+        tdd_state = {
+            "created_at": datetime.now().isoformat(),
+            "feature_name": feature_name,
+            "branch_name": branch_name,
+            "tdd_phase": "READY",  # READY, RED, GREEN, REFACTOR
+            "test_count": 0,
+            "last_test_run": None,
+            "coverage_percent": 0.0,
+            "claude_agent_active": False,
+            "vscode_launched": False,
+            "cycles_completed": 0
+        }
+        
+        state_file = worktree_path / ".tdd-state"
+        with open(state_file, "w") as f:
+            json.dump(tdd_state, f, indent=2)
+            
+        # Generate Claude prompt for this feature
+        self._generate_claude_prompt(worktree_path, feature_name)
+        
+        # Copy essential files to worktree
+        self._setup_worktree_environment(worktree_path)
+            
+        print(f"✅ TDD worktree created: {worktree_path}")
+        print(f"🌿 Branch: {branch_name}")
+        
+        # Interactive IDE and Claude integration
+        if interactive:
+            launch_ide = self._prompt_ide_launch()
+            if launch_ide:
+                self._launch_vscode_and_claude(worktree_path, feature_name)
+        
+        print(f"📋 To start manually: cd {worktree_path} && pixi shell")
+        return True
+        
+    def _prompt_ide_launch(self) -> bool:
+        """Prompt user to launch VSCode and Claude agent"""
+        try:
+            response = input("🚀 Launch VSCode instance and Claude agent for this feature? [Y/n]: ").strip().lower()
+            return response in ('', 'y', 'yes')
+        except KeyboardInterrupt:
+            print("\n❌ Cancelled by user")
+            return False
+            
+    def _generate_claude_prompt(self, worktree_path: Path, feature_name: str) -> None:
+        """Generate Claude-specific prompt for the feature"""
+        prompt_content = f"""# Claude TDD Agent Prompt for Feature: {feature_name}
+
+## Mission
+    def _setup_worktree_environment(self, worktree_path: Path) -> None:
+        """Setup the worktree environment with necessary files"""
+        # Copy pixi.toml if it exists
+        if Path("pixi.toml").exists():
+            shutil.copy2("pixi.toml", worktree_path / "pixi.toml")
+            
+        # Copy pyproject.toml if it exists
+        if Path("pyproject.toml").exists():
+            shutil.copy2("pyproject.toml", worktree_path / "pyproject.toml")
+            
+        # Create VSCode workspace settings
+        vscode_dir = worktree_path / ".vscode"
+        vscode_dir.mkdir(exist_ok=True)
+        
+        settings = {
+            "python.defaultInterpreterPath": "./venv/bin/python",
+            "python.testing.pytestEnabled": True,
+            "python.testing.pytestArgs": ["."],
+            "python.linting.enabled": True,
+            "python.linting.flake8Enabled": True,
+            "python.formatting.provider": "black",
+            "editor.formatOnSave": True,
+            "files.autoSave": "afterDelay",
+            "autoDocstring.docstringFormat": "google",
+            "python.testing.autoTestDiscoverOnSaveEnabled": True
+        }
+        
+        with open(vscode_dir / "settings.json", "w") as f:
+            json.dump(settings, f, indent=2)
+            
+        # Create VSCode tasks for TDD
+        tasks = {
+            "version": "2.0.0",
+            "tasks": [
+                {
+                    "label": "TDD: Run Tests",
+                    "type": "shell",
+                    "command": "pytest",
+                    "args": ["-v"],
+                    "group": "test",
+                    "presentation": {"echo": True, "reveal": "always", "focus": False}
+                },
+                {
+                    "label": "TDD: Run Single Test", 
+                    "type": "shell",
+                    "command": "pytest",
+                    "args": ["${file}", "-v"],
+                    "group": "test"
+                },
+                {
+                    "label": "TDD: Coverage Report",
+                    "type": "shell", 
+                    "command": "pytest",
+                    "args": ["--cov", "--cov-report=html"],
+                    "group": "test"
+                }
+            ]
+        }
+        
+        with open(vscode_dir / "tasks.json", "w") as f:
+            json.dump(tasks, f, indent=2)
+            
+    def _launch_vscode_and_claude(self, worktree_path: Path, feature_name: str) -> None:
+        """Launch VSCode instance and Claude agent for the worktree"""
+        print(f"🚀 Launching VSCode for feature: {feature_name}")
+        
+        # Launch VSCode
+        try:
+            subprocess.Popen([
+                "code", str(worktree_path)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Update TDD state
+            state_file = worktree_path / ".tdd-state"
+            if state_file.exists():
+                with open(state_file, "r") as f:
+                    state = json.load(f)
+                state["vscode_launched"] = True
+                state["vscode_launched_at"] = datetime.now().isoformat()
+                with open(state_file, "w") as f:
+                    json.dump(state, f, indent=2)
+                    
+            print(f"✅ VSCode launched for {worktree_path}")
+            
+        except FileNotFoundError:
+            print("❌ VSCode not found in PATH. Please install VSCode and ensure 'code' command is available.")
+            return
+            
+        # Launch Claude agent
+        print(f"🤖 Launching Claude agent for feature: {feature_name}")
+        try:
+            subprocess.Popen([
+                "python", str(self.scripts_dir / "claude_agent.py"), 
+                "start", feature_name
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            print(f"✅ Claude agent launched for {feature_name}")
+            print(f"📊 Monitor progress: pixi run claude-agent-status {feature_name}")
+            
+        except Exception as e:
+            print(f"❌ Failed to launch Claude agent: {e}")
+            
+    def get_worktree_status(self) -> List[Dict]:
+        """Get status of all TDD worktrees"""
+        result = subprocess.run([
+            "git", "worktree", "list", "--porcelain"
+        ], capture_output=True, text=True)
+        
+        worktrees = []
+        for line in result.stdout.strip().split('\n\n'):
+            if not line:
+                continue
+                
+            info = {}
+            for item in line.split('\n'):
+                if item.startswith('worktree '):
+                    info['path'] = item.split(' ', 1)[1]
+                elif item.startswith('branch '):
+                    info['branch'] = item.split(' ', 1)[1]
+                elif item.startswith('HEAD '):
+                    info['head'] = item.split(' ', 1)[1]
+                    
+            # Skip main worktree
+            if info.get('branch') == 'refs/heads/main':
+                continue
+                
+            # Load TDD state if available
+            worktree_path = Path(info['path'])
+            state_file = worktree_path / ".tdd-state"
+            if state_file.exists():
+                with open(state_file) as f:
+                    tdd_state = json.load(f)
+                info.update(tdd_state)
+                
+            # Check current test status
+            if worktree_path.exists():
+                test_result = subprocess.run([
+                    "pytest", "--quiet"
+                ], cwd=worktree_path, capture_output=True)
+                
+                if test_result.returncode == 0:
+                    info['test_status'] = "🟢 GREEN"
+                else:
+                    info['test_status'] = "🔴 RED"
+                    
+                # Check Claude agent status
+                claude_status = self._check_claude_agent_status(worktree_path)
+                info['claude_status'] = claude_status
+            else:
+                info['test_status'] = "❓ UNKNOWN"
+                info['claude_status'] = "❓ UNKNOWN"
+                
+            worktrees.append(info)
+            
+        return worktrees
+        
+    def _check_claude_agent_status(self, worktree_path: Path) -> str:
+        """Check if Claude agent is active for this worktree"""
+        try:
+            result = subprocess.run([
+                "python", str(self.scripts_dir / "claude_agent.py"),
+                "status", worktree_path.name.replace("feature-", "")
+            ], capture_output=True, text=True)
+            
+            if "ACTIVE" in result.stdout:
+                return "🤖 ACTIVE"
+            elif "COMPLETED" in result.stdout:
+                return "✅ COMPLETED"
+            elif "PAUSED" in result.stdout:
+                return "⏸️ PAUSED"
+            else:
+                return "⭕ INACTIVE"
+        except:
+            return "❓ UNKNOWN"
+        
+    def switch_worktree(self, worktree_name: str) -> bool:
+        """Switch to a specific worktree"""
+        worktree_path = self.worktrees_dir / worktree_name
+        
+        if not worktree_path.exists():
+            print(f"❌ Worktree not found: {worktree_path}")
+            return False
+            
+        print(f"🔄 Switching to worktree: {worktree_path}")
+        print(f"💡 Run: cd {worktree_path} && pixi shell")
+        
+        # Optional: Launch VSCode if not already running
+        launch_ide = self._prompt_ide_launch()
+        if launch_ide:
+            feature_name = worktree_name.replace("feature-", "")
+            self._launch_vscode_and_claude(worktree_path, feature_name)
+        
+        return True
+        
+    def sync_worktree(self, worktree_name: str) -> bool:
+        """Sync worktree with main branch"""
+        worktree_path = self.worktrees_dir / worktree_name
+        
+        if not worktree_path.exists():
+            print(f"❌ Worktree not found: {worktree_path}")
+            return False
+            
+        print(f"🔄 Syncing {worktree_name} with main...")
+        
+        # Fetch latest changes
+        subprocess.run(["git", "fetch", "origin"], cwd=worktree_path)
+        
+        # Rebase on main
+        result = subprocess.run([
+            "git", "rebase", "origin/main"
+        ], cwd=worktree_path, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"❌ Rebase failed: {result.stderr}")
+            print("🔧 Manual resolution required")
+            return False
+            
+        # Run tests after sync
+        test_result = subprocess.run([
+            "pytest"
+        ], cwd=worktree_path, capture_output=True)
+        
+        if test_result.returncode == 0:
+            print("✅ Sync completed, all tests passing")
+            # Play success sound
+            subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "success"])
+        else:
+            print("⚠️  Sync completed, but tests are failing")
+            print("🔧 TDD cycle may need adjustment")
+            # Play warning sound
+            subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "failure"])
+            
+        return True
+        
+    def complete_feature(self, feature_name: str) -> bool:
+        """Complete feature development and merge to main"""
+        worktree_path = self.worktrees_dir / f"feature-{feature_name}"
+        branch_name = f"feature/{feature_name}"
+        
+        if not worktree_path.exists():
+            print(f"❌ Feature worktree not found: {worktree_path}")
+            return False
+            
+        print(f"🏁 Completing feature: {feature_name}")
+        
+        # Stop Claude agent if running
+        subprocess.run([
+            "python", str(self.scripts_dir / "claude_agent.py"),
+            "stop", feature_name
+        ])
+        
+        # Ensure we're in GREEN state
+        test_result = subprocess.run([
+            "pytest", "--cov", "--cov-fail-under=95"
+        ], cwd=worktree_path, capture_output=True)
+        
+        if test_result.returncode != 0:
+            print("❌ Cannot complete feature - tests failing or coverage < 95%")
+            print("🔧 Fix tests before completing feature")
+            subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "failure"])
+            return False
+            
+        # Generate completion report
+        report = self._generate_completion_report(worktree_path, feature_name)
+        
+        # Switch to main and pull latest
+        subprocess.run(["git", "checkout", "main"])
+        subprocess.run(["git", "pull", "origin", "main"])
+        
+        # Merge feature branch
+        merge_result = subprocess.run([
+            "git", "merge", "--no-ff", branch_name,
+            "-m", f"feat: {feature_name} - TDD complete"
+        ], capture_output=True, text=True)
+        
+        if merge_result.returncode != 0:
+            print(f"❌ Merge failed: {merge_result.stderr}")
+            subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "failure"])
+            return False
+            
+        # Run tests on main
+        test_result = subprocess.run(["pytest"], capture_output=True)
+        if test_result.returncode != 0:
+            print("❌ Tests failing on main after merge!")
+            print("🔧 Rolling back merge...")
+            subprocess.run(["git", "reset", "--hard", "HEAD~1"])
+            subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "failure"])
+            return False
+            
+        # Clean up worktree and branch
+        subprocess.run(["git", "worktree", "remove", str(worktree_path)])
+        subprocess.run(["git", "branch", "-d", branch_name])
+        
+        print(f"✅ Feature {feature_name} completed and merged!")
+        print("🧹 Worktree and branch cleaned up")
+        print(f"📊 Report saved: reports/feature-{feature_name}-completion.md")
+        
+        # Play completion sound
+        subprocess.run(["python", str(self.scripts_dir / "audio_notifier.py"), "completion"])
+        
+        # Display report
+        print("\n" + "="*60)
+        print(report)
+        print("="*60)
+        
+        return True
+        
+    def _generate_completion_report(self, worktree_path: Path, feature_name: str) -> str:
+        """Generate detailed completion report for the feature"""
+        
+        # Ensure reports directory exists
+        reports_dir = Path("reports")
+        reports_dir.mkdir(exist_ok=True)
+        
+        # Load TDD state
+        state_file = worktree_path / ".tdd-state"
+        tdd_state = {}
+        if state_file.exists():
+            with open(state_file) as f:
+                tdd_state = json.load(f)
+                
+        # Get test statistics
+        test_result = subprocess.run([
+            "pytest", "--tb=no", "-v"
+        ], cwd=worktree_path, capture_output=True, text=True)
+        
+        coverage_result = subprocess.run([
+            "pytest", "--cov", "--cov-report=term"
+        ], cwd=worktree_path, capture_output=True, text=True)
+        
+        # Count lines of code
+        try:
+            loc_result = subprocess.run([
+                "find", str(worktree_path / "src"), "-name", "*.py", "-exec", "wc", "-l", "{}", "+"
+            ], capture_output=True, text=True)
+            lines_of_code = sum(int(line.split()[0]) for line in loc_result.stdout.strip().split('\n')[:-1] if line.strip())
+        except:
+            lines_of_code = "N/A"
+            
+        # Generate report
+        report = f"""# Feature Completion Report: {feature_name}
+
+## Summary
     def _calculate_duration(self, start_time: str) -> str:
         """Calculate duration from start time to now"""
         try:
@@ -596,7 +871,6 @@ Begin with analyzing the existing codebase and planning your approach.
                         
         print("✅ Cleanup completed")
         return True
-
 def main():
     """CLI interface for TDD Worktree Manager"""
     if len(sys.argv) < 2:
@@ -658,6 +932,5 @@ def main():
     else:
         print(f"❌ Unknown command: {command}")
         return 1
-
 if __name__ == "__main__":
     sys.exit(main())

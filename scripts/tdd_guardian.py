@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
 """
 TDD Guardian - Enforces TDD compliance
 """
 import subprocess
 import sys
 from pathlib import Path
-
 def check_test_coverage():
     """Ensure test coverage is above 95%"""
     result = subprocess.run(
@@ -27,7 +25,6 @@ def check_tdd_structure():
             print(f"❌ Missing required directory: {dir_name}")
             return False
     return True
-
 def main():
     """Run TDD compliance checks"""
     print("🔍 Running TDD Guardian checks...")
@@ -52,6 +49,5 @@ def main():
     else:
         print("🚨 TDD compliance violations detected!")
         return 1
-
 if __name__ == "__main__":
     sys.exit(main())
