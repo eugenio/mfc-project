@@ -1,26 +1,21 @@
-#!/usr/bin/env -S pixi run pyhton
+#!/usr/bin/env -S pixi run python
 # /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "python-dotenv",
-# ]
+# requires-python = ">=3.8"
 # ///
 
-import argparse
 import json
 import os
-import sys
 import subprocess
+import sys
+from datetime import datetime
 from pathlib import Path
+
+from cchooks import SubagentStopContext, create_context
 from utils.constants import ensure_session_log_dir
 
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    pass  # dotenv is optional
-
+# Create context
+c = create_context()
+assert isinstance(c, SubagentStopContext)
 
 def get_tts_script_path():
     """
@@ -50,20 +45,19 @@ def get_tts_script_path():
 
     return None
 
-
-def announce_subagent_completion():
-    """Announce subagent completion using the best available TTS service."""
+def announce_subagent_completion(subagent_type):
+    """Announce subagent completion using TTS."""
     try:
         tts_script = get_tts_script_path()
         if not tts_script:
             return  # No TTS scripts available
 
-        # Use fixed message for subagent completion
-        completion_message = "Subagent Complete"
+        # Create subagent-specific message
+        message = f"{subagent_type} agent finished"
 
-        # Call the TTS script with the completion message
+        # Call the TTS script with the message
         subprocess.run(
-            ["pixi", "run", tts_script, completion_message],
+            ["pixi", "run", tts_script, message],
             capture_output=True,  # Suppress output
             timeout=10,  # 10-second timeout
         )
@@ -75,82 +69,67 @@ def announce_subagent_completion():
         # Fail silently for any other errors
         pass
 
+# Main hook logic
+# Extract fields
+session_id = c.session_id or ""
+stop_hook_active = c.stop_hook_active
+subagent_type = getattr(c, 'subagent_type', 'subagent')  # Get subagent type if available
 
-def main():
+# Ensure session log directory exists
+log_dir = ensure_session_log_dir(session_id)
+log_path = log_dir / "subagent_stop.json"
+
+# Read existing log data or initialize empty list
+log_data = []
+if log_path.exists():
     try:
-        # Parse command line arguments
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--chat", action="store_true", help="Copy transcript to chat.json"
-        )
-        args = parser.parse_args()
+        with open(log_path) as f:
+            log_data = json.load(f)
+    except (json.JSONDecodeError, ValueError):
+        log_data = []
 
-        # Read JSON input from stdin
-        input_data = json.load(sys.stdin)
+# Append new data
+log_entry = {
+    'session_id': session_id,
+    'stop_hook_active': stop_hook_active,
+    'subagent_type': subagent_type,
+    'transcript_path': c.transcript_path,
+    'timestamp': datetime.now().isoformat()
+}
+log_data.append(log_entry)
 
-        # Extract required fields
-        session_id = input_data.get("session_id", "")
-        input_data.get("stop_hook_active", False)
+# Write back to file with formatting
+with open(log_path, "w") as f:
+    json.dump(log_data, f, indent=2)
 
-        # Ensure session log directory exists
-        log_dir = ensure_session_log_dir(session_id)
-        log_path = log_dir / "subagent_stop.json"
+# Handle --chat switch (same as stop.py)
+if "--chat" in sys.argv and c.transcript_path:
+    transcript_path = c.transcript_path
+    # Convert relative paths to absolute paths
+    if not os.path.isabs(transcript_path):
+        transcript_path = os.path.abspath(transcript_path)
+    if os.path.exists(transcript_path):
+        # Read .jsonl file and convert to JSON array
+        chat_data = []
+        try:
+            with open(transcript_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            chat_data.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass  # Skip invalid lines
 
-        # Read existing log data or initialize empty list
-        if log_path.exists():
-            with open(log_path, "r") as f:
-                try:
-                    log_data = json.load(f)
-                except (json.JSONDecodeError, ValueError):
-                    log_data = []
-        else:
-            log_data = []
+            # Write to logs/subagent_chat.json (different from main chat.json)
+            chat_file = log_dir / "subagent_chat.json"
+            with open(chat_file, "w") as f:
+                json.dump(chat_data, f, indent=2)
+        except Exception:
+            pass  # Fail silently
 
-        # Append new data
-        log_data.append(input_data)
+# Announce subagent completion via TTS
+announce_subagent_completion(subagent_type)
 
-        # Write back to file with formatting
-        with open(log_path, "w") as f:
-            json.dump(log_data, f, indent=2)
-
-        # Handle --chat switch (same as stop.py)
-        if args.chat and "transcript_path" in input_data:
-            transcript_path = input_data["transcript_path"]
-            # Convert relative paths to absolute paths
-            if not os.path.isabs(transcript_path):
-                transcript_path = os.path.abspath(transcript_path)
-            if os.path.exists(transcript_path):
-                # Read .jsonl file and convert to JSON array
-                chat_data = []
-                try:
-                    with open(transcript_path, "r") as f:
-                        for line in f:
-                            line = line.strip()
-                            if line:
-                                try:
-                                    chat_data.append(json.loads(line))
-                                except json.JSONDecodeError:
-                                    pass  # Skip invalid lines
-
-                    # Write to logs/chat.json
-                    chat_file = os.path.join(log_dir, "chat.json")
-                    with open(chat_file, "w") as f:
-                        json.dump(chat_data, f, indent=2)
-                except Exception:
-                    pass  # Fail silently
-
-        # Announce subagent completion via TTS
-        announce_subagent_completion()
-
-        sys.exit(0)
-
-    except json.JSONDecodeError:
-        # Handle JSON decode errors gracefully
-        sys.exit(0)
-    except Exception:
-        # Handle any other errors gracefully
-        sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()
+# Exit success
+c.output.exit_success()

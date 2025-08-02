@@ -61,6 +61,51 @@ black-format-mfc = "black q-learning-mfcs/"
 validate-all = "pixi run ruff-check && pixi run mypy-check && pixi run test-all"
 validate-mfc = "pixi run ruff-check-mfc && pixi run mypy-check-mfc && pixi run test-all"
 
+# TDD Core Tasks - MANDATORY
+tdd-red = "pytest -x --tb=short -v"
+tdd-green = "pytest --tb=short"
+tdd-refactor = "pytest && pixi run validate-all"
+
+# Git Worktree TDD Management
+worktree-new = { cmd = "python scripts/tdd_worktree_manager.py create {{ feature_name }}", args = ["feature_name"] }
+worktree-switch = { cmd = "python scripts/tdd_worktree_manager.py switch {{ worktree_name }}", args = ["worktree_name"] }
+worktree-status = "python scripts/tdd_worktree_manager.py status"
+worktree-clean = "python scripts/tdd_worktree_manager.py cleanup"
+worktree-sync = { cmd = "python scripts/tdd_worktree_manager.py sync {{ worktree_name }}", args = ["worktree_name"] }
+
+# TDD Worktree Workflow with IDE Integration
+tdd-feature-start = { cmd = "python scripts/tdd_worktree_manager.py create {{ feature_name }} --interactive", args = ["feature_name"] }
+tdd-feature-test = { cmd = "cd worktrees/feature-{{ feature_name }} && pixi run tdd-red", args = ["feature_name"] }
+tdd-feature-complete = { cmd = "python scripts/tdd_worktree_manager.py complete {{ feature_name }}", args = ["feature_name"] }
+
+# Claude Integration
+claude-agent-start = { cmd = "python scripts/claude_agent.py start {{ feature_name }}", args = ["feature_name"] }
+claude-agent-status = { cmd = "python scripts/claude_agent.py status {{ feature_name }}", args = ["feature_name"] }
+claude-agent-stop = { cmd = "python scripts/claude_agent.py stop {{ feature_name }}", args = ["feature_name"] }
+
+# IDE Integration
+vscode-launch = { cmd = "code worktrees/feature-{{ feature_name }}", args = ["feature_name"] }
+vscode-multi = "python scripts/vscode_manager.py launch-all"
+
+# Test execution tasks
+test-watch = "pytest-watch --clear --verbose"
+test-single = { cmd = "pytest {{ test_file }} -v", args = ["test_file"] }
+test-focused = { cmd = "pytest -k {{ pattern }} -v", args = ["pattern"] }
+test-coverage-tdd = "pytest --cov --cov-report=term-missing --cov-fail-under=95"
+
+# TDD workflow enforcement
+tdd-cycle = { cmd = "echo 'TDD Cycle: 1) Write failing test 2) Make it pass 3) Refactor'", depends-on = ["test-all"] }
+enforce-tdd = "python scripts/tdd_guardian.py"
+
+# Worktree synchronization
+sync-from-main = "git fetch origin && git rebase origin/main"
+sync-to-main = "git checkout main && git pull origin main"
+
+# Audio notifications
+play-success = "python scripts/audio_notifier.py success"
+play-failure = "python scripts/audio_notifier.py failure"
+play-completion = "python scripts/audio_notifier.py completion"
+
 # GUI Tasks
 gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
 gui-enhanced = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
@@ -90,6 +135,7 @@ webdriver-manager = ">=4.0.2,<5"
 pydantic = ">=2.10.4"
 ruff = ">=0.12.7,<0.13"
 mypy = ">=1.17.1,<2"
+glab = ">=1.62.0,<2"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -165,6 +211,7 @@ requests = ">=2.31.0"
 python-crontab = ">=3.3.0, <4"
 types-python-crontab = ">=3.3.0.20250715, <4"
 pubmedclient = ">=0.2.0, <0.3"
+cchooks = ">=0.1.2, <0.2"
 
 # API and web server components
 [feature.api.pypi-dependencies]
