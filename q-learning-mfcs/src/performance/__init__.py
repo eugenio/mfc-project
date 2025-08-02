@@ -5,12 +5,17 @@ Provides GPU memory management, performance benchmarking,
 and system optimization for MFC simulations.
 """
 
-from .gpu_memory_manager import GPUMemoryManager, ManagedGPUContext, MemoryStats, PerformanceProfile
-from .benchmark_suite import PerformanceBenchmark, BenchmarkResult, run_benchmark_demo
+from .benchmark_suite import BenchmarkResult, PerformanceBenchmark, run_benchmark_demo
+from .gpu_memory_manager import (
+    GPUMemoryManager,
+    ManagedGPUContext,
+    MemoryStats,
+    PerformanceProfile,
+)
 
 __all__ = [
     'GPUMemoryManager',
-    'ManagedGPUContext', 
+    'ManagedGPUContext',
     'MemoryStats',
     'PerformanceProfile',
     'PerformanceBenchmark',
