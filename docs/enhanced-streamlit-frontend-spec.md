@@ -80,7 +80,7 @@ mfc_enhanced_ui/
 ```
 MFC Scientific Platform
 ├── 🏠 Dashboard              # Overview & quick access
-├── 🔋 Electrode System       # Phase 1: Material & geometry  
+├── 🔋 Electrode System       # Phase 1: Material & geometry
 ├── 🏗️ Cell Configuration     # Cell geometry & 3D models
 ├── ⚗️ Physics Simulation     # Phase 2: Advanced physics
 ├── 🧠 ML Optimization       # Phase 3: Bayesian & neural nets
