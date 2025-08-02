@@ -248,7 +248,7 @@ class PolicyEvolutionVisualization:
                 y=policy_entropies,
                 mode='lines+markers',
                 name='Policy Entropy',
-                line=dict(color='blue', width=2),
+                line={'color': 'blue', 'width': 2},
                 hovertemplate='Episode: %{x}<br>Entropy: %{y:.3f}<extra></extra>'
             ),
             row=1, col=1
@@ -261,7 +261,7 @@ class PolicyEvolutionVisualization:
                 y=state_coverages,
                 mode='lines+markers',
                 name='State Coverage',
-                line=dict(color='green', width=2),
+                line={'color': 'green', 'width': 2},
                 hovertemplate='Episode: %{x}<br>Coverage: %{y:.1%}<extra></extra>'
             ),
             row=2, col=1
@@ -276,7 +276,7 @@ class PolicyEvolutionVisualization:
                     y=metrics.policy_changes,
                     mode='lines+markers',
                     name='Policy Changes',
-                    line=dict(color='red', width=2),
+                    line={'color': 'red', 'width': 2},
                     hovertemplate='Episode: %{x}<br>Changes: %{y}<extra></extra>'
                 ),
                 row=3, col=1
@@ -389,7 +389,7 @@ class PolicyEvolutionVisualization:
                 y=dominant_actions_timeline,
                 mode='lines+markers',
                 name='Dominant Action',
-                line=dict(width=3),
+                line={'width': 3},
                 hovertemplate='Episode: %{x}<br>Dominant Action: %{y}<extra></extra>'
             ))
 
@@ -419,7 +419,7 @@ class PolicyEvolutionVisualization:
                     y=metrics.learning_velocity,
                     mode='lines+markers',
                     name='Learning Velocity',
-                    line=dict(color='purple', width=2),
+                    line={'color': 'purple', 'width': 2},
                     hovertemplate='Episode: %{x}<br>Velocity: %{y:.3f}<extra></extra>'
                 ))
 
@@ -450,7 +450,7 @@ class PolicyEvolutionVisualization:
                     y=metrics.performance_trend,
                     mode='lines+markers',
                     name='Episode Reward',
-                    line=dict(color='green', width=2)
+                    line={'color': 'green', 'width': 2}
                 ),
                 row=1, col=1
             )
@@ -464,7 +464,7 @@ class PolicyEvolutionVisualization:
                         y=metrics.learning_velocity,
                         mode='lines+markers',
                         name='Learning Velocity',
-                        line=dict(color='purple', width=2)
+                        line={'color': 'purple', 'width': 2}
                     ),
                     row=2, col=1
                 )
@@ -493,7 +493,7 @@ class PolicyEvolutionVisualization:
                 y=metrics.exploration_decay,
                 mode='lines+markers',
                 name='Exploration Decay Rate',
-                line=dict(color='orange', width=2),
+                line={'color': 'orange', 'width': 2},
                 hovertemplate='Episode: %{x}<br>Decay Rate: %{y:.3f}<extra></extra>'
             ))
 

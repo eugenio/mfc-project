@@ -406,7 +406,7 @@ class AlertConfigurationUI:
             df = pd.DataFrame(alert_data)
 
             # Interactive table with acknowledge buttons
-            for idx, row in df.iterrows():
+            for _idx, row in df.iterrows():
                 col1, col2, col3 = st.columns([3, 4, 1])
 
                 with col1:
@@ -451,11 +451,11 @@ class AlertConfigurationUI:
                     x=[alert.timestamp],
                     y=[y_pos],
                     mode='markers',
-                    marker=dict(
-                        size=15,
-                        color=color,
-                        symbol='circle' if not alert.escalated else 'star'
-                    ),
+                    marker={
+                        "size": 15,
+                        "color": color,
+                        "symbol": 'circle' if not alert.escalated else 'star'
+                    },
                     text=f"{param_info['name']}: {alert.value:.3f}<br>{alert.message}",
                     hoverinfo='text',
                     showlegend=False
@@ -467,12 +467,12 @@ class AlertConfigurationUI:
         fig.update_layout(
             title="Alert Timeline",
             xaxis_title="Time",
-            yaxis=dict(
-                tickmode='array',
-                tickvals=list(range(len(param_alerts))),
-                ticktext=[self.parameter_info.get(p, {"name": p})["name"]
+            yaxis={
+                "tickmode": 'array',
+                "tickvals": list(range(len(param_alerts))),
+                "ticktext": [self.parameter_info.get(p, {"name": p})["name"]
                          for p in param_alerts.keys()]
-            ),
+            },
             height=400,
             hovermode='closest'
         )

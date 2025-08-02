@@ -297,7 +297,7 @@ class QTableVisualization:
             xaxis_title="Actions",
             yaxis_title="States",
             height=max(400, min(800, qtable.shape[0] * 20)),
-            font=dict(size=12)
+            font={'size': 12}
         )
 
         return fig
@@ -353,28 +353,28 @@ class QTableVisualization:
         # Convergence Score
         fig.add_trace(
             go.Scatter(x=df.index, y=df['convergence_score'], name='Convergence Score',
-                      line=dict(color='blue', width=2), mode='lines+markers'),
+                      line={'color': 'blue', 'width': 2}, mode='lines+markers'),
             row=1, col=1
         )
 
         # Stability Measure
         fig.add_trace(
             go.Scatter(x=df.index, y=df['stability_measure'], name='Stability',
-                      line=dict(color='green', width=2), mode='lines+markers'),
+                      line={'color': 'green', 'width': 2}, mode='lines+markers'),
             row=1, col=2
         )
 
         # Exploration Coverage
         fig.add_trace(
             go.Scatter(x=df.index, y=df['exploration_coverage'], name='Exploration',
-                      line=dict(color='orange', width=2), mode='lines+markers'),
+                      line={'color': 'orange', 'width': 2}, mode='lines+markers'),
             row=2, col=1
         )
 
         # Policy Entropy
         fig.add_trace(
             go.Scatter(x=df.index, y=df['policy_entropy'], name='Policy Entropy',
-                      line=dict(color='red', width=2), mode='lines+markers'),
+                      line={'color': 'red', 'width': 2}, mode='lines+markers'),
             row=2, col=2
         )
 
@@ -463,11 +463,11 @@ class QTableVisualization:
                 text=None,
                 hoverongaps=False,
                 hovertemplate="State: %{y}<br>Action: %{x}<br>Explored: %{z}<extra></extra>",
-                colorbar=dict(
-                    title="Exploration Status",
-                    tickvals=[0, 1],
-                    ticktext=['Unexplored', 'Explored']
-                )
+                colorbar={
+                    'title': "Exploration Status",
+                    'tickvals': [0, 1],
+                    'ticktext': ['Unexplored', 'Explored']
+                }
             ))
 
             fig.update_layout(

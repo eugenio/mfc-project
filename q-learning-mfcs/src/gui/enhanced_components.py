@@ -259,7 +259,7 @@ class ScientificParameterInput:
                 value = text_value
 
         # Validation and literature reference (only for numeric values)
-        if min_val is not None and max_val is not None and isinstance(value, (float, int)):
+        if min_val is not None and max_val is not None and isinstance(value, float | int):
             self._display_validation_status(value, min_val, max_val, param_name)
 
         if literature_ref:
@@ -381,7 +381,7 @@ class InteractiveVisualization:
                             y=df[column],
                             name=f"{panel_name}: {column}",
                             mode='lines',
-                            line=dict(width=2)
+                            line={"width": 2}
                         ),
                         row=row, col=col
                     )
@@ -395,7 +395,7 @@ class InteractiveVisualization:
                         y=df[numeric_cols[1]],
                         name=panel_name,
                         mode='markers',
-                        marker=dict(size=6)
+                        marker={"size": 6}
                     ),
                     row=row, col=col
                 )
@@ -509,8 +509,8 @@ class InteractiveVisualization:
                     y=metric_values,
                     name=metric_name,
                     mode='lines+markers',
-                    line=dict(width=2),
-                    marker=dict(size=4)
+                    line={"width": 2},
+                    marker={"size": 4}
                 )
             )
 
@@ -666,7 +666,7 @@ class ExportManager:
 
         # Figure selection
         selected_figures = []
-        for fig_name, fig in figures.items():
+        for fig_name, _fig in figures.items():
             if st.checkbox(f"{fig_name}", key=f"export_fig_{fig_name}"):
                 selected_figures.append(fig_name)
 

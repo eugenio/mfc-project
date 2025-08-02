@@ -356,7 +356,7 @@ class QLearningVisualizer:
                     x=episodes,
                     y=values_array,
                     name=metric_name,
-                    line=dict(color=colors[i % len(colors)], width=2),
+                    line={"color": colors[i % len(colors)], "width": 2},
                     mode='lines',
                     hovertemplate=f"{metric_name}: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>"
                 ),
@@ -373,7 +373,7 @@ class QLearningVisualizer:
                         x=episodes,
                         y=smoothed,
                         name=f"{metric_name} (trend)",
-                        line=dict(color=colors[i % len(colors)], width=3, dash='dash'),
+                        line={"color": colors[i % len(colors)], "width": 3, "dash": 'dash'},
                         mode='lines',
                         opacity=0.7,
                         hovertemplate=f"{metric_name} Trend: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>"
@@ -496,7 +496,7 @@ class QLearningVisualizer:
                     title="Policy Confidence by State",
                     title_font_size=14,
                     height=400,
-                    yaxis=dict(autorange="reversed")
+                    yaxis={"autorange": "reversed"}
                 )
 
                 st.plotly_chart(fig_conf, use_container_width=True)

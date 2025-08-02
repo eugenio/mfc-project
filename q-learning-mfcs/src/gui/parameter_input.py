@@ -373,7 +373,7 @@ class ParameterInputComponent:
                 if status in export_data['validation_summary']:
                     export_data['validation_summary'][status] += 1
 
-        export_data['literature_references'] = sorted(list(all_references))
+        export_data['literature_references'] = sorted(all_references)
 
         # Display export options
         st.subheader("📄 Export Configuration")
@@ -444,7 +444,7 @@ class ParameterInputComponent:
         all_references = set()
         used_references = {}
 
-        for name, value in st.session_state.parameter_values.items():
+        for name, _value in st.session_state.parameter_values.items():
             param = self.literature_db.get_parameter(name)
             if param:
                 for ref in param.references:
@@ -495,7 +495,7 @@ class ParameterInputComponent:
             x=[param.min_value, param.max_value],
             y=['Valid Range', 'Valid Range'],
             mode='lines+markers',
-            line=dict(color='red', width=8),
+            line={'color': 'red', 'width': 8},
             name='Valid Range',
             hovertemplate=f'Valid Range: {param.min_value} - {param.max_value} {param.unit}<extra></extra>'
         ))
@@ -504,7 +504,7 @@ class ParameterInputComponent:
             x=[param.recommended_range[0], param.recommended_range[1]],
             y=['Recommended', 'Recommended'],
             mode='lines+markers',
-            line=dict(color='green', width=8),
+            line={'color': 'green', 'width': 8},
             name='Recommended Range',
             hovertemplate=f'Recommended: {param.recommended_range[0]} - {param.recommended_range[1]} {param.unit}<extra></extra>'
         ))
@@ -517,7 +517,7 @@ class ParameterInputComponent:
             x=[current_value],
             y=['Current Value'],
             mode='markers',
-            marker=dict(color=color, size=15, symbol='diamond'),
+            marker={'color': color, 'size': 15, 'symbol': 'diamond'},
             name='Current Value',
             hovertemplate=f'Current: {current_value} {param.unit}<br>Status: {validation["status"]}<extra></extra>'
         ))
