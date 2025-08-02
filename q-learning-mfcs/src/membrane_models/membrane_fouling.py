@@ -420,7 +420,7 @@ class FoulingModel:
         base_resistance = 0.1  # Ω·m² (typical)
 
         # Run simulation
-        for i, t in enumerate(time_array):
+        for i, _t in enumerate(time_array):
             if i > 0:
                 self.update_fouling(time_step, operating_conditions)
 

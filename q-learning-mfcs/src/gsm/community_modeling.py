@@ -289,7 +289,7 @@ class MFCCommunityModel:
         # Sum exchange fluxes across community
         net_exchange = {}
 
-        for org_id, fluxes in community_fluxes.items():
+        for _org_id, fluxes in community_fluxes.items():
             for rxn_id, flux in fluxes.items():
                 # Look for exchange reactions
                 if rxn_id.startswith('EX_'):
@@ -338,13 +338,13 @@ class MFCCommunityModel:
         # Look for electron transfer reactions
         electron_reactions = ['cytochrome', 'quinone', 'flavin', 'riboflavin_export']
 
-        for org_id, fluxes in community_fluxes.items():
+        for _org_id, fluxes in community_fluxes.items():
             for rxn_id, flux in fluxes.items():
                 if any(keyword in rxn_id.lower() for keyword in electron_reactions):
                     electron_rate += abs(flux)
 
         # Add mediator-based transfer
-        for mediator, conc in self.electrode_mediators.items():
+        for mediator, _conc in self.electrode_mediators.items():
             if mediator in self.shared_metabolites:
                 # Mediator cycling rate
                 cycling_rate = self.shared_metabolites[mediator] * 10.0  # h⁻¹

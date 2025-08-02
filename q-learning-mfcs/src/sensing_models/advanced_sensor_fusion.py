@@ -208,7 +208,7 @@ class AdvancedKalmanFilter(KalmanFilter):
         predicted_covariances = []
 
         # Multi-step prediction
-        for step in range(steps):
+        for _step in range(steps):
             # Apply nonlinear biofilm growth model
             self._apply_biofilm_dynamics()
 

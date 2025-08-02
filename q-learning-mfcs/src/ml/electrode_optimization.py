@@ -36,7 +36,7 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    warnings.warn("PyTorch not available. Deep learning features disabled.")
+    warnings.warn("PyTorch not available. Deep learning features disabled.", stacklevel=2)
 
 try:
     from sklearn.ensemble import RandomForestRegressor
@@ -47,7 +47,7 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
-    warnings.warn("Scikit-learn not available. Some ML features disabled.")
+    warnings.warn("Scikit-learn not available. Some ML features disabled.", stacklevel=2)
 
 try:
     from scipy.optimize import differential_evolution, minimize
@@ -55,7 +55,7 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-    warnings.warn("SciPy not available. Optimization features limited.")
+    warnings.warn("SciPy not available. Optimization features limited.", stacklevel=2)
 
 from config.electrode_config import ElectrodeGeometry, ElectrodeMaterial
 from physics.advanced_electrode_model import AdvancedElectrodeModel, CellGeometry
@@ -188,7 +188,9 @@ class GaussianProcessSurrogate(SurrogateModel):
 class NeuralNetworkSurrogate(SurrogateModel):
     """Neural network surrogate model for fast evaluation."""
 
-    def __init__(self, hidden_layers=[64, 32, 16], dropout_rate=0.1, learning_rate=0.001):
+    def __init__(self, hidden_layers=None, dropout_rate=0.1, learning_rate=0.001):
+        if hidden_layers is None:
+            hidden_layers = [64, 32, 16]
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch required for Neural Network surrogate")
 

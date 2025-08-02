@@ -372,7 +372,7 @@ class ModelInferenceEngine:
         """Infer from callable model (neural network, etc.)"""
         try:
             output = self.model(state)
-            if isinstance(output, (list, tuple)):
+            if isinstance(output, list | tuple):
                 action = output[0]
                 confidence = output[1] if len(output) > 1 else 1.0
             else:
@@ -485,7 +485,7 @@ class ModelInferenceEngine:
                 actions_batch = np.argmax(q_values_batch, axis=1)
                 confidences_batch = [self._calculate_confidence(q_values) for q_values in q_values_batch]
 
-                for i, (state, action, confidence) in enumerate(zip(states, actions_batch, confidences_batch, strict=False)):
+                for _i, (state, action, confidence) in enumerate(zip(states, actions_batch, confidences_batch, strict=False)):
                     measurement = InferenceMeasurement(
                         timestamp=time.time(),
                         input_state=state.copy(),
