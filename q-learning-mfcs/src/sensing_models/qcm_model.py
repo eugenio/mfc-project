@@ -18,12 +18,13 @@ Implementation includes:
 - Integration with biofilm kinetics models
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Any
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
-import sys
-import os
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 
 # Add GPU acceleration
 sys.path.append(os.path.dirname(__file__))

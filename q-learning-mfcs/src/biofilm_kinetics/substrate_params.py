@@ -5,9 +5,10 @@ This module contains parameters for different substrates (acetate, lactate)
 and their utilization by exoelectrogenic bacteria.
 """
 
-import numpy as np
-from typing import Dict
 from dataclasses import dataclass
+from typing import Dict
+
+import numpy as np
 
 
 @dataclass

@@ -17,13 +17,14 @@ Implementation includes:
 - Real-time measurement simulation
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Any
+import cmath
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
-import cmath
-import sys
-import os
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 
 # Add GPU acceleration
 sys.path.append(os.path.dirname(__file__))
@@ -411,7 +412,7 @@ class EISModel:
     def _calculate_impedance_spectrum_gpu(self, frequencies_gpu):
         """Calculate impedance spectrum using GPU acceleration."""
         # GPU implementation for parallel frequency calculation
-        omega_gpu = self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
+        self.gpu_acc.multiply(frequencies_gpu, 2 * np.pi)
 
         # Capacitive impedances (simplified for GPU)
         # This is a simplified version - full complex arithmetic requires more GPU ops

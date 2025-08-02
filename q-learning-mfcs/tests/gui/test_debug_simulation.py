@@ -13,8 +13,13 @@ from pathlib import Path
 src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'src')
 sys.path.insert(0, src_path)
 
-from path_config import enable_debug_mode, disable_debug_mode, is_debug_mode, get_current_base_path
-from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+# Import required modules
+try:
+    from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+    from mfc_streamlit_gui import SimulationRunner
+except ImportError as e:
+    print(f"❌ Import error: {e}")
+    sys.exit(1)
 
 def test_debug_simulation():
     """Test a short debug simulation similar to GUI workflow"""
@@ -22,36 +27,24 @@ def test_debug_simulation():
     print("🧪 Testing Debug Mode Simulation")
     print("=" * 50)
     
-    # Enable debug mode
-    print("🐛 Enabling debug mode...")
-    enable_debug_mode()
-    print(f"Debug mode active: {is_debug_mode()}")
-    print(f"Debug output path: {get_current_base_path()}")
+    print("🧪 Running GUI simulation test")
     print()
     
     # Test SimulationRunner class like the GUI does
     try:
         print("📱 Testing GUI SimulationRunner class...")
         
-        # Import the SimulationRunner from GUI
-        from mfc_streamlit_gui import SimulationRunner
-        
         # Create runner instance
         runner = SimulationRunner()
         print("✅ SimulationRunner created successfully")
         
-        # Test path resolution
-        from path_config import get_simulation_data_path
-        test_path = get_simulation_data_path("test_debug_sim")
-        print(f"Test path resolution: {test_path}")
-        
-        # Check if we can create directories
-        test_dir = Path(test_path)
+        # Test temp directory creation
+        test_dir = Path(tempfile.gettempdir()) / "mfc_test_simulation"
         test_dir.mkdir(parents=True, exist_ok=True)
         print(f"✅ Directory creation works: {test_dir.exists()}")
         
         print()
-        print("🚀 Starting short debug simulation...")
+        print("🚀 Starting short test simulation...")
         
         # Start a very short simulation (30 seconds = 0.5 minutes)
         duration_hours = 0.008  # ~30 seconds
@@ -62,8 +55,7 @@ def test_debug_simulation():
             n_cells=5,
             electrode_area_m2=0.001,  # 10 cm²
             target_conc=25.0,
-            gui_refresh_interval=1.0,  # Check every second
-            debug_mode=True
+            gui_refresh_interval=1.0  # Check every second
         )
         
         if success:
@@ -75,29 +67,34 @@ def test_debug_simulation():
             
             while runner.is_running and (time.time() - start_time) < max_wait:
                 status = runner.get_status()
-                print(f"Status: {status[0]} - {status[1]}")
-                
-                if status[0] in ['completed', 'error', 'stopped']:
-                    break
+                if status:
+                    print(f"Status: {status[0]} - {status[1]}")
+                    if status[0] in ['completed', 'error', 'stopped']:
+                        break
+                else:
+                    print("Status: None")
                     
                 time.sleep(2)
             
             # Get final status
             final_status = runner.get_status()
-            print(f"Final status: {final_status[0]} - {final_status[1]}")
-            
-            if final_status[2]:  # output_dir
-                output_dir = final_status[2]
-                print(f"Output directory: {output_dir}")
+            if final_status:
+                print(f"Final status: {final_status[0]} - {final_status[1]}")
                 
-                # Check if files were created
-                if output_dir.exists():
-                    files = list(output_dir.glob("*"))
-                    print(f"Files created: {len(files)}")
-                    for file in files:
-                        print(f"  - {file.name} ({file.stat().st_size} bytes)")
-                else:
-                    print("⚠️  Output directory doesn't exist")
+                if len(final_status) > 2 and final_status[2]:  # output_dir
+                    output_dir = final_status[2]
+                    print(f"Output directory: {output_dir}")
+                    
+                    # Check if files were created
+                    if output_dir.exists():
+                        files = list(output_dir.glob("*"))
+                        print(f"Files created: {len(files)}")
+                        for file in files:
+                            print(f"  - {file.name} ({file.stat().st_size} bytes)")
+                    else:
+                        print("⚠️  Output directory doesn't exist")
+            else:
+                print("Final status: None")
             
             # Stop if still running
             if runner.is_running:
@@ -115,16 +112,14 @@ def test_debug_simulation():
     finally:
         # Cleanup
         print("\n🧹 Cleaning up...")
-        disable_debug_mode()
-        print(f"Debug mode disabled: {not is_debug_mode()}")
         
         # Clean up temp directory
-        temp_dir = Path(tempfile.gettempdir()) / "mfc_debug_simulation"
+        temp_dir = Path(tempfile.gettempdir()) / "mfc_test_simulation"
         if temp_dir.exists():
             try:
                 import shutil
                 shutil.rmtree(temp_dir)
-                print("✅ Temporary debug directory cleaned up")
+                print("✅ Temporary test directory cleaned up")
             except Exception as e:
                 print(f"⚠️  Could not clean temp directory: {e}")
     

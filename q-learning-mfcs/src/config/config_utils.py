@@ -26,21 +26,23 @@ Features:
 - Error reporting and debugging
 """
 
-import os
-import yaml
 import json
+import os
 import re
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any, Union, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
+
+import yaml
 
 if TYPE_CHECKING:
     pass
-from dataclasses import dataclass, field, fields, is_dataclass
 import logging
-from datetime import datetime
-from jsonschema import validate, ValidationError
 import warnings
+from dataclasses import dataclass, field, fields, is_dataclass
+from datetime import datetime
+
+from jsonschema import ValidationError, validate
 
 # Import configuration classes
 from .config_manager import ConfigurationError
@@ -90,7 +92,7 @@ def load_yaml_config(file_path: Union[str, Path],
         raise ConfigurationFormatError(f"Configuration file not found: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # Substitute environment variables if requested
@@ -142,7 +144,7 @@ def load_json_config(file_path: Union[str, Path],
         raise ConfigurationFormatError(f"Configuration file not found: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # Substitute environment variables if requested

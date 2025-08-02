@@ -24,14 +24,15 @@ Literature References:
 2. Hunt, A., & Thomas, D. (1999). "The Pragmatic Programmer"
 """
 
-import yaml
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Any, TypeVar
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
 import logging
 from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, TypeVar
+
+import yaml
 
 # Import all configuration classes
 from .control_config import ControlSystemConfig
@@ -286,10 +287,10 @@ class ConfigManager:
 
             # Load based on file extension
             if file_path.suffix.lower() in ['.yaml', '.yml']:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     config_data = yaml.safe_load(f)
             elif file_path.suffix.lower() == '.json':
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     config_data = json.load(f)
             else:
                 raise ConfigurationLoadError(f"Unsupported file format: {file_path.suffix}")

@@ -10,15 +10,12 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-from typing import Dict, Any, Optional, Tuple, List
-from dataclasses import dataclass
 import copy
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
-from .qlearning_config import (
-    QLearningConfig,
-    DEFAULT_QLEARNING_CONFIG
-)
 from .literature_database import LITERATURE_DB
+from .qlearning_config import DEFAULT_QLEARNING_CONFIG, QLearningConfig
 
 
 @dataclass

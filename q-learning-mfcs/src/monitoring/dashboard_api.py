@@ -4,32 +4,35 @@ FastAPI Dashboard API for MFC Monitoring System with HTTPS Support
 Provides REST API endpoints for simulation data, control, and monitoring.
 """
 
+import gzip
+import json
+import logging
 import os
 import sys
-import json
-import gzip
-import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-from contextlib import asynccontextmanager
 
+import pandas as pd
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Security, Request, Response
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
-import pandas as pd
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from ssl_config import (
-    SSLConfig, SSLContextManager, SecurityHeaders,
-    load_ssl_config, initialize_ssl_infrastructure
+from monitoring.ssl_config import (
+    SecurityHeaders,
+    SSLConfig,
+    SSLContextManager,
+    initialize_ssl_infrastructure,
+    load_ssl_config,
 )
 
 # Setup logging
@@ -370,7 +373,7 @@ async def get_performance_metrics():
 
         latest_file = max(results_files, key=lambda f: f.stat().st_mtime)
 
-        with open(latest_file, 'r') as f:
+        with open(latest_file) as f:
             results = json.load(f)
 
         metrics = results.get('performance_metrics', {})
@@ -467,7 +470,6 @@ def run_dashboard_api(
         port = config.https_port_api
 
     # SSL context for uvicorn
-    ssl_context = None
     if config and Path(config.cert_file).exists() and Path(config.key_file).exists():
         ssl_manager = SSLContextManager(config)
         ssl_params = ssl_manager.get_uvicorn_ssl_config()

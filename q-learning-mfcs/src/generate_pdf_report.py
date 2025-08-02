@@ -5,14 +5,17 @@ This script creates a professional PDF document suitable for sharing with
 colleagues, including all technical findings, analyses, and visualizations.
 """
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.backends.backend_pdf import PdfPages
-import numpy as np
 import datetime
+
 import matplotlib
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
+
 matplotlib.use('Agg')
 from path_config import get_report_path
+
 
 def create_cover_page(pdf):
     """Create professional cover page"""

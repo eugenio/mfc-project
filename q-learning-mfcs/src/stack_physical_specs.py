@@ -3,13 +3,15 @@ Calculate and display the physical dimensions and characteristics
 of the 5-cell MFC stack based on simulation parameters.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import Rectangle, Circle
 import matplotlib
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Circle, Rectangle
+
 matplotlib.use('Agg')
 from path_config import get_figure_path
+
 
 def calculate_stack_dimensions():
     """Calculate physical dimensions from simulation parameters"""
@@ -39,7 +41,6 @@ def calculate_stack_dimensions():
 
     # Stack dimensions
     stack_length = n_cells * d_cell  # Total stack length (m)
-    stack_cross_section = A_m  # Cross-sectional area (m²)
     stack_volume = n_cells * V_total_per_cell  # Total stack volume (m³)
 
     # Physical characteristics
@@ -468,7 +469,7 @@ def main():
     """Main function to calculate and display stack characteristics"""
 
     # Calculate and display dimensions
-    specs = calculate_stack_dimensions()
+    calculate_stack_dimensions()
 
     # Create technical diagrams
     create_stack_diagram()

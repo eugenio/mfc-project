@@ -5,15 +5,15 @@ Email notification system for MFC simulation completion.
 Created: 2025-07-26
 """
 
-import smtplib
-import os
 import json
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-from datetime import datetime
+import os
+import smtplib
 import sys
+from datetime import datetime
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 def send_completion_email(results_file, recipient_email=None):
@@ -36,7 +36,7 @@ def send_completion_email(results_file, recipient_email=None):
 
     try:
         # Load simulation results
-        with open(results_file, 'r') as f:
+        with open(results_file) as f:
             results = json.load(f)
 
         # Create email content
@@ -127,6 +127,7 @@ def setup_email_monitoring(pid_file, log_file):
         log_file: Path to log file
     """
     import time
+
     import psutil
 
     print("📧 Email monitoring setup...")
@@ -137,7 +138,7 @@ def setup_email_monitoring(pid_file, log_file):
     print()
 
     try:
-        with open(pid_file, 'r') as f:
+        with open(pid_file) as f:
             pid = int(f.read().strip())
 
         print(f"🔍 Monitoring process {pid}...")
