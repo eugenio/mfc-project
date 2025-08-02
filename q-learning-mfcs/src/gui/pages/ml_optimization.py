@@ -605,7 +605,7 @@ def create_optimization_visualizations(result: OptimizationResult):
                         y=best_obj,
                         name="Best Objective",
                         mode='lines',
-                        line=dict(color='green', width=3)
+                        line={"color": 'green', "width": 3}
                     ))
 
                     fig_conv.update_layout(

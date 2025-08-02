@@ -239,13 +239,13 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
 
         fig_cpu_mem.add_trace(
             go.Scatter(x=df['timestamp'], y=df['cpu_usage'],
-                      name='CPU', line=dict(color='blue')),
+                      name='CPU', line={'color': 'blue'}),
             row=1, col=1
         )
 
         fig_cpu_mem.add_trace(
             go.Scatter(x=df['timestamp'], y=df['memory_usage'],
-                      name='Memory', line=dict(color='green')),
+                      name='Memory', line={'color': 'green'}),
             row=2, col=1
         )
 
@@ -264,19 +264,19 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
 
         fig_gpu.add_trace(
             go.Scatter(x=df['timestamp'], y=df['gpu_utilization'],
-                      name='GPU Util', line=dict(color='red')),
+                      name='GPU Util', line={'color': 'red'}),
             row=1, col=1
         )
 
         fig_gpu.add_trace(
             go.Scatter(x=df['timestamp'], y=df['gpu_memory'],
-                      name='GPU Memory', line=dict(color='orange')),
+                      name='GPU Memory', line={'color': 'orange'}),
             row=2, col=1
         )
 
         fig_gpu.add_trace(
             go.Scatter(x=df['timestamp'], y=df['gpu_temperature'],
-                      name='GPU Temp', line=dict(color='purple')),
+                      name='GPU Temp', line={'color': 'purple'}),
             row=3, col=1
         )
 
