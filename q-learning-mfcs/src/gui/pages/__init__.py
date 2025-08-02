@@ -1,0 +1,1 @@
+# Enhanced MFC Platform Pages Module
