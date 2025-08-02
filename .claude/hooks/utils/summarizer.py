@@ -8,11 +8,12 @@
 # ///
 
 import json
-from typing import Optional, Dict, Any
+from typing import Any
+
 from .llm.anth import prompt_llm
 
 
-def generate_event_summary(event_data: Dict[str, Any]) -> Optional[str]:
+def generate_event_summary(event_data: dict[str, Any]) -> str | None:
     """
     Generate a concise one-sentence summary of a hook event for engineers.
 
