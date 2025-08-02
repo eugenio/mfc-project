@@ -136,7 +136,7 @@ class DomainAdaptationNetwork(nn.Module):
             num_domains: Number of source domains
             hidden_dim: Hidden layer dimension
         """
-        super(DomainAdaptationNetwork, self).__init__()
+        super().__init__()
 
         self.feature_dim = feature_dim
         self.num_domains = num_domains
@@ -192,7 +192,7 @@ class ProgressiveNetwork(nn.Module):
             num_columns: Number of progressive columns
             lateral_connections: Whether to use lateral connections
         """
-        super(ProgressiveNetwork, self).__init__()
+        super().__init__()
 
         self.input_dim = input_dim
         self.hidden_dims = hidden_dims
@@ -268,7 +268,7 @@ class ProgressiveNetwork(nn.Module):
                 current_input = col_input
                 layer_idx = 0
 
-                for i, layer in enumerate(self.columns[col]):
+                for _i, layer in enumerate(self.columns[col]):
                     if isinstance(layer, nn.Linear):
                         if layer_idx < len(lateral_inputs):
                             # Concatenate lateral input
@@ -346,7 +346,7 @@ class MultiTaskNetwork(nn.Module):
             task_layers: Task-specific layer dimensions
             task_outputs: Output dimensions for each task
         """
-        super(MultiTaskNetwork, self).__init__()
+        super().__init__()
 
         self.input_dim = input_dim
         self.tasks = list(task_layers.keys())
@@ -411,7 +411,7 @@ class MAMLController(nn.Module):
             hidden_dims: Hidden layer dimensions
             output_dim: Output dimension
         """
-        super(MAMLController, self).__init__()
+        super().__init__()
 
         # Build network
         layers = []
@@ -450,7 +450,7 @@ class MAMLController(nn.Module):
         adapted_model = copy.deepcopy(self)
 
         # Inner loop optimization
-        for step in range(inner_steps):
+        for _step in range(inner_steps):
             # Forward pass
             pred = adapted_model(support_x)
             loss = F.mse_loss(pred, support_y)

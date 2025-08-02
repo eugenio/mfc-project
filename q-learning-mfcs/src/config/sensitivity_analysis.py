@@ -832,7 +832,7 @@ class SensitivityVisualizer:
         ax.grid(True, alpha=0.3, axis='x')
 
         # Add value labels on bars
-        for i, (bar, value) in enumerate(zip(bars, values, strict=False)):
+        for _i, (bar, value) in enumerate(zip(bars, values, strict=False)):
             ax.text(bar.get_width() + max(values) * 0.01, bar.get_y() + bar.get_height()/2,
                    f'{value:.3f}', va='center', fontsize=9)
 

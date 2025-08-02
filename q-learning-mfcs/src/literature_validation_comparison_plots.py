@@ -246,7 +246,7 @@ def create_literature_comparison_plots():
 
     ax9.text(0.05, 0.95, improvements_text, transform=ax9.transAxes, fontsize=11,
              verticalalignment='top', fontfamily='monospace',
-             bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8))
+             bbox={'boxstyle': "round,pad=0.5", 'facecolor': "lightgray", 'alpha': 0.8})
     ax9.text(-0.15, 1.05, 'I', transform=ax9.transAxes, fontsize=16, fontweight='bold')
 
     plt.tight_layout()

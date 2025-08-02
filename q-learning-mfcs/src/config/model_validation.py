@@ -45,7 +45,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some statistical tests will be limited.")
+    warnings.warn("SciPy not available. Some statistical tests will be limited.", stacklevel=2)
 
 try:
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -54,7 +54,7 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Some validation features will be limited.")
+    warnings.warn("Scikit-learn not available. Some validation features will be limited.", stacklevel=2)
 
 # Plotting dependencies
 try:
@@ -63,7 +63,7 @@ try:
     HAS_PLOTTING = True
 except ImportError:
     HAS_PLOTTING = False
-    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.")
+    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.", stacklevel=2)
 
 # Import configuration classes
 

@@ -488,7 +488,7 @@ class PolicyEvolutionTracker:
         for snapshot in self.policy_snapshots:
             all_actions.update(snapshot.action_frequencies.keys())
 
-        all_actions = sorted(list(all_actions))
+        all_actions = sorted(all_actions)
 
         # Create frequency matrix
         frequency_data = []

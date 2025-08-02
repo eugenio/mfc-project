@@ -164,8 +164,8 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
         # Create a combined action space from flow and substrate actions
         if hasattr(self, 'flow_actions') and hasattr(self, 'substrate_actions'):
             self.actions = []
-            for flow_idx, flow_val in enumerate(self.flow_actions):
-                for substr_idx, substr_val in enumerate(self.substrate_actions):
+            for _flow_idx, flow_val in enumerate(self.flow_actions):
+                for _substr_idx, substr_val in enumerate(self.substrate_actions):
                     self.actions.append((flow_val, substr_val))
         else:
             # Fallback action space

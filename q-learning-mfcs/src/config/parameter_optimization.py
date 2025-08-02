@@ -42,7 +42,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some optimization features will be limited.")
+    warnings.warn("SciPy not available. Some optimization features will be limited.", stacklevel=2)
 
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
@@ -50,7 +50,7 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Bayesian optimization will be limited.")
+    warnings.warn("Scikit-learn not available. Bayesian optimization will be limited.", stacklevel=2)
 
 # Import configuration classes
 from .sensitivity_analysis import ParameterSpace
@@ -307,7 +307,7 @@ class BayesianOptimizer(ParameterOptimizer):
         gp = self._create_gaussian_process()
 
         # Bayesian optimization loop
-        for i in range(n_initial_points, max_evaluations):
+        for _i in range(n_initial_points, max_evaluations):
             # Fit GP to current data
             gp.fit(X, y)
 
@@ -509,7 +509,7 @@ class GeneticOptimizer(ParameterOptimizer):
         fitness_scores = np.array(fitness_scores)
 
         # Evolution loop
-        for generation in range(max_generations):
+        for _generation in range(max_generations):
             if result.total_evaluations >= max_evaluations:
                 break
 

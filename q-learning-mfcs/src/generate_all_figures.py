@@ -79,7 +79,7 @@ def add_panel_label(ax, label, fontsize=16, fontweight='bold'):
     # Position the label outside the plot area (top-left, outside the axes)
     ax.text(-0.1, 1.1, f'({label})', transform=ax.transAxes, fontsize=fontsize,
             fontweight=fontweight, va='bottom', ha='left',
-            bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="black", alpha=0.9))
+            bbox={'boxstyle': "round,pad=0.4", 'facecolor': "white", 'edgecolor': "black", 'alpha': 0.9})
 
 def save_dataset(data_dict, base_filename, function_name, description=""):
     """Save dataset in CSV, JSON formats and create a data provenance report."""
@@ -99,13 +99,13 @@ def save_dataset(data_dict, base_filename, function_name, description=""):
             # First check if all values are lists/arrays and find max length
             max_length = 0
             for key, value in data_dict.items():
-                if isinstance(value, (list, np.ndarray)):
+                if isinstance(value, list | np.ndarray):
                     max_length = max(max_length, len(value))
 
             # Pad shorter arrays with None or repeat last value
             normalized_data = {}
             for key, value in data_dict.items():
-                if isinstance(value, (list, np.ndarray)):
+                if isinstance(value, list | np.ndarray):
                     value_list = list(value) if isinstance(value, np.ndarray) else value
                     if len(value_list) < max_length:
                         # For short metadata arrays, repeat the last value
@@ -536,7 +536,7 @@ def generate_cumulative_energy():
                markeredgecolor='black', markeredgewidth=2)
         ax.text(time_hours[-1]-5, final_val+max(final_energies)*0.02, f'{final_val} Wh',
                ha='right', va='bottom', fontweight='bold', fontsize=11,
-               bbox=dict(boxstyle="round,pad=0.3", facecolor=color, alpha=0.2))
+               bbox={'boxstyle': "round,pad=0.3", 'facecolor': color, 'alpha': 0.2})
 
     # Add key milestones
     milestones = [24, 48, 72, 96]  # Every 24 hours
@@ -564,7 +564,7 @@ def generate_cumulative_energy():
     summary_str = '\n'.join(summary_text)
     ax.text(0.98, 0.02, summary_str, transform=ax.transAxes, fontsize=10,
            ha='right', va='bottom', fontweight='bold',
-           bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow", alpha=0.9))
+           bbox={'boxstyle': "round,pad=0.5", 'facecolor': "lightyellow", 'alpha': 0.9})
 
     plt.tight_layout()
 
@@ -628,7 +628,7 @@ def generate_power_evolution():
 
     # Add annotations for key events
     ax.annotate('Initial Performance Peak', xy=(5, 1.4), xytext=(15, 1.6),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
                 fontsize=10, fontweight='bold')
 
     plt.tight_layout()
@@ -1080,9 +1080,9 @@ def generate_control_analysis():
     ax2.axvline(x=settling_time, color='green', linestyle=':', alpha=0.7)
 
     ax2.text(settling_time+2, 0.5, f'Settling Time:\n{settling_time-10}s',
-             fontsize=10, fontweight='bold', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgreen"))
+             fontsize=10, fontweight='bold', bbox={'boxstyle': "round,pad=0.3", 'facecolor': "lightgreen"})
     ax2.text(25, 1.15, f'Overshoot:\n{overshoot*100:.1f}%',
-             fontsize=10, fontweight='bold', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow"))
+             fontsize=10, fontweight='bold', bbox={'boxstyle': "round,pad=0.3", 'facecolor': "lightyellow"})
 
     ax2.set_title('System Step Response Characteristics', fontsize=14, fontweight='bold')
     ax2.set_xlabel('Time (seconds)', fontsize=12)
@@ -1239,7 +1239,7 @@ def generate_maintenance_schedule():
     ax4.text(len(maintenance_items)/2, max(total_cost)*0.9,
             f'Total Monthly Cost: ${total_monthly:.0f}',
             ha='center', va='center', fontsize=12, fontweight='bold',
-            bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow"))
+            bbox={'boxstyle': "round,pad=0.5", 'facecolor': "lightyellow"})
 
     plt.tight_layout()
 
@@ -1295,7 +1295,7 @@ def generate_economic_analysis():
     total_cost = sum(costs)
     ax1.text(len(cost_categories)/2, max(costs)*0.8, f'Total: ${total_cost}',
             ha='center', va='center', fontsize=12, fontweight='bold',
-            bbox=dict(boxstyle="round,pad=0.5", facecolor="white", alpha=0.8))
+            bbox={'boxstyle': "round,pad=0.5", 'facecolor': "white", 'alpha': 0.8})
 
     # Revenue projections
     years = np.arange(1, 11)
@@ -1360,7 +1360,7 @@ def generate_economic_analysis():
         ax3.axvline(x=payback_year, color='purple', linestyle=':', linewidth=2)
         ax3.text(payback_year+0.1, max(npv_values)*0.5, f'Payback:\n{payback_year} years',
                 fontsize=10, fontweight='bold',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="lightpurple"))
+                bbox={'boxstyle': "round,pad=0.3", 'facecolor': "lightpurple"})
 
     # Sensitivity analysis
     sensitivity_factors = ['Energy Price\n+20%', 'Maintenance\n-15%', 'Efficiency\n+10%',

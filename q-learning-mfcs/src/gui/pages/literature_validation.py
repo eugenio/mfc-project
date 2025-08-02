@@ -333,7 +333,7 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
             xaxis_title="Parameters",
             yaxis_title="Confidence Level",
             height=400,
-            yaxis=dict(range=[0, 1])
+            yaxis={"range": [0, 1]}
         )
         st.plotly_chart(fig_conf, use_container_width=True)
 
@@ -355,7 +355,7 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
                 x=[lit_min, lit_max],
                 y=[1, 1],
                 mode='lines',
-                line=dict(color='lightblue', width=20),
+                line={"color": 'lightblue', "width": 20},
                 name='Literature Range',
                 hovertemplate=f'Literature Range: {lit_min:.3f} - {lit_max:.3f}'
             ))
@@ -365,7 +365,7 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
                 x=[typ_min, typ_max],
                 y=[1, 1],
                 mode='lines',
-                line=dict(color='blue', width=15),
+                line={"color": 'blue', "width": 15},
                 name='Typical Range',
                 hovertemplate=f'Typical Range: {typ_min:.3f} - {typ_max:.3f}'
             ))
@@ -376,7 +376,7 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
                 x=[value],
                 y=[1],
                 mode='markers',
-                marker=dict(color=color, size=15, symbol='diamond'),
+                marker={"color": color, "size": 15, "symbol": 'diamond'},
                 name='Current Value',
                 hovertemplate=f'Your Value: {value:.3f}'
             ))
@@ -384,7 +384,7 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
             fig_range.update_layout(
                 title=f"{validation.parameter_name.replace('_', ' ').title()} Range Analysis",
                 xaxis_title=f"Value ({validation.unit})",
-                yaxis=dict(showticklabels=False, range=[0.5, 1.5]),
+                yaxis={"showticklabels": False, "range": [0.5, 1.5]},
                 height=200,
                 showlegend=True
             )

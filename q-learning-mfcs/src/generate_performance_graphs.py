@@ -180,7 +180,7 @@ def create_comprehensive_performance_plots():
     ax1.annotate(f'Peak: {data["stack_power"][max_power_idx]:.3f}W',
                 xy=(data['hours'][max_power_idx], data['stack_power'][max_power_idx]),
                 xytext=(data['hours'][max_power_idx] + 10, data['stack_power'][max_power_idx] + 0.2),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
+                arrowprops={'arrowstyle': '->', 'color': 'red', 'lw': 2},
                 fontsize=12, fontweight='bold', color='red')
 
     # 2. Individual Cell Voltages
@@ -219,7 +219,7 @@ def create_comprehensive_performance_plots():
     ax4.annotate(f'Total: {final_energy:.2f} Wh',
                 xy=(100, final_energy),
                 xytext=(85, final_energy * 0.8),
-                arrowprops=dict(arrowstyle='->', color='green', lw=2),
+                arrowprops={'arrowstyle': '->', 'color': 'green', 'lw': 2},
                 fontsize=11, fontweight='bold', color='green')
 
     # 5. Cell Aging and Biofilm Growth
@@ -368,7 +368,7 @@ def create_comprehensive_performance_plots():
 
     ax11.text(0.05, 0.95, metrics_text, transform=ax11.transAxes, fontsize=11,
              verticalalignment='top', fontfamily='monospace',
-             bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+             bbox={'boxstyle': 'round', 'facecolor': 'lightblue', 'alpha': 0.8})
 
     # 12. Final Cell Comparison
     ax12 = fig.add_subplot(gs[5, :])

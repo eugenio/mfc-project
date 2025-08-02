@@ -169,7 +169,7 @@ def run_mojo_qlearning_demo():
             episode_power = 0.0
             steps = 0
 
-            for step in range(50):  # Max steps per episode
+            for _step in range(50):  # Max steps per episode
                 # Extract state features for discretization
                 state_features = [state[0], state[3], state[4], state[7], state[8], 0.1]  # Last is power estimate
                 state_index = self.discretize_state(state_features)
