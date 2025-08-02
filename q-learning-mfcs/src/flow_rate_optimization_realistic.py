@@ -4,13 +4,17 @@ Realistic Flow Rate Optimization for MFC Stack
 Considers practical constraints and realistic power generation
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
-from dataclasses import dataclass
+
 from path_config import get_figure_path
+
 
 @dataclass
 class RealisticMFCParameters:

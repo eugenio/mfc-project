@@ -7,21 +7,27 @@ patterns, reliability metrics, and maintenance scheduling.
 
 Created: 2025-07-28
 """
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.offline as pyo
-from typing import Dict, List, Tuple, Optional, Any
-from datetime import datetime, timedelta
-from pathlib import Path
 import json
 import logging
-from degradation_detector import DegradationDetector, DegradationPattern, DegradationSeverity
-from reliability_analyzer import ReliabilityAnalyzer, ComponentReliability
-from maintenance_scheduler import MaintenanceScheduler, MaintenanceTask
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.offline as pyo
 from data_manager import LongTermDataManager
+from degradation_detector import (
+    DegradationDetector,
+    DegradationPattern,
+    DegradationSeverity,
+)
+from maintenance_scheduler import MaintenanceScheduler, MaintenanceTask
+from plotly.subplots import make_subplots
+from reliability_analyzer import ComponentReliability, ReliabilityAnalyzer
+
 
 class VisualizationConfig:
     """Configuration for visualization settings."""
@@ -44,8 +50,8 @@ class StabilityVisualizer:
     - Failure prediction plots
     - Comprehensive PDF reports
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  output_directory: str = "../reports/stability_reports",
                  config: Optional[VisualizationConfig] = None):
         """
@@ -57,15 +63,15 @@ class StabilityVisualizer:
         """
         self.output_directory = Path(output_directory)
         self.output_directory.mkdir(parents=True, exist_ok=True)
-        
+
         self.config = config or VisualizationConfig()
-        
+
         # Initialize analysis components
         self.degradation_detector = DegradationDetector()
         self.reliability_analyzer = ReliabilityAnalyzer()
         self.maintenance_scheduler = MaintenanceScheduler()
         self.data_manager = LongTermDataManager()
-        
+
         # Color schemes
         self.severity_colors = {
             'minimal': '#2E8B57',     # Sea Green
@@ -75,7 +81,7 @@ class StabilityVisualizer:
             'critical': '#DC143C',    # Crimson
             'failure': '#8B0000'      # Dark Red
         }
-        
+
         self.component_colors = {
             'membrane': '#1f77b4',
             'anode': '#ff7f0e',
@@ -84,11 +90,11 @@ class StabilityVisualizer:
             'housing': '#9467bd',
             'system': '#8c564b'
         }
-        
+
         # Logger
         self.logger = logging.getLogger(__name__)
-    
-    def create_degradation_dashboard(self, 
+
+    def create_degradation_dashboard(self,
                                    patterns: List[DegradationPattern],
                                    time_window_days: int = 30) -> str:
         """
@@ -104,7 +110,7 @@ class StabilityVisualizer:
         if not patterns:
             self.logger.warning("No degradation patterns to visualize")
             return ""
-        
+
         # Create subplot structure
         fig = make_subplots(
             rows=3, cols=2,
@@ -122,13 +128,13 @@ class StabilityVisualizer:
                 [{"colspan": 2}, None]
             ]
         )
-        
+
         # 1. Degradation patterns by severity (pie chart)
         severity_counts = {}
         for pattern in patterns:
             severity = pattern.severity.value
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
+
         fig.add_trace(
             go.Pie(
                 labels=list(severity_counts.keys()),
@@ -138,24 +144,24 @@ class StabilityVisualizer:
             ),
             row=1, col=1
         )
-        
+
         # 2. Component health status (bar chart)
         component_status = {}
         for pattern in patterns:
             for component in pattern.affected_components:
                 if component not in component_status:
                     component_status[component] = {'count': 0, 'max_severity': 0}
-                
+
                 component_status[component]['count'] += 1
                 severity_score = self._severity_to_score(pattern.severity)
                 component_status[component]['max_severity'] = max(
-                    component_status[component]['max_severity'], 
+                    component_status[component]['max_severity'],
                     severity_score
                 )
-        
+
         components = list(component_status.keys())
         severity_scores = [component_status[c]['max_severity'] for c in components]
-        
+
         fig.add_trace(
             go.Bar(
                 x=components,
@@ -165,10 +171,10 @@ class StabilityVisualizer:
             ),
             row=1, col=2
         )
-        
+
         # 3. Pattern confidence distribution (histogram)
         confidences = [pattern.confidence for pattern in patterns]
-        
+
         fig.add_trace(
             go.Histogram(
                 x=confidences,
@@ -178,7 +184,7 @@ class StabilityVisualizer:
             ),
             row=2, col=1
         )
-        
+
         # 4. Degradation types by component (stacked bar)
         degradation_component_matrix = {}
         for pattern in patterns:
@@ -188,13 +194,13 @@ class StabilityVisualizer:
                     degradation_component_matrix[component] = {}
                 degradation_component_matrix[component][deg_type] = \
                     degradation_component_matrix[component].get(deg_type, 0) + 1
-        
+
         # Create stacked bar chart
         components = list(degradation_component_matrix.keys())
         all_deg_types = set()
         for comp_data in degradation_component_matrix.values():
             all_deg_types.update(comp_data.keys())
-        
+
         for deg_type in all_deg_types:
             values = [degradation_component_matrix[comp].get(deg_type, 0) for comp in components]
             fig.add_trace(
@@ -205,7 +211,7 @@ class StabilityVisualizer:
                 ),
                 row=2, col=2
             )
-        
+
         # 5. Failure predictions timeline (scatter plot)
         prediction_data = []
         for pattern in patterns:
@@ -217,10 +223,10 @@ class StabilityVisualizer:
                     'severity': pattern.severity.value,
                     'pattern_id': pattern.pattern_id
                 })
-        
+
         if prediction_data:
             pred_df = pd.DataFrame(prediction_data)
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=pred_df['failure_time'],
@@ -236,7 +242,7 @@ class StabilityVisualizer:
                 ),
                 row=3, col=1
             )
-        
+
         # Update layout
         fig.update_layout(
             title=f"MFC Degradation Analysis Dashboard - {datetime.now().strftime('%Y-%m-%d')}",
@@ -244,25 +250,25 @@ class StabilityVisualizer:
             showlegend=True,
             template="plotly_white"
         )
-        
+
         # Save dashboard
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         dashboard_path = self.output_directory / f"degradation_dashboard_{timestamp}.html"
-        
+
         pyo.plot(fig, filename=str(dashboard_path), auto_open=False)
-        
+
         self.logger.info(f"Degradation dashboard saved to {dashboard_path}")
         return str(dashboard_path)
-    
-    def create_reliability_trends_plot(self, 
+
+    def create_reliability_trends_plot(self,
                                      reliability_data: List[ComponentReliability],
                                      time_window_days: int = 90) -> str:
         """Create reliability trends visualization."""
-        
+
         if not reliability_data:
             self.logger.warning("No reliability data to visualize")
             return ""
-        
+
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=[
@@ -272,7 +278,7 @@ class StabilityVisualizer:
                 'Maintenance Impact'
             ]
         )
-        
+
         # Process reliability data by component
         component_data = {}
         for rel_data in reliability_data:
@@ -284,18 +290,18 @@ class StabilityVisualizer:
                     'failure_rate': [],
                     'maintenance_events': []
                 }
-            
+
             component_data[component]['reliability'].append(rel_data.current_reliability)
             component_data[component]['mtbf'].append(rel_data.mtbf_hours)
             component_data[component]['failure_rate'].append(rel_data.failure_rate)
-        
+
         # Create time series for reliability
         time_points = pd.date_range(
             start=datetime.now() - timedelta(days=time_window_days),
             end=datetime.now(),
             periods=len(reliability_data)
         )
-        
+
         # 1. Reliability vs Time
         for component, data in component_data.items():
             if data['reliability']:
@@ -309,7 +315,7 @@ class StabilityVisualizer:
                     ),
                     row=1, col=1
                 )
-        
+
         # 2. MTBF Trends
         for component, data in component_data.items():
             if data['mtbf']:
@@ -323,14 +329,14 @@ class StabilityVisualizer:
                     ),
                     row=1, col=2
                 )
-        
+
         # 3. Failure Rate Distribution
         all_failure_rates = []
         components_list = []
         for component, data in component_data.items():
             all_failure_rates.extend(data['failure_rate'])
             components_list.extend([component] * len(data['failure_rate']))
-        
+
         if all_failure_rates:
             fig.add_trace(
                 go.Box(
@@ -340,7 +346,7 @@ class StabilityVisualizer:
                 ),
                 row=2, col=1
             )
-        
+
         # 4. Maintenance Impact (placeholder - would need maintenance data)
         fig.add_trace(
             go.Scatter(
@@ -352,39 +358,39 @@ class StabilityVisualizer:
             ),
             row=2, col=2
         )
-        
+
         fig.update_layout(
             title="MFC System Reliability Analysis",
             height=800,
             showlegend=True,
             template="plotly_white"
         )
-        
+
         # Save plot
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         plot_path = self.output_directory / f"reliability_trends_{timestamp}.html"
-        
+
         pyo.plot(fig, filename=str(plot_path), auto_open=False)
-        
+
         self.logger.info(f"Reliability trends plot saved to {plot_path}")
         return str(plot_path)
-    
-    def create_maintenance_schedule_chart(self, 
+
+    def create_maintenance_schedule_chart(self,
                                         tasks: List[MaintenanceTask],
                                         time_horizon_days: int = 90) -> str:
         """Create maintenance schedule Gantt chart."""
-        
+
         if not tasks:
             self.logger.warning("No maintenance tasks to visualize")
             return ""
-        
+
         # Prepare data for Gantt chart
         gantt_data = []
-        
+
         for task in tasks:
             start_date = task.scheduled_date
             end_date = start_date + timedelta(hours=task.estimated_duration_hours)
-            
+
             gantt_data.append({
                 'Task': task.task_id,
                 'Start': start_date,
@@ -395,9 +401,9 @@ class StabilityVisualizer:
                 'Duration': task.estimated_duration_hours,
                 'Cost': task.cost_estimate
             })
-        
+
         df = pd.DataFrame(gantt_data)
-        
+
         # Create Gantt chart
         fig = px.timeline(
             df,
@@ -415,38 +421,38 @@ class StabilityVisualizer:
                 'emergency': '#DC143C'
             }
         )
-        
+
         fig.update_layout(
             height=600,
             xaxis_title="Timeline",
             yaxis_title="Component",
             template="plotly_white"
         )
-        
+
         # Save chart
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         chart_path = self.output_directory / f"maintenance_schedule_{timestamp}.html"
-        
+
         pyo.plot(fig, filename=str(chart_path), auto_open=False)
-        
+
         self.logger.info(f"Maintenance schedule chart saved to {chart_path}")
         return str(chart_path)
-    
-    def create_component_health_heatmap(self, 
+
+    def create_component_health_heatmap(self,
                                       patterns: List[DegradationPattern],
                                       reliability_data: List[ComponentReliability]) -> str:
         """Create component health status heatmap."""
-        
+
         # Collect component health data
         components = set()
         for pattern in patterns:
             components.update(pattern.affected_components)
-        
+
         for rel_data in reliability_data:
             components.add(rel_data.component_id)
-        
+
         components = sorted(list(components))
-        
+
         # Create health matrix
         health_metrics = [
             'Degradation Severity',
@@ -455,38 +461,38 @@ class StabilityVisualizer:
             'Maintenance Urgency',
             'Failure Risk'
         ]
-        
+
         health_matrix = np.zeros((len(components), len(health_metrics)))
-        
+
         # Fill matrix with normalized health scores
         for i, component in enumerate(components):
             # Degradation severity
             max_severity = 0
             avg_confidence = 0
             pattern_count = 0
-            
+
             for pattern in patterns:
                 if component in pattern.affected_components:
                     max_severity = max(max_severity, self._severity_to_score(pattern.severity))
                     avg_confidence += pattern.confidence
                     pattern_count += 1
-            
+
             if pattern_count > 0:
                 avg_confidence /= pattern_count
-            
+
             health_matrix[i, 0] = max_severity / 5  # Normalize to 0-1
             health_matrix[i, 1] = 1 - avg_confidence  # Invert confidence (lower is better)
-            
+
             # Reliability score
             for rel_data in reliability_data:
                 if rel_data.component_id == component:
                     health_matrix[i, 2] = 1 - rel_data.current_reliability
                     health_matrix[i, 4] = rel_data.failure_rate * 1000  # Scale for visibility
                     break
-            
+
             # Maintenance urgency (placeholder)
             health_matrix[i, 3] = max_severity / 5  # Use severity as proxy
-        
+
         # Create heatmap
         fig = go.Figure(
             data=go.Heatmap(
@@ -500,7 +506,7 @@ class StabilityVisualizer:
                 textfont={"size": 10}
             )
         )
-        
+
         fig.update_layout(
             title="MFC Component Health Status Heatmap",
             xaxis_title="Health Metrics",
@@ -508,19 +514,19 @@ class StabilityVisualizer:
             height=max(400, len(components) * 50),
             template="plotly_white"
         )
-        
+
         # Save heatmap
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         heatmap_path = self.output_directory / f"component_health_heatmap_{timestamp}.html"
-        
+
         pyo.plot(fig, filename=str(heatmap_path), auto_open=False)
-        
+
         self.logger.info(f"Component health heatmap saved to {heatmap_path}")
         return str(heatmap_path)
-    
+
     def create_failure_prediction_plot(self, patterns: List[DegradationPattern]) -> str:
         """Create failure prediction timeline plot."""
-        
+
         predictions = []
         for pattern in patterns:
             if pattern.predicted_failure_time:
@@ -532,13 +538,13 @@ class StabilityVisualizer:
                     'degradation_type': pattern.degradation_type.value,
                     'pattern_id': pattern.pattern_id
                 })
-        
+
         if not predictions:
             self.logger.warning("No failure predictions to visualize")
             return ""
-        
+
         df = pd.DataFrame(predictions)
-        
+
         # Create timeline plot
         fig = px.scatter(
             df,
@@ -550,7 +556,7 @@ class StabilityVisualizer:
             title="MFC Component Failure Predictions",
             color_discrete_map=self.severity_colors
         )
-        
+
         # Add vertical line for current time
         fig.add_vline(
             x=datetime.now(),
@@ -558,30 +564,30 @@ class StabilityVisualizer:
             line_color="red",
             annotation_text="Current Time"
         )
-        
+
         fig.update_layout(
             xaxis_title="Predicted Failure Time",
             yaxis_title="Component",
             height=500,
             template="plotly_white"
         )
-        
+
         # Save plot
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         plot_path = self.output_directory / f"failure_predictions_{timestamp}.html"
-        
+
         pyo.plot(fig, filename=str(plot_path), auto_open=False)
-        
+
         self.logger.info(f"Failure prediction plot saved to {plot_path}")
         return str(plot_path)
-    
+
     def generate_stability_report(self,
                                 patterns: List[DegradationPattern],
                                 reliability_data: List[ComponentReliability],
                                 maintenance_tasks: List[MaintenanceTask],
                                 include_plots: bool = True) -> str:
         """Generate comprehensive stability report."""
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_data = {
             'generated_at': datetime.now().isoformat(),
@@ -597,7 +603,7 @@ class StabilityVisualizer:
             ),
             'visualizations': []
         }
-        
+
         # Generate visualizations if requested
         if include_plots:
             try:
@@ -608,7 +614,7 @@ class StabilityVisualizer:
                         'path': dashboard_path,
                         'description': 'Interactive degradation pattern dashboard'
                     })
-                
+
                 reliability_path = self.create_reliability_trends_plot(reliability_data)
                 if reliability_path:
                     report_data['visualizations'].append({
@@ -616,7 +622,7 @@ class StabilityVisualizer:
                         'path': reliability_path,
                         'description': 'Component reliability trends over time'
                     })
-                
+
                 maintenance_path = self.create_maintenance_schedule_chart(maintenance_tasks)
                 if maintenance_path:
                     report_data['visualizations'].append({
@@ -624,7 +630,7 @@ class StabilityVisualizer:
                         'path': maintenance_path,
                         'description': 'Maintenance schedule Gantt chart'
                     })
-                
+
                 heatmap_path = self.create_component_health_heatmap(patterns, reliability_data)
                 if heatmap_path:
                     report_data['visualizations'].append({
@@ -632,7 +638,7 @@ class StabilityVisualizer:
                         'path': heatmap_path,
                         'description': 'Component health status heatmap'
                     })
-                
+
                 prediction_path = self.create_failure_prediction_plot(patterns)
                 if prediction_path:
                     report_data['visualizations'].append({
@@ -640,18 +646,18 @@ class StabilityVisualizer:
                         'path': prediction_path,
                         'description': 'Component failure prediction timeline'
                     })
-                
+
             except Exception as e:
                 self.logger.warning(f"Error generating visualizations: {e}")
-        
+
         # Save report
         report_path = self.output_directory / f"stability_report_{timestamp}.json"
         with open(report_path, 'w') as f:
             json.dump(report_data, f, indent=2, default=str)
-        
+
         self.logger.info(f"Stability report generated: {report_path}")
         return str(report_path)
-    
+
     def _severity_to_score(self, severity: DegradationSeverity) -> int:
         """Convert severity enum to numeric score."""
         severity_scores = {
@@ -663,34 +669,34 @@ class StabilityVisualizer:
             DegradationSeverity.FAILURE: 6
         }
         return severity_scores.get(severity, 0)
-    
+
     def _generate_executive_summary(self,
                                   patterns: List[DegradationPattern],
                                   reliability_data: List[ComponentReliability],
                                   maintenance_tasks: List[MaintenanceTask]) -> Dict[str, Any]:
         """Generate executive summary for stability report."""
-        
+
         # Count patterns by severity
         severity_counts = {}
         for pattern in patterns:
             severity = pattern.severity.value
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
+
         # Count maintenance tasks by priority
         priority_counts = {}
         for task in maintenance_tasks:
             priority = task.priority.value
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
-        
+
         # Calculate average reliability
         avg_reliability = 0
         if reliability_data:
             avg_reliability = np.mean([r.current_reliability for r in reliability_data])
-        
+
         # Identify critical issues
         critical_patterns = [p for p in patterns if p.severity in [DegradationSeverity.CRITICAL, DegradationSeverity.FAILURE]]
         emergency_tasks = [t for t in maintenance_tasks if t.priority.value == 'emergency']
-        
+
         return {
             'total_degradation_patterns': len(patterns),
             'critical_degradation_patterns': len(critical_patterns),
@@ -706,28 +712,28 @@ class StabilityVisualizer:
                 f"Average system reliability: {avg_reliability:.2%}" if avg_reliability < 0.8 else None
             ]
         }
-    
+
     def _analyze_degradation_patterns(self, patterns: List[DegradationPattern]) -> Dict[str, Any]:
         """Analyze degradation patterns for report."""
-        
+
         if not patterns:
             return {'error': 'No degradation patterns to analyze'}
-        
+
         # Group by type
         type_counts = {}
         for pattern in patterns:
             deg_type = pattern.degradation_type.value
             type_counts[deg_type] = type_counts.get(deg_type, 0) + 1
-        
+
         # Group by component
         component_counts = {}
         for pattern in patterns:
             for component in pattern.affected_components:
                 component_counts[component] = component_counts.get(component, 0) + 1
-        
+
         # Confidence statistics
         confidences = [p.confidence for p in patterns]
-        
+
         return {
             'total_patterns': len(patterns),
             'patterns_by_type': type_counts,
@@ -741,17 +747,17 @@ class StabilityVisualizer:
             'most_common_degradation_type': max(type_counts, key=type_counts.get) if type_counts else None,
             'most_affected_component': max(component_counts, key=component_counts.get) if component_counts else None
         }
-    
+
     def _analyze_reliability_data(self, reliability_data: List[ComponentReliability]) -> Dict[str, Any]:
         """Analyze reliability data for report."""
-        
+
         if not reliability_data:
             return {'error': 'No reliability data to analyze'}
-        
+
         reliabilities = [r.current_reliability for r in reliability_data]
         mtbf_values = [r.mtbf_hours for r in reliability_data]
         failure_rates = [r.failure_rate for r in reliability_data]
-        
+
         return {
             'components_analyzed': len(reliability_data),
             'reliability_statistics': {
@@ -773,40 +779,40 @@ class StabilityVisualizer:
                 'max': np.max(failure_rates)
             },
             'low_reliability_components': [
-                r.component_id for r in reliability_data 
+                r.component_id for r in reliability_data
                 if r.current_reliability < 0.8
             ]
         }
-    
+
     def _analyze_maintenance_schedule(self, maintenance_tasks: List[MaintenanceTask]) -> Dict[str, Any]:
         """Analyze maintenance schedule for report."""
-        
+
         if not maintenance_tasks:
             return {'error': 'No maintenance tasks to analyze'}
-        
+
         # Calculate total cost and downtime
         total_cost = sum(task.cost_estimate for task in maintenance_tasks)
         total_downtime = sum(task.downtime_impact for task in maintenance_tasks)
-        
+
         # Group by type and priority
         type_counts = {}
         priority_counts = {}
-        
+
         for task in maintenance_tasks:
             task_type = task.maintenance_type.value
             priority = task.priority.value
-            
+
             type_counts[task_type] = type_counts.get(task_type, 0) + 1
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
-        
+
         # Timeline analysis
         now = datetime.now()
         overdue_tasks = [t for t in maintenance_tasks if t.scheduled_date < now]
         upcoming_tasks = [
-            t for t in maintenance_tasks 
+            t for t in maintenance_tasks
             if now <= t.scheduled_date <= now + timedelta(days=30)
         ]
-        
+
         return {
             'total_tasks': len(maintenance_tasks),
             'total_estimated_cost': total_cost,
@@ -818,22 +824,22 @@ class StabilityVisualizer:
             'average_task_cost': total_cost / len(maintenance_tasks) if maintenance_tasks else 0,
             'average_downtime_per_task': total_downtime / len(maintenance_tasks) if maintenance_tasks else 0
         }
-    
+
     def _generate_recommendations(self,
                                 patterns: List[DegradationPattern],
                                 reliability_data: List[ComponentReliability],
                                 maintenance_tasks: List[MaintenanceTask]) -> List[str]:
         """Generate actionable recommendations."""
-        
+
         recommendations = []
-        
+
         # Degradation-based recommendations
         critical_patterns = [p for p in patterns if p.severity in [DegradationSeverity.CRITICAL, DegradationSeverity.FAILURE]]
         if critical_patterns:
             recommendations.append(
                 f"URGENT: Address {len(critical_patterns)} critical degradation patterns immediately"
             )
-        
+
         # Component-specific recommendations
         component_issues = {}
         for pattern in patterns:
@@ -841,40 +847,40 @@ class StabilityVisualizer:
                 if component not in component_issues:
                     component_issues[component] = []
                 component_issues[component].append(pattern.degradation_type.value)
-        
+
         for component, issues in component_issues.items():
             if len(issues) > 2:
                 recommendations.append(
                     f"Component '{component}' shows multiple degradation patterns - consider comprehensive inspection"
                 )
-        
+
         # Reliability-based recommendations
         low_reliability_components = [
-            r.component_id for r in reliability_data 
+            r.component_id for r in reliability_data
             if r.current_reliability < 0.8
         ]
-        
+
         if low_reliability_components:
             recommendations.append(
                 f"Monitor components with low reliability: {', '.join(low_reliability_components)}"
             )
-        
+
         # Maintenance-based recommendations
         overdue_tasks = [
-            t for t in maintenance_tasks 
+            t for t in maintenance_tasks
             if t.scheduled_date < datetime.now()
         ]
-        
+
         if overdue_tasks:
             recommendations.append(
                 f"Complete {len(overdue_tasks)} overdue maintenance tasks immediately"
             )
-        
+
         # General recommendations
         if len(patterns) > 10:
             recommendations.append("Consider implementing more frequent monitoring due to high number of degradation patterns")
-        
+
         if not recommendations:
             recommendations.append("System appears stable - continue regular monitoring")
-        
+
         return recommendations

@@ -6,11 +6,12 @@ and mass transport through Nafion membranes based on literature properties
 and experimental data.
 """
 
-import numpy as np
-from typing import Dict
-from dataclasses import dataclass
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Dict
+
+import numpy as np
 
 # Add path for GPU acceleration
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))

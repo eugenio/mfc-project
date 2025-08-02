@@ -5,13 +5,17 @@ Optimizes anodic flow rate to maximize power output and substrate consumption
 while minimizing biofilm growth
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')  # Use non-interactive backend
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
-from dataclasses import dataclass
+
 from path_config import get_figure_path
+
 
 @dataclass
 class MFCParameters:
@@ -149,7 +153,6 @@ class MFCFlowOptimizer:
     def optimize_flow_rate(self) -> dict:
         """Find optimal flow rate"""
         # Initial guess based on typical values
-        Q_initial = 2.25e-5  # Current operating point
 
         # Bounds for flow rate (m³/s)
         Q_min = 1e-6   # Very slow flow

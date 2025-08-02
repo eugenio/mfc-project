@@ -12,19 +12,25 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass
 import logging
-from datetime import datetime, timezone
 from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+
+from .eis_model import EISMeasurement
+from .qcm_model import QCMMeasurement
 
 # Import base sensor fusion components
 from .sensor_fusion import (
-    SensorFusion, FusedMeasurement, KalmanFilter, FusionMethod, BacterialSpecies
+    BacterialSpecies,
+    FusedMeasurement,
+    FusionMethod,
+    KalmanFilter,
+    SensorFusion,
 )
-from .eis_model import EISMeasurement
-from .qcm_model import QCMMeasurement
 
 # Configuration and GPU support
 try:
@@ -40,8 +46,8 @@ except ImportError:
 # Statistical analysis
 try:
     from scipy import stats
-    from scipy.signal import find_peaks
     from scipy.optimize import minimize
+    from scipy.signal import find_peaks
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -257,7 +263,7 @@ class AdvancedKalmanFilter(KalmanFilter):
     def _apply_biofilm_dynamics(self):
         """Apply nonlinear biofilm growth dynamics to state prediction."""
         thickness = self.state[0]
-        biomass = self.state[1]
+        self.state[1]
         growth_rate = self.state[3]  # d_thickness/dt
 
         # Logistic growth model with saturation

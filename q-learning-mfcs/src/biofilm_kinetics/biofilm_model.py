@@ -6,10 +6,11 @@ for exoelectrogenic bacteria with species selection, substrate selection,
 and environmental compensation.
 """
 
-import numpy as np
-from typing import Dict, Optional, Any
-import sys
 import os
+import sys
+from typing import Any, Dict, Optional
+
+import numpy as np
 
 # Add path for GPU acceleration
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -21,15 +22,20 @@ from .substrate_params import SubstrateParameters
 # Import biological configuration
 try:
     from config.biological_config import (
-        SpeciesMetabolicConfig, BiofilmKineticsConfig,
-        get_geobacter_config, get_shewanella_config, get_default_biofilm_config
-    )
-    from config.substrate_config import (
-        ComprehensiveSubstrateConfig, SubstrateType,
-        DEFAULT_SUBSTRATE_CONFIGS
+        BiofilmKineticsConfig,
+        SpeciesMetabolicConfig,
+        get_default_biofilm_config,
+        get_geobacter_config,
+        get_shewanella_config,
     )
     from config.biological_validation import (
-        validate_species_metabolic_config, validate_biofilm_kinetics_config
+        validate_biofilm_kinetics_config,
+        validate_species_metabolic_config,
+    )
+    from config.substrate_config import (
+        DEFAULT_SUBSTRATE_CONFIGS,
+        ComprehensiveSubstrateConfig,
+        SubstrateType,
     )
 except ImportError:
     # Fallback if configuration modules are not available
@@ -132,7 +138,7 @@ class BiofilmKineticsModel:
             self.E_an = -0.5  # Typical anode potential
             self.attachment_prob = self.species_config.attachment_rate
             self.biofilm_thickness_max = self.species_config.max_biofilm_thickness
-            
+
             # Update kinetic_params object attributes for backward compatibility
             self.kinetic_params.mu_max = self.mu_max
             self.kinetic_params.K_s = self.K_s
@@ -173,7 +179,7 @@ class BiofilmKineticsModel:
             ph_optimal = 7.0
             ph_factor = np.exp(-0.5 * ((self.ph - ph_optimal) / 1.0)**2)
             self.mu_max *= ph_factor
-            
+
             # pH also affects electrochemical parameters (Nernst equation influence)
             # E_ka shifts with pH: dE/dpH ≈ -0.059 V/pH unit for typical bioelectrochemical systems
             ph_shift = (self.ph - ph_optimal) * (-0.059)  # V/pH unit

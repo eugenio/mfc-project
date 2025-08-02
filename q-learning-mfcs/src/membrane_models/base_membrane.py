@@ -14,11 +14,12 @@ Key transport mechanisms:
 Created: 2025-07-27
 """
 
-import jax.numpy as jnp
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, Optional
+
+import jax.numpy as jnp
 
 
 class IonType(Enum):
@@ -45,28 +46,28 @@ class TransportMechanism(Enum):
 @dataclass
 class MembraneParameters:
     """Base parameters for all membrane types."""
-    
+
     # Physical properties
     thickness: float = 100e-6        # m - membrane thickness
     area: float = 1e-4              # m² - membrane area
     porosity: float = 0.3           # - void fraction
     tortuosity: float = 2.5         # - pore tortuosity
     pore_size: float = 1e-9         # m - average pore size
-    
+
     # Operating conditions
     temperature: float = 298.15      # K - operating temperature
     pressure_anode: float = 101325   # Pa - anode pressure
     pressure_cathode: float = 101325 # Pa - cathode pressure
-    
+
     # Ion exchange capacity
     ion_exchange_capacity: float = 1.2  # mol/kg - IEC
     water_content: float = 10.0         # mol H2O/mol functional group
     fixed_charge_density: float = 1200  # mol/m³
-    
+
     # Physical constants
     faraday_constant: float = 96485.0   # C/mol
     gas_constant: float = 8.314         # J/(mol·K)
-    
+
     # Degradation parameters
     initial_conductivity: float = 0.1    # S/cm - initial ionic conductivity
     degradation_rate: float = 1e-6       # h⁻¹ - conductivity loss rate
@@ -76,7 +77,7 @@ class MembraneParameters:
 @dataclass
 class IonTransportMechanisms:
     """Ion transport properties and mechanisms."""
-    
+
     ion_type: IonType
     diffusion_coefficient: float      # m²/s - in membrane
     mobility: float                   # m²/(V·s) - ion mobility
@@ -98,31 +99,31 @@ class BaseMembraneModel(ABC):
     - Membrane resistance
     - Degradation effects
     """
-    
+
     def __init__(self, parameters: MembraneParameters):
         self.params = parameters
         self.thickness = parameters.thickness
         self.area = parameters.area
         self.temperature = parameters.temperature
         self.operating_hours = 0.0
-        
+
         # Setup ion transport mechanisms
         self._setup_ion_transport()
-        
+
         # Calculate initial properties
         self._calculate_membrane_properties()
-    
+
     @abstractmethod
     def _setup_ion_transport(self):
         """Setup membrane-specific ion transport mechanisms."""
         pass
-    
+
     @abstractmethod
     def _calculate_membrane_properties(self):
         """Calculate membrane-specific properties."""
         pass
-    
-    def calculate_nernst_planck_flux(self, ion: IonType, 
+
+    def calculate_nernst_planck_flux(self, ion: IonType,
                                     concentration_anode: float,
                                     concentration_cathode: float,
                                     potential_gradient: float) -> float:
@@ -142,34 +143,34 @@ class BaseMembraneModel(ABC):
         """
         if ion not in self.ion_transport:
             return 0.0
-        
+
         transport = self.ion_transport[ion]
         D = transport.diffusion_coefficient
         z = transport.charge
         F = self.params.faraday_constant
         R = self.params.gas_constant
         T = self.temperature
-        
+
         # Effective diffusion in porous membrane
         D_eff = D * self.params.porosity / self.params.tortuosity
-        
+
         # Average concentration for migration term
         C_avg = (concentration_anode + concentration_cathode) / 2
-        
+
         # Concentration gradient
         dC_dx = (concentration_cathode - concentration_anode) / self.thickness
-        
+
         # Diffusion flux
         flux_diffusion = -D_eff * dC_dx
-        
+
         # Migration flux (electric field driven)
         flux_migration = -z * F * D_eff * C_avg * potential_gradient / (R * T)
-        
+
         # Total flux
         total_flux = flux_diffusion + flux_migration
-        
+
         return total_flux
-    
+
     def calculate_donnan_potential(self, ion_concentrations_anode: Dict[IonType, float],
                                   ion_concentrations_cathode: Dict[IonType, float]) -> float:
         """
@@ -185,21 +186,21 @@ class BaseMembraneModel(ABC):
         R = self.params.gas_constant
         T = self.temperature
         F = self.params.faraday_constant
-        
+
         # Calculate ionic strength on both sides
         ionic_strength_anode = 0.0
         ionic_strength_cathode = 0.0
-        
+
         for ion, conc in ion_concentrations_anode.items():
             if ion in self.ion_transport:
                 z = self.ion_transport[ion].charge
                 ionic_strength_anode += 0.5 * conc * z**2
-        
+
         for ion, conc in ion_concentrations_cathode.items():
             if ion in self.ion_transport:
                 z = self.ion_transport[ion].charge
                 ionic_strength_cathode += 0.5 * conc * z**2
-        
+
         # Simplified Donnan potential calculation
         if ionic_strength_anode > 0 and ionic_strength_cathode > 0:
             donnan_potential = (R * T / F) * jnp.log(
@@ -207,9 +208,9 @@ class BaseMembraneModel(ABC):
             )
         else:
             donnan_potential = 0.0
-        
+
         return float(donnan_potential)
-    
+
     def calculate_water_transport(self, current_density: float,
                                  primary_ion: IonType) -> float:
         """
@@ -224,24 +225,24 @@ class BaseMembraneModel(ABC):
         """
         if primary_ion not in self.ion_transport:
             return 0.0
-        
+
         # Ion flux from current
         z = abs(self.ion_transport[primary_ion].charge)
         ion_flux = current_density / (z * self.params.faraday_constant)
-        
+
         # Water drag coefficient
         hydration_number = self.ion_transport[primary_ion].hydration_number
-        
+
         # Account for membrane water content
         water_activity = min(1.0, self.params.water_content / 14.0)  # Normalized to Nafion
         effective_hydration = hydration_number * water_activity
-        
+
         # Water flux
         water_flux = effective_hydration * ion_flux
-        
+
         return water_flux
-    
-    def calculate_gas_permeability(self, gas_type: str, 
+
+    def calculate_gas_permeability(self, gas_type: str,
                                   pressure_difference: float) -> float:
         """
         Calculate gas permeability through membrane.
@@ -261,30 +262,30 @@ class BaseMembraneModel(ABC):
             "N2": 0.9e-15,   # Nitrogen
             "CH4": 2.1e-15   # Methane
         }
-        
+
         if gas_type not in permeability_data:
             return 0.0
-        
+
         # Base permeability
         P_base = permeability_data[gas_type]
-        
+
         # Temperature correction (Arrhenius)
         T_ref = 298.15
         activation_energy = 20000  # J/mol (typical)
-        temp_factor = jnp.exp(-activation_energy / self.params.gas_constant * 
+        temp_factor = jnp.exp(-activation_energy / self.params.gas_constant *
                              (1/self.temperature - 1/T_ref))
-        
+
         # Water content effect (hydrated membranes have higher permeability)
         water_factor = 1.0 + 0.1 * self.params.water_content
-        
+
         # Effective permeability
         P_eff = P_base * temp_factor * water_factor
-        
+
         # Gas flux (mol/m²/s)
         gas_flux = P_eff * pressure_difference / self.thickness
-        
+
         return float(gas_flux)
-    
+
     def calculate_membrane_resistance(self, ionic_conductivity: Optional[float] = None) -> float:
         """
         Calculate membrane resistance including degradation effects.
@@ -299,15 +300,15 @@ class BaseMembraneModel(ABC):
             # Use degraded conductivity
             degradation_factor = jnp.exp(-self.params.degradation_rate * self.operating_hours)
             ionic_conductivity = self.params.initial_conductivity * degradation_factor * 100  # S/m
-        
+
         # Resistance = thickness / (conductivity * area)
         resistance = self.thickness / (ionic_conductivity * self.area)
-        
+
         # Add fouling resistance
         resistance += self.params.fouling_resistance / self.area
-        
+
         return float(resistance)
-    
+
     def calculate_selectivity(self, ion1: IonType, ion2: IonType,
                             concentration_ratio: float = 1.0) -> float:
         """
@@ -325,32 +326,32 @@ class BaseMembraneModel(ABC):
         """
         if ion1 not in self.ion_transport or ion2 not in self.ion_transport:
             return 1.0
-        
+
         transport1 = self.ion_transport[ion1]
         transport2 = self.ion_transport[ion2]
-        
+
         # Diffusion selectivity
         D_ratio = transport1.diffusion_coefficient / transport2.diffusion_coefficient
-        
+
         # Partition selectivity
         K_ratio = transport1.partition_coefficient / transport2.partition_coefficient
-        
+
         # Charge selectivity (Donnan exclusion)
         z1 = transport1.charge
         z2 = transport2.charge
-        
+
         if z1 * z2 < 0:  # Opposite charges
             charge_selectivity = 10.0  # High selectivity
         elif z1 == z2:  # Same charge
             charge_selectivity = 1.0
         else:  # Different magnitudes
             charge_selectivity = abs(z1/z2)
-        
+
         # Total selectivity
         selectivity = D_ratio * K_ratio * charge_selectivity
-        
+
         return float(selectivity)
-    
+
     def calculate_transport_number(self, ion: IonType,
                                   all_ion_concentrations: Dict[IonType, float],
                                   current_density: float) -> float:
@@ -369,32 +370,32 @@ class BaseMembraneModel(ABC):
         """
         if ion not in self.ion_transport or ion not in all_ion_concentrations:
             return 0.0
-        
+
         # Calculate conductivity contribution of each ion
         total_conductivity = 0.0
         ion_conductivity = 0.0
-        
+
         F = self.params.faraday_constant
-        
+
         for ion_type, concentration in all_ion_concentrations.items():
             if ion_type in self.ion_transport:
                 transport = self.ion_transport[ion_type]
                 z = abs(transport.charge)
                 u = transport.mobility
-                
+
                 conductivity_contribution = z * F * u * concentration
                 total_conductivity += conductivity_contribution
-                
+
                 if ion_type == ion:
                     ion_conductivity = conductivity_contribution
-        
+
         if total_conductivity > 0:
             transport_number = ion_conductivity / total_conductivity
         else:
             transport_number = 0.0
-        
+
         return float(transport_number)
-    
+
     @abstractmethod
     def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
                                    water_content: Optional[float] = None) -> float:
@@ -409,7 +410,7 @@ class BaseMembraneModel(ABC):
             Ionic conductivity (S/m)
         """
         pass
-    
+
     def update_operating_conditions(self, temperature: Optional[float] = None,
                                   pressure_anode: Optional[float] = None,
                                   pressure_cathode: Optional[float] = None):
@@ -417,24 +418,24 @@ class BaseMembraneModel(ABC):
         if temperature is not None:
             self.temperature = temperature
             self.params.temperature = temperature
-        
+
         if pressure_anode is not None:
             self.params.pressure_anode = pressure_anode
-        
+
         if pressure_cathode is not None:
             self.params.pressure_cathode = pressure_cathode
-        
+
         # Recalculate properties
         self._calculate_membrane_properties()
-    
+
     def update_degradation(self, operating_hours: float):
         """Update membrane degradation state."""
         self.operating_hours = operating_hours
-    
+
     def add_fouling_resistance(self, additional_resistance: float):
         """Add fouling resistance to membrane."""
         self.params.fouling_resistance += additional_resistance
-    
+
     def get_performance_metrics(self, current_density: float,
                               ion_concentrations: Dict[IonType, float]) -> Dict[str, float]:
         """
@@ -449,23 +450,23 @@ class BaseMembraneModel(ABC):
         """
         # Calculate conductivity
         conductivity = self.calculate_ionic_conductivity()
-        
+
         # Calculate resistance
         resistance = self.calculate_membrane_resistance(conductivity)
-        
+
         # Voltage drop
         voltage_drop = current_density * self.area * resistance
-        
+
         # Power loss
         power_loss = current_density * voltage_drop * self.area
-        
+
         # Transport numbers for major ions
         transport_numbers = {}
         for ion in ion_concentrations:
             if ion in self.ion_transport:
                 t_ion = self.calculate_transport_number(ion, ion_concentrations, current_density)
                 transport_numbers[f"transport_number_{ion.value}"] = t_ion
-        
+
         return {
             'ionic_conductivity_S_m': float(conductivity),
             'membrane_resistance_ohm': float(resistance),
@@ -477,7 +478,7 @@ class BaseMembraneModel(ABC):
             'fouling_resistance_ohm_m2': self.params.fouling_resistance,
             **transport_numbers
         }
-    
+
     def get_transport_properties(self) -> Dict[str, Any]:
         """Get all transport properties for inspection."""
         properties = {
@@ -491,7 +492,7 @@ class BaseMembraneModel(ABC):
             'temperature_K': self.temperature,
             'ion_transport_mechanisms': {}
         }
-        
+
         # Add ion transport details
         for ion, transport in self.ion_transport.items():
             properties['ion_transport_mechanisms'][ion.value] = {
@@ -501,9 +502,9 @@ class BaseMembraneModel(ABC):
                 'hydration_number': transport.hydration_number,
                 'charge': transport.charge
             }
-        
+
         return properties
-    
+
     def __repr__(self) -> str:
         return (f"{self.__class__.__name__}("
                 f"thickness={self.thickness*1e6:.1f} μm, "
@@ -513,7 +514,7 @@ class BaseMembraneModel(ABC):
 
 class IonTransportDatabase:
     """Database of ion transport properties in various membrane types."""
-    
+
     @staticmethod
     def get_proton_transport() -> IonTransportMechanisms:
         """Get proton transport properties."""
@@ -526,7 +527,7 @@ class IonTransportDatabase:
             charge=1,
             stokes_radius=2.8e-10            # m
         )
-    
+
     @staticmethod
     def get_hydroxide_transport() -> IonTransportMechanisms:
         """Get hydroxide transport properties."""
@@ -539,7 +540,7 @@ class IonTransportDatabase:
             charge=-1,
             stokes_radius=3.0e-10             # m
         )
-    
+
     @staticmethod
     def get_sodium_transport() -> IonTransportMechanisms:
         """Get sodium transport properties."""

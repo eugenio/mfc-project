@@ -9,8 +9,8 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass

@@ -4,28 +4,32 @@ Real-time WebSocket Streaming Service with WSS (WebSocket Secure) Support
 Provides secure real-time data streaming for MFC monitoring dashboard.
 """
 
-import sys
-import ssl
-import json
 import asyncio
-import logging
 import gzip
+import json
+import logging
+import signal
+import ssl
+import sys
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Optional
-import signal
+from typing import Dict, List, Optional, Set
 
+import pandas as pd
 import websockets
 from websockets.server import WebSocketServerProtocol
-import pandas as pd
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from ssl_config import (
-    SSLConfig, SSLContextManager, load_ssl_config, initialize_ssl_infrastructure, test_ssl_connection
+from monitoring.ssl_config import (
+    SSLConfig,
+    SSLContextManager,
+    initialize_ssl_infrastructure,
+    load_ssl_config,
+    test_ssl_connection,
 )
 
 # Setup logging

@@ -23,21 +23,23 @@ INTEGRATION REQUIREMENTS:
 - Performance-critical: changes here affect live simulation responsiveness
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import json
 import gzip
-from pathlib import Path
-import sys
+import json
 import os
-import threading
 import queue
+import sys
+import threading
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+
 # Phase 3: Parquet Migration
 import pyarrow as pa
 import pyarrow.parquet as pq
+import streamlit as st
+from plotly.subplots import make_subplots
 
 # Add src to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -100,14 +102,14 @@ class SimulationRunner:
         self.thread = None
         self.current_output_dir = None
         self.live_data_buffer = []  # In-memory buffer for GUI
-        
+
         # Phase 2: Incremental Updates - Change Detection
         self.last_data_count = 0
         self.last_plot_hash = None
         self.last_metrics_hash = None
         self.plot_dirty_flag = True
         self.metrics_dirty_flag = True
-        
+
         # Phase 3: Parquet Migration - Columnar Storage
         self.parquet_buffer = []
         self.parquet_batch_size = 100  # Write every 100 data points
@@ -143,11 +145,11 @@ class SimulationRunner:
         """Stop the running simulation"""
         if self.is_running:
             self.should_stop = True
-            
+
             # Wait for thread to finish (with longer timeout for GPU cleanup)
             if self.thread and self.thread.is_alive():
                 self.thread.join(timeout=10.0)  # Wait up to 10 seconds for GPU cleanup
-                
+
                 # If thread is still alive after timeout, force cleanup
                 if self.thread.is_alive():
                     print("Warning: Simulation thread did not stop gracefully")
@@ -156,12 +158,12 @@ class SimulationRunner:
 
             # Ensure stopped message is sent after thread completes
             self.results_queue.put(('stopped', 'Simulation stopped by user', self.current_output_dir))
-            
+
             # Final state cleanup
             self.is_running = False
             self.should_stop = False
             self.thread = None  # Clear thread reference
-            
+
             # Clear data queue and buffer
             while not self.data_queue.empty():
                 try:
@@ -169,7 +171,7 @@ class SimulationRunner:
                 except queue.Empty:
                     break
             self.live_data_buffer.clear()
-            
+
             print("✅ Simulation stopped successfully")
             return True
         return False
@@ -220,11 +222,13 @@ class SimulationRunner:
         try:
             # Import here to avoid circular imports
             sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-            from mfc_gpu_accelerated import GPUAcceleratedMFC
+            import json
             from datetime import datetime
             from pathlib import Path
+
             import pandas as pd
-            import json
+
+            from mfc_gpu_accelerated import GPUAcceleratedMFC
 
             # Create output directory
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -253,7 +257,7 @@ class SimulationRunner:
             # Maximum save interval: every 100 simulation steps (10 sim hours)
             min_save_steps = 30  # Minimum 3 hours of simulation time between saves
             max_save_steps = 100  # Maximum 10 hours of simulation time between saves
-            
+
             # Calculate based on GUI refresh, but constrain to reasonable bounds
             gui_refresh_hours = gui_refresh_interval / 3600.0  # Convert seconds to hours
             calculated_steps = max(1, int(gui_refresh_hours / dt_hours))
@@ -312,26 +316,26 @@ class SimulationRunner:
                         'epsilon': step_results['epsilon'],
                         'reward': step_results['reward']
                     }
-                    
+
                     try:
                         self.data_queue.put_nowait(latest_data_point)
                     except queue.Full:
                         pass  # Skip if queue full
-                    
+
                     # Phase 3: Parquet batch processing
                     if self.enable_parquet:
                         # Initialize Parquet writer on first data point
                         if self.parquet_writer is None and self.parquet_schema is None:
                             self.create_parquet_schema(latest_data_point)
                             self.init_parquet_writer(output_dir)
-                        
+
                         # Add to Parquet buffer
                         if self.parquet_writer is not None:
                             self.parquet_buffer.append(latest_data_point.copy())
-                            
+
                             # Write batch when buffer is full
                             self.write_parquet_batch()
-                        
+
                     # Async CSV.gz backup every 100 steps (reduced frequency for legacy support)
                     if step % 100 == 0:
                         df = pd.DataFrame(results)
@@ -341,7 +345,7 @@ class SimulationRunner:
             # Phase 3: Finalize Parquet storage
             if self.enable_parquet:
                 self.close_parquet_writer()
-            
+
             # Save final results (CSV.gz for backward compatibility)
             df = pd.DataFrame(results)
             data_file = output_dir / f"gui_simulation_data_{timestamp}.csv.gz"
@@ -398,11 +402,11 @@ class SimulationRunner:
                 data_point = self.data_queue.get_nowait()
                 new_data.append(data_point)
                 self.live_data_buffer.append(data_point)
-                
+
                 # Keep buffer size manageable (last 1000 points)
                 if len(self.live_data_buffer) > 1000:
                     self.live_data_buffer = self.live_data_buffer[-1000:]
-                    
+
         except queue.Empty:
             pass
         return new_data
@@ -490,7 +494,7 @@ class SimulationRunner:
         """Phase 3: Write Parquet batch when buffer reaches threshold"""
         if not self.enable_parquet or not self.parquet_writer or len(self.parquet_buffer) < self.parquet_batch_size:
             return
-        
+
         try:
             df_batch = pd.DataFrame(self.parquet_buffer)
             table = pa.Table.from_pandas(df_batch, schema=self.parquet_schema)
@@ -564,7 +568,7 @@ def load_recent_simulations():
 
             if json_files and csv_files:
                 try:
-                    with open(json_files[0], 'r') as f:
+                    with open(json_files[0]) as f:
                         results = json.load(f)
 
                     sim_dirs.append({
@@ -1669,7 +1673,7 @@ def main():
             current_time = time.time()
             if 'last_refresh_time' not in st.session_state:
                 st.session_state.last_refresh_time = current_time
-            
+
             if current_time - st.session_state.last_refresh_time >= refresh_interval:
                 st.session_state.last_refresh_time = current_time
                 st.rerun()
@@ -1681,7 +1685,7 @@ def main():
             # Load current simulation data from memory queue (Phase 1: Shared Memory)
             new_data = st.session_state.sim_runner.get_live_data()
             df = st.session_state.sim_runner.get_buffered_data()
-            
+
             if df is not None and len(df) > 0:
                 # Get actual elapsed time from simulation data
                 actual_hours = df['time_hours'].iloc[-1] if 'time_hours' in df.columns else 0
