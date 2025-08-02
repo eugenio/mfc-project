@@ -10,6 +10,7 @@ from gui.pages.electrode_enhanced import render_enhanced_electrode_page
 from gui.pages.literature_validation import render_literature_validation_page
 from gui.pages.ml_optimization import render_ml_optimization_page
 from gui.pages.performance_monitor import render_performance_monitor_page
+from gui.pages.system_configuration import render_system_configuration_page
 
 
 class NavigationController:
@@ -23,7 +24,7 @@ class NavigationController:
             "gsm_integration": self._render_placeholder,
             "literature_validation": render_literature_validation_page,
             "performance_monitor": render_performance_monitor_page,
-            "system_configuration": self._render_placeholder
+            "system_configuration": render_system_configuration_page
         }
 
     def run(self):
