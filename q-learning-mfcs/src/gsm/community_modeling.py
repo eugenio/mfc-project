@@ -9,7 +9,7 @@ Created: 2025-08-01
 """
 
 import logging
-from typing import Dict, List, Any
+from typing import Dict, List
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
