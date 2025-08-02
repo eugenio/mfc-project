@@ -111,21 +111,24 @@
     }
   },
   "edit_thresholds": {
-    "max_lines_added": 25,
-    "max_lines_removed": 25,
-    "max_total_changes": 50,
+    "max_lines_added": -1,
+    "max_lines_removed": -1,
+    "max_total_changes": -1,
     "enabled": true,
     "auto_commit": true,
-    "commit_message_prefix": "Auto-commit: Large file changes detected - "
+    "commit_message_prefix": "Auto-commit: Large file changes detected - ",
+    "git_guardian_integration": true
   },
   "file_creation_thresholds": {
-    "max_new_file_lines": 20,
-    "max_files_per_session": 5,
+    "max_new_file_lines": -1,
+    "max_files_per_session": 10,
     "enabled": true,
     "auto_commit": true,
     "commit_message_prefix": "Auto-commit: New file created - ",
     "exclude_patterns": ["*.tmp", "*.log", "*.cache", ".DS_Store", "Thumbs.db"],
-    "include_patterns": ["*.py", "*.md", "*.yaml", "*.yml", "*.json", "*.toml", "*.txt"]
+    "include_patterns": ["*.py", "*.md", "*.yaml", "*.yml", "*.json", "*.toml", "*.txt"],
+    "chunking_threshold": 50,
+    "git_guardian_integration": true
   },
   "gitlab": {
     "enabled": true,

@@ -86,7 +86,6 @@ exclude_lines =
     if __name__ == "__main__":
 
 show_missing = True
-skip_covered = False
 
 [html]
 directory = htmlcov

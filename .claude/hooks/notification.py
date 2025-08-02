@@ -1,27 +1,22 @@
 #!/usr/bin/env -S pixi run python
 # /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "python-dotenv",
-# ]
+# requires-python = ">=3.8"
 # ///
 
-import argparse
 import json
 import os
-import sys
-import subprocess
 import random
+import subprocess
+import sys
+from datetime import datetime
 from pathlib import Path
+
+from cchooks import NotificationContext, create_context
 from utils.constants import ensure_session_log_dir
 
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    pass  # dotenv is optional
-
+# Create context
+c = create_context()
+assert isinstance(c, NotificationContext)
 
 def get_tts_script_path():
     """
@@ -50,7 +45,6 @@ def get_tts_script_path():
         return str(pyttsx3_script)
 
     return None
-
 
 def announce_notification():
     """Announce that the agent needs user input."""
@@ -82,60 +76,42 @@ def announce_notification():
         # Fail silently for any other errors
         pass
 
+# Main hook logic
+# Get session_id
+session_id = c.session_id or "unknown"
 
-def main():
+# Ensure session log directory exists
+log_dir = ensure_session_log_dir(session_id)
+log_file = log_dir / "notification.json"
+
+# Read existing log data or initialize empty list
+log_data = []
+if log_file.exists():
     try:
-        # Parse command line arguments
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--notify", action="store_true", help="Enable TTS notifications"
-        )
-        args = parser.parse_args()
+        with open(log_file) as f:
+            log_data = json.load(f)
+    except (json.JSONDecodeError, ValueError):
+        log_data = []
 
-        # Read JSON input from stdin
-        input_data = json.loads(sys.stdin.read())
+# Append new data
+log_entry = {
+    'message': c.message,
+    'session_id': session_id,
+    'timestamp': datetime.now().isoformat()
+}
+log_data.append(log_entry)
 
-        # Extract session_id
-        session_id = input_data.get("session_id", "unknown")
+# Write back to file with formatting
+with open(log_file, "w") as f:
+    json.dump(log_data, f, indent=2)
 
-        # Ensure session log directory exists
-        log_dir = ensure_session_log_dir(session_id)
-        log_file = log_dir / "notification.json"
+# Check for --notify flag from command line args
+notify_enabled = "--notify" in sys.argv
 
-        # Read existing log data or initialize empty list
-        if log_file.exists():
-            with open(log_file, "r") as f:
-                try:
-                    log_data = json.load(f)
-                except (json.JSONDecodeError, ValueError):
-                    log_data = []
-        else:
-            log_data = []
+# Announce notification via TTS only if --notify flag is set
+# Skip TTS for the generic "Claude is waiting for your input" message
+if notify_enabled and c.message != "Claude is waiting for your input":
+    announce_notification()
 
-        # Append new data
-        log_data.append(input_data)
-
-        # Write back to file with formatting
-        with open(log_file, "w") as f:
-            json.dump(log_data, f, indent=2)
-
-        # Announce notification via TTS only if --notify flag is set
-        # Skip TTS for the generic "Claude is waiting for your input" message
-        if (
-            args.notify
-            and input_data.get("message") != "Claude is waiting for your input"
-        ):
-            announce_notification()
-
-        sys.exit(0)
-
-    except json.JSONDecodeError:
-        # Handle JSON decode errors gracefully
-        sys.exit(0)
-    except Exception:
-        # Handle any other errors gracefully
-        sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()
+# Notification hooks don't need to return anything specific
+print("Notification processed successfully")
