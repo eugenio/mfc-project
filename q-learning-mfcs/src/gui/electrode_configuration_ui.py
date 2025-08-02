@@ -14,13 +14,11 @@ Created: 2025-08-01
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
-from typing import Dict, Any, Optional, Tuple
-import numpy as np
+from typing import Dict, Optional, Tuple
 
 from config.electrode_config import (
     ElectrodeMaterial, ElectrodeGeometry, ElectrodeConfiguration,
-    MaterialProperties, ElectrodeGeometrySpec, MATERIAL_PROPERTIES_DATABASE,
+    MaterialProperties, MATERIAL_PROPERTIES_DATABASE,
     create_electrode_config
 )
 
