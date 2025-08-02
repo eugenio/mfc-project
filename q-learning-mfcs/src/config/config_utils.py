@@ -374,7 +374,7 @@ def dataclass_to_dict(obj: Any) -> Any:
             value = getattr(obj, field.name)
             result[field.name] = dataclass_to_dict(value)
         return result
-    elif isinstance(obj, (list, tuple)):
+    elif isinstance(obj, list | tuple):
         return [dataclass_to_dict(item) for item in obj]
     elif isinstance(obj, dict):
         return {key: dataclass_to_dict(value) for key, value in obj.items()}
@@ -651,7 +651,7 @@ class ConfigConverter:
         if current_version == "1.0.0" and target_version == "2.0.0":
             return self._migrate_v1_to_v2(config)
 
-        warnings.warn(f"No migration path from {current_version} to {target_version}")
+        warnings.warn(f"No migration path from {current_version} to {target_version}", stacklevel=2)
         return config
 
     def _migrate_v1_to_v2(self, config: dict[str, Any]) -> dict[str, Any]:

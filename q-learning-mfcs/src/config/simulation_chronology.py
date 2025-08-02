@@ -337,7 +337,7 @@ class ChronologyManager:
             'success_rate': (successful_runs / total_entries * 100) if total_entries > 0 else 0,
             'total_simulation_time_hours': total_simulation_time,
             'total_execution_time_seconds': total_execution_time,
-            'unique_tags': sorted(list(all_tags)),
+            'unique_tags': sorted(all_tags),
             'created_at': self.chronology.created_at,
             'last_updated': self.chronology.last_updated
         }

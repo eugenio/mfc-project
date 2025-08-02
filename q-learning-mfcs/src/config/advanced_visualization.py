@@ -50,7 +50,7 @@ try:
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
-    warnings.warn("Matplotlib/Seaborn not available. Visualization features will be limited.")
+    warnings.warn("Matplotlib/Seaborn not available. Visualization features will be limited.", stacklevel=2)
 
 # Advanced plotting dependencies
 try:
@@ -61,7 +61,7 @@ try:
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
-    warnings.warn("Plotly not available. Interactive visualization will be limited.")
+    warnings.warn("Plotly not available. Interactive visualization will be limited.", stacklevel=2)
 
 # Statistical analysis
 try:
@@ -74,7 +74,7 @@ try:
     HAS_ADVANCED_STATS = True
 except ImportError:
     HAS_ADVANCED_STATS = False
-    warnings.warn("Advanced statistical packages not available. Some features will be limited.")
+    warnings.warn("Advanced statistical packages not available. Some features will be limited.", stacklevel=2)
 
 # Import configuration classes
 from .parameter_optimization import OptimizationResult
@@ -361,16 +361,16 @@ class MultiDimensionalPlotter(AdvancedVisualizer):
             # Use Plotly for interactive parallel coordinates
             dimensions = []
             for col in columns:
-                dimensions.append(dict(
-                    range=[clean_data[col].min(), clean_data[col].max()],
-                    label=col,
-                    values=clean_data[col]
-                ))
+                dimensions.append({
+                    "range": [clean_data[col].min(), clean_data[col].max()],
+                    "label": col,
+                    "values": clean_data[col]
+                })
 
             color = clean_data[class_column] if class_column and class_column in clean_data.columns else None
 
             fig = go.Figure(data=go.Parcoords(
-                line=dict(color=color, colorscale=config.color_map) if color is not None else dict(color='blue'),
+                line={"color": color, "colorscale": config.color_map} if color is not None else {"color": 'blue'},
                 dimensions=dimensions
             ))
 
@@ -426,7 +426,7 @@ class MultiDimensionalPlotter(AdvancedVisualizer):
                 normalized_data[col] = 0.5
 
         # Set up radar chart
-        fig, ax = plt.subplots(figsize=config.figure_size, subplot_kw=dict(projection='polar'))
+        fig, ax = plt.subplots(figsize=config.figure_size, subplot_kw={"projection": 'polar'})
 
         # Calculate angles for each axis
         angles = np.linspace(0, 2 * np.pi, len(columns), endpoint=False).tolist()
@@ -517,7 +517,7 @@ class InteractiveAnalyzer(AdvancedVisualizer):
             hover_columns.append(size_col)
 
         for _, row in clean_data.iterrows():
-            text = "<br>".join([f"{col}: {row[col]:.3f}" if isinstance(row[col], (int, float))
+            text = "<br>".join([f"{col}: {row[col]:.3f}" if isinstance(row[col], int | float)
                               else f"{col}: {row[col]}" for col in hover_columns])
             hover_text.append(text)
 
@@ -528,13 +528,13 @@ class InteractiveAnalyzer(AdvancedVisualizer):
             x=clean_data[x_col],
             y=clean_data[y_col],
             mode='markers',
-            marker=dict(
-                size=clean_data[size_col] if size_col and size_col in clean_data.columns else config.marker_size,
-                color=clean_data[color_col] if color_col and color_col in clean_data.columns else 'blue',
-                colorscale=config.color_map,
-                opacity=config.alpha,
-                colorbar=dict(title=config.color_label or color_col) if color_col else None
-            ),
+            marker={
+                "size": clean_data[size_col] if size_col and size_col in clean_data.columns else config.marker_size,
+                "color": clean_data[color_col] if color_col and color_col in clean_data.columns else 'blue',
+                "colorscale": config.color_map,
+                "opacity": config.alpha,
+                "colorbar": {"title": config.color_label or color_col} if color_col else None
+            },
             text=hover_text,
             hovertemplate='%{text}<extra></extra>',
             name='Data Points'
@@ -580,7 +580,7 @@ class InteractiveAnalyzer(AdvancedVisualizer):
                         y=group_data[col],
                         mode='lines+markers',
                         name=f"{group}_{col}",
-                        line=dict(color=colors[i % len(colors)]),
+                        line={"color": colors[i % len(colors)]},
                         opacity=config.alpha
                     ))
         else:
@@ -593,7 +593,7 @@ class InteractiveAnalyzer(AdvancedVisualizer):
                     y=clean_data[col],
                     mode='lines+markers',
                     name=col,
-                    line=dict(color=colors[i % len(colors)]),
+                    line={"color": colors[i % len(colors)]},
                     opacity=config.alpha
                 ))
 
@@ -604,14 +604,14 @@ class InteractiveAnalyzer(AdvancedVisualizer):
             yaxis_title=config.y_label or "Value",
             width=config.figure_size[0] * 100,
             height=config.figure_size[1] * 100,
-            updatemenus=[dict(
-                type="buttons",
-                buttons=[
-                    dict(label="Play", method="animate", args=[None]),
-                    dict(label="Pause", method="animate", args=[[None],
-                         {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}])
+            updatemenus=[{
+                "type": "buttons",
+                "buttons": [
+                    {"label": "Play", "method": "animate", "args": [None]},
+                    {"label": "Pause", "method": "animate", "args": [[None],
+                         {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]}
                 ]
-            )]
+            }]
         )
 
         return fig
@@ -1078,7 +1078,7 @@ def create_sensitivity_tornado_plot(sensitivity_indices: dict[str, float],
     bars = ax.barh(params, values, color=colors, alpha=config.alpha)
 
     # Add value labels on bars
-    for i, (bar, value) in enumerate(zip(bars, values, strict=False)):
+    for i, (_bar, value) in enumerate(zip(bars, values, strict=False)):
         ax.text(value + (0.01 if value >= 0 else -0.01), i, f'{value:.3f}',
                ha='left' if value >= 0 else 'right', va='center')
 

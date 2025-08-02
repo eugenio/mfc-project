@@ -50,7 +50,7 @@ try:
     HAS_ASYNCIO = True
 except ImportError:
     HAS_ASYNCIO = False
-    warnings.warn("Asyncio not available. Some async features will be limited.")
+    warnings.warn("Asyncio not available. Some async features will be limited.", stacklevel=2)
 
 # Statistical processing
 try:
@@ -59,7 +59,7 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some signal processing features will be limited.")
+    warnings.warn("SciPy not available. Some signal processing features will be limited.", stacklevel=2)
 
 # Time series analysis
 try:
@@ -68,7 +68,7 @@ try:
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
-    warnings.warn("Statsmodels not available. Some time series features will be limited.")
+    warnings.warn("Statsmodels not available. Some time series features will be limited.", stacklevel=2)
 
 # Anomaly detection
 try:
@@ -77,7 +77,7 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Anomaly detection will be limited.")
+    warnings.warn("Scikit-learn not available. Anomaly detection will be limited.", stacklevel=2)
 
 
 class StreamingMode(Enum):
@@ -509,7 +509,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for sensor_id, points in sensor_data.items():
+            for _sensor_id, points in sensor_data.items():
                 values = np.array([dp.value for dp in points])
 
                 if method == 'moving_average':
@@ -549,7 +549,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for sensor_id, points in sensor_data.items():
+            for _sensor_id, points in sensor_data.items():
                 values = np.array([dp.value for dp in points if not np.isnan(dp.value)])
 
                 if len(values) < 5:  # Need minimum data for outlier detection
@@ -610,7 +610,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for sensor_id, points in sensor_data.items():
+            for _sensor_id, points in sensor_data.items():
                 if len(points) < window_size:
                     processed_points.extend(points)
                     continue
@@ -665,7 +665,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for sensor_id, points in sensor_data.items():
+            for _sensor_id, points in sensor_data.items():
                 values = np.array([dp.value for dp in points if not np.isnan(dp.value)])
 
                 if len(values) < 10:  # Need minimum data for anomaly detection

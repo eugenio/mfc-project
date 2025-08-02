@@ -442,7 +442,7 @@ class LiteratureDatabase:
             for ref in param.references:
                 all_refs.add(ref.format_citation(format_style))
 
-        return sorted(list(all_refs))
+        return sorted(all_refs)
 
 
 # Global instance for easy access
