@@ -11,14 +11,15 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
-import numpy as np
 import logging
 
+import numpy as np
+
 # Import Phase 2 components
-from ml_optimization import create_ml_optimized_controller, OptimizationStrategy
-from sensing_models.sensor_fusion import BacterialSpecies
+from ml_optimization import OptimizationStrategy, create_ml_optimized_controller
 from sensing_models.eis_model import EISMeasurement, EISModel
 from sensing_models.qcm_model import QCMMeasurement, QCMModel
+from sensing_models.sensor_fusion import BacterialSpecies
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -309,7 +310,7 @@ def demonstrate_individual_components():
     feature_engineer = FeatureEngineer()
 
     # Create sample system state
-    from adaptive_mfc_controller import SystemState, ControlStrategy, AdaptationMode
+    from adaptive_mfc_controller import AdaptationMode, ControlStrategy, SystemState
 
     sample_state = SystemState(
         fused_measurement=fused,

@@ -11,9 +11,9 @@ The models are based on literature-validated parameters and enable
 accurate biofilm thickness and mass determination for MFC control.
 """
 
-from .eis_model import EISModel, EISMeasurement, EISCircuitModel
-from .qcm_model import QCMModel, QCMMeasurement, SauerbreyModel, ViscoelasticModel
-from .sensor_fusion import SensorFusion, SensorCalibration
+from .eis_model import EISCircuitModel, EISMeasurement, EISModel
+from .qcm_model import QCMMeasurement, QCMModel, SauerbreyModel, ViscoelasticModel
+from .sensor_fusion import SensorCalibration, SensorFusion
 
 __all__ = [
     'EISModel', 'EISMeasurement', 'EISCircuitModel',

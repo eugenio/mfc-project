@@ -6,9 +6,10 @@ This script compiles the Mojo Q-learning implementation and creates
 Python bindings for easy integration.
 """
 
+import os
 import subprocess
 import sys
-import os
+
 
 def run_command(cmd, description):
     """Run a command and handle errors"""

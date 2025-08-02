@@ -4,10 +4,11 @@ Development SSL Configuration for MFC Monitoring System
 Sets up SSL certificates in local directories for development use.
 """
 
-import os
 import logging
+import os
 from pathlib import Path
-from ssl_config import SSLConfig, save_ssl_config
+
+from monitoring.ssl_config import SSLConfig, save_ssl_config
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

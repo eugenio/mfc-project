@@ -6,9 +6,9 @@ and S. oneidensis MR-1, including stoichiometric coefficients, enzyme kinetics,
 and flux constraints derived from KEGG and literature sources.
 """
 
-from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Tuple
 
 
 class Species(Enum):

@@ -10,9 +10,9 @@ Last Modified: 2025-07-31
 """
 
 import time
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 from config.literature_database import LITERATURE_DB, ParameterInfo
 from config.unit_converter import UNIT_CONVERTER
@@ -239,7 +239,7 @@ class RealTimeValidator:
             if param_info == param:
                 parameter_key = key
                 break
-        
+
         suggested_ranges = self._get_suggested_ranges(param, research_objective, parameter_key)
 
         # Calculate confidence score and uncertainty bounds
@@ -360,7 +360,7 @@ class RealTimeValidator:
 
         base_score = base_scores.get(level, 0.0)
 
-        # Adjust based on literature support  
+        # Adjust based on literature support
         # Give reasonable confidence even with single reference
         if len(param.references) == 0:
             literature_factor = 0.3
@@ -459,7 +459,7 @@ class RealTimeValidator:
             recommendations.append(f"❌ Use values between {param.min_value} and {param.max_value} {param.unit}")
             recommendations.append(f"📚 Based on {len(param.references)} peer-reviewed studies")
             recommendations.append(f"🔧 Start with typical value: {param.typical_value} {param.unit}")
-            
+
             # Add research objective recommendations even for invalid values
             if research_objective and parameter_key:
                 obj = self.research_objectives.get(research_objective)

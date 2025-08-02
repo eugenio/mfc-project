@@ -4,15 +4,22 @@ Supports YAML and JSON formats with validation.
 """
 
 import json
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Union
-from dataclasses import asdict, is_dataclass
 import logging
+from dataclasses import asdict, is_dataclass
+from pathlib import Path
+from typing import Any, Dict, Union
 
-from .qlearning_config import QLearningConfig, QLearningRewardWeights, StateSpaceConfig
-from .sensor_config import SensorConfig, EISConfig, QCMConfig, SensorFusionConfig, FusionMethod
+import yaml
+
 from .parameter_validation import validate_qlearning_config, validate_sensor_config
+from .qlearning_config import QLearningConfig, QLearningRewardWeights, StateSpaceConfig
+from .sensor_config import (
+    EISConfig,
+    FusionMethod,
+    QCMConfig,
+    SensorConfig,
+    SensorFusionConfig,
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -202,10 +209,10 @@ def load_config(filepath: Union[str, Path],
 
     # Load based on file extension
     if filepath.suffix.lower() in ['.yaml', '.yml']:
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             config_dict = yaml.safe_load(f)
     elif filepath.suffix.lower() == '.json':
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             config_dict = json.load(f)
     else:
         raise ValueError(f"Unsupported file format: {filepath.suffix}")

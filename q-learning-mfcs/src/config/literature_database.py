@@ -10,8 +10,8 @@ Last Modified: 2025-07-31
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class ParameterCategory(Enum):

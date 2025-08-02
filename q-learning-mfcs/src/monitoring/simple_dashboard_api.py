@@ -3,8 +3,10 @@ Simplified MFC Real-time Monitoring Dashboard API
 
 A minimal but functional monitoring API for MFC systems.
 """
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import Dict, List, Optional, Any
+
 
 class SystemMetrics(BaseModel):
     """System metrics response"""

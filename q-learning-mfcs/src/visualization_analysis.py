@@ -3,10 +3,12 @@
 Visualization analysis of substrate utilization performance between unified and non-unified MFC models
 """
 
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from path_config import get_figure_path, get_simulation_data_path
+
 
 def create_analysis_plots():
     """Create visualization plots for the MFC comparison analysis"""

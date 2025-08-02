@@ -4,15 +4,19 @@ Literature Validation Comparison Plots for MFC Recirculation Control
 Compares original conservative parameters vs literature-validated parameters
 """
 
-import pandas as pd
 import matplotlib
+import pandas as pd
+
 matplotlib.use('Agg')  # Use non-interactive backend
+import glob
+import json
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import numpy as np
-import json
-import glob
-from datetime import datetime
+
 from path_config import get_figure_path, get_simulation_data_path
+
 
 def load_simulation_data(file_pattern):
     """Load the most recent simulation data matching pattern"""
@@ -30,7 +34,7 @@ def load_simulation_data(file_pattern):
     df = pd.read_csv(csv_file)
 
     try:
-        with open(json_file, 'r') as f:
+        with open(json_file) as f:
             metadata = json.load(f)
     except:
         metadata = {}
@@ -52,7 +56,7 @@ def create_literature_comparison_plots():
         return
 
     # Create comprehensive comparison figure
-    fig = plt.figure(figsize=(20, 16))
+    plt.figure(figsize=(20, 16))
 
     # Define colors
     color_original = '#FF6B6B'      # Red for original

@@ -12,15 +12,17 @@ Features:
 - GPU acceleration status indicators
 """
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-from typing import Dict, Any, Optional, Tuple
 import json
 from datetime import datetime
+from typing import Any, Dict, Optional, Tuple
+
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 
 # Import path configuration
 try:

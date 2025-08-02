@@ -12,10 +12,11 @@ The enhanced model provides more accurate biofilm dynamics by incorporating
 actual sensor measurements as feedback for model validation and adaptation.
 """
 
-import numpy as np
-from typing import Dict, Optional, Any
-import sys
 import os
+import sys
+from typing import Any, Dict, Optional
+
+import numpy as np
 
 # Import base biofilm model
 from .biofilm_model import BiofilmKineticsModel
@@ -23,9 +24,13 @@ from .biofilm_model import BiofilmKineticsModel
 # Import sensing models
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sensing_models'))
 try:
-    from sensing_models.eis_model import EISModel, EISMeasurement, BacterialSpecies
-    from sensing_models.qcm_model import QCMModel, QCMMeasurement
-    from sensing_models.sensor_fusion import SensorFusion, FusedMeasurement, FusionMethod
+    from sensing_models.eis_model import BacterialSpecies, EISMeasurement, EISModel
+    from sensing_models.qcm_model import QCMMeasurement, QCMModel
+    from sensing_models.sensor_fusion import (
+        FusedMeasurement,
+        FusionMethod,
+        SensorFusion,
+    )
 except ImportError as e:
     print(f"Warning: Sensing models not available: {e}")
     EISModel = QCMModel = SensorFusion = None

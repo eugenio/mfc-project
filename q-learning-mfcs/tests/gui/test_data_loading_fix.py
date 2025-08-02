@@ -13,9 +13,13 @@ from pathlib import Path
 src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'src')
 sys.path.insert(0, src_path)
 
-from path_config import enable_debug_mode, disable_debug_mode
-from mfc_streamlit_gui import SimulationRunner, load_simulation_data
-from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+# Import required modules
+try:
+    from mfc_streamlit_gui import SimulationRunner, load_simulation_data
+    from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
+except ImportError as e:
+    print(f"❌ Import error: {e}")
+    sys.exit(1)
 
 def test_data_loading_fix():
     """Test that data loading handles empty files and errors gracefully"""
@@ -23,9 +27,7 @@ def test_data_loading_fix():
     print("🧪 Testing Data Loading Fix")
     print("=" * 50)
     
-    # Enable debug mode
-    enable_debug_mode()
-    print("🐛 Debug mode enabled")
+    print("🧪 Running data loading test")
     
     try:
         # Create runner
@@ -40,8 +42,7 @@ def test_data_loading_fix():
             n_cells=3,
             electrode_area_m2=0.001,
             target_conc=25.0,
-            gui_refresh_interval=1.0,
-            debug_mode=True
+            gui_refresh_interval=1.0
         )
         
         if success:
@@ -93,7 +94,7 @@ def test_data_loading_fix():
                         print(f"   Error reading file: {e}")
             
             # Stop simulation
-            if runner.is_actually_running():
+            if runner.is_running:
                 print("\n⏹️ Stopping simulation...")
                 runner.stop_simulation()
                 time.sleep(2)
@@ -108,7 +109,7 @@ def test_data_loading_fix():
     
     finally:
         # Cleanup
-        disable_debug_mode()
+        pass  # Cleanup placeholder
         print("\n✅ Test completed!")
 
 if __name__ == "__main__":
