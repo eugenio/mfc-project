@@ -7,7 +7,6 @@ from the MATHEMATICAL_MODELS_CELL_ATTACHMENT.md documentation.
 """
 
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -44,7 +43,7 @@ class SpeciesParameters:
         """Initialize parameter database with literature values."""
         self._parameters = self._load_species_parameters()
 
-    def _load_species_parameters(self) -> Dict[str, KineticParameters]:
+    def _load_species_parameters(self) -> dict[str, KineticParameters]:
         """Load species-specific parameters from literature."""
 
         # G. sulfurreducens parameters (from literature compilation)
@@ -125,13 +124,13 @@ class SpeciesParameters:
     def get_parameters(self, species: str) -> KineticParameters:
         """
         Get kinetic parameters for specified species.
-        
+
         Args:
             species: Species name ('geobacter', 'shewanella', 'mixed')
-            
+
         Returns:
             KineticParameters object with species-specific values
-            
+
         Raises:
             ValueError: If species not recognized
         """
@@ -144,11 +143,11 @@ class SpeciesParameters:
     def get_synergy_coefficient(self, species_1: str, species_2: str) -> float:
         """
         Get synergy coefficient for mixed cultures.
-        
+
         Args:
             species_1: Primary species name
             species_2: Secondary species name
-            
+
         Returns:
             Synergy coefficient (α = 1.38 for G. sulfurreducens + S. oneidensis)
         """
@@ -164,11 +163,11 @@ class SpeciesParameters:
                                      temperature: float) -> KineticParameters:
         """
         Apply Arrhenius temperature compensation to kinetic parameters.
-        
+
         Args:
             params: Base kinetic parameters at reference temperature
             temperature: Operating temperature (K)
-            
+
         Returns:
             Temperature-compensated parameters
         """
@@ -199,11 +198,11 @@ class SpeciesParameters:
     def apply_ph_compensation(self, params: KineticParameters, pH: float) -> KineticParameters:
         """
         Apply pH compensation to electrochemical parameters.
-        
+
         Args:
             params: Base kinetic parameters
             pH: Operating pH
-            
+
         Returns:
             pH-compensated parameters
         """

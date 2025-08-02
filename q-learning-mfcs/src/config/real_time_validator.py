@@ -12,7 +12,7 @@ Last Modified: 2025-07-31
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from config.literature_database import LITERATURE_DB, ParameterInfo
 from config.unit_converter import UNIT_CONVERTER
@@ -42,13 +42,13 @@ class ValidationResult:
     level: ValidationLevel
     message: str
     scientific_reasoning: str
-    suggested_ranges: List[Tuple[float, float]]
+    suggested_ranges: list[tuple[float, float]]
     confidence_score: float  # 0.0 to 1.0
-    uncertainty_bounds: Tuple[float, float]  # Lower and upper uncertainty bounds
+    uncertainty_bounds: tuple[float, float]  # Lower and upper uncertainty bounds
     response_time_ms: float
-    recommendations: List[str]
-    warnings: List[str]
-    parameter_info: Optional[ParameterInfo] = None
+    recommendations: list[str]
+    warnings: list[str]
+    parameter_info: ParameterInfo | None = None
 
 
 @dataclass
@@ -57,8 +57,8 @@ class ResearchObjective:
 
     name: str
     description: str
-    priority_parameters: List[str]
-    target_ranges: Dict[str, Tuple[float, float]]
+    priority_parameters: list[str]
+    target_ranges: dict[str, tuple[float, float]]
     scientific_context: str
 
 
@@ -69,15 +69,15 @@ class RealTimeValidator:
         """Initialize real-time validator."""
         self.literature_db = LITERATURE_DB
         self.unit_converter = UNIT_CONVERTER
-        self.validation_cache: Dict[str, ValidationResult] = {}
+        self.validation_cache: dict[str, ValidationResult] = {}
         self.research_objectives = self._define_research_objectives()
 
         # Performance tracking
-        self.validation_times: List[float] = []
+        self.validation_times: list[float] = []
         self.cache_hits = 0
         self.cache_misses = 0
 
-    def _define_research_objectives(self) -> Dict[str, ResearchObjective]:
+    def _define_research_objectives(self) -> dict[str, ResearchObjective]:
         """Define common research objectives for parameter optimization."""
 
         objectives = {
@@ -136,18 +136,18 @@ class RealTimeValidator:
         self,
         parameter_name: str,
         value: float,
-        research_objective: Optional[str] = None,
+        research_objective: str | None = None,
         use_cache: bool = True
     ) -> ValidationResult:
         """
         Perform real-time parameter validation with enhanced feedback.
-        
+
         Args:
             parameter_name: Name of parameter to validate
             value: Parameter value
             research_objective: Optional research objective context
             use_cache: Whether to use validation cache
-            
+
         Returns:
             Enhanced validation result with scientific context
         """
@@ -214,8 +214,8 @@ class RealTimeValidator:
         self,
         param: ParameterInfo,
         value: float,
-        basic_validation: Dict[str, Any],
-        research_objective: Optional[str],
+        basic_validation: dict[str, Any],
+        research_objective: str | None,
         start_time: float
     ) -> ValidationResult:
         """Enhance basic validation with scientific context."""
@@ -308,9 +308,9 @@ class RealTimeValidator:
     def _get_suggested_ranges(
         self,
         param: ParameterInfo,
-        research_objective: Optional[str],
-        parameter_key: Optional[str] = None
-    ) -> List[Tuple[float, float]]:
+        research_objective: str | None,
+        parameter_key: str | None = None
+    ) -> list[tuple[float, float]]:
         """Get suggested parameter ranges based on research objective."""
 
         ranges = []
@@ -391,15 +391,15 @@ class RealTimeValidator:
         param: ParameterInfo,
         value: float,
         confidence_score: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate uncertainty bounds for parameter value.
-        
+
         Args:
             param: Parameter information
             value: Current parameter value
             confidence_score: Validation confidence score
-            
+
         Returns:
             Tuple of (lower_bound, upper_bound) representing uncertainty
         """
@@ -431,9 +431,9 @@ class RealTimeValidator:
         param: ParameterInfo,
         value: float,
         level: ValidationLevel,
-        research_objective: Optional[str],
-        parameter_key: Optional[str] = None
-    ) -> List[str]:
+        research_objective: str | None,
+        parameter_key: str | None = None
+    ) -> list[str]:
         """Generate enhanced recommendations based on validation level and context."""
 
         recommendations = []
@@ -482,8 +482,8 @@ class RealTimeValidator:
         param: ParameterInfo,
         value: float,
         level: ValidationLevel,
-        parameter_key: Optional[str] = None
-    ) -> List[str]:
+        parameter_key: str | None = None
+    ) -> list[str]:
         """Generate warnings for potentially problematic parameter values."""
 
         warnings = []
@@ -506,7 +506,7 @@ class RealTimeValidator:
 
         return warnings
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get validator performance metrics."""
 
         if not self.validation_times:
@@ -528,11 +528,11 @@ class RealTimeValidator:
             "instant_validations": sum(1 for t in self.validation_times if t < 50)
         }
 
-    def get_research_objectives(self) -> List[str]:
+    def get_research_objectives(self) -> list[str]:
         """Get available research objectives."""
         return list(self.research_objectives.keys())
 
-    def get_research_objective_info(self, objective_name: str) -> Optional[ResearchObjective]:
+    def get_research_objective_info(self, objective_name: str) -> ResearchObjective | None:
         """Get information about a specific research objective."""
         return self.research_objectives.get(objective_name)
 

@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol, Tuple
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -55,10 +55,10 @@ class DeviceInfo:
 class DeviceConfiguration:
     """Device configuration parameters"""
     device_id: str
-    parameters: Dict[str, Any]
-    limits: Dict[str, Tuple[float, float]]
-    calibration_data: Dict[str, float]
-    maintenance_schedule: Dict[str, Any]
+    parameters: dict[str, Any]
+    limits: dict[str, tuple[float, float]]
+    calibration_data: dict[str, float]
+    maintenance_schedule: dict[str, Any]
 
 
 class DeviceDriver(Protocol):
@@ -84,7 +84,7 @@ class DeviceDriver(Protocol):
         """Get device status"""
         ...
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """Get device diagnostics"""
         ...
 
@@ -321,7 +321,7 @@ class PowerDevice(MFCDevice):
             self.set_status(DeviceStatus.ERROR)
             return False
 
-    def read(self) -> Dict[str, float]:
+    def read(self) -> dict[str, float]:
         """Read power parameters"""
         return {
             'voltage': self.voltage_output,
@@ -329,7 +329,7 @@ class PowerDevice(MFCDevice):
             'power': self.voltage_output * self.current_output
         }
 
-    def write(self, data: Dict[str, float]) -> bool:
+    def write(self, data: dict[str, float]) -> bool:
         """Set power parameters"""
         try:
             if 'voltage' in data:
@@ -362,7 +362,7 @@ class MFCControlInterface:
         self.device_groups = {}
         self.control_loops = {}
 
-    def add_device(self, device: MFCDevice, group: Optional[str] = None):
+    def add_device(self, device: MFCDevice, group: str | None = None):
         """Add a device to the interface"""
         self.devices[device.device_info.device_id] = device
 
@@ -373,11 +373,11 @@ class MFCControlInterface:
 
         logger.info(f"Added device {device.device_info.device_id} to MFC interface")
 
-    def get_device(self, device_id: str) -> Optional[MFCDevice]:
+    def get_device(self, device_id: str) -> MFCDevice | None:
         """Get device by ID"""
         return self.devices.get(device_id)
 
-    def get_devices_by_group(self, group: str) -> List[MFCDevice]:
+    def get_devices_by_group(self, group: str) -> list[MFCDevice]:
         """Get all devices in a group"""
         if group not in self.device_groups:
             return []
@@ -385,7 +385,7 @@ class MFCControlInterface:
         return [self.devices[device_id] for device_id in self.device_groups[group]
                 if device_id in self.devices]
 
-    def read_sensor(self, sensor_id: str) -> Optional[float]:
+    def read_sensor(self, sensor_id: str) -> float | None:
         """Read from a sensor"""
         device = self.get_device(sensor_id)
         if device and isinstance(device, SensorDevice):
@@ -399,7 +399,7 @@ class MFCControlInterface:
             return device.write(value)
         return False
 
-    def read_power_status(self, power_id: str) -> Optional[Dict[str, float]]:
+    def read_power_status(self, power_id: str) -> dict[str, float] | None:
         """Read power device status"""
         device = self.get_device(power_id)
         if device and isinstance(device, PowerDevice):
@@ -413,7 +413,7 @@ class MFCControlInterface:
             return device.write({'voltage': voltage, 'current': current})
         return False
 
-    def initialize_all_devices(self) -> Dict[str, bool]:
+    def initialize_all_devices(self) -> dict[str, bool]:
         """Initialize all devices"""
         results = {}
         for device_id, device in self.devices.items():
@@ -424,7 +424,7 @@ class MFCControlInterface:
 
         return results
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get overall system status"""
         status_counts = {}
         device_statuses = {}
@@ -457,7 +457,7 @@ class MFCControlInterface:
 
         return online_devices / len(self.devices)
 
-    def run_diagnostics(self) -> Dict[str, Any]:
+    def run_diagnostics(self) -> dict[str, Any]:
         """Run comprehensive system diagnostics"""
         diagnostics = {
             'timestamp': time.time(),
@@ -501,7 +501,7 @@ class MFCControlInterface:
 
         return diagnostics
 
-    def calibrate_sensors(self, sensor_group: Optional[str] = None) -> Dict[str, bool]:
+    def calibrate_sensors(self, sensor_group: str | None = None) -> dict[str, bool]:
         """Calibrate sensors in a group or all sensors"""
         results = {}
 
@@ -533,7 +533,7 @@ class HardwareAbstractionLayer:
         self.device_drivers[device_type] = driver_class
         logger.info(f"Registered driver for {device_type}")
 
-    def create_device_from_config(self, config_path: str) -> Optional[MFCDevice]:
+    def create_device_from_config(self, config_path: str) -> MFCDevice | None:
         """Create device from configuration file"""
         try:
             config = self.configuration_manager.load_device_config(config_path)
@@ -563,7 +563,7 @@ class ConfigurationManager:
     def __init__(self):
         self.configurations = {}
 
-    def load_device_config(self, config_path: str) -> Dict[str, Any]:
+    def load_device_config(self, config_path: str) -> dict[str, Any]:
         """Load device configuration from file"""
         # Placeholder implementation
         # In a real system, this would load from JSON/YAML files
@@ -574,11 +574,11 @@ class ConfigurationManager:
             'calibration_data': {}
         }
 
-    def save_device_config(self, device_id: str, config: Dict[str, Any]):
+    def save_device_config(self, device_id: str, config: dict[str, Any]):
         """Save device configuration"""
         self.configurations[device_id] = config
 
-    def get_device_config(self, device_id: str) -> Optional[Dict[str, Any]]:
+    def get_device_config(self, device_id: str) -> dict[str, Any] | None:
         """Get device configuration"""
         return self.configurations.get(device_id)
 

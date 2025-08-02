@@ -15,7 +15,6 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -254,7 +253,7 @@ class AlertConfigurationUI:
                 self.alert_manager.import_alert_config(config)
                 st.success("Configuration imported successfully")
 
-    def _visualize_thresholds(self, parameter: str, param_info: Dict,
+    def _visualize_thresholds(self, parameter: str, param_info: dict,
                              min_val: float, max_val: float,
                              critical_min: float, critical_max: float):
         """Visualize threshold ranges."""
@@ -429,7 +428,7 @@ class AlertConfigurationUI:
             st.subheader("Alert Timeline")
             self._render_alert_timeline(active_alerts)
 
-    def _render_alert_timeline(self, alerts: List[Alert]):
+    def _render_alert_timeline(self, alerts: list[Alert]):
         """Render alert timeline visualization."""
         fig = go.Figure()
 
@@ -573,7 +572,7 @@ class AlertConfigurationUI:
                 "text/csv"
             )
 
-    def _render_alert_frequency_chart(self, alerts: List[Alert]):
+    def _render_alert_frequency_chart(self, alerts: list[Alert]):
         """Render alert frequency chart."""
         # Create hourly bins
         df = pd.DataFrame([{

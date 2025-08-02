@@ -11,13 +11,12 @@ Last Modified: 2025-07-31
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 # Import policy evolution tracker
 from analysis.policy_evolution_tracker import (
@@ -25,6 +24,7 @@ from analysis.policy_evolution_tracker import (
     PolicyEvolutionMetrics,
     PolicyStability,
 )
+from plotly.subplots import make_subplots
 
 
 class PolicyEvolutionVisualization:
@@ -42,10 +42,10 @@ class PolicyEvolutionVisualization:
         if 'selected_episodes' not in st.session_state:
             st.session_state.selected_episodes = []
 
-    def render_policy_evolution_interface(self) -> Dict[str, Any]:
+    def render_policy_evolution_interface(self) -> dict[str, Any]:
         """
         Render the main policy evolution tracking interface.
-        
+
         Returns:
             Analysis results and metadata
         """
@@ -125,7 +125,7 @@ class PolicyEvolutionVisualization:
         if self.tracker.policy_snapshots:
             st.info(f"📈 Currently loaded: {len(self.tracker.policy_snapshots)} policy snapshots")
 
-    def _render_analysis_overview(self) -> Optional[PolicyEvolutionMetrics]:
+    def _render_analysis_overview(self) -> PolicyEvolutionMetrics | None:
         """Render policy evolution analysis overview."""
         if not st.session_state.policy_evolution_metrics:
             # Run quick analysis if not done yet
@@ -597,7 +597,7 @@ class PolicyEvolutionVisualization:
                 else:
                     st.warning("Select episodes to compare")
 
-    def _generate_episode_comparison(self, reference_episode: int, compare_episodes: List[int]):
+    def _generate_episode_comparison(self, reference_episode: int, compare_episodes: list[int]):
         """Generate detailed episode comparison."""
         # Get policy comparison matrix
         similarity_matrix = self.tracker.get_policy_comparison_matrix(reference_episode)

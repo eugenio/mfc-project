@@ -125,7 +125,7 @@ def create_cover_page(pdf):
         "Power Efficiency: 68% surplus available"
     ]
 
-    for i, (left, right) in enumerate(zip(specs_left, specs_right)):
+    for i, (left, right) in enumerate(zip(specs_left, specs_right, strict=False)):
         y_pos = 0.32 - i*0.03
         ax_main.text(0.08, y_pos, left, fontsize=9, color='#555555',
                     transform=ax_main.transAxes)
@@ -363,7 +363,7 @@ def create_simulation_results_page(pdf):
     ax_cells = fig.add_subplot(gs[2, 0])
     colors = ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9']
 
-    for i, (voltage, color) in enumerate(zip(cell_voltages, colors)):
+    for i, (voltage, color) in enumerate(zip(cell_voltages, colors, strict=False)):
         ax_cells.plot(time_hours, voltage, color=color, linewidth=1.5,
                      label=f'Cell {i+1}', alpha=0.8)
 
@@ -439,9 +439,9 @@ def create_simulation_results_page(pdf):
 
     # Add performance summary box
     summary_text = """KEY PERFORMANCE INDICATORS
-    
+
     • Zero cell failures or reversals
-    • 98.5% uptime achievement  
+    • 98.5% uptime achievement
     • ±2% voltage stability across cells
     • pH maintained within ±0.2 units
     • Temperature control: ±1°C
@@ -609,7 +609,7 @@ def create_energy_analysis_page(pdf):
     ax_env.set_ylabel('Impact Units', fontsize=10)
 
     # Add value labels
-    for bar, value in zip(bars_env, values_env):
+    for bar, value in zip(bars_env, values_env, strict=False):
         ax_env.text(bar.get_x() + bar.get_width()/2., bar.get_height() + max(values_env)*0.02,
                    f'{value}', ha='center', va='bottom', fontsize=10, fontweight='bold')
 

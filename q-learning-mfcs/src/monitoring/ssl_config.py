@@ -13,7 +13,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +26,7 @@ class SSLConfig:
     # Certificate paths
     cert_file: str = "/etc/ssl/certs/mfc-monitoring.crt"
     key_file: str = "/etc/ssl/private/mfc-monitoring.key"
-    ca_file: Optional[str] = None
+    ca_file: str | None = None
 
     # Let's Encrypt configuration
     use_letsencrypt: bool = True
@@ -53,12 +53,12 @@ class SSLConfig:
     auto_renew: bool = True
     renewal_days_before: int = 30
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization"""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'SSLConfig':
+    def from_dict(cls, data: dict) -> 'SSLConfig':
         """Create from dictionary"""
         return cls(**data)
 
@@ -78,7 +78,7 @@ class CertificateManager:
 
         return cert_path.exists() and key_path.exists()
 
-    def check_certificate_validity(self) -> Tuple[bool, Optional[datetime]]:
+    def check_certificate_validity(self) -> tuple[bool, datetime | None]:
         """
         Check if certificate is valid and return expiration date
         Returns: (is_valid, expiration_date)
@@ -241,7 +241,7 @@ class SecurityHeaders:
     """Manage security headers for HTTPS deployment"""
 
     @staticmethod
-    def get_security_headers(config: SSLConfig) -> Dict[str, str]:
+    def get_security_headers(config: SSLConfig) -> dict[str, str]:
         """Get dictionary of security headers"""
         headers = {}
 
@@ -306,7 +306,7 @@ class SSLContextManager:
 
         return context
 
-    def get_uvicorn_ssl_config(self) -> Dict[str, Any]:
+    def get_uvicorn_ssl_config(self) -> dict[str, Any]:
         """Get SSL configuration for uvicorn (FastAPI)"""
         return {
             'ssl_keyfile': self.config.key_file,
@@ -317,7 +317,7 @@ class SSLContextManager:
             'ssl_ciphers': self.config.ciphers
         }
 
-def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
+def load_ssl_config(config_file: str | None = None) -> SSLConfig:
     """Load SSL configuration from file or environment variables"""
 
     # Check for development config first
@@ -360,7 +360,7 @@ def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
         if env_value is not None:
             # Handle boolean conversion
             if attr_name in ['use_letsencrypt', 'staging', 'auto_renew', 'enable_hsts', 'enable_csp']:
-                converted_value: Union[bool, int, str] = env_value.lower() in ('true', '1', 'yes', 'on')
+                converted_value: bool | int | str = env_value.lower() in ('true', '1', 'yes', 'on')
             # Handle integer conversion
             elif attr_name in ['https_port_api', 'https_port_frontend', 'wss_port_streaming', 'hsts_max_age', 'renewal_days_before']:
                 converted_value = int(env_value)
@@ -371,7 +371,7 @@ def load_ssl_config(config_file: Optional[str] = None) -> SSLConfig:
 
     return config
 
-def save_ssl_config(config: SSLConfig, config_file: Optional[str] = None) -> bool:
+def save_ssl_config(config: SSLConfig, config_file: str | None = None) -> bool:
     """Save SSL configuration to file"""
     if config_file is None:
         config_file = os.getenv('MFC_SSL_CONFIG', '/etc/mfc/ssl-config.json')
@@ -390,7 +390,7 @@ def save_ssl_config(config: SSLConfig, config_file: Optional[str] = None) -> boo
         logger.error(f"Failed to save config to {config_file}: {e}")
         return False
 
-def initialize_ssl_infrastructure(config: Optional[SSLConfig] = None) -> Tuple[bool, SSLConfig]:
+def initialize_ssl_infrastructure(config: SSLConfig | None = None) -> tuple[bool, SSLConfig]:
     """
     Initialize SSL infrastructure - certificates, configuration, etc.
     Returns: (success, config)

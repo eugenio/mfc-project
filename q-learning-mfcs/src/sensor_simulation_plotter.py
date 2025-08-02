@@ -19,7 +19,7 @@ import pandas as pd
 matplotlib.use('Agg')  # Use non-interactive backend
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -35,7 +35,7 @@ except ImportError:
 class SensorMFCPlotter:
     """Professional plotting class for sensor-integrated MFC simulations."""
 
-    def __init__(self, timestamp: Optional[str] = None):
+    def __init__(self, timestamp: str | None = None):
         """Initialize plotter with timestamp."""
         self.timestamp = timestamp or datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -86,13 +86,13 @@ class SensorMFCPlotter:
             'savefig.facecolor': 'white'
         })
 
-    def create_comprehensive_dashboard(self, data: Dict[str, Any]) -> str:
+    def create_comprehensive_dashboard(self, data: dict[str, Any]) -> str:
         """
         Create main comprehensive dashboard with all key metrics.
-        
+
         Args:
             data: Simulation data dictionary
-            
+
         Returns:
             Path to saved figure
         """
@@ -149,7 +149,7 @@ class SensorMFCPlotter:
 
         return filepath
 
-    def create_sensor_analysis_dashboard(self, data: Dict[str, Any]) -> str:
+    def create_sensor_analysis_dashboard(self, data: dict[str, Any]) -> str:
         """Create detailed sensor analysis dashboard."""
         fig = plt.figure(figsize=(18, 14))
         gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.3, wspace=0.3)
@@ -195,7 +195,7 @@ class SensorMFCPlotter:
 
         return filepath
 
-    def create_performance_summary(self, data: Dict[str, Any]) -> str:
+    def create_performance_summary(self, data: dict[str, Any]) -> str:
         """Create performance summary with key metrics."""
         fig = plt.figure(figsize=(16, 12))
         gs = gridspec.GridSpec(3, 4, figure=fig, hspace=0.3, wspace=0.3)
@@ -280,7 +280,7 @@ class SensorMFCPlotter:
         ax.set_xlim(0, 1)
 
         # Add confidence values
-        for i, (bar, conf) in enumerate(zip(bars, confidence)):
+        for i, (bar, conf) in enumerate(zip(bars, confidence, strict=False)):
             ax.text(conf + 0.02, i, f'{conf:.2f}', va='center')
 
     def _plot_biofilm_sensor_validation(self, ax, data):
@@ -516,7 +516,7 @@ class SensorMFCPlotter:
         # EIS tends to overestimate during lag phase, underestimate during growth
         eis_thickness = np.zeros_like(true_thickness)
 
-        for i, (t, thickness) in enumerate(zip(time, true_thickness)):
+        for i, (t, thickness) in enumerate(zip(time, true_thickness, strict=False)):
             if t <= 20:  # Lag phase: EIS overestimates due to electrode surface effects
                 eis_thickness[i] = thickness * 1.2 + 0.02
             elif t <= 60:  # Growth phase: EIS underestimates due to biofilm heterogeneity
@@ -533,7 +533,7 @@ class SensorMFCPlotter:
         # QCM is more accurate for mass but can be affected by viscoelastic properties
         qcm_thickness = np.zeros_like(true_thickness)
 
-        for i, (t, thickness) in enumerate(zip(time, true_thickness)):
+        for i, (t, thickness) in enumerate(zip(time, true_thickness, strict=False)):
             if t <= 20:  # Lag phase: QCM slightly underestimates due to low cell density
                 qcm_thickness[i] = thickness * 0.9
             elif t <= 60:  # Growth phase: QCM overestimates due to water content
@@ -854,7 +854,7 @@ class SensorMFCPlotter:
                                             self.colors['info']])
 
         # Add value labels on bars
-        for bar, val in zip(bars, values):
+        for bar, val in zip(bars, values, strict=False):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                    f'{val:.2f}', ha='center', va='bottom')
@@ -984,7 +984,7 @@ class SensorMFCPlotter:
         ax.axis('off')
 
         # Create table
-        table = ax.table(cellText=list(zip(final_metrics['Metric'], final_metrics['Value'])),
+        table = ax.table(cellText=list(zip(final_metrics['Metric'], final_metrics['Value'], strict=False)),
                         colLabels=['Final System Metric', 'Value'],
                         cellLoc='left',
                         loc='center',
@@ -1023,13 +1023,13 @@ PERFORMANCE SUMMARY
         fig.text(0.02, 0.02, info_text, fontsize=8, verticalalignment='bottom',
                 bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.8))
 
-    def save_simulation_data(self, data: Dict[str, Any]) -> Tuple[str, str]:
+    def save_simulation_data(self, data: dict[str, Any]) -> tuple[str, str]:
         """
         Save simulation data in CSV and JSON formats.
-        
+
         Args:
             data: Simulation data dictionary
-            
+
         Returns:
             Tuple of (csv_path, json_path)
         """
@@ -1089,14 +1089,14 @@ PERFORMANCE SUMMARY
         return csv_path, json_path
 
 
-def create_all_sensor_plots(data: Dict[str, Any], timestamp: Optional[str] = None) -> Dict[str, str]:
+def create_all_sensor_plots(data: dict[str, Any], timestamp: str | None = None) -> dict[str, str]:
     """
     Create all sensor-integrated MFC plots.
-    
+
     Args:
         data: Simulation data dictionary
         timestamp: Optional timestamp string
-        
+
     Returns:
         Dictionary of plot names and file paths
     """

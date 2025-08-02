@@ -11,7 +11,7 @@ Created: 2025-08-01
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -32,24 +32,24 @@ class ExperimentalDataset:
     substrate_concentration: float
 
     # Performance data
-    current_density: List[float] = field(default_factory=list)
-    voltage: List[float] = field(default_factory=list)
-    power_density: List[float] = field(default_factory=list)
-    coulombic_efficiency: List[float] = field(default_factory=list)
+    current_density: list[float] = field(default_factory=list)
+    voltage: list[float] = field(default_factory=list)
+    power_density: list[float] = field(default_factory=list)
+    coulombic_efficiency: list[float] = field(default_factory=list)
 
     # Time series data (optional)
-    time_points: List[float] = field(default_factory=list)
-    biofilm_thickness: List[float] = field(default_factory=list)
-    substrate_consumption: List[float] = field(default_factory=list)
+    time_points: list[float] = field(default_factory=list)
+    biofilm_thickness: list[float] = field(default_factory=list)
+    substrate_consumption: list[float] = field(default_factory=list)
 
     # Metadata
-    experimental_conditions: Dict[str, Any] = field(default_factory=dict)
+    experimental_conditions: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
 
 class MFCExperimentalDatabase:
     """
     Database of experimental MFC data for model validation.
-    
+
     Contains curated experimental datasets from literature for validating
     physics models, biofilm growth predictions, and metabolic predictions.
     """
@@ -210,10 +210,10 @@ class ModelValidationFramework:
         self.experimental_db = experimental_db
         self.validation_results = {}
 
-    def validate_polarization_curve(self, dataset_id: str, model_predictions: Dict[str, List[float]]) -> Dict[str, Any]:
+    def validate_polarization_curve(self, dataset_id: str, model_predictions: dict[str, list[float]]) -> dict[str, Any]:
         """
         Validate model predictions against experimental polarization curves.
-        
+
         Args:
             dataset_id: ID of experimental dataset
             model_predictions: Dictionary with 'current_density', 'voltage', 'power_density'
@@ -304,7 +304,7 @@ class ModelValidationFramework:
 
         return validation_result
 
-    def validate_biofilm_growth(self, dataset_id: str, model_predictions: Dict[str, List[float]]) -> Dict[str, Any]:
+    def validate_biofilm_growth(self, dataset_id: str, model_predictions: dict[str, list[float]]) -> dict[str, Any]:
         """
         Validate biofilm growth model against experimental time series data.
         """
@@ -394,7 +394,7 @@ class ModelValidationFramework:
 
         return validation_result
 
-    def generate_comprehensive_validation_report(self) -> Dict[str, Any]:
+    def generate_comprehensive_validation_report(self) -> dict[str, Any]:
         """Generate comprehensive validation report for all datasets."""
 
         report = {
@@ -424,7 +424,7 @@ class ModelValidationFramework:
                 noise_factor = 0.1
                 simulated_current = [c * (1 + np.random.normal(0, noise_factor)) for c in dataset.current_density]
                 simulated_voltage = [v * (1 + np.random.normal(0, noise_factor * 0.5)) for v in dataset.voltage]
-                simulated_power = [c * v for c, v in zip(simulated_current, simulated_voltage)]
+                simulated_power = [c * v for c, v in zip(simulated_current, simulated_voltage, strict=False)]
 
                 model_predictions = {
                     'current_density': simulated_current,
@@ -445,7 +445,7 @@ class ModelValidationFramework:
 
         return report
 
-    def _generate_recommendations(self, validation_report: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, validation_report: dict[str, Any]) -> list[str]:
         """Generate recommendations based on validation results."""
 
         recommendations = []

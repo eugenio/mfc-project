@@ -556,14 +556,14 @@ def render_performance_monitor_page():
 
         with col1:
             st.subheader("Alert Thresholds")
-            cpu_threshold = st.slider("CPU Alert (%)", 50, 100, 90)
-            memory_threshold = st.slider("Memory Alert (%)", 50, 100, 85)
-            gpu_temp_threshold = st.slider("GPU Temp Alert (°C)", 60, 100, 80)
+            st.slider("CPU Alert (%)", 50, 100, 90)
+            st.slider("Memory Alert (%)", 50, 100, 85)
+            st.slider("GPU Temp Alert (°C)", 60, 100, 80)
 
         with col2:
             st.subheader("Data Retention")
-            retention_hours = st.number_input("Retention (hours)", 1, 168, 24)
-            export_interval = st.selectbox("Export Interval", ["Never", "Hourly", "Daily", "Weekly"])
+            st.number_input("Retention (hours)", 1, 168, 24)
+            st.selectbox("Export Interval", ["Never", "Hourly", "Daily", "Weekly"])
 
         with col3:
             st.subheader("Export Options")

@@ -6,7 +6,7 @@ CRITICAL ARCHITECTURE WARNING:
 =================================
 This file implements a 3-phase data optimization architecture:
 - Phase 1: Shared Memory Queue (queue.Queue for real-time streaming)
-- Phase 2: Incremental Updates (change detection, smart GUI updates)  
+- Phase 2: Incremental Updates (change detection, smart GUI updates)
 - Phase 3: Parquet Migration (planned - columnar storage optimization)
 
 ANY MODIFICATIONS MUST:
@@ -71,13 +71,13 @@ st.markdown("""
 
 class SimulationRunner:
     """Thread-safe simulation runner for Streamlit
-    
+
     CRITICAL ARCHITECTURE COMPONENT:
     =================================
     This class implements the core data optimization architecture with:
     - Phase 1: Memory queue streaming (data_queue, live_data_buffer)
     - Phase 2: Incremental updates (change detection, smart refresh flags)
-    
+
     MODIFICATION WARNING:
     Any changes to this class must preserve:
     1. Queue-based real-time data streaming patterns
@@ -85,7 +85,7 @@ class SimulationRunner:
     3. Incremental update mechanisms for GUI performance
     4. Thread-safe operation between simulation and GUI threads
     5. Change detection flags and caching mechanisms
-    
+
     Critical methods that control data flow:
     - get_live_data(): Non-blocking queue data retrieval
     - get_buffered_data(): DataFrame generation from buffer
@@ -119,7 +119,7 @@ class SimulationRunner:
 
     def start_simulation(self, config, duration_hours, n_cells=None, electrode_area_m2=None, target_conc=None, gui_refresh_interval=5.0):
         """Start simulation in background thread
-        
+
         Args:
             config: Q-learning configuration
             duration_hours: Simulation duration in hours
@@ -227,7 +227,6 @@ class SimulationRunner:
             from pathlib import Path
 
             import pandas as pd
-
             from mfc_gpu_accelerated import GPUAcceleratedMFC
 
             # Create output directory
@@ -878,7 +877,7 @@ def create_biofilm_analysis_plots(df):
             biomass_data = data_dict.get('biomass_density', data_dict.get('biomass_density_per_cell', []))
             if biomass_data and isinstance(biomass_data[0], list):
                 # Transpose for heatmap: rows = cells, cols = time
-                transposed_data = list(map(list, zip(*biomass_data)))
+                transposed_data = list(map(list, zip(*biomass_data, strict=False)))
 
                 fig.add_trace(
                     go.Heatmap(
@@ -1329,7 +1328,7 @@ def create_performance_analysis_plots(df):
         cost_data = data_dict.get('operating_cost', [1.0] * len(time_data))
         revenue_data = data_dict.get('revenue', [2.0] * len(time_data))
         profit = [(r - c) if isinstance(r, (int, float)) and isinstance(c, (int, float)) else 1.0
-                 for r, c in zip(revenue_data, cost_data)]
+                 for r, c in zip(revenue_data, cost_data, strict=False)]
         fig.add_trace(
             go.Scatter(x=time_data, y=profit,
                       name='Profit ($/h)', line=dict(color='gold', width=2)),

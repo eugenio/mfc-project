@@ -5,14 +5,13 @@ GitLab API integration for automatic issue creation and management
 Usage:
     export GITLAB_TOKEN=your_token_here
     export GITLAB_PROJECT_ID=project_id_here
-    
-    python -c "from utils.gitlab_integration import create_enhancement_issue; 
+
+    python -c "from utils.gitlab_integration import create_enhancement_issue;
                create_enhancement_issue('Add cathode models', 'Implement platinum and biological cathode models')"
 """
 
 import os
 from datetime import datetime
-from typing import List, Optional
 
 try:
     import gitlab
@@ -60,9 +59,9 @@ class GitLabIssueManager:
             print(f"❌ GitLab connection failed: {e}")
 
     def create_bug_issue(self, title: str, description: str,
-                        steps_to_reproduce: Optional[str] = None,
-                        expected_behavior: Optional[str] = None,
-                        environment: Optional[str] = None) -> Optional[int]:
+                        steps_to_reproduce: str | None = None,
+                        expected_behavior: str | None = None,
+                        environment: str | None = None) -> int | None:
         """Create a bug issue."""
         if not self.project:
             print("❌ GitLab not configured")
@@ -107,8 +106,8 @@ class GitLabIssueManager:
             return None
 
     def create_enhancement_issue(self, title: str, description: str,
-                               todo_list: Optional[List[str]] = None,
-                               priority: str = 'medium') -> Optional[int]:
+                               todo_list: list[str] | None = None,
+                               priority: str = 'medium') -> int | None:
         """Create an enhancement issue."""
         if not self.project:
             print("❌ GitLab not configured")
@@ -173,11 +172,11 @@ class GitLabIssueManager:
 # Global instance
 gitlab_manager = GitLabIssueManager()
 
-def create_bug_issue(title: str, description: str, **kwargs) -> Optional[int]:
+def create_bug_issue(title: str, description: str, **kwargs) -> int | None:
     """Convenience function to create a bug issue."""
     return gitlab_manager.create_bug_issue(title, description, **kwargs)
 
-def create_enhancement_issue(title: str, description: str, **kwargs) -> Optional[int]:
+def create_enhancement_issue(title: str, description: str, **kwargs) -> int | None:
     """Convenience function to create an enhancement issue."""
     return gitlab_manager.create_enhancement_issue(title, description, **kwargs)
 

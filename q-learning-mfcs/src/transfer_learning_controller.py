@@ -26,7 +26,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -71,19 +71,19 @@ class TransferConfig:
     """Configuration for transfer learning."""
 
     # Source and target domains
-    source_species: List[BacterialSpecies] = None
+    source_species: list[BacterialSpecies] = None
     target_species: BacterialSpecies = BacterialSpecies.MIXED
 
     # Transfer learning parameters
     transfer_method: TransferLearningMethod = TransferLearningMethod.FINE_TUNING
-    freeze_layers: List[str] = None  # Layers to freeze during transfer
-    adaptation_layers: List[int] = None  # New layers for domain adaptation
+    freeze_layers: list[str] = None  # Layers to freeze during transfer
+    adaptation_layers: list[int] = None  # New layers for domain adaptation
 
     # Multi-task learning
-    tasks: List[TaskType] = None
-    task_weights: Dict[TaskType, float] = None
-    shared_layers: List[int] = None
-    task_specific_layers: Dict[TaskType, List[int]] = None
+    tasks: list[TaskType] = None
+    task_weights: dict[TaskType, float] = None
+    shared_layers: list[int] = None
+    task_specific_layers: dict[TaskType, list[int]] = None
 
     # Meta-learning (MAML)
     meta_lr: float = 1e-3
@@ -93,7 +93,7 @@ class TransferConfig:
 
     # Progressive networks
     lateral_connections: bool = True
-    adapter_layers: List[int] = None
+    adapter_layers: list[int] = None
 
     # Knowledge distillation
     temperature: float = 4.0
@@ -130,7 +130,7 @@ class DomainAdaptationNetwork(nn.Module):
     def __init__(self, feature_dim: int, num_domains: int, hidden_dim: int = 128):
         """
         Initialize domain adaptation network.
-        
+
         Args:
             feature_dim: Dimension of input features
             num_domains: Number of source domains
@@ -180,11 +180,11 @@ class GradientReversalLayer(torch.autograd.Function):
 class ProgressiveNetwork(nn.Module):
     """Progressive neural network for continual learning."""
 
-    def __init__(self, input_dim: int, hidden_dims: List[int], output_dim: int,
+    def __init__(self, input_dim: int, hidden_dims: list[int], output_dim: int,
                  num_columns: int = 1, lateral_connections: bool = True):
         """
         Initialize progressive network.
-        
+
         Args:
             input_dim: Input dimension
             hidden_dims: Hidden layer dimensions
@@ -335,11 +335,11 @@ class ProgressiveNetwork(nn.Module):
 class MultiTaskNetwork(nn.Module):
     """Multi-task neural network with shared and task-specific layers."""
 
-    def __init__(self, input_dim: int, shared_layers: List[int],
-                 task_layers: Dict[TaskType, List[int]], task_outputs: Dict[TaskType, int]):
+    def __init__(self, input_dim: int, shared_layers: list[int],
+                 task_layers: dict[TaskType, list[int]], task_outputs: dict[TaskType, int]):
         """
         Initialize multi-task network.
-        
+
         Args:
             input_dim: Input dimension
             shared_layers: Shared layer dimensions
@@ -383,7 +383,7 @@ class MultiTaskNetwork(nn.Module):
 
         logger.info(f"Multi-task network initialized for tasks: {[t.value for t in self.tasks]}")
 
-    def forward(self, x: torch.Tensor, task: Optional[TaskType] = None) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+    def forward(self, x: torch.Tensor, task: TaskType | None = None) -> torch.Tensor | dict[str, torch.Tensor]:
         """Forward pass through multi-task network."""
         # Shared feature extraction
         shared_features = self.shared_layers(x)
@@ -402,10 +402,10 @@ class MultiTaskNetwork(nn.Module):
 class MAMLController(nn.Module):
     """Model-Agnostic Meta-Learning (MAML) controller for few-shot adaptation."""
 
-    def __init__(self, input_dim: int, hidden_dims: List[int], output_dim: int):
+    def __init__(self, input_dim: int, hidden_dims: list[int], output_dim: int):
         """
         Initialize MAML controller.
-        
+
         Args:
             input_dim: Input dimension
             hidden_dims: Hidden layer dimensions
@@ -436,13 +436,13 @@ class MAMLController(nn.Module):
               inner_lr: float, inner_steps: int) -> 'MAMLController':
         """
         Adapt to new task using support set.
-        
+
         Args:
             support_x: Support input data
             support_y: Support target data
             inner_lr: Inner loop learning rate
             inner_steps: Number of inner loop steps
-            
+
         Returns:
             Adapted model
         """
@@ -459,7 +459,7 @@ class MAMLController(nn.Module):
             grads = torch.autograd.grad(loss, adapted_model.parameters(), create_graph=True)
 
             # Update parameters
-            for param, grad in zip(adapted_model.parameters(), grads):
+            for param, grad in zip(adapted_model.parameters(), grads, strict=False):
                 param.data = param.data - inner_lr * grad
 
         return adapted_model
@@ -468,17 +468,17 @@ class MAMLController(nn.Module):
 class TransferLearningController:
     """
     Advanced Transfer Learning and Multi-Task Learning Controller.
-    
+
     Integrates multiple transfer learning techniques for knowledge sharing
     across different MFC configurations and operating conditions.
     """
 
     def __init__(self, state_dim: int, action_dim: int,
-                 config: Optional[TransferConfig] = None,
-                 base_controller: Optional[DeepRLController] = None):
+                 config: TransferConfig | None = None,
+                 base_controller: DeepRLController | None = None):
         """
         Initialize transfer learning controller.
-        
+
         Args:
             state_dim: State space dimension
             action_dim: Action space dimension
@@ -556,7 +556,7 @@ class TransferLearningController:
     def load_source_knowledge(self, species: BacterialSpecies, model_path: str):
         """
         Load knowledge from source domain.
-        
+
         Args:
             species: Source bacterial species
             model_path: Path to source model
@@ -568,10 +568,10 @@ class TransferLearningController:
         except Exception as e:
             logger.error(f"Failed to load source knowledge: {e}")
 
-    def transfer_knowledge(self) -> Dict[str, Any]:
+    def transfer_knowledge(self) -> dict[str, Any]:
         """
         Transfer knowledge from source to target domain.
-        
+
         Returns:
             Transfer learning results
         """
@@ -588,7 +588,7 @@ class TransferLearningController:
         else:
             return {'status': 'No transfer method specified'}
 
-    def _fine_tune_transfer(self) -> Dict[str, Any]:
+    def _fine_tune_transfer(self) -> dict[str, Any]:
         """Fine-tuning transfer from source to target domain."""
         if self.base_controller is None:
             return {'status': 'No base controller for fine-tuning'}
@@ -625,7 +625,7 @@ class TransferLearningController:
             'trainable_params': sum(p.numel() for p in self.base_controller.q_network.parameters() if p.requires_grad)
         }
 
-    def _domain_adaptation_transfer(self) -> Dict[str, Any]:
+    def _domain_adaptation_transfer(self) -> dict[str, Any]:
         """Domain adaptation with adversarial training."""
         if not hasattr(self, 'domain_adapter'):
             return {'status': 'Domain adapter not initialized'}
@@ -639,7 +639,7 @@ class TransferLearningController:
             'adapter_params': sum(p.numel() for p in self.domain_adapter.parameters())
         }
 
-    def _progressive_transfer(self) -> Dict[str, Any]:
+    def _progressive_transfer(self) -> dict[str, Any]:
         """Progressive network transfer learning."""
         if not hasattr(self, 'progressive_net'):
             return {'status': 'Progressive network not initialized'}
@@ -655,7 +655,7 @@ class TransferLearningController:
             'current_column': self.progressive_net.num_columns - 1
         }
 
-    def _meta_learning_transfer(self) -> Dict[str, Any]:
+    def _meta_learning_transfer(self) -> dict[str, Any]:
         """Meta-learning (MAML) transfer."""
         if not hasattr(self, 'maml_controller'):
             return {'status': 'MAML controller not initialized'}
@@ -667,7 +667,7 @@ class TransferLearningController:
             'inner_steps': self.config.inner_steps
         }
 
-    def _knowledge_distillation_transfer(self) -> Dict[str, Any]:
+    def _knowledge_distillation_transfer(self) -> dict[str, Any]:
         """Knowledge distillation from teacher to student model."""
         if self.base_controller is None:
             return {'status': 'No teacher model available'}
@@ -681,14 +681,14 @@ class TransferLearningController:
         }
 
     def adapt_to_new_species(self, target_species: BacterialSpecies,
-                           adaptation_data: List[Tuple[np.ndarray, int, float]]) -> Dict[str, Any]:
+                           adaptation_data: list[tuple[np.ndarray, int, float]]) -> dict[str, Any]:
         """
         Adapt controller to new bacterial species.
-        
+
         Args:
             target_species: Target bacterial species
             adaptation_data: Adaptation data (state, action, reward) tuples
-            
+
         Returns:
             Adaptation results
         """
@@ -699,7 +699,7 @@ class TransferLearningController:
         else:
             return self._standard_adaptation(target_species, adaptation_data)
 
-    def _maml_adaptation(self, adaptation_data: List[Tuple[np.ndarray, int, float]]) -> Dict[str, Any]:
+    def _maml_adaptation(self, adaptation_data: list[tuple[np.ndarray, int, float]]) -> dict[str, Any]:
         """Few-shot adaptation using MAML."""
         if len(adaptation_data) < 5:
             return {'status': 'Insufficient adaptation data', 'required': 5, 'provided': len(adaptation_data)}
@@ -732,7 +732,7 @@ class TransferLearningController:
         }
 
     def _standard_adaptation(self, target_species: BacterialSpecies,
-                           adaptation_data: List[Tuple[np.ndarray, int, float]]) -> Dict[str, Any]:
+                           adaptation_data: list[tuple[np.ndarray, int, float]]) -> dict[str, Any]:
         """Standard adaptation for other methods."""
         self.adaptation_history.append({
             'species': target_species.value,
@@ -746,13 +746,13 @@ class TransferLearningController:
             'adaptation_samples': len(adaptation_data)
         }
 
-    def multi_task_control(self, system_state: SystemState) -> Dict[TaskType, Any]:
+    def multi_task_control(self, system_state: SystemState) -> dict[TaskType, Any]:
         """
         Multi-task control decision.
-        
+
         Args:
             system_state: Current system state
-            
+
         Returns:
             Task-specific control decisions
         """
@@ -796,7 +796,7 @@ class TransferLearningController:
 
         return decisions
 
-    def get_transfer_summary(self) -> Dict[str, Any]:
+    def get_transfer_summary(self) -> dict[str, Any]:
         """Get transfer learning summary."""
         return {
             'transfer_method': self.config.transfer_method.value,
@@ -836,12 +836,12 @@ class TransferLearningController:
 
 def create_transfer_controller(state_dim: int, action_dim: int,
                              method: str = "multi_task",
-                             source_species: List[str] = None,
+                             source_species: list[str] = None,
                              target_species: str = "mixed",
                              **kwargs) -> TransferLearningController:
     """
     Factory function to create transfer learning controller.
-    
+
     Args:
         state_dim: State space dimension
         action_dim: Action space dimension
@@ -849,7 +849,7 @@ def create_transfer_controller(state_dim: int, action_dim: int,
         source_species: Source species names
         target_species: Target species name
         **kwargs: Additional configuration
-        
+
     Returns:
         Configured transfer learning controller
     """

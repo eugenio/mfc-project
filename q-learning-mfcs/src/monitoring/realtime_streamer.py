@@ -14,7 +14,6 @@ import sys
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 import pandas as pd
 import websockets
@@ -42,14 +41,14 @@ logger = logging.getLogger(__name__)
 class DataStreamManager:
     """Manages real-time data streaming with secure WebSocket connections"""
 
-    def __init__(self, ssl_config: Optional[SSLConfig] = None):
+    def __init__(self, ssl_config: SSLConfig | None = None):
         self.ssl_config = ssl_config or load_ssl_config()
-        self.clients: Set[WebSocketServerProtocol] = set()
-        self.data_cache: List[Dict] = []
+        self.clients: set[WebSocketServerProtocol] = set()
+        self.data_cache: list[dict] = []
         self.cache_size_limit = 1000
         self.last_data_time = datetime.now()
         self.streaming_active = False
-        self.data_thread: Optional[threading.Thread] = None
+        self.data_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
         # SSL context manager
@@ -77,7 +76,7 @@ class DataStreamManager:
         client_info = f"{websocket.remote_address[0]}:{websocket.remote_address[1]}"
         logger.info(f"Client disconnected: {client_info} (Total: {len(self.clients)})")
 
-    async def send_to_client(self, websocket: WebSocketServerProtocol, message: Dict):
+    async def send_to_client(self, websocket: WebSocketServerProtocol, message: dict):
         """Send message to specific client with error handling"""
         try:
             await websocket.send(json.dumps(message))
@@ -87,7 +86,7 @@ class DataStreamManager:
             logger.error(f"Error sending to client: {e}")
             await self.unregister_client(websocket)
 
-    async def broadcast_to_clients(self, message: Dict):
+    async def broadcast_to_clients(self, message: dict):
         """Broadcast message to all connected clients"""
         if not self.clients:
             return
@@ -99,7 +98,7 @@ class DataStreamManager:
         tasks = [self.send_to_client(client, message) for client in clients_copy]
         await asyncio.gather(*tasks, return_exceptions=True)
 
-    def load_simulation_data(self) -> Optional[List[Dict]]:
+    def load_simulation_data(self) -> list[dict] | None:
         """Load latest simulation data from files"""
         try:
             # Find latest simulation data directory
@@ -165,7 +164,7 @@ class DataStreamManager:
             logger.error(f"Error loading simulation data: {e}")
             return None
 
-    def update_data_cache(self, new_data: List[Dict]):
+    def update_data_cache(self, new_data: list[dict]):
         """Update internal data cache with size limit"""
         if new_data:
             self.data_cache.extend(new_data)
@@ -335,7 +334,7 @@ class WSSSecurity:
         return context
 
     @staticmethod
-    def validate_origin(origin: str, allowed_origins: List[str]) -> bool:
+    def validate_origin(origin: str, allowed_origins: list[str]) -> bool:
         """Validate WebSocket origin for security"""
         if not origin:
             return False
@@ -349,8 +348,8 @@ class WSSSecurity:
 
 async def run_websocket_server(
     host: str = "0.0.0.0",
-    port: Optional[int] = None,
-    ssl_config: Optional[SSLConfig] = None
+    port: int | None = None,
+    ssl_config: SSLConfig | None = None
 ):
     """Run WebSocket server with SSL support"""
 

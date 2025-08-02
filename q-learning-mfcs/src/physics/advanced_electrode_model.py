@@ -18,13 +18,13 @@ Literature References:
 5. Zhang, X.C. & Halme, A. (1995). "Modelling of a microbial fuel cell process"
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import scipy.sparse as sp
-
 from config.electrode_config import ElectrodeConfiguration, ElectrodeGeometry
 
 
@@ -71,7 +71,7 @@ class CellGeometry:
         """Calculate spacing between electrodes."""
         return self.separator_thickness
 
-    def validate_electrode_fit(self, electrode_config: ElectrodeConfiguration) -> Dict[str, Any]:
+    def validate_electrode_fit(self, electrode_config: ElectrodeConfiguration) -> dict[str, Any]:
         """Validate if electrode geometry fits within cell."""
         electrode_volume = electrode_config.geometry.calculate_volume()
         available_volume = min(self.anode_chamber_volume, self.cathode_chamber_volume)
@@ -124,7 +124,7 @@ class FluidDynamicsProperties:
     # Porous media properties (calculated from electrode config)
     permeability: float = field(init=False)  # m² (Darcy permeability)
     forchheimer_coefficient: float = field(init=False)  # m⁻¹
-    pore_size_distribution: List[float] = field(default_factory=list)
+    pore_size_distribution: list[float] = field(default_factory=list)
 
     def calculate_reynolds_number(self, characteristic_length: float) -> float:
         """Calculate Reynolds number for flow through electrode."""
@@ -187,7 +187,7 @@ class BiofilmDynamics:
     michaelis_constant: float = 5.0  # mM (Km for substrate limitation)
 
     # 3D growth parameters
-    growth_direction_weights: Dict[str, float] = field(default_factory=lambda: {
+    growth_direction_weights: dict[str, float] = field(default_factory=lambda: {
         'radial': 0.6,  # Growth outward from electrode surface
         'axial': 0.3,   # Growth along flow direction
         'normal': 0.1   # Growth perpendicular to surface
@@ -199,7 +199,7 @@ class BiofilmDynamics:
 
     # Current biofilm state (dynamic)
     biofilm_thickness_distribution: np.ndarray = field(default_factory=lambda: np.array([]))
-    pore_size_evolution: List[float] = field(default_factory=list)
+    pore_size_evolution: list[float] = field(default_factory=list)
     biofilm_age_distribution: np.ndarray = field(default_factory=lambda: np.array([]))
 
     def calculate_growth_rate(self, substrate_conc: float, local_ph: float, temperature: float) -> float:
@@ -233,9 +233,9 @@ class AdvancedElectrodeModel:
     def __init__(self,
                  electrode_config: ElectrodeConfiguration,
                  cell_geometry: CellGeometry,
-                 fluid_properties: Optional[FluidDynamicsProperties] = None,
-                 transport_properties: Optional[MassTransportProperties] = None,
-                 biofilm_dynamics: Optional[BiofilmDynamics] = None):
+                 fluid_properties: FluidDynamicsProperties | None = None,
+                 transport_properties: MassTransportProperties | None = None,
+                 biofilm_dynamics: BiofilmDynamics | None = None):
 
         self.electrode_config = electrode_config
         self.cell_geometry = cell_geometry
@@ -254,11 +254,11 @@ class AdvancedElectrodeModel:
         # Validation
         self.compatibility_check = self._validate_electrode_compatibility()
 
-    def _validate_electrode_compatibility(self) -> Dict[str, Any]:
+    def _validate_electrode_compatibility(self) -> dict[str, Any]:
         """Validate electrode-cell compatibility."""
         return self.cell_geometry.validate_electrode_fit(self.electrode_config)
 
-    def _calculate_grid_spacing(self) -> Tuple[float, float, float]:
+    def _calculate_grid_spacing(self) -> tuple[float, float, float]:
         """Calculate 3D grid spacing based on electrode geometry."""
         geom = self.electrode_config.geometry
 
@@ -272,7 +272,7 @@ class AdvancedElectrodeModel:
 
         return dx, dy, dz
 
-    def _initialize_state(self) -> Dict[str, np.ndarray]:
+    def _initialize_state(self) -> dict[str, np.ndarray]:
         """Initialize 3D state variables."""
         shape = (self.nx, self.ny, self.nz)
 
@@ -304,7 +304,7 @@ class AdvancedElectrodeModel:
 
         return permeability
 
-    def solve_flow_field(self) -> Dict[str, np.ndarray]:
+    def solve_flow_field(self) -> dict[str, np.ndarray]:
         """Solve 3D flow field through porous electrode."""
         permeability = self.calculate_permeability_field()
 
@@ -372,7 +372,7 @@ class AdvancedElectrodeModel:
 
         return substrate_new
 
-    def solve_biofilm_growth(self, dt: float) -> Dict[str, np.ndarray]:
+    def solve_biofilm_growth(self, dt: float) -> dict[str, np.ndarray]:
         """Solve 3D biofilm growth with pore blocking."""
         substrate = self.current_state['substrate_concentration']
         biofilm_density = self.current_state['biofilm_density']
@@ -421,13 +421,13 @@ class AdvancedElectrodeModel:
             'growth_rates': growth_rates
         }
 
-    def step(self, dt: float) -> Dict[str, Any]:
+    def step(self, dt: float) -> dict[str, Any]:
         """
         Advance simulation by one time step with coupled physics.
-        
+
         Solves the coupled system of:
         1. Flow field (momentum transport)
-        2. Mass transport (species transport)  
+        2. Mass transport (species transport)
         3. Biofilm growth (biological processes)
         """
         step_results = {}
@@ -458,7 +458,7 @@ class AdvancedElectrodeModel:
             'compatibility_check': self.compatibility_check
         }
 
-    def calculate_performance_metrics(self) -> Dict[str, float]:
+    def calculate_performance_metrics(self) -> dict[str, float]:
         """Calculate electrode performance metrics."""
         substrate = self.current_state['substrate_concentration']
         biofilm_density = self.current_state['biofilm_density']
@@ -496,7 +496,7 @@ class AdvancedElectrodeModel:
             'electrode_utilization_efficiency': np.mean(biofilm_density > 1.0)  # Fraction with active biofilm
         }
 
-    def get_optimization_targets(self) -> Dict[str, float]:
+    def get_optimization_targets(self) -> dict[str, float]:
         """Get optimization targets for ML-based parameter tuning."""
         metrics = self.calculate_performance_metrics()
 
@@ -512,7 +512,7 @@ class AdvancedElectrodeModel:
 
 # Helper functions for ML optimization
 def create_optimization_objective(electrode_model: AdvancedElectrodeModel,
-                                weights: Dict[str, float]) -> Callable:
+                                weights: dict[str, float]) -> Callable:
     """Create objective function for ML optimization."""
 
     def objective_function(parameters: np.ndarray) -> float:

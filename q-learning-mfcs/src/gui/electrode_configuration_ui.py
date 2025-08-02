@@ -11,12 +11,10 @@ Provides comprehensive electrode configuration interface including:
 Created: 2025-08-01
 """
 
-from typing import Dict, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-
 from config.electrode_config import (
     MATERIAL_PROPERTIES_DATABASE,
     ElectrodeConfiguration,
@@ -95,7 +93,7 @@ class ElectrodeConfigurationUI:
 
             st.caption(f"📚 Reference: {props.reference}")
 
-    def render_geometry_selector(self, electrode_type: str = "anode") -> Tuple[ElectrodeGeometry, Dict[str, float]]:
+    def render_geometry_selector(self, electrode_type: str = "anode") -> tuple[ElectrodeGeometry, dict[str, float]]:
         """Render geometry selection and dimension input interface."""
         st.markdown(f"### 📐 {electrode_type.title()} Geometry Configuration")
 
@@ -122,7 +120,7 @@ class ElectrodeConfigurationUI:
 
         return selected_geometry, dimensions
 
-    def _render_dimension_inputs(self, geometry: ElectrodeGeometry, electrode_type: str) -> Dict[str, float]:
+    def _render_dimension_inputs(self, geometry: ElectrodeGeometry, electrode_type: str) -> dict[str, float]:
         """Render dimension input fields based on geometry type."""
         dimensions = {}
 
@@ -456,7 +454,7 @@ class ElectrodeConfigurationUI:
             st.write(f"**Conductance:** {summary['specific_conductance_S_per_m']:,.0f} S/m")
             st.write(f"**Hydrophobicity:** {summary['hydrophobicity_angle_deg']:.0f}°")
 
-    def render_full_electrode_configuration(self) -> Tuple[Optional[ElectrodeConfiguration], Optional[ElectrodeConfiguration]]:
+    def render_full_electrode_configuration(self) -> tuple[ElectrodeConfiguration | None, ElectrodeConfiguration | None]:
         """Render complete electrode configuration interface."""
         st.markdown("## ⚡ Electrode Configuration")
         st.markdown("Configure electrode materials, geometry, and properties for accurate MFC modeling.")

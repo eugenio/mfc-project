@@ -529,7 +529,7 @@ def generate_comparison_plots(successful_results):
     ax1.tick_params(axis='x', rotation=45)
 
     # Add value labels on bars
-    for i, (bar, energy) in enumerate(zip(bars1, energies)):
+    for i, (bar, energy) in enumerate(zip(bars1, energies, strict=False)):
         ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(energies)*0.01,
                 f'{energy:.1f}', ha='center', va='bottom', fontweight='bold')
 
@@ -553,20 +553,20 @@ def generate_comparison_plots(successful_results):
     ax3.tick_params(axis='x', rotation=45)
 
     # Add value labels
-    for bar, runtime in zip(bars3, runtimes):
+    for bar, runtime in zip(bars3, runtimes, strict=False):
         ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(runtimes)*0.01,
                 f'{runtime:.1f}s', ha='center', va='bottom', fontweight='bold')
 
     # Energy efficiency (Energy/Runtime ratio)
     ax4 = axes[1, 1]
-    efficiency = [e/r if r > 0 else 0 for e, r in zip(energies, runtimes)]
+    efficiency = [e/r if r > 0 else 0 for e, r in zip(energies, runtimes, strict=False)]
     bars4 = ax4.bar(names, efficiency, color=['#96CEB4', '#FF6B6B', '#4ECDC4', '#45B7D1'])
     ax4.set_ylabel('Energy/Time Efficiency (Wh/s)')
     ax4.set_title('Computational Efficiency')
     ax4.tick_params(axis='x', rotation=45)
 
     # Add value labels
-    for bar, eff in zip(bars4, efficiency):
+    for bar, eff in zip(bars4, efficiency, strict=False):
         ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(efficiency)*0.01,
                 f'{eff:.3f}', ha='center', va='bottom', fontweight='bold')
 

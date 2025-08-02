@@ -12,7 +12,6 @@ import mimetypes
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Try to import streamlit for enhanced web interface
 try:
@@ -44,7 +43,7 @@ class DownloadServer:
     def __init__(self, output_dir: Path = Path("simulation_outputs"), port: int = 8080):
         """
         Initialize download server.
-        
+
         Args:
             output_dir: Directory containing simulation outputs
             port: Port to run server on
@@ -56,7 +55,7 @@ class DownloadServer:
         if not FASTAPI_AVAILABLE:
             logger.warning("FastAPI not available. Install with: pip install fastapi uvicorn")
 
-    def create_fastapi_app(self) -> Optional[FastAPI]:
+    def create_fastapi_app(self) -> FastAPI | None:
         """Create FastAPI application."""
         if not FASTAPI_AVAILABLE:
             return None
@@ -158,14 +157,14 @@ class DownloadServer:
                 .success {{ border-left: 5px solid #27ae60; }}
                 .failed {{ border-left: 5px solid #e74c3c; }}
                 .download-links {{ margin-top: 10px; }}
-                .download-links a {{ 
-                    display: inline-block; margin-right: 10px; padding: 8px 16px; 
+                .download-links a {{
+                    display: inline-block; margin-right: 10px; padding: 8px 16px;
                     background: #3498db; color: white; text-decoration: none; border-radius: 4px;
                 }}
                 .download-links a:hover {{ background: #2980b9; }}
                 .metadata {{ color: #666; font-size: 0.9em; }}
                 .tags {{ margin-top: 10px; }}
-                .tag {{ background: #ecf0f1; padding: 3px 8px; border-radius: 12px; 
+                .tag {{ background: #ecf0f1; padding: 3px 8px; border-radius: 12px;
                        font-size: 0.8em; margin-right: 5px; }}
             </style>
         </head>
@@ -193,14 +192,14 @@ class DownloadServer:
                 <div class="simulation {status_class}">
                     <h3>{status_icon} {entry.simulation_name}</h3>
                     <div class="metadata">
-                        <strong>ID:</strong> {entry.id} | 
-                        <strong>Time:</strong> {entry.timestamp} | 
+                        <strong>ID:</strong> {entry.id} |
+                        <strong>Time:</strong> {entry.timestamp} |
                         <strong>Duration:</strong> {entry.duration_hours:.1f}h |
                         <strong>Execution:</strong> {entry.execution_time_seconds:.1f}s
                     </div>
-                    
+
                     {f'<p><strong>Description:</strong> {entry.description}</p>' if entry.description else ''}
-                    
+
                     <div class="tags">
                         {''.join(f'<span class="tag">{tag}</span>' for tag in entry.tags) if entry.tags else ''}
                     </div>
@@ -219,8 +218,8 @@ class DownloadServer:
 
         html += """
             <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; text-align: center;">
-                <p>MFC Q-Learning Simulation System | 
-                   <a href="/api/simulations">JSON API</a> | 
+                <p>MFC Q-Learning Simulation System |
+                   <a href="/api/simulations">JSON API</a> |
                    Generated with browser download support</p>
             </div>
         </body>
@@ -357,7 +356,7 @@ def create_streamlit_download_interface():
 def start_download_interface(interface_type: str = "fastapi", port: int = 8080):
     """
     Start download interface.
-    
+
     Args:
         interface_type: Type of interface ('fastapi' or 'streamlit')
         port: Port to run on

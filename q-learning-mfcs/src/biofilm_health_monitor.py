@@ -15,7 +15,7 @@ import logging
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -80,7 +80,7 @@ class HealthMetrics:
 
     # Predictive metrics
     predicted_health_24h: float  # Predicted health in 24 hours
-    predicted_intervention_time: Optional[float]  # Hours until intervention needed
+    predicted_intervention_time: float | None  # Hours until intervention needed
 
     # Component contributions
     thickness_contribution: float  # Contribution to overall health
@@ -106,8 +106,8 @@ class HealthAlert:
     alert_type: str  # 'health_decline', 'intervention_needed', 'anomaly_detected'
     severity: str  # 'low', 'medium', 'high', 'critical'
     message: str
-    affected_components: List[str]
-    recommended_actions: List[str]
+    affected_components: list[str]
+    recommended_actions: list[str]
     predicted_consequences: str
     confidence: float
 
@@ -128,17 +128,17 @@ class InterventionRecommendation:
 class BiofimHealthOptimizer:
     """
     Biofilm health optimization using physiological models and operational parameters.
-    
+
     Determines optimal operating conditions for biofilm health based on:
     - Species-specific growth parameters
     - Environmental conditions
     - Historical performance data
     """
 
-    def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED, config: Optional[SensorConfig] = None):
+    def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED, config: SensorConfig | None = None):
         """
         Initialize health optimizer.
-        
+
         Args:
             species: Target bacterial species
             config: Optional sensor configuration
@@ -164,7 +164,7 @@ class BiofimHealthOptimizer:
 
         logger.info(f"Biofilm health optimizer initialized for {species.value}")
 
-    def _initialize_optimal_parameters(self) -> Dict[str, float]:
+    def _initialize_optimal_parameters(self) -> dict[str, float]:
         """Initialize species-specific optimal parameters."""
         if self.species == BacterialSpecies.GEOBACTER:
             return {
@@ -275,10 +275,10 @@ class BiofimHealthOptimizer:
         return np.clip(final_score, 0.0, 1.0)
 
     def assess_risks(self, thickness: float, conductivity: float, growth_rate: float,
-                    measurement_stability: float) -> Tuple[float, float, float]:
+                    measurement_stability: float) -> tuple[float, float, float]:
         """
         Assess specific risk factors.
-        
+
         Returns:
             Tuple of (fouling_risk, detachment_risk, stagnation_risk)
         """
@@ -317,17 +317,17 @@ class BiofimHealthOptimizer:
 class PredictiveBiofimHealthMonitor:
     """
     Comprehensive predictive biofilm health monitoring system.
-    
+
     Integrates sensor fusion data, growth patterns, and predictive models
     to provide real-time health assessment and early intervention recommendations.
     """
 
     def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED,
-                 config: Optional[SensorConfig] = None,
+                 config: SensorConfig | None = None,
                  history_window: int = 100):
         """
         Initialize predictive health monitor.
-        
+
         Args:
             species: Target bacterial species
             config: Optional sensor configuration
@@ -367,16 +367,16 @@ class PredictiveBiofimHealthMonitor:
         logger.info(f"Predictive biofilm health monitor initialized for {species.value}")
 
     def assess_health(self, fused_measurement: FusedMeasurement,
-                     growth_pattern: Optional[BiofimGrowthPattern] = None,
-                     anomalies: Optional[List[AnomalyDetection]] = None) -> HealthMetrics:
+                     growth_pattern: BiofimGrowthPattern | None = None,
+                     anomalies: list[AnomalyDetection] | None = None) -> HealthMetrics:
         """
         Comprehensive health assessment from sensor data.
-        
+
         Args:
             fused_measurement: Latest fused sensor measurement
             growth_pattern: Optional growth pattern analysis
             anomalies: Optional detected anomalies
-            
+
         Returns:
             Complete health metrics
         """
@@ -620,7 +620,7 @@ class PredictiveBiofimHealthMonitor:
 
         return np.clip(predicted_health, 0.0, 1.0)
 
-    def _predict_intervention_time(self, current_health: float, trend: HealthTrend) -> Optional[float]:
+    def _predict_intervention_time(self, current_health: float, trend: HealthTrend) -> float | None:
         """Predict time until intervention needed (hours)."""
         threshold = self.prediction_models['intervention_threshold']
 
@@ -648,7 +648,7 @@ class PredictiveBiofimHealthMonitor:
         return None
 
     def generate_alerts(self, health_metrics: HealthMetrics,
-                       anomalies: Optional[List[AnomalyDetection]] = None) -> List[HealthAlert]:
+                       anomalies: list[AnomalyDetection] | None = None) -> list[HealthAlert]:
         """Generate health alerts based on current assessment."""
         alerts = []
         timestamp = self.last_assessment_time
@@ -738,7 +738,7 @@ class PredictiveBiofimHealthMonitor:
 
         return alerts
 
-    def generate_intervention_recommendations(self, health_metrics: HealthMetrics) -> List[InterventionRecommendation]:
+    def generate_intervention_recommendations(self, health_metrics: HealthMetrics) -> list[InterventionRecommendation]:
         """Generate specific intervention recommendations."""
         recommendations = []
 
@@ -828,7 +828,7 @@ class PredictiveBiofimHealthMonitor:
 
         return recommendations[:5]  # Return top 5 recommendations
 
-    def get_health_dashboard_data(self) -> Dict[str, Any]:
+    def get_health_dashboard_data(self) -> dict[str, Any]:
         """Get comprehensive data for health monitoring dashboard."""
         if not self.current_health:
             return {'error': 'No health data available'}
@@ -868,14 +868,14 @@ class PredictiveBiofimHealthMonitor:
 
 
 def create_predictive_health_monitor(species: BacterialSpecies = BacterialSpecies.MIXED,
-                                   config: Optional[SensorConfig] = None) -> PredictiveBiofimHealthMonitor:
+                                   config: SensorConfig | None = None) -> PredictiveBiofimHealthMonitor:
     """
     Factory function to create predictive health monitor with optimal settings.
-    
+
     Args:
         species: Target bacterial species
         config: Optional sensor configuration
-        
+
     Returns:
         Configured PredictiveBiofimHealthMonitor instance
     """

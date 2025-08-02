@@ -162,10 +162,10 @@ def render_theme_configuration():
 
         if selected_theme == "custom":
             st.write("**Custom Theme Colors:**")
-            primary_color = st.color_picker("Primary Color", "#1f77b4")
-            secondary_color = st.color_picker("Secondary Color", "#ff7f0e")
-            background_color = st.color_picker("Background Color", "#ffffff")
-            text_color = st.color_picker("Text Color", "#262730")
+            st.color_picker("Primary Color", "#1f77b4")
+            st.color_picker("Secondary Color", "#ff7f0e")
+            st.color_picker("Background Color", "#ffffff")
+            st.color_picker("Text Color", "#262730")
 
         font_family = st.selectbox(
             "Font Family",
@@ -226,20 +226,20 @@ def render_export_management():
         with col1:
             st.write("**Default Export Settings:**")
 
-            export_format = st.selectbox(
+            st.selectbox(
                 "Default Format",
                 ["CSV", "JSON", "XLSX", "HDF5", "Parquet"],
                 help="Default format for data exports"
             )
 
-            include_metadata = st.checkbox("Include Metadata", value=True)
-            include_citations = st.checkbox("Include Literature Citations", value=True)
-            compress_files = st.checkbox("Compress Exports", value=False)
+            st.checkbox("Include Metadata", value=True)
+            st.checkbox("Include Literature Citations", value=True)
+            st.checkbox("Compress Exports", value=False)
 
             auto_export = st.checkbox("Enable Auto-Export", value=False)
 
             if auto_export:
-                export_frequency = st.selectbox(
+                st.selectbox(
                     "Export Frequency",
                     ["After each simulation", "Daily", "Weekly", "Monthly"]
                 )
@@ -351,7 +351,7 @@ def render_export_management():
         with col2:
             st.write("**Backup Management:**")
 
-            backup_frequency = st.selectbox(
+            st.selectbox(
                 "Backup Frequency",
                 ["Manual", "Daily", "Weekly", "Monthly"]
             )
@@ -654,7 +654,7 @@ def render_system_configuration_page():
 
             st.write("**Data Retention:**")
 
-            data_retention = st.selectbox(
+            st.selectbox(
                 "Data Retention Policy",
                 ["Keep Forever", "1 Year", "6 Months", "3 Months"],
                 help="How long to keep old simulation data"
@@ -732,32 +732,32 @@ def render_system_configuration_page():
     with st.expander("ℹ️ Configuration Guide"):
         st.markdown("""
         **System Configuration Overview:**
-        
+
         **🎛️ General Settings:**
         - Configure default units, precision, and simulation parameters
         - Enable/disable core features like GPU acceleration and monitoring
         - Set up email notifications for important events
-        
+
         **🎨 Theme & UI:**
         - Customize the visual appearance of the platform
         - Choose from predefined themes or create custom color schemes
         - Adjust font settings for optimal readability
-        
+
         **💾 Export & Data:**
         - Configure default export formats and locations
         - Manage data storage and automatic exports
         - Import/export configurations and backup management
-        
+
         **🔧 System Monitor:**
         - View real-time system performance metrics
         - Run diagnostics and health checks
         - Monitor resource usage and platform status
-        
+
         **🔒 Security & Privacy:**
         - Configure security settings and data protection
         - Manage session timeouts and access controls
         - Set up audit logging and backup policies
-        
+
         **💡 Best Practices:**
         - Export your configuration before making major changes
         - Enable auto-backup for important data

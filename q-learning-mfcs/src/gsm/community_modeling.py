@@ -10,7 +10,6 @@ Created: 2025-08-01
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -54,8 +53,8 @@ class CommunityState:
     """Current state of the microbial community."""
 
     time: float
-    abundances: Dict[str, float]  # organism_id: abundance
-    metabolite_concentrations: Dict[str, float]  # metabolite_id: concentration
+    abundances: dict[str, float]  # organism_id: abundance
+    metabolite_concentrations: dict[str, float]  # metabolite_id: concentration
     community_growth_rate: float
     electron_production_rate: float
 
@@ -82,16 +81,16 @@ class CommunityState:
 class MFCCommunityModel:
     """
     Multi-organism community model for MFC systems.
-    
+
     Implements dynamic community modeling with metabolic interactions,
     electron transfer, and spatial considerations.
     """
 
     def __init__(self, electrode_area: float = 0.01):  # m²
-        self.organisms: Dict[str, COBRAModelWrapper] = {}  # organism_id: COBRAModelWrapper
-        self.abundances: Dict[str, OrganismAbundance] = {}  # organism_id: OrganismAbundance
-        self.interactions: List[CommunityInteraction] = []  # List of CommunityInteraction
-        self.shared_metabolites: Dict[str, float] = {}  # metabolite_id: concentration
+        self.organisms: dict[str, COBRAModelWrapper] = {}  # organism_id: COBRAModelWrapper
+        self.abundances: dict[str, OrganismAbundance] = {}  # organism_id: OrganismAbundance
+        self.interactions: list[CommunityInteraction] = []  # List of CommunityInteraction
+        self.shared_metabolites: dict[str, float] = {}  # metabolite_id: concentration
         self.electrode_area = electrode_area
 
         # Community parameters
@@ -100,7 +99,7 @@ class MFCCommunityModel:
 
         # Simulation state
         self.time = 0.0
-        self.history: List[CommunityState] = []
+        self.history: list[CommunityState] = []
 
         # MFC-specific parameters
         self.electrode_mediators = {
@@ -113,7 +112,7 @@ class MFCCommunityModel:
                     initial_abundance: float = 0.1):
         """
         Add organism to community.
-        
+
         Args:
             organism_id: Unique identifier for organism
             model: COBRAModelWrapper with loaded GSM
@@ -145,7 +144,7 @@ class MFCCommunityModel:
     def setup_mfc_community(self):
         """
         Set up typical MFC community with electroactive bacteria.
-        
+
         Creates a community with:
         - Shewanella oneidensis (electroactive, flavin-mediated)
         - Geobacter sulfurreducens (electroactive, direct transfer)
@@ -174,10 +173,10 @@ class MFCCommunityModel:
     def simulate_step(self, dt: float = 0.1) -> CommunityState:
         """
         Simulate one time step of community dynamics.
-        
+
         Args:
             dt: Time step in hours
-            
+
         Returns:
             CommunityState object
         """
@@ -260,7 +259,7 @@ class MFCCommunityModel:
 
         return state
 
-    def _prepare_media_for_organism(self, organism_id: str) -> Dict[str, float]:
+    def _prepare_media_for_organism(self, organism_id: str) -> dict[str, float]:
         """Prepare media conditions for specific organism."""
         # Base media from shared pool
         media = {}
@@ -285,7 +284,7 @@ class MFCCommunityModel:
 
         return media
 
-    def _update_metabolite_pool(self, community_fluxes: Dict[str, Dict[str, float]], dt: float):
+    def _update_metabolite_pool(self, community_fluxes: dict[str, dict[str, float]], dt: float):
         """Update shared metabolite pool based on community fluxes."""
         # Sum exchange fluxes across community
         net_exchange = {}
@@ -311,7 +310,7 @@ class MFCCommunityModel:
         for met_id in self.shared_metabolites:
             self.shared_metabolites[met_id] *= (1 - self.diffusion_rate * dt)
 
-    def _apply_interactions(self, growth_rates: Dict[str, float]):
+    def _apply_interactions(self, growth_rates: dict[str, float]):
         """Apply community interactions to growth rates."""
         for interaction in self.interactions:
             if interaction.producer_id not in growth_rates:
@@ -332,7 +331,7 @@ class MFCCommunityModel:
                     growth_rates[interaction.consumer_id] -= penalty
                     growth_rates[interaction.consumer_id] = max(0, growth_rates[interaction.consumer_id])
 
-    def _calculate_electron_production(self, community_fluxes: Dict[str, Dict[str, float]]) -> float:
+    def _calculate_electron_production(self, community_fluxes: dict[str, dict[str, float]]) -> float:
         """Calculate total electron production rate."""
         electron_rate = 0.0
 
@@ -390,11 +389,11 @@ class MFCCommunityModel:
     def simulate_succession(self, duration: float, dt: float = 0.1) -> pd.DataFrame:
         """
         Simulate community succession over time.
-        
+
         Args:
             duration: Total simulation time (hours)
             dt: Time step
-            
+
         Returns:
             DataFrame with time series data
         """
@@ -441,7 +440,7 @@ class CommunityElectrodeIntegration:
 
         return current_density
 
-    def get_optimization_objectives(self) -> Dict[str, float]:
+    def get_optimization_objectives(self) -> dict[str, float]:
         """Get optimization objectives from community state."""
         objectives = {
             'maximize_current_density': self.calculate_current_density(),

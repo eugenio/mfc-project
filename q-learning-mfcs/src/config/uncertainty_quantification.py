@@ -28,11 +28,11 @@ Literature References:
 import logging
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy import stats
@@ -84,11 +84,11 @@ class UncertainParameter:
     """Definition of uncertain parameter with probability distribution."""
     name: str
     distribution: DistributionType
-    parameters: Dict[str, float]  # Distribution parameters (e.g., {'mean': 1.0, 'std': 0.1})
-    bounds: Optional[Tuple[float, float]] = None
+    parameters: dict[str, float]  # Distribution parameters (e.g., {'mean': 1.0, 'std': 0.1})
+    bounds: tuple[float, float] | None = None
     description: str = ""
 
-    def sample(self, n_samples: int, seed: Optional[int] = None) -> np.ndarray:
+    def sample(self, n_samples: int, seed: int | None = None) -> np.ndarray:
         """Sample from the parameter distribution."""
         if seed is not None:
             np.random.seed(seed)
@@ -165,40 +165,40 @@ class UncertaintyResult:
 
     # Method information
     method: UncertaintyMethod
-    parameter_names: List[str]
-    output_names: List[str]
+    parameter_names: list[str]
+    output_names: list[str]
     n_samples: int
 
     # Input samples and outputs
-    parameter_samples: Optional[np.ndarray] = None
-    output_samples: Optional[Dict[str, np.ndarray]] = None
+    parameter_samples: np.ndarray | None = None
+    output_samples: dict[str, np.ndarray] | None = None
 
     # Statistical measures
-    output_mean: Optional[Dict[str, float]] = None
-    output_std: Optional[Dict[str, float]] = None
-    output_var: Optional[Dict[str, float]] = None
-    output_skewness: Optional[Dict[str, float]] = None
-    output_kurtosis: Optional[Dict[str, float]] = None
+    output_mean: dict[str, float] | None = None
+    output_std: dict[str, float] | None = None
+    output_var: dict[str, float] | None = None
+    output_skewness: dict[str, float] | None = None
+    output_kurtosis: dict[str, float] | None = None
 
     # Confidence intervals
-    confidence_intervals: Optional[Dict[str, Dict[str, Tuple[float, float]]]] = None
+    confidence_intervals: dict[str, dict[str, tuple[float, float]]] | None = None
 
     # Percentiles
-    percentiles: Optional[Dict[str, Dict[str, float]]] = None
+    percentiles: dict[str, dict[str, float]] | None = None
 
     # Correlation analysis
-    parameter_correlations: Optional[np.ndarray] = None
-    output_correlations: Optional[np.ndarray] = None
-    parameter_output_correlations: Optional[Dict[str, np.ndarray]] = None
+    parameter_correlations: np.ndarray | None = None
+    output_correlations: np.ndarray | None = None
+    parameter_output_correlations: dict[str, np.ndarray] | None = None
 
     # Bayesian inference results
-    posterior_samples: Optional[np.ndarray] = None
-    evidence: Optional[float] = None
-    bayes_factor: Optional[float] = None
+    posterior_samples: np.ndarray | None = None
+    evidence: float | None = None
+    bayes_factor: float | None = None
 
     # Polynomial chaos expansion results
-    pce_coefficients: Optional[Dict[str, np.ndarray]] = None
-    pce_variance_contributions: Optional[Dict[str, np.ndarray]] = None
+    pce_coefficients: dict[str, np.ndarray] | None = None
+    pce_variance_contributions: dict[str, np.ndarray] | None = None
 
     # Computation metadata
     computation_time: float = 0.0
@@ -208,11 +208,11 @@ class UncertaintyResult:
 class UncertaintyQuantifier(ABC):
     """Abstract base class for uncertainty quantification methods."""
 
-    def __init__(self, uncertain_parameters: List[UncertainParameter],
-                 random_seed: Optional[int] = None):
+    def __init__(self, uncertain_parameters: list[UncertainParameter],
+                 random_seed: int | None = None):
         """
         Initialize uncertainty quantifier.
-        
+
         Args:
             uncertain_parameters: List of uncertain parameter definitions
             random_seed: Random seed for reproducibility
@@ -227,17 +227,17 @@ class UncertaintyQuantifier(ABC):
             np.random.seed(random_seed)
 
     @abstractmethod
-    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], Dict[str, float]],
+    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], dict[str, float]],
                             n_samples: int,
                             **kwargs) -> UncertaintyResult:
         """
         Propagate parameter uncertainty through model.
-        
+
         Args:
             model_function: Model function to evaluate
             n_samples: Number of samples for uncertainty propagation
             **kwargs: Method-specific parameters
-            
+
         Returns:
             Uncertainty quantification results
         """
@@ -254,7 +254,7 @@ class UncertaintyQuantifier(ABC):
 
     def _evaluate_model_batch(self, model_function: Callable,
                             parameter_samples: np.ndarray,
-                            parallel: bool = True) -> Dict[str, np.ndarray]:
+                            parallel: bool = True) -> dict[str, np.ndarray]:
         """Evaluate model for batch of parameter samples."""
         output_names = None
         all_outputs = {}
@@ -305,7 +305,7 @@ class UncertaintyQuantifier(ABC):
 
         return all_outputs
 
-    def _calculate_statistics(self, output_samples: Dict[str, np.ndarray]) -> Dict[str, Dict[str, float]]:
+    def _calculate_statistics(self, output_samples: dict[str, np.ndarray]) -> dict[str, dict[str, float]]:
         """Calculate statistical measures for outputs."""
         statistics = {}
 
@@ -329,8 +329,8 @@ class UncertaintyQuantifier(ABC):
 
         return statistics
 
-    def _calculate_confidence_intervals(self, output_samples: Dict[str, np.ndarray],
-                                      confidence_levels: List[float] = [0.95, 0.99]) -> Dict[str, Dict[str, Tuple[float, float]]]:
+    def _calculate_confidence_intervals(self, output_samples: dict[str, np.ndarray],
+                                      confidence_levels: list[float] = [0.95, 0.99]) -> dict[str, dict[str, tuple[float, float]]]:
         """Calculate confidence intervals for outputs."""
         intervals = {}
 
@@ -349,8 +349,8 @@ class UncertaintyQuantifier(ABC):
 
         return intervals
 
-    def _calculate_percentiles(self, output_samples: Dict[str, np.ndarray],
-                             percentile_values: List[float] = [5, 25, 50, 75, 95]) -> Dict[str, Dict[str, float]]:
+    def _calculate_percentiles(self, output_samples: dict[str, np.ndarray],
+                             percentile_values: list[float] = [5, 25, 50, 75, 95]) -> dict[str, dict[str, float]]:
         """Calculate percentiles for outputs."""
         percentiles = {}
 
@@ -370,12 +370,12 @@ class UncertaintyQuantifier(ABC):
 class MonteCarloAnalyzer(UncertaintyQuantifier):
     """Monte Carlo uncertainty quantification."""
 
-    def __init__(self, uncertain_parameters: List[UncertainParameter],
+    def __init__(self, uncertain_parameters: list[UncertainParameter],
                  sampling_method: str = "random",
-                 random_seed: Optional[int] = None):
+                 random_seed: int | None = None):
         """
         Initialize Monte Carlo analyzer.
-        
+
         Args:
             uncertain_parameters: List of uncertain parameter definitions
             sampling_method: Sampling method ("random", "latin_hypercube", "sobol")
@@ -384,19 +384,19 @@ class MonteCarloAnalyzer(UncertaintyQuantifier):
         super().__init__(uncertain_parameters, random_seed)
         self.sampling_method = sampling_method
 
-    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], Dict[str, float]],
+    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], dict[str, float]],
                             n_samples: int,
                             parallel: bool = True,
                             **kwargs) -> UncertaintyResult:
         """
         Perform Monte Carlo uncertainty propagation.
-        
+
         Args:
             model_function: Model function to evaluate
             n_samples: Number of Monte Carlo samples
             parallel: Whether to use parallel evaluation
             **kwargs: Additional parameters
-            
+
         Returns:
             Uncertainty quantification results
         """
@@ -499,12 +499,12 @@ class MonteCarloAnalyzer(UncertaintyQuantifier):
 class BayesianInference(UncertaintyQuantifier):
     """Bayesian inference for parameter estimation and model updating."""
 
-    def __init__(self, uncertain_parameters: List[UncertainParameter],
-                 prior_distributions: Optional[List[UncertainParameter]] = None,
-                 random_seed: Optional[int] = None):
+    def __init__(self, uncertain_parameters: list[UncertainParameter],
+                 prior_distributions: list[UncertainParameter] | None = None,
+                 random_seed: int | None = None):
         """
         Initialize Bayesian inference.
-        
+
         Args:
             uncertain_parameters: List of uncertain parameter definitions
             prior_distributions: Prior distributions for parameters
@@ -513,15 +513,15 @@ class BayesianInference(UncertaintyQuantifier):
         super().__init__(uncertain_parameters, random_seed)
         self.prior_distributions = prior_distributions or uncertain_parameters
 
-    def calibrate_parameters(self, model_function: Callable[[np.ndarray], Dict[str, float]],
-                           experimental_data: Dict[str, np.ndarray],
-                           observation_noise: Dict[str, float],
+    def calibrate_parameters(self, model_function: Callable[[np.ndarray], dict[str, float]],
+                           experimental_data: dict[str, np.ndarray],
+                           observation_noise: dict[str, float],
                            n_samples: int = 10000,
                            n_chains: int = 4,
                            algorithm: str = "metropolis_hastings") -> UncertaintyResult:
         """
         Perform Bayesian parameter calibration.
-        
+
         Args:
             model_function: Model function to calibrate
             experimental_data: Experimental observations
@@ -529,7 +529,7 @@ class BayesianInference(UncertaintyQuantifier):
             n_samples: Number of MCMC samples
             n_chains: Number of MCMC chains
             algorithm: MCMC algorithm ("metropolis_hastings", "gibbs")
-            
+
         Returns:
             Calibration results with posterior samples
         """
@@ -558,7 +558,7 @@ class BayesianInference(UncertaintyQuantifier):
         # Define log-prior function
         def log_prior(parameters):
             lp = 0.0
-            for i, (param, prior) in enumerate(zip(parameters, self.prior_distributions)):
+            for i, (param, prior) in enumerate(zip(parameters, self.prior_distributions, strict=False)):
                 lp += prior.pdf(np.array([param]))[0]
             return np.log(lp) if lp > 0 else -np.inf
 
@@ -646,12 +646,12 @@ class BayesianInference(UncertaintyQuantifier):
 class PolynomialChaosAnalyzer(UncertaintyQuantifier):
     """Polynomial Chaos Expansion for uncertainty quantification."""
 
-    def __init__(self, uncertain_parameters: List[UncertainParameter],
+    def __init__(self, uncertain_parameters: list[UncertainParameter],
                  polynomial_order: int = 3,
-                 random_seed: Optional[int] = None):
+                 random_seed: int | None = None):
         """
         Initialize Polynomial Chaos analyzer.
-        
+
         Args:
             uncertain_parameters: List of uncertain parameter definitions
             polynomial_order: Order of polynomial expansion
@@ -660,17 +660,17 @@ class PolynomialChaosAnalyzer(UncertaintyQuantifier):
         super().__init__(uncertain_parameters, random_seed)
         self.polynomial_order = polynomial_order
 
-    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], Dict[str, float]],
+    def propagate_uncertainty(self, model_function: Callable[[np.ndarray], dict[str, float]],
                             n_samples: int = None,
                             **kwargs) -> UncertaintyResult:
         """
         Perform uncertainty propagation using Polynomial Chaos Expansion.
-        
+
         Args:
             model_function: Model function to evaluate
             n_samples: Number of samples for PCE construction
             **kwargs: Additional parameters
-            
+
         Returns:
             PCE-based uncertainty results
         """
@@ -764,7 +764,7 @@ class PolynomialChaosAnalyzer(UncertaintyQuantifier):
 
         return basis_matrix
 
-    def _generate_multi_indices(self) -> List[List[int]]:
+    def _generate_multi_indices(self) -> list[list[int]]:
         """Generate multi-indices for polynomial expansion."""
         multi_indices = []
 
@@ -789,8 +789,8 @@ class PolynomialChaosAnalyzer(UncertaintyQuantifier):
         # In practice, this would use orthogonality properties of polynomials
         return coefficients[1:]**2  # Exclude constant term
 
-    def _calculate_pce_statistics(self, pce_coefficients: Dict[str, np.ndarray],
-                                variance_contributions: Dict[str, np.ndarray]) -> Dict[str, Dict[str, float]]:
+    def _calculate_pce_statistics(self, pce_coefficients: dict[str, np.ndarray],
+                                variance_contributions: dict[str, np.ndarray]) -> dict[str, dict[str, float]]:
         """Calculate statistics from PCE representation."""
         statistics = {'mean': {}, 'variance': {}}
 
@@ -809,12 +809,12 @@ def calculate_reliability(samples: np.ndarray, threshold: float,
                         failure_criterion: str = "greater") -> float:
     """
     Calculate reliability (probability of not exceeding threshold).
-    
+
     Args:
         samples: Output samples
         threshold: Failure threshold
         failure_criterion: "greater" or "less" than threshold
-        
+
     Returns:
         Reliability estimate
     """
@@ -827,14 +827,14 @@ def calculate_reliability(samples: np.ndarray, threshold: float,
 
 
 def calculate_sensitivity_indices_from_pce(pce_coefficients: np.ndarray,
-                                         multi_indices: List[List[int]]) -> Dict[str, float]:
+                                         multi_indices: list[list[int]]) -> dict[str, float]:
     """
     Calculate Sobol sensitivity indices from PCE coefficients.
-    
+
     Args:
         pce_coefficients: PCE coefficients
         multi_indices: Multi-indices corresponding to coefficients
-        
+
     Returns:
         Dictionary of sensitivity indices
     """
@@ -846,7 +846,7 @@ def calculate_sensitivity_indices_from_pce(pce_coefficients: np.ndarray,
     for i in range(n_params):
         # First-order sensitivity index
         first_order_var = 0.0
-        for j, (coeff, multi_index) in enumerate(zip(pce_coefficients[1:], multi_indices[1:])):
+        for j, (coeff, multi_index) in enumerate(zip(pce_coefficients[1:], multi_indices[1:], strict=False)):
             if np.sum(multi_index) == multi_index[i] and multi_index[i] > 0:
                 first_order_var += coeff**2
 
@@ -856,16 +856,16 @@ def calculate_sensitivity_indices_from_pce(pce_coefficients: np.ndarray,
 
 
 def bootstrap_uncertainty(samples: np.ndarray, statistic_func: Callable,
-                         n_bootstrap: int = 1000, confidence_level: float = 0.95) -> Tuple[float, Tuple[float, float]]:
+                         n_bootstrap: int = 1000, confidence_level: float = 0.95) -> tuple[float, tuple[float, float]]:
     """
     Bootstrap estimation of uncertainty in a statistic.
-    
+
     Args:
         samples: Original samples
         statistic_func: Function to calculate statistic
         n_bootstrap: Number of bootstrap resamples
         confidence_level: Confidence level for interval
-        
+
     Returns:
         Tuple of (statistic_value, confidence_interval)
     """

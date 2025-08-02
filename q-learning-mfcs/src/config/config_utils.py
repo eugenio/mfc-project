@@ -31,7 +31,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -62,26 +62,26 @@ class ConfigurationSchemaError(ConfigurationError):
 class ValidationResult:
     """Results of configuration validation."""
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    schema_version: Optional[str] = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    schema_version: str | None = None
     validation_time: float = 0.0
 
 
-def load_yaml_config(file_path: Union[str, Path],
+def load_yaml_config(file_path: str | Path,
                     validate_schema: bool = True,
-                    substitute_env: bool = True) -> Dict[str, Any]:
+                    substitute_env: bool = True) -> dict[str, Any]:
     """
     Load YAML configuration file with optional validation and environment substitution.
-    
+
     Args:
         file_path: Path to YAML file
         validate_schema: Whether to validate against schema
         substitute_env: Whether to substitute environment variables
-        
+
     Returns:
         Loaded configuration dictionary
-        
+
     Raises:
         ConfigurationFormatError: If file format is invalid
         ConfigurationSchemaError: If schema validation fails
@@ -120,20 +120,20 @@ def load_yaml_config(file_path: Union[str, Path],
         raise ConfigurationFormatError(f"Failed to load configuration from {file_path}: {e}")
 
 
-def load_json_config(file_path: Union[str, Path],
+def load_json_config(file_path: str | Path,
                     validate_schema: bool = True,
-                    substitute_env: bool = True) -> Dict[str, Any]:
+                    substitute_env: bool = True) -> dict[str, Any]:
     """
     Load JSON configuration file with optional validation and environment substitution.
-    
+
     Args:
         file_path: Path to JSON file
         validate_schema: Whether to validate against schema
         substitute_env: Whether to substitute environment variables
-        
+
     Returns:
         Loaded configuration dictionary
-        
+
     Raises:
         ConfigurationFormatError: If file format is invalid
         ConfigurationSchemaError: If schema validation fails
@@ -172,15 +172,15 @@ def load_json_config(file_path: Union[str, Path],
 def substitute_environment_variables(content: str) -> str:
     """
     Substitute environment variables in configuration content.
-    
+
     Supports formats:
     - ${VAR_NAME}
     - ${VAR_NAME:default_value}
     - $VAR_NAME (simple form)
-    
+
     Args:
         content: Configuration file content
-        
+
     Returns:
         Content with environment variables substituted
     """
@@ -208,10 +208,10 @@ def substitute_environment_variables(content: str) -> str:
     return content
 
 
-def get_config_schema() -> Dict[str, Any]:
+def get_config_schema() -> dict[str, Any]:
     """
     Get JSON schema for MFC configuration validation.
-    
+
     Returns:
         JSON schema dictionary
     """
@@ -322,15 +322,15 @@ def get_config_schema() -> Dict[str, Any]:
     return schema
 
 
-def validate_config_schema(config: Dict[str, Any],
-                          schema: Optional[Dict[str, Any]] = None) -> ValidationResult:
+def validate_config_schema(config: dict[str, Any],
+                          schema: dict[str, Any] | None = None) -> ValidationResult:
     """
     Validate configuration against JSON schema.
-    
+
     Args:
         config: Configuration dictionary to validate
         schema: JSON schema (uses default if None)
-        
+
     Returns:
         Validation result
     """
@@ -361,10 +361,10 @@ def validate_config_schema(config: Dict[str, Any],
 def dataclass_to_dict(obj: Any) -> Any:
     """
     Convert dataclass instance to dictionary recursively.
-    
+
     Args:
         obj: Dataclass instance or other object
-        
+
     Returns:
         Dictionary representation
     """
@@ -382,14 +382,14 @@ def dataclass_to_dict(obj: Any) -> Any:
         return obj
 
 
-def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Type) -> Any:
+def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:
     """
     Convert dictionary to dataclass instance.
-    
+
     Args:
         data: Dictionary data
         dataclass_type: Target dataclass type
-        
+
     Returns:
         Dataclass instance
     """
@@ -413,21 +413,21 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Type) -> Any:
     return dataclass_type(**kwargs)
 
 
-def merge_config_files(*file_paths: Union[str, Path],
-                      output_path: Optional[Union[str, Path]] = None,
-                      format: str = "yaml") -> Dict[str, Any]:
+def merge_config_files(*file_paths: str | Path,
+                      output_path: str | Path | None = None,
+                      format: str = "yaml") -> dict[str, Any]:
     """
     Merge multiple configuration files.
-    
+
     Args:
         file_paths: Paths to configuration files to merge
         output_path: Path to save merged configuration
         format: Output format ("yaml" or "json")
-        
+
     Returns:
         Merged configuration dictionary
     """
-    merged_config: Dict[str, Any] = {}
+    merged_config: dict[str, Any] = {}
 
     for file_path in file_paths:
         file_path = Path(file_path)
@@ -449,14 +449,14 @@ def merge_config_files(*file_paths: Union[str, Path],
     return merged_config
 
 
-def deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
     """
     Deep merge two dictionaries.
-    
+
     Args:
         dict1: Base dictionary
         dict2: Dictionary to merge into base
-        
+
     Returns:
         Merged dictionary
     """
@@ -471,12 +471,12 @@ def deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, 
     return result
 
 
-def save_config_file(config: Dict[str, Any],
-                    file_path: Union[str, Path],
+def save_config_file(config: dict[str, Any],
+                    file_path: str | Path,
                     format: str = "yaml") -> None:
     """
     Save configuration to file.
-    
+
     Args:
         config: Configuration dictionary
         file_path: Output file path
@@ -502,25 +502,25 @@ class ConfigLoader:
                  validate_schema: bool = True):
         """
         Initialize configuration loader.
-        
+
         Args:
             cache_enabled: Enable configuration caching
             validate_schema: Enable schema validation
         """
         self.cache_enabled = cache_enabled
         self.validate_schema = validate_schema
-        self.cache: Dict[str, Tuple[Dict[str, Any], float]] = {}
+        self.cache: dict[str, tuple[dict[str, Any], float]] = {}
         self.logger = logging.getLogger(__name__)
 
-    def load_config(self, file_path: Union[str, Path],
-                   force_reload: bool = False) -> Dict[str, Any]:
+    def load_config(self, file_path: str | Path,
+                   force_reload: bool = False) -> dict[str, Any]:
         """
         Load configuration with caching support.
-        
+
         Args:
             file_path: Path to configuration file
             force_reload: Force reload even if cached
-            
+
         Returns:
             Configuration dictionary
         """
@@ -566,13 +566,13 @@ class ConfigConverter:
         """Initialize configuration converter."""
         self.logger = logging.getLogger(__name__)
 
-    def convert_legacy_qlearning_config(self, legacy_config: Dict[str, Any]) -> Dict[str, Any]:
+    def convert_legacy_qlearning_config(self, legacy_config: dict[str, Any]) -> dict[str, Any]:
         """
         Convert legacy Q-learning configuration to new format.
-        
+
         Args:
             legacy_config: Legacy configuration dictionary
-            
+
         Returns:
             Converted configuration
         """
@@ -620,8 +620,8 @@ class ConfigConverter:
         self.logger.info("Converted legacy Q-learning configuration")
         return converted
 
-    def _set_nested_value(self, dictionary: Dict[str, Any],
-                         path: List[str], value: Any) -> None:
+    def _set_nested_value(self, dictionary: dict[str, Any],
+                         path: list[str], value: Any) -> None:
         """Set nested dictionary value using path."""
         current = dictionary
         for key in path[:-1]:
@@ -630,15 +630,15 @@ class ConfigConverter:
             current = current[key]
         current[path[-1]] = value
 
-    def migrate_config_version(self, config: Dict[str, Any],
-                              target_version: str = "2.0.0") -> Dict[str, Any]:
+    def migrate_config_version(self, config: dict[str, Any],
+                              target_version: str = "2.0.0") -> dict[str, Any]:
         """
         Migrate configuration to target version.
-        
+
         Args:
             config: Configuration to migrate
             target_version: Target version string
-            
+
         Returns:
             Migrated configuration
         """
@@ -654,7 +654,7 @@ class ConfigConverter:
         warnings.warn(f"No migration path from {current_version} to {target_version}")
         return config
 
-    def _migrate_v1_to_v2(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _migrate_v1_to_v2(self, config: dict[str, Any]) -> dict[str, Any]:
         """Migrate from version 1.0.0 to 2.0.0."""
         migrated = config.copy()
 
@@ -673,17 +673,17 @@ class ConfigConverter:
 
 
 # Utility functions for common operations
-def get_config_value(config: Dict[str, Any], path: str,
+def get_config_value(config: dict[str, Any], path: str,
                     default: Any = None, separator: str = ".") -> Any:
     """
     Get nested configuration value using dot notation.
-    
+
     Args:
         config: Configuration dictionary
         path: Dot-separated path (e.g., "control.flow_control.max_flow_rate")
         default: Default value if path not found
         separator: Path separator
-        
+
     Returns:
         Configuration value or default
     """
@@ -698,11 +698,11 @@ def get_config_value(config: Dict[str, Any], path: str,
         return default
 
 
-def set_config_value(config: Dict[str, Any], path: str,
+def set_config_value(config: dict[str, Any], path: str,
                     value: Any, separator: str = ".") -> None:
     """
     Set nested configuration value using dot notation.
-    
+
     Args:
         config: Configuration dictionary
         path: Dot-separated path
@@ -720,20 +720,20 @@ def set_config_value(config: Dict[str, Any], path: str,
     current[keys[-1]] = value
 
 
-def validate_config_types(config: Dict[str, Any]) -> List[str]:
+def validate_config_types(config: dict[str, Any]) -> list[str]:
     """
     Validate configuration data types.
-    
+
     Args:
         config: Configuration dictionary
-        
+
     Returns:
         List of type validation errors
     """
     errors = []
 
     # Define expected types for common configuration paths
-    type_checks: Dict[str, Union[Type, Tuple[Type, ...]]] = {
+    type_checks: dict[str, type | tuple[type, ...]] = {
         "control.flow_control.min_flow_rate": (int, float),
         "control.flow_control.max_flow_rate": (int, float),
         "control.advanced_control.learning_rate": (int, float),

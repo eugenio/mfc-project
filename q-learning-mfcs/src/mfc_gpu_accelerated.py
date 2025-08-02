@@ -119,7 +119,7 @@ class GPUAcceleratedMFC:
 
     def __init__(self, config, n_cells=None, reservoir_volume=None, electrode_area=None):
         """Initialize GPU-accelerated MFC simulation.
-        
+
         Args:
             config: Q-learning configuration
             n_cells: Number of MFC cells
@@ -445,7 +445,7 @@ class GPUAcceleratedMFC:
             cell_powers = power_func(self.biofilm_thicknesses, self.cell_concentrations)
         else:
             cell_powers = [self.calculate_power_output(thick, conc)
-                          for thick, conc in zip(self.biofilm_thicknesses, self.cell_concentrations)]
+                          for thick, conc in zip(self.biofilm_thicknesses, self.cell_concentrations, strict=False)]
             cell_powers = jnp.array(cell_powers)
 
         total_power = jnp.sum(cell_powers)

@@ -8,7 +8,7 @@ for extracellular electron transfer.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -42,14 +42,14 @@ class ElectronShuttle:
     binding_constant: float      # μM - binding to cells/electrode
 
     # Species specificity
-    producing_species: List[str]  # Species that produce this shuttle
-    utilization_efficiency: Dict[str, float]  # Species-specific efficiency
+    producing_species: list[str]  # Species that produce this shuttle
+    utilization_efficiency: dict[str, float]  # Species-specific efficiency
 
 
 class ElectronShuttleModel:
     """
     Model for electron shuttle dynamics in MFC systems.
-    
+
     Features:
     - Multiple shuttle types with different properties
     - Production and degradation kinetics
@@ -64,7 +64,7 @@ class ElectronShuttleModel:
         self.shuttle_concentrations = {}  # Current concentrations
         self.reset_concentrations()
 
-    def _load_shuttle_database(self) -> Dict[ShuttleType, ElectronShuttle]:
+    def _load_shuttle_database(self) -> dict[ShuttleType, ElectronShuttle]:
         """Load electron shuttle properties from literature."""
 
         shuttle_db = {
@@ -161,16 +161,16 @@ class ElectronShuttleModel:
         self.shuttle_concentrations = dict.fromkeys(ShuttleType, 0.0)
 
     def calculate_shuttle_production(self, species: str, biomass: float,
-                                   growth_rate: float, dt: float) -> Dict[ShuttleType, float]:
+                                   growth_rate: float, dt: float) -> dict[ShuttleType, float]:
         """
         Calculate electron shuttle production rates.
-        
+
         Args:
             species: Bacterial species name
             biomass: Biomass concentration (g/L)
             growth_rate: Specific growth rate (1/h)
             dt: Time step (h)
-            
+
         Returns:
             Dictionary of shuttle production (mmol/L)
         """
@@ -191,13 +191,13 @@ class ElectronShuttleModel:
 
         return production
 
-    def calculate_shuttle_degradation(self, dt: float) -> Dict[ShuttleType, float]:
+    def calculate_shuttle_degradation(self, dt: float) -> dict[ShuttleType, float]:
         """
         Calculate shuttle degradation/consumption.
-        
+
         Args:
             dt: Time step (h)
-            
+
         Returns:
             Dictionary of degradation amounts (mmol/L)
         """
@@ -217,12 +217,12 @@ class ElectronShuttleModel:
                                        electrode_potential: float) -> float:
         """
         Calculate electron transfer rate via shuttle.
-        
+
         Args:
             shuttle_type: Type of electron shuttle
             concentration: Shuttle concentration (mmol/L)
             electrode_potential: Electrode potential (V vs SHE)
-            
+
         Returns:
             Electron transfer rate (mmol e-/L/h)
         """
@@ -255,12 +255,12 @@ class ElectronShuttleModel:
                                   distance: float) -> float:
         """
         Calculate shuttle diffusion flux.
-        
+
         Args:
             concentration_gradient: Concentration difference (mmol/L)
             shuttle_type: Type of electron shuttle
             distance: Diffusion distance (m)
-            
+
         Returns:
             Diffusion flux (mmol/m²/s)
         """
@@ -271,12 +271,12 @@ class ElectronShuttleModel:
 
         return flux
 
-    def update_shuttle_concentrations(self, production: Dict[ShuttleType, float],
-                                    degradation: Dict[ShuttleType, float],
-                                    consumption: Dict[ShuttleType, float]):
+    def update_shuttle_concentrations(self, production: dict[ShuttleType, float],
+                                    degradation: dict[ShuttleType, float],
+                                    consumption: dict[ShuttleType, float]):
         """
         Update shuttle concentrations based on production/consumption.
-        
+
         Args:
             production: Production rates by type (mmol/L)
             degradation: Degradation amounts by type (mmol/L)
@@ -298,10 +298,10 @@ class ElectronShuttleModel:
     def get_total_electron_flux(self, electrode_potential: float) -> float:
         """
         Calculate total electron flux from all shuttles.
-        
+
         Args:
             electrode_potential: Electrode potential (V vs SHE)
-            
+
         Returns:
             Total electron flux (mmol e-/L/h)
         """
@@ -316,7 +316,7 @@ class ElectronShuttleModel:
 
         return total_flux
 
-    def get_dominant_shuttle(self) -> Optional[ShuttleType]:
+    def get_dominant_shuttle(self) -> ShuttleType | None:
         """Get the dominant electron shuttle by concentration."""
         if not any(self.shuttle_concentrations.values()):
             return None
@@ -328,11 +328,11 @@ class ElectronShuttleModel:
                                              electrode_area: float) -> float:
         """
         Calculate current contribution from electron shuttles.
-        
+
         Args:
             volume: System volume (L)
             electrode_area: Electrode area (m²)
-            
+
         Returns:
             Current density contribution (A/m²)
         """
@@ -349,7 +349,7 @@ class ElectronShuttleModel:
 
         return current_density
 
-    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> Dict[str, Any]:
+    def get_shuttle_properties(self, shuttle_type: ShuttleType) -> dict[str, Any]:
         """Get properties of specific shuttle."""
         shuttle = self.shuttles[shuttle_type]
 
@@ -362,7 +362,7 @@ class ElectronShuttleModel:
             "current_concentration": self.shuttle_concentrations[shuttle_type]
         }
 
-    def get_species_shuttle_efficiency(self, species: str) -> Dict[ShuttleType, float]:
+    def get_species_shuttle_efficiency(self, species: str) -> dict[ShuttleType, float]:
         """Get shuttle utilization efficiency for a species."""
         efficiencies = {}
 
@@ -377,16 +377,16 @@ class ElectronShuttleModel:
     def estimate_optimal_shuttle_concentration(self, target_current: float,
                                              electrode_potential: float,
                                              volume: float,
-                                             area: float) -> Dict[ShuttleType, float]:
+                                             area: float) -> dict[ShuttleType, float]:
         """
         Estimate optimal shuttle concentrations for target current.
-        
+
         Args:
             target_current: Target current (A)
             electrode_potential: Electrode potential (V)
             volume: System volume (L)
             area: Electrode area (m²)
-            
+
         Returns:
             Optimal concentrations by shuttle type (mmol/L)
         """

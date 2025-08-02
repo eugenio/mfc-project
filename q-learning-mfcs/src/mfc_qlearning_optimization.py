@@ -12,7 +12,6 @@ import pickle
 import time
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +29,7 @@ gpu_accelerator = get_gpu_accelerator()
 GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 class QLearningFlowController:
-    def __init__(self, config: Optional[QLearningConfig] = None):
+    def __init__(self, config: QLearningConfig | None = None):
         """Q-Learning controller for flow rate optimization"""
         # Use default configuration if not provided
         if config is None:
@@ -756,19 +755,19 @@ class MFCQLearningSimulation:
 
         summary_text = f"""
         Q-LEARNING OPTIMIZATION
-        
+
         Total Energy: {total_energy:.1f} Wh
         Average Power: {avg_power:.3f} W
         Final Power: {self.stack_powers[-1]:.3f} W
-        
+
         Final Flow Rate: {final_flow_rate:.1f} mL/h
         Substrate Utilization: {final_utilization:.2f}%
-        
+
         Q-Learning Stats:
         Total Reward: {total_q_reward:.1f}
         Q-Table Size: {q_table_size} states
         Final ε: {self.q_controller.epsilon:.3f}
-        
+
         LEARNING ACHIEVED:
         ✓ Adaptive Flow Control
         ✓ Multi-Objective Balance

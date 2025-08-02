@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class ValidationQuery:
     parameter_value: float
     units: str
     organism: str = ""
-    experimental_conditions: List[str] = field(default_factory=list)
+    experimental_conditions: list[str] = field(default_factory=list)
     confidence_threshold: float = 0.7
     max_literature_age_years: int = 20
 
@@ -40,14 +40,14 @@ class ValidationResult:
     query: ValidationQuery
     validation_status: str  # "VALIDATED", "ACCEPTABLE", "NEEDS_REVIEW", "NO_DATA"
     confidence_score: float
-    literature_matches: List[PubMedArticle] = field(default_factory=list)
-    statistical_analysis: Dict[str, float] = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
+    literature_matches: list[PubMedArticle] = field(default_factory=list)
+    statistical_analysis: dict[str, float] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 class LiteratureDatabase:
     """
     Comprehensive literature database for MFC parameter validation.
-    
+
     Provides automated querying, caching, and validation against
     scientific literature through PubMed integration.
     """
@@ -55,7 +55,7 @@ class LiteratureDatabase:
     def __init__(self, db_path: str = "data/literature.db", cache_dir: str = "data/pubmed_cache"):
         """
         Initialize literature database.
-        
+
         Args:
             db_path: Path to SQLite database file
             cache_dir: Directory for PubMed cache
@@ -166,7 +166,7 @@ class LiteratureDatabase:
 
     def add_literature_value(self, parameter_name: str, category: str, value: float,
                            pmid: str = "", organism: str = "",
-                           experimental_conditions: List[str] = None,
+                           experimental_conditions: list[str] = None,
                            extraction_method: str = "", confidence_score: float = 1.0) -> int:
         """Add literature value to database."""
 
@@ -179,8 +179,8 @@ class LiteratureDatabase:
         with self._db_lock:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute("""
-                    INSERT INTO literature_values 
-                    (parameter_id, value, pmid, organism, experimental_conditions, 
+                    INSERT INTO literature_values
+                    (parameter_id, value, pmid, organism, experimental_conditions,
                      extraction_method, confidence_score)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (param_id, value, pmid, organism, json.dumps(experimental_conditions),
@@ -188,7 +188,7 @@ class LiteratureDatabase:
 
                 return cursor.lastrowid
 
-    def query_literature_values(self, parameter_name: str, category: str = "") -> List[Dict[str, Any]]:
+    def query_literature_values(self, parameter_name: str, category: str = "") -> list[dict[str, Any]]:
         """Query literature values for a parameter."""
 
         with sqlite3.connect(self.db_path) as conn:
@@ -216,14 +216,14 @@ class LiteratureDatabase:
 
             results = []
             for row in cursor.fetchall():
-                result = dict(zip(columns, row))
+                result = dict(zip(columns, row, strict=False))
                 # Parse JSON fields
                 result['experimental_conditions'] = json.loads(result['experimental_conditions'] or '[]')
                 results.append(result)
 
             return results
 
-    def search_literature_for_parameter(self, query: ValidationQuery) -> List[PubMedArticle]:
+    def search_literature_for_parameter(self, query: ValidationQuery) -> list[PubMedArticle]:
         """Search literature for parameter validation."""
 
         # Build search terms
@@ -259,7 +259,7 @@ class LiteratureDatabase:
 
         return articles
 
-    def _store_article_metadata(self, articles: List[PubMedArticle]):
+    def _store_article_metadata(self, articles: list[PubMedArticle]):
         """Store article metadata in database."""
 
         with self._db_lock:
@@ -288,11 +288,11 @@ class LiteratureDatabase:
                         1.0  # Default relevance score
                     ))
 
-    def extract_parameter_values(self, articles: List[PubMedArticle],
-                                query: ValidationQuery) -> List[Tuple[float, str, float]]:
+    def extract_parameter_values(self, articles: list[PubMedArticle],
+                                query: ValidationQuery) -> list[tuple[float, str, float]]:
         """
         Extract parameter values from article abstracts.
-        
+
         Returns:
             List of (value, pmid, confidence) tuples
         """
@@ -343,10 +343,10 @@ class LiteratureDatabase:
     def validate_parameter(self, query: ValidationQuery) -> ValidationResult:
         """
         Comprehensive parameter validation against literature.
-        
+
         Args:
             query: Validation query parameters
-            
+
         Returns:
             ValidationResult with comprehensive analysis
         """
@@ -471,14 +471,14 @@ class LiteratureDatabase:
         query_str = json.dumps(query_dict, sort_keys=True)
         return hashlib.md5(query_str.encode()).hexdigest()
 
-    def _get_cached_validation(self, query: ValidationQuery) -> Optional[ValidationResult]:
+    def _get_cached_validation(self, query: ValidationQuery) -> ValidationResult | None:
         """Check for cached validation result."""
 
         query_hash = self._get_query_hash(query)
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute("""
-                SELECT result_data FROM validation_queries 
+                SELECT result_data FROM validation_queries
                 WHERE query_hash = ? AND created_at > datetime('now', '-7 days')
             """, (query_hash,))
 
@@ -532,15 +532,15 @@ class LiteratureDatabase:
                     json.dumps(result_data)
                 ))
 
-    def batch_validate_parameters(self, queries: List[ValidationQuery],
-                                 max_workers: int = 3) -> List[ValidationResult]:
+    def batch_validate_parameters(self, queries: list[ValidationQuery],
+                                 max_workers: int = 3) -> list[ValidationResult]:
         """
         Validate multiple parameters in parallel.
-        
+
         Args:
             queries: List of validation queries
             max_workers: Maximum number of concurrent validations
-            
+
         Returns:
             List of validation results
         """
@@ -573,7 +573,7 @@ class LiteratureDatabase:
 
         return results
 
-    def generate_validation_report(self, results: List[ValidationResult]) -> Dict[str, Any]:
+    def generate_validation_report(self, results: list[ValidationResult]) -> dict[str, Any]:
         """Generate comprehensive validation report."""
 
         summary = {
@@ -622,7 +622,7 @@ class LiteratureDatabase:
             'database_stats': self.get_database_statistics()
         }
 
-    def get_database_statistics(self) -> Dict[str, Any]:
+    def get_database_statistics(self) -> dict[str, Any]:
         """Get database statistics."""
 
         with sqlite3.connect(self.db_path) as conn:
@@ -665,7 +665,7 @@ class LiteratureDatabase:
             cursor = conn.execute("SELECT * FROM parameters")
             columns = [desc[0] for desc in cursor.description]
             for row in cursor.fetchall():
-                export_data['parameters'].append(dict(zip(columns, row)))
+                export_data['parameters'].append(dict(zip(columns, row, strict=False)))
 
             # Export literature values
             cursor = conn.execute("""
@@ -675,7 +675,7 @@ class LiteratureDatabase:
             """)
             columns = [desc[0] for desc in cursor.description]
             for row in cursor.fetchall():
-                record = dict(zip(columns, row))
+                record = dict(zip(columns, row, strict=False))
                 record['experimental_conditions'] = json.loads(record['experimental_conditions'] or '[]')
                 export_data['literature_values'].append(record)
 
@@ -683,7 +683,7 @@ class LiteratureDatabase:
             cursor = conn.execute("SELECT * FROM article_metadata LIMIT 1000")  # Limit for size
             columns = [desc[0] for desc in cursor.description]
             for row in cursor.fetchall():
-                record = dict(zip(columns, row))
+                record = dict(zip(columns, row, strict=False))
                 record['authors'] = json.loads(record['authors'] or '[]')
                 export_data['articles'].append(record)
 

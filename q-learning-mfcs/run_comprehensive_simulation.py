@@ -12,23 +12,24 @@ Parameters:
 - Full sensor integration with EIS and QCM
 """
 
-import sys
-import os
-import time
-import signal
 import json
+import os
 import pickle
-import numpy as np
+import signal
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any
+
+import numpy as np
 
 # Add source paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 try:
-    from sensor_integrated_mfc_model import SensorIntegratedMFCModel
-    from sensing_models.sensor_fusion import FusionMethod
     from path_config import get_simulation_data_path
+    from sensing_models.sensor_fusion import FusionMethod
+    from sensor_integrated_mfc_model import SensorIntegratedMFCModel
 except ImportError as e:
     print(f"Error importing modules: {e}")
     sys.exit(1)
@@ -38,7 +39,7 @@ class SimulationMonitor:
 
     def __init__(self, output_dir: str):
         self.output_dir = output_dir
-        self.start_time: Optional[float] = None
+        self.start_time: float | None = None
         self.progress_file = os.path.join(output_dir, "simulation_progress.json")
         self.log_file = os.path.join(output_dir, "simulation.log")
         self.checkpoint_interval = 600  # 10 minutes in seconds
@@ -60,7 +61,7 @@ class SimulationMonitor:
             f.write(log_entry + "\n")
 
     def update_progress(self, current_hour: float, total_hours: float,
-                       current_state: Dict[str, Any]):
+                       current_state: dict[str, Any]):
         """Update simulation progress."""
         if time.time() - self.last_checkpoint > self.checkpoint_interval:
             progress = {

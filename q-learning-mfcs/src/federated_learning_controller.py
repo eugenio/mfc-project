@@ -42,7 +42,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import torch
@@ -122,7 +122,7 @@ class FederatedConfig:
     sparsification_ratio: float = 0.01
 
     # Personalization
-    personalization_layers: List[str] = field(default_factory=lambda: ['output_layer'])
+    personalization_layers: list[str] = field(default_factory=lambda: ['output_layer'])
     local_adaptation_steps: int = 10
 
     # Byzantine tolerance
@@ -159,7 +159,7 @@ class ClientInfo:
     # Status
     is_active: bool = True
     last_update: datetime = field(default_factory=datetime.now)
-    round_participation: List[int] = field(default_factory=list)
+    round_participation: list[int] = field(default_factory=list)
 
     # Local model performance
     local_accuracy: float = 0.0
@@ -173,7 +173,7 @@ class DifferentialPrivacy:
     def __init__(self, noise_multiplier: float = 1.0, max_grad_norm: float = 1.0):
         """
         Initialize differential privacy mechanism.
-        
+
         Args:
             noise_multiplier: Noise scale for privacy
             max_grad_norm: Maximum gradient norm for clipping
@@ -225,15 +225,15 @@ class SecureAggregation:
 
         logger.info(f"Secure aggregation initialized for {num_clients} clients")
 
-    def generate_masks(self, model_params: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def generate_masks(self, model_params: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Generate random masks for secure aggregation."""
         masks = {}
         for name, param in model_params.items():
             masks[name] = torch.randn_like(param)
         return masks
 
-    def mask_model(self, model_params: Dict[str, torch.Tensor],
-                   masks: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def mask_model(self, model_params: dict[str, torch.Tensor],
+                   masks: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Apply masks to model parameters."""
         masked_params = {}
         for name, param in model_params.items():
@@ -243,8 +243,8 @@ class SecureAggregation:
                 masked_params[name] = param
         return masked_params
 
-    def unmask_aggregate(self, masked_models: List[Dict[str, torch.Tensor]],
-                        all_masks: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+    def unmask_aggregate(self, masked_models: list[dict[str, torch.Tensor]],
+                        all_masks: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
         """Unmask and aggregate models securely."""
         if len(masked_models) < self.threshold:
             raise ValueError(f"Insufficient clients: {len(masked_models)} < {self.threshold}")
@@ -279,7 +279,7 @@ class ModelCompression:
                  sparsification_ratio: float = 0.01):
         """
         Initialize model compression.
-        
+
         Args:
             compression_ratio: Overall compression ratio
             quantization_bits: Bits for quantization
@@ -291,7 +291,7 @@ class ModelCompression:
 
         logger.info(f"Model compression initialized: {compression_ratio} ratio, {quantization_bits} bits")
 
-    def compress_model(self, model_params: Dict[str, torch.Tensor]) -> Dict[str, Any]:
+    def compress_model(self, model_params: dict[str, torch.Tensor]) -> dict[str, Any]:
         """Compress model parameters."""
         compressed = {}
 
@@ -318,7 +318,7 @@ class ModelCompression:
 
         return compressed
 
-    def decompress_model(self, compressed_params: Dict[str, Any]) -> Dict[str, torch.Tensor]:
+    def decompress_model(self, compressed_params: dict[str, Any]) -> dict[str, torch.Tensor]:
         """Decompress model parameters."""
         decompressed = {}
 
@@ -371,7 +371,7 @@ class FederatedClient:
                  config: FederatedConfig):
         """
         Initialize federated client.
-        
+
         Args:
             client_info: Client information
             model: Local model
@@ -419,10 +419,10 @@ class FederatedClient:
         logger.info(f"Federated client initialized: {client_info.client_id}")
         logger.info(f"Site: {client_info.site_name}, Species: {client_info.bacterial_species.value}")
 
-    def add_local_data(self, system_states: List[SystemState], actions: List[int],
-                      rewards: List[float]):
+    def add_local_data(self, system_states: list[SystemState], actions: list[int],
+                      rewards: list[float]):
         """Add local training data."""
-        for state, action, reward in zip(system_states, actions, rewards):
+        for state, action, reward in zip(system_states, actions, rewards, strict=False):
             # Extract features using Phase 2 feature engineering
             performance_metrics = {
                 'power_efficiency': state.power_output / max(state.current_density, 0.01),
@@ -445,13 +445,13 @@ class FederatedClient:
         self.client_info.data_samples = len(self.local_data)
         logger.info(f"Client {self.client_info.client_id} now has {len(self.local_data)} samples")
 
-    def local_train(self, global_model_params: Dict[str, torch.Tensor]) -> Dict[str, Any]:
+    def local_train(self, global_model_params: dict[str, torch.Tensor]) -> dict[str, Any]:
         """
         Perform local training on client data.
-        
+
         Args:
             global_model_params: Global model parameters
-            
+
         Returns:
             Training results and updated model
         """
@@ -541,7 +541,7 @@ class FederatedClient:
 
         return results
 
-    def evaluate_model(self, test_data: List[Dict[str, Any]]) -> Dict[str, float]:
+    def evaluate_model(self, test_data: list[dict[str, Any]]) -> dict[str, float]:
         """Evaluate local model performance."""
         if not test_data:
             return {'accuracy': 0.0, 'loss': float('inf')}
@@ -594,7 +594,7 @@ class FederatedServer:
     def __init__(self, global_model: nn.Module, config: FederatedConfig):
         """
         Initialize federated server.
-        
+
         Args:
             global_model: Global model template
             config: Federated learning configuration
@@ -607,8 +607,8 @@ class FederatedServer:
         self.global_model.to(self.device)
 
         # Client management
-        self.clients: Dict[str, FederatedClient] = {}
-        self.client_info: Dict[str, ClientInfo] = {}
+        self.clients: dict[str, FederatedClient] = {}
+        self.client_info: dict[str, ClientInfo] = {}
 
         # Aggregation mechanisms
         if config.secure_aggregation:
@@ -650,13 +650,13 @@ class FederatedServer:
             logger.error(f"Failed to register client {client_info.client_id}: {e}")
             return False
 
-    def select_clients(self, round_num: int) -> List[str]:
+    def select_clients(self, round_num: int) -> list[str]:
         """
         Select clients for the current round.
-        
+
         Args:
             round_num: Current round number
-            
+
         Returns:
             List of selected client IDs
         """
@@ -716,13 +716,13 @@ class FederatedServer:
 
         return selected
 
-    def aggregate_models(self, client_updates: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def aggregate_models(self, client_updates: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         """
         Aggregate client model updates.
-        
+
         Args:
             client_updates: List of client training results
-            
+
         Returns:
             Aggregated global model parameters
         """
@@ -740,7 +740,7 @@ class FederatedServer:
         else:
             return self._weighted_average_aggregation(client_updates)
 
-    def _weighted_average_aggregation(self, client_updates: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def _weighted_average_aggregation(self, client_updates: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         """Federated averaging aggregation."""
         total_samples = sum(update['num_samples'] for update in client_updates)
 
@@ -765,7 +765,7 @@ class FederatedServer:
 
         return aggregated_params
 
-    def _median_aggregation(self, client_updates: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def _median_aggregation(self, client_updates: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         """Coordinate-wise median aggregation."""
         aggregated_params = {}
 
@@ -784,8 +784,8 @@ class FederatedServer:
 
         return aggregated_params
 
-    def _trimmed_mean_aggregation(self, client_updates: List[Dict[str, Any]],
-                                trim_ratio: float = 0.1) -> Dict[str, torch.Tensor]:
+    def _trimmed_mean_aggregation(self, client_updates: list[dict[str, Any]],
+                                trim_ratio: float = 0.1) -> dict[str, torch.Tensor]:
         """Trimmed mean aggregation for Byzantine robustness."""
         aggregated_params = {}
 
@@ -815,18 +815,18 @@ class FederatedServer:
 
         return aggregated_params
 
-    def _byzantine_robust_aggregation(self, client_updates: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def _byzantine_robust_aggregation(self, client_updates: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         """Byzantine-robust aggregation using geometric median."""
         # Simplified implementation - in practice, use more sophisticated methods
         return self._trimmed_mean_aggregation(client_updates, trim_ratio=0.2)
 
-    def run_round(self, round_num: int) -> Dict[str, Any]:
+    def run_round(self, round_num: int) -> dict[str, Any]:
         """
         Execute one round of federated learning.
-        
+
         Args:
             round_num: Current round number
-            
+
         Returns:
             Round results and metrics
         """
@@ -918,10 +918,10 @@ class FederatedServer:
 
         return round_results
 
-    def train_federation(self) -> Dict[str, Any]:
+    def train_federation(self) -> dict[str, Any]:
         """
         Train the complete federation for all rounds.
-        
+
         Returns:
             Complete training results
         """
@@ -963,7 +963,7 @@ class FederatedServer:
 
         return federation_results
 
-    def _get_client_summary(self) -> Dict[str, Any]:
+    def _get_client_summary(self) -> dict[str, Any]:
         """Get summary of client performance."""
         client_summary = {}
 
@@ -1003,13 +1003,13 @@ def create_federated_system(global_model: nn.Module,
                           **kwargs) -> FederatedServer:
     """
     Factory function to create federated learning system.
-    
+
     Args:
         global_model: Global model template
         num_clients: Number of clients
         algorithm: Federated algorithm
         **kwargs: Additional configuration
-        
+
     Returns:
         Configured federated server
     """

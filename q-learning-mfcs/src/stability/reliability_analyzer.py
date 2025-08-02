@@ -6,7 +6,7 @@ This module provides comprehensive reliability analysis for Microbial Fuel Cell 
 systems, including failure rate analysis, Mean Time Between Failures (MTBF) calculation,
 system availability assessment, and predictive reliability modeling.
 
-Author: MFC Analysis Team  
+Author: MFC Analysis Team
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
+from typing import Any, Protocol, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,7 @@ from scipy import stats
 logger = logging.getLogger(__name__)
 
 # Type aliases
-TimeSeriesData = Union[pd.Series, np.ndarray, List[float]]
+TimeSeriesData = Union[pd.Series, np.ndarray, list[float]]
 Timestamp = Union[datetime, pd.Timestamp, float]
 ReliabilityValue = Union[float, np.floating]
 FailureTime = Union[float, int, np.number]
@@ -96,7 +96,7 @@ class FailureEvent:
 class ReliabilityParameters:
     """Parameters for reliability distribution models."""
     model_type: ReliabilityModel
-    parameters: Dict[str, float]
+    parameters: dict[str, float]
     confidence_level: float = 0.95
     goodness_of_fit: float = 0.0
 
@@ -117,7 +117,7 @@ class ReliabilityMetrics:
     availability: float = 0.0  # System availability (0-1)
 
     # Additional metrics
-    confidence_interval: Tuple[float, float] = (0.0, 0.0)
+    confidence_interval: tuple[float, float] = (0.0, 0.0)
     sample_size: int = 0
     observation_period: float = 0.0  # hours
 
@@ -147,18 +147,18 @@ class ReliabilityPrediction:
     failure_rate_trend: float = 0.0  # Trend in failure rate
 
     # Reliability functions
-    reliability_at_time: Dict[float, float] = field(default_factory=dict)  # R(t)
-    hazard_function: Dict[float, float] = field(default_factory=dict)  # h(t)
-    cumulative_hazard: Dict[float, float] = field(default_factory=dict)  # H(t)
+    reliability_at_time: dict[float, float] = field(default_factory=dict)  # R(t)
+    hazard_function: dict[float, float] = field(default_factory=dict)  # h(t)
+    cumulative_hazard: dict[float, float] = field(default_factory=dict)  # H(t)
 
     # Model parameters
-    distribution_parameters: Optional[ReliabilityParameters] = None
+    distribution_parameters: ReliabilityParameters | None = None
     model_confidence: float = 0.0
     prediction_horizon: float = 8760.0  # Default: 1 year in hours
 
     # Failure mode analysis
-    dominant_failure_modes: List[Tuple[FailureMode, float]] = field(default_factory=list)
-    failure_mode_probabilities: Dict[FailureMode, float] = field(default_factory=dict)
+    dominant_failure_modes: list[tuple[FailureMode, float]] = field(default_factory=list)
+    failure_mode_probabilities: dict[FailureMode, float] = field(default_factory=dict)
 
     # Maintenance recommendations
     recommended_maintenance_interval: float = 0.0  # Hours
@@ -219,7 +219,7 @@ class ReliabilityPrediction:
 
         return 1.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert prediction to dictionary format."""
         return {
             'mean_time_to_failure': self.mean_time_to_failure,
@@ -249,7 +249,7 @@ class ReliabilityAnalyzer(Protocol):
     def analyze_reliability(
         self,
         failure_data: Sequence[FailureEvent],
-        operational_data: Optional[TimeSeriesData] = None,
+        operational_data: TimeSeriesData | None = None,
         **kwargs: Any
     ) -> ReliabilityPrediction:
         """Analyze system reliability."""
@@ -259,7 +259,7 @@ class ReliabilityAnalyzer(Protocol):
         self,
         current_time: float,
         **kwargs: Any
-    ) -> Tuple[float, float]:  # (predicted_time, confidence)
+    ) -> tuple[float, float]:  # (predicted_time, confidence)
         """Predict next failure time."""
         ...
 
@@ -274,7 +274,7 @@ class BaseReliabilityAnalyzer(ABC):
         min_failures_for_analysis: int = 3
     ) -> None:
         """Initialize reliability analyzer.
-        
+
         Args:
             confidence_level: Confidence level for statistical analysis
             prediction_horizon: Time horizon for predictions (hours)
@@ -293,7 +293,7 @@ class BaseReliabilityAnalyzer(ABC):
     def analyze_reliability(
         self,
         failure_data: Sequence[FailureEvent],
-        operational_data: Optional[TimeSeriesData] = None,
+        operational_data: TimeSeriesData | None = None,
         **kwargs: Any
     ) -> ReliabilityPrediction:
         """Analyze system reliability."""
@@ -304,16 +304,16 @@ class BaseReliabilityAnalyzer(ABC):
         self,
         current_time: float,
         **kwargs: Any
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Predict next failure time."""
         pass
 
     def validate_failure_data(self, failure_data: Sequence[FailureEvent]) -> bool:
         """Validate failure data quality.
-        
+
         Args:
             failure_data: Sequence of failure events
-            
+
         Returns:
             True if data is valid, False otherwise
         """
@@ -427,7 +427,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         default_distribution: ReliabilityModel = ReliabilityModel.WEIBULL
     ) -> None:
         """Initialize statistical reliability analyzer.
-        
+
         Args:
             confidence_level: Confidence level for statistical analysis
             prediction_horizon: Time horizon for predictions (hours)
@@ -436,21 +436,21 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         """
         super().__init__(confidence_level, prediction_horizon, min_failures_for_analysis)
         self.default_distribution = default_distribution
-        self.fitted_distribution: Optional[ReliabilityParameters] = None
+        self.fitted_distribution: ReliabilityParameters | None = None
 
     def analyze_reliability(
         self,
         failure_data: Sequence[FailureEvent],
-        operational_data: Optional[TimeSeriesData] = None,
+        operational_data: TimeSeriesData | None = None,
         **kwargs: Any
     ) -> ReliabilityPrediction:
         """Perform statistical reliability analysis.
-        
+
         Args:
             failure_data: Sequence of failure events
             operational_data: Optional operational performance data
             **kwargs: Additional analysis parameters
-            
+
         Returns:
             ReliabilityPrediction with comprehensive reliability metrics
         """
@@ -503,9 +503,9 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             instantaneous_failure_rate=instantaneous_failure_rate,
             average_failure_rate=avg_failure_rate,
             failure_rate_trend=failure_rate_trend,
-            reliability_at_time=dict(zip(time_points, reliability_function)),
-            hazard_function=dict(zip(time_points, hazard_function)),
-            cumulative_hazard=dict(zip(time_points, cumulative_hazard)),
+            reliability_at_time=dict(zip(time_points, reliability_function, strict=False)),
+            hazard_function=dict(zip(time_points, hazard_function, strict=False)),
+            cumulative_hazard=dict(zip(time_points, cumulative_hazard, strict=False)),
             distribution_parameters=self.fitted_distribution,
             model_confidence=self.fitted_distribution.goodness_of_fit if self.fitted_distribution else 0.0,
             prediction_horizon=self.prediction_horizon,
@@ -524,13 +524,13 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         self,
         current_time: float,
         **kwargs: Any
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Predict next failure time using fitted distribution.
-        
+
         Args:
             current_time: Current system time
             **kwargs: Additional prediction parameters
-            
+
         Returns:
             Tuple of (predicted_failure_time, confidence_level)
         """
@@ -694,10 +694,10 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         """Calculate Weibull reliability at given time."""
         return float(np.exp(-(time / scale) ** shape))
 
-    def _analyze_failure_modes(self, failure_data: Sequence[FailureEvent]) -> Dict[str, Any]:
+    def _analyze_failure_modes(self, failure_data: Sequence[FailureEvent]) -> dict[str, Any]:
         """Analyze failure modes and their probabilities."""
         failure_modes = [event.failure_mode for event in failure_data]
-        mode_counts: Dict[FailureMode, int] = {}
+        mode_counts: dict[FailureMode, int] = {}
 
         for mode in failure_modes:
             mode_counts[mode] = mode_counts.get(mode, 0) + 1
@@ -817,7 +817,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         self,
         current_time: float,
         distribution: ReliabilityParameters
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Predict failure using specific distribution parameters."""
         if not distribution.parameters:
             return (current_time + 1000.0, 0.0)

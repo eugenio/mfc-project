@@ -17,7 +17,7 @@ control decisions, leading to better biofilm management and MFC performance.
 
 import os
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -53,7 +53,7 @@ except ImportError:
 class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
     """
     Enhanced Q-learning controller with integrated EIS/QCM sensor feedback.
-    
+
     Extends the base Q-learning controller with:
     - Sensor-informed state representation
     - Multi-objective reward function
@@ -61,12 +61,12 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
     - Sensor fault handling and degradation compensation
     """
 
-    def __init__(self, qlearning_config: Optional[QLearningConfig] = None,
-                 sensor_config: Optional[SensorConfig] = None,
+    def __init__(self, qlearning_config: QLearningConfig | None = None,
+                 sensor_config: SensorConfig | None = None,
                  enable_sensor_state: bool = True, fault_tolerance: bool = True):
         """
         Initialize sensing-enhanced Q-learning controller.
-        
+
         Args:
             qlearning_config: Q-learning configuration parameters
             sensor_config: Sensor configuration parameters
@@ -182,14 +182,14 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         else:
             print("Using base state space without sensor integration")
 
-    def discretize_sensor_enhanced_state(self, base_state: Tuple, sensor_data: Optional[Dict] = None) -> Tuple:
+    def discretize_sensor_enhanced_state(self, base_state: tuple, sensor_data: dict | None = None) -> tuple:
         """
         Convert continuous state to discrete state including sensor data.
-        
+
         Args:
             base_state: Base state tuple from parent class
             sensor_data: Optional sensor measurement data
-            
+
         Returns:
             Enhanced discrete state tuple
         """
@@ -267,16 +267,16 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         else:
             return 0  # unavailable
 
-    def choose_action_with_sensors(self, base_state: Tuple, sensor_data: Optional[Dict] = None,
-                                 available_actions: Optional[List] = None) -> int:
+    def choose_action_with_sensors(self, base_state: tuple, sensor_data: dict | None = None,
+                                 available_actions: list | None = None) -> int:
         """
         Choose action using sensor-enhanced state and adaptive exploration.
-        
+
         Args:
             base_state: Base Q-learning state
             sensor_data: Sensor measurement data
             available_actions: Available actions (if constrained)
-            
+
         Returns:
             Selected action index
         """
@@ -315,7 +315,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return action_idx
 
-    def _calculate_sensor_confidence(self, sensor_data: Optional[Dict]) -> float:
+    def _calculate_sensor_confidence(self, sensor_data: dict | None) -> float:
         """Calculate overall sensor confidence."""
         if sensor_data is None:
             return 0.0
@@ -368,7 +368,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return adaptive_epsilon
 
-    def _choose_best_available_action(self, state: Tuple, available_actions: List) -> int:
+    def _choose_best_available_action(self, state: tuple, available_actions: list) -> int:
         """Choose best action from available actions only."""
         if not available_actions:
             return 0
@@ -387,16 +387,16 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         else:
             return 0
 
-    def calculate_sensor_enhanced_reward(self, base_reward: float, sensor_data: Optional[Dict] = None,
-                                       system_state: Optional[Dict] = None) -> float:
+    def calculate_sensor_enhanced_reward(self, base_reward: float, sensor_data: dict | None = None,
+                                       system_state: dict | None = None) -> float:
         """
         Calculate enhanced reward incorporating sensor feedback.
-        
+
         Args:
             base_reward: Base reward from system performance
             sensor_data: Sensor measurement data
             system_state: Current system state
-            
+
         Returns:
             Enhanced reward value
         """
@@ -429,7 +429,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return total_reward
 
-    def _calculate_biofilm_health_reward(self, sensor_data: Dict, system_state: Dict) -> float:
+    def _calculate_biofilm_health_reward(self, sensor_data: dict, system_state: dict) -> float:
         """Calculate reward based on biofilm health indicators."""
         biofilm_reward = 0.0
 
@@ -467,7 +467,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return biofilm_reward
 
-    def _calculate_sensor_agreement_reward(self, sensor_data: Dict) -> float:
+    def _calculate_sensor_agreement_reward(self, sensor_data: dict) -> float:
         """Calculate reward based on sensor agreement."""
         fusion_data = sensor_data.get('fusion', {})
         if not fusion_data:
@@ -481,7 +481,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return agreement_reward
 
-    def _calculate_stability_reward(self, system_state: Dict) -> float:
+    def _calculate_stability_reward(self, system_state: dict) -> float:
         """Calculate reward based on system stability."""
         # Flow rate stability
         current_flow = system_state.get('flow_rate', 10.0)
@@ -498,11 +498,11 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
 
         return stability_reward
 
-    def update_q_value_with_sensors(self, state: Tuple, action: int, reward: float,
-                                   next_state: Tuple, sensor_data: Optional[Dict] = None):
+    def update_q_value_with_sensors(self, state: tuple, action: int, reward: float,
+                                   next_state: tuple, sensor_data: dict | None = None):
         """
         Update Q-value with sensor-enhanced learning.
-        
+
         Args:
             state: Current state
             action: Action taken
@@ -542,7 +542,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
     def handle_sensor_fault(self, fault_type: str, affected_sensor: str):
         """
         Handle sensor faults by adapting control strategy.
-        
+
         Args:
             fault_type: Type of fault ('failed', 'degraded', 'noisy')
             affected_sensor: Which sensor is affected ('eis', 'qcm', 'both')
@@ -571,7 +571,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
         print(f"Sensor fault handled: {fault_type} in {affected_sensor}, "
               f"degradation factor: {self.sensor_degradation_factor:.2f}")
 
-    def get_controller_performance_summary(self) -> Dict[str, Any]:
+    def get_controller_performance_summary(self) -> dict[str, Any]:
         """Get comprehensive controller performance summary."""
         total_decisions = self.sensor_guided_decisions + self.model_guided_decisions
 
@@ -629,7 +629,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
     def adapt_to_sensor_availability(self, eis_available: bool, qcm_available: bool):
         """
         Adapt controller behavior based on sensor availability.
-        
+
         Args:
             eis_available: Whether EIS sensor is available
             qcm_available: Whether QCM sensor is available
@@ -653,7 +653,7 @@ class SensingEnhancedQLearningController(AdvancedQLearningFlowController):
             sensor_type = "EIS" if eis_available else "QCM"
             print(f"Single sensor ({sensor_type}) available - partial integration enabled")
 
-    def validate_sensor_enhanced_operation(self) -> Dict[str, bool]:
+    def validate_sensor_enhanced_operation(self) -> dict[str, bool]:
         """Validate that sensor-enhanced operation is working correctly."""
         validation_results = {
             'sensor_state_enabled': self.enable_sensor_state,

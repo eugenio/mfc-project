@@ -11,7 +11,7 @@ Created: 2025-08-01
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -36,18 +36,18 @@ class ParameterValidation:
     parameter_name: str
     model_value: float
     units: str
-    literature_values: List[float] = field(default_factory=list)
-    literature_refs: List[LiteratureReference] = field(default_factory=list)
-    experimental_conditions: List[str] = field(default_factory=list)
+    literature_values: list[float] = field(default_factory=list)
+    literature_refs: list[LiteratureReference] = field(default_factory=list)
+    experimental_conditions: list[str] = field(default_factory=list)
     validation_status: str = "pending"  # "validated", "needs_review", "conflicting"
-    uncertainty_range: Tuple[float, float] = (0.0, 0.0)
+    uncertainty_range: tuple[float, float] = (0.0, 0.0)
     confidence_level: float = 0.0  # 0-1 scale
     notes: str = ""
 
 class MFCLiteratureDatabase:
     """
     Comprehensive literature database for MFC model validation.
-    
+
     Contains experimental data and literature values for all model parameters
     used in the physics, biofilm, and metabolic models.
     """
@@ -371,7 +371,7 @@ class MFCLiteratureDatabase:
             notes='Typical range for Shewanella MFCs'
         )
 
-    def validate_parameter(self, parameter_name: str) -> Dict[str, Any]:
+    def validate_parameter(self, parameter_name: str) -> dict[str, Any]:
         """Validate a specific parameter against literature values."""
 
         if parameter_name not in self.parameter_validations:
@@ -451,7 +451,7 @@ class MFCLiteratureDatabase:
             'notes': validation.notes
         }
 
-    def validate_all_parameters(self) -> Dict[str, Any]:
+    def validate_all_parameters(self) -> dict[str, Any]:
         """Validate all parameters in the database."""
 
         results = {}

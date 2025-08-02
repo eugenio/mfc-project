@@ -8,19 +8,20 @@ capabilities with MFC simulations.
 Created: 2025-07-31
 """
 
-import sys
 import os
+import sys
 import time
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from simulation_helpers import SimulationRunner, quick_simulation_with_chronology
 from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
 from config.sensor_config import DEFAULT_SENSOR_CONFIG
 from config.simulation_chronology import get_chronology_manager
+from simulation_helpers import SimulationRunner, quick_simulation_with_chronology
 
 
 def mock_simulation_function() -> dict:

@@ -23,7 +23,7 @@ import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -96,16 +96,16 @@ class FusedMeasurement:
 class KalmanFilter:
     """
     Kalman filter for biofilm state estimation using EIS and QCM sensors.
-    
+
     State vector: [thickness, biomass_density, conductivity, velocity_thickness, velocity_biomass]
-    
+
     Measurement vector: [eis_thickness, qcm_thickness, eis_conductivity]
     """
 
-    def __init__(self, dt: float = 0.1, config: Optional[SensorConfig] = None):
+    def __init__(self, dt: float = 0.1, config: SensorConfig | None = None):
         """
         Initialize Kalman filter.
-        
+
         Args:
             dt: Time step (hours)
             config: Optional sensor configuration
@@ -183,7 +183,7 @@ class KalmanFilter:
     def update(self, measurements: np.ndarray, measurement_uncertainties: np.ndarray):
         """
         Update step of Kalman filter.
-        
+
         Args:
             measurements: [eis_thickness, qcm_thickness, eis_conductivity]
             measurement_uncertainties: Uncertainties for each measurement
@@ -217,17 +217,17 @@ class KalmanFilter:
         post_fit_residual = measurements - np.dot(self.H, self.state)
         self.residual_history.append(post_fit_residual.copy())
 
-    def get_state_estimate(self) -> Tuple[np.ndarray, np.ndarray]:
+    def get_state_estimate(self) -> tuple[np.ndarray, np.ndarray]:
         """
         Get current state estimate and uncertainties.
-        
+
         Returns:
             Tuple of (state_vector, state_uncertainties)
         """
         state_uncertainties = np.sqrt(np.diag(self.covariance))
         return self.state.copy(), state_uncertainties
 
-    def assess_filter_performance(self) -> Dict[str, float]:
+    def assess_filter_performance(self) -> dict[str, float]:
         """Assess Kalman filter performance metrics."""
         if len(self.innovation_history) < 5:
             return {'insufficient_data': True}
@@ -267,12 +267,12 @@ class KalmanFilter:
 class SensorCalibration:
     """
     Adaptive calibration system for EIS and QCM sensors.
-    
+
     Maintains calibration parameters and updates them based on
     sensor agreement and external validation data.
     """
 
-    def __init__(self, config: Optional[SensorConfig] = None):
+    def __init__(self, config: SensorConfig | None = None):
         """Initialize calibration system."""
         self.config = config
 
@@ -326,12 +326,12 @@ class SensorCalibration:
             self.qcm_reliability = 1.0  # 0-1
         self.last_calibration_time = 0.0
 
-    def update_calibration(self, eis_measurements: List[EISMeasurement],
-                          qcm_measurements: List[QCMMeasurement],
-                          reference_thickness: Optional[float] = None):
+    def update_calibration(self, eis_measurements: list[EISMeasurement],
+                          qcm_measurements: list[QCMMeasurement],
+                          reference_thickness: float | None = None):
         """
         Update calibration parameters based on sensor agreement.
-        
+
         Args:
             eis_measurements: Recent EIS measurements
             qcm_measurements: Recent QCM measurements
@@ -347,7 +347,7 @@ class SensorCalibration:
         # Calculate current agreement
         if len(eis_thicknesses) == len(qcm_thicknesses):
             agreements = []
-            for eis_thick, qcm_thick in zip(eis_thicknesses, qcm_thicknesses):
+            for eis_thick, qcm_thick in zip(eis_thicknesses, qcm_thicknesses, strict=False):
                 if max(eis_thick, qcm_thick) > 0:
                     agreement = 1.0 - abs(eis_thick - qcm_thick) / max(eis_thick, qcm_thick)
                     agreements.append(max(0, agreement))
@@ -362,8 +362,8 @@ class SensorCalibration:
         # Update reliability estimates
         self._update_reliability()
 
-    def _update_with_reference(self, eis_measurements: List[EISMeasurement],
-                             qcm_measurements: List[QCMMeasurement],
+    def _update_with_reference(self, eis_measurements: list[EISMeasurement],
+                             qcm_measurements: list[QCMMeasurement],
                              reference_thickness: float):
         """Update calibration using external reference."""
         # Calculate current sensor estimates
@@ -410,11 +410,11 @@ class SensorCalibration:
     def get_measurement_uncertainty(self, sensor_type: str, measured_value: float) -> float:
         """
         Calculate measurement uncertainty for given sensor and value.
-        
+
         Args:
             sensor_type: 'eis' or 'qcm'
             measured_value: Measured thickness value
-            
+
         Returns:
             Estimated uncertainty (same units as measured_value)
         """
@@ -440,7 +440,7 @@ class SensorCalibration:
 
         return uncertainty
 
-    def get_calibration_status(self) -> Dict[str, Any]:
+    def get_calibration_status(self) -> dict[str, Any]:
         """Get current calibration status."""
         return {
             'eis_reliability': self.eis_reliability,
@@ -456,7 +456,7 @@ class SensorCalibration:
 class SensorFusion:
     """
     Complete sensor fusion system for EIS and QCM integration.
-    
+
     Features:
     - Multiple fusion algorithms
     - Adaptive sensor weighting
@@ -468,10 +468,10 @@ class SensorFusion:
     def __init__(self, method: FusionMethod = FusionMethod.KALMAN_FILTER,
                  species: BacterialSpecies = BacterialSpecies.MIXED,
                  use_gpu: bool = True,
-                 config: Optional[SensorConfig] = None):
+                 config: SensorConfig | None = None):
         """
         Initialize sensor fusion system.
-        
+
         Args:
             method: Fusion algorithm to use
             species: Bacterial species for calibration
@@ -519,19 +519,19 @@ class SensorFusion:
 
     def fuse_measurements(self, eis_measurement: EISMeasurement,
                          qcm_measurement: QCMMeasurement,
-                         eis_properties: Dict[str, float],
-                         qcm_properties: Dict[str, float],
+                         eis_properties: dict[str, float],
+                         qcm_properties: dict[str, float],
                          time_hours: float = 0.0) -> FusedMeasurement:
         """
         Fuse EIS and QCM measurements into unified biofilm state estimate.
-        
+
         Args:
             eis_measurement: EIS measurement data
             qcm_measurement: QCM measurement data
             eis_properties: Biofilm properties from EIS
             qcm_properties: Biofilm properties from QCM
             time_hours: Measurement timestamp
-            
+
         Returns:
             Fused measurement with uncertainties
         """
@@ -631,7 +631,7 @@ class SensorFusion:
 
     def _kalman_fusion(self, eis_thickness: float, qcm_thickness: float,
                       eis_conductivity: float, eis_uncertainty: float,
-                      qcm_uncertainty: float, time_hours: float) -> Dict[str, float]:
+                      qcm_uncertainty: float, time_hours: float) -> dict[str, float]:
         """Apply Kalman filter fusion."""
         if not self.kalman_filter.initialized:
             # Initialize with first measurements
@@ -670,7 +670,7 @@ class SensorFusion:
 
     def _weighted_average_fusion(self, eis_thickness: float, qcm_thickness: float,
                                eis_conductivity: float, eis_uncertainty: float,
-                               qcm_uncertainty: float) -> Dict[str, float]:
+                               qcm_uncertainty: float) -> dict[str, float]:
         """Apply weighted average fusion."""
         # Calculate weights inversely proportional to uncertainties
         eis_weight = 1.0 / (eis_uncertainty**2 + 1e-6)
@@ -721,7 +721,7 @@ class SensorFusion:
 
     def _maximum_likelihood_fusion(self, eis_thickness: float, qcm_thickness: float,
                                  eis_conductivity: float, eis_uncertainty: float,
-                                 qcm_uncertainty: float) -> Dict[str, float]:
+                                 qcm_uncertainty: float) -> dict[str, float]:
         """Apply maximum likelihood fusion."""
         # Maximum likelihood estimate for Gaussian distributions
         # θ_ML = (σ₂²θ₁ + σ₁²θ₂) / (σ₁² + σ₂²)
@@ -750,7 +750,7 @@ class SensorFusion:
 
     def _bayesian_fusion(self, eis_thickness: float, qcm_thickness: float,
                         eis_conductivity: float, eis_uncertainty: float,
-                        qcm_uncertainty: float) -> Dict[str, float]:
+                        qcm_uncertainty: float) -> dict[str, float]:
         """Apply Bayesian inference fusion."""
         # Simplified Bayesian fusion with uniform prior
         # Posterior is proportional to product of likelihoods
@@ -808,8 +808,8 @@ class SensorFusion:
             'qcm_weight': qcm_weight
         }
 
-    def _assess_sensor_status(self, sensor_type: str, measurement: Union[EISMeasurement, QCMMeasurement],
-                            properties: Dict[str, float]) -> str:
+    def _assess_sensor_status(self, sensor_type: str, measurement: EISMeasurement | QCMMeasurement,
+                            properties: dict[str, float]) -> str:
         """Assess individual sensor status."""
         if sensor_type == 'eis':
             # EIS sensor assessment
@@ -885,7 +885,7 @@ class SensorFusion:
 
         return np.clip(confidence, 0.0, 1.0)
 
-    def get_fusion_summary(self) -> Dict[str, Any]:
+    def get_fusion_summary(self) -> dict[str, Any]:
         """Get comprehensive fusion system summary."""
         return {
             'fusion_method': self.method.value,
@@ -908,7 +908,7 @@ class SensorFusion:
             }
         }
 
-    def detect_sensor_faults(self) -> Dict[str, Any]:
+    def detect_sensor_faults(self) -> dict[str, Any]:
         """Detect and diagnose sensor faults."""
         faults = {
             'eis_faults': [],

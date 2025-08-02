@@ -17,7 +17,7 @@ import pickle
 import sys
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -52,28 +52,28 @@ class SensorIntegratedMFCState(IntegratedMFCState):
     """Extended MFC state with sensor measurements."""
 
     # Sensor measurements (per cell)
-    eis_thickness: List[float]
-    eis_conductivity: List[float]
-    eis_measurement_quality: List[float]
+    eis_thickness: list[float]
+    eis_conductivity: list[float]
+    eis_measurement_quality: list[float]
 
-    qcm_mass_per_area: List[float]
-    qcm_frequency_shift: List[float]
-    qcm_dissipation: List[float]
+    qcm_mass_per_area: list[float]
+    qcm_frequency_shift: list[float]
+    qcm_dissipation: list[float]
 
     # Sensor fusion results (per cell)
-    fused_thickness: List[float]
-    fused_biomass: List[float]
-    sensor_agreement: List[float]
-    fusion_confidence: List[float]
+    fused_thickness: list[float]
+    fused_biomass: list[float]
+    sensor_agreement: list[float]
+    fusion_confidence: list[float]
 
     # Sensor status
-    eis_sensor_status: List[str]
-    qcm_sensor_status: List[str]
-    sensor_fault_flags: List[bool]
+    eis_sensor_status: list[str]
+    qcm_sensor_status: list[str]
+    sensor_fault_flags: list[bool]
 
     # Model validation metrics
-    thickness_prediction_error: List[float]
-    biomass_prediction_error: List[float]
+    thickness_prediction_error: list[float]
+    biomass_prediction_error: list[float]
     model_sensor_agreement: float
     adaptive_calibration_active: bool
 
@@ -81,7 +81,7 @@ class SensorIntegratedMFCState(IntegratedMFCState):
 class SensorIntegratedMFCModel(IntegratedMFCModel):
     """
     Complete MFC model with integrated sensor feedback loops.
-    
+
     Features:
     - Real-time EIS and QCM sensor integration
     - Sensor-guided model validation and calibration
@@ -99,7 +99,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
                  recirculation_mode: bool = False):
         """
         Initialize sensor-integrated MFC model.
-        
+
         Args:
             n_cells: Number of cells in stack
             species: Bacterial species
@@ -132,7 +132,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         self.gpu_acc = get_gpu_accelerator() if use_gpu else None
 
         # Initialize sensor states tracking
-        self.sensor_states: List[Dict[str, Any]] = []
+        self.sensor_states: list[dict[str, Any]] = []
         self.gpu_available = self.gpu_acc.is_gpu_available() if self.gpu_acc else False
 
         print("Initializing Sensor-Integrated MFC Model")
@@ -295,10 +295,10 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
     def step_sensor_integrated_dynamics(self, dt: float = 1.0) -> SensorIntegratedMFCState:
         """
         Step the sensor-integrated model forward by dt hours.
-        
+
         Args:
             dt: Time step (hours)
-            
+
         Returns:
             SensorIntegratedMFCState with sensor measurements
         """
@@ -459,7 +459,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         self.reservoir.add_substrate(substrate_addition, dt)
 
         # 8. Update energy and power tracking
-        total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents))
+        total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents, strict=False))
         self.total_energy_generated += total_power * dt
         self.pump_power_consumed += 0.001 * self.flow_rate_ml_h * dt
 
@@ -486,10 +486,10 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         return integrated_state
 
-    def _collect_cell_sensor_data(self, cell_index: int, biofilm_state: Dict,
-                                 time_hours: float) -> Dict:
+    def _collect_cell_sensor_data(self, cell_index: int, biofilm_state: dict,
+                                 time_hours: float) -> dict:
         """Collect sensor data for a specific cell."""
-        sensor_data: Dict[str, Any] = {
+        sensor_data: dict[str, Any] = {
             'eis': {},
             'qcm': {},
             'fusion': {}
@@ -580,7 +580,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         return sensor_data
 
-    def _aggregate_sensor_data(self, sensor_measurements: List[Dict]) -> Dict:
+    def _aggregate_sensor_data(self, sensor_measurements: list[dict]) -> dict:
         """Aggregate sensor data from all cells for Q-learning."""
         if not sensor_measurements or not any(sensor_measurements):
             return {}
@@ -651,8 +651,8 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         return aggregated
 
-    def _calculate_biofilm_current_enhancement(self, biofilm_state: Dict,
-                                             sensor_data: Dict) -> float:
+    def _calculate_biofilm_current_enhancement(self, biofilm_state: dict,
+                                             sensor_data: dict) -> float:
         """Calculate biofilm current enhancement based on sensor data."""
         # Use sensor-validated thickness if available
         if 'fusion' in sensor_data and 'thickness' in sensor_data['fusion']:
@@ -674,15 +674,15 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         return enhanced_current
 
-    def _calculate_model_validation_score(self, biofilm_states: List[Dict],
-                                        sensor_measurements: List[Dict]) -> float:
+    def _calculate_model_validation_score(self, biofilm_states: list[dict],
+                                        sensor_measurements: list[dict]) -> float:
         """Calculate model validation score based on sensor agreement."""
         if not sensor_measurements or not any(sensor_measurements):
             return 0.5  # Neutral score without sensors
 
         validation_scores = []
 
-        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements)):
+        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
             model_thickness = biofilm_state['biofilm_thickness']
             model_biomass = biofilm_state['biomass_density']
 
@@ -704,7 +704,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
 
         return np.mean(validation_scores) if validation_scores else 0.5
 
-    def _handle_sensor_faults(self, sensor_measurements: List[Dict]):
+    def _handle_sensor_faults(self, sensor_measurements: list[dict]):
         """Handle detected sensor faults."""
         for i, sensor_data in enumerate(sensor_measurements):
             # Check EIS faults
@@ -729,9 +729,9 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
                     'fault_type': 'failed'
                 })
 
-    def _create_sensor_integrated_state(self, biofilm_states: List[Dict],
-                                      metabolic_states: List, sensor_measurements: List[Dict],
-                                      enhanced_currents: List[float], cell_voltages: List[float],
+    def _create_sensor_integrated_state(self, biofilm_states: list[dict],
+                                      metabolic_states: list, sensor_measurements: list[dict],
+                                      enhanced_currents: list[float], cell_voltages: list[float],
                                       total_power: float, model_validation_score: float) -> SensorIntegratedMFCState:
         """Create comprehensive sensor-integrated state."""
         # Extract sensor data
@@ -754,7 +754,7 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         thickness_errors = []
         biomass_errors = []
 
-        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements)):
+        for i, (biofilm_state, sensor_data) in enumerate(zip(biofilm_states, sensor_measurements, strict=False)):
             # EIS data
             if 'eis' in sensor_data and 'properties' in sensor_data['eis']:
                 eis_props = sensor_data['eis']['properties']
@@ -859,14 +859,14 @@ class SensorIntegratedMFCModel(IntegratedMFCModel):
         )
 
     def run_sensor_integrated_simulation(self, dt: float = 1.0,
-                                       save_interval: int = 10) -> Dict[str, Any]:
+                                       save_interval: int = 10) -> dict[str, Any]:
         """
         Run complete sensor-integrated simulation.
-        
+
         Args:
             dt: Time step (hours)
             save_interval: Save results every N hours
-            
+
         Returns:
             Dictionary with enhanced simulation results
         """
@@ -929,7 +929,7 @@ Sensor-Integrated Simulation Complete!")
         with open(filename, 'wb') as f:
             pickle.dump(checkpoint, f)
 
-    def _compile_sensor_results(self) -> Dict[str, Any]:
+    def _compile_sensor_results(self) -> dict[str, Any]:
         """Compile sensor-enhanced simulation results."""
         if not self.history:
             return {}
@@ -960,7 +960,7 @@ Sensor-Integrated Simulation Complete!")
 
         return results
 
-    def get_sensor_diagnostics(self) -> Dict[str, Any]:
+    def get_sensor_diagnostics(self) -> dict[str, Any]:
         """Get comprehensive sensor diagnostics."""
         diagnostics = {
             'sensor_availability': {

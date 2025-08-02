@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
+from typing import Any, Protocol, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -29,10 +29,10 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 # Type aliases for better readability
-TimeSeriesData = Union[pd.Series, np.ndarray, List[float]]
+TimeSeriesData = Union[pd.Series, np.ndarray, list[float]]
 Timestamp = Union[datetime, pd.Timestamp, float]
 MetricValue = Union[float, int, np.floating, np.integer]
-ParameterDict = Dict[str, Any]
+ParameterDict = dict[str, Any]
 
 # Generic types
 T = TypeVar('T')
@@ -112,7 +112,7 @@ class StabilityMetrics:
     # System-wide metrics
     overall_stability_score: float = 0.0
     stability_level: StabilityLevel = StabilityLevel.FAIR
-    confidence_interval: Tuple[float, float] = (0.0, 0.0)
+    confidence_interval: tuple[float, float] = (0.0, 0.0)
 
     # Temporal metrics
     analysis_timestamp: datetime = field(default_factory=datetime.now)
@@ -176,7 +176,7 @@ class StabilityMetrics:
         else:
             return StabilityLevel.CRITICAL
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary format."""
         return {
             'power_stability_coefficient': self.power_stability_coefficient,
@@ -206,7 +206,7 @@ class StabilityAnalyzer(Protocol):
     def analyze(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
     ) -> StabilityMetrics:
         """Analyze stability of time series data."""
@@ -222,12 +222,12 @@ class BaseStabilityAnalyzer(ABC):
 
     def __init__(
         self,
-        thresholds: Optional[StabilityThresholds] = None,
+        thresholds: StabilityThresholds | None = None,
         min_data_points: int = 10,
         confidence_level: float = 0.95
     ) -> None:
         """Initialize the stability analyzer.
-        
+
         Args:
             thresholds: Custom stability thresholds
             min_data_points: Minimum number of data points required
@@ -246,7 +246,7 @@ class BaseStabilityAnalyzer(ABC):
     def analyze(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
     ) -> StabilityMetrics:
         """Analyze stability of time series data."""
@@ -254,10 +254,10 @@ class BaseStabilityAnalyzer(ABC):
 
     def validate_data(self, data: TimeSeriesData) -> bool:
         """Validate input data quality.
-        
+
         Args:
             data: Time series data to validate
-            
+
         Returns:
             True if data is valid, False otherwise
         """
@@ -291,14 +291,14 @@ class BaseStabilityAnalyzer(ABC):
     def _calculate_confidence_interval(
         self,
         values: np.ndarray,
-        confidence_level: Optional[float] = None
-    ) -> Tuple[float, float]:
+        confidence_level: float | None = None
+    ) -> tuple[float, float]:
         """Calculate confidence interval for values.
-        
+
         Args:
             values: Array of values
             confidence_level: Confidence level (defaults to instance level)
-            
+
         Returns:
             Tuple of (lower_bound, upper_bound)
         """
@@ -322,13 +322,13 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
 
     def __init__(
         self,
-        thresholds: Optional[StabilityThresholds] = None,
+        thresholds: StabilityThresholds | None = None,
         min_data_points: int = 30,
         confidence_level: float = 0.95,
-        window_size: Optional[int] = None
+        window_size: int | None = None
     ) -> None:
         """Initialize statistical analyzer.
-        
+
         Args:
             thresholds: Custom stability thresholds
             min_data_points: Minimum number of data points
@@ -341,16 +341,16 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
     def analyze(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
     ) -> StabilityMetrics:
         """Perform statistical stability analysis.
-        
+
         Args:
             data: Time series data to analyze
             timestamps: Optional timestamps for data points
             **kwargs: Additional analysis parameters
-            
+
         Returns:
             StabilityMetrics with computed stability measures
         """
@@ -542,18 +542,18 @@ class StabilityFramework:
 
     def __init__(
         self,
-        analyzer: Optional[BaseStabilityAnalyzer] = None,
-        thresholds: Optional[StabilityThresholds] = None
+        analyzer: BaseStabilityAnalyzer | None = None,
+        thresholds: StabilityThresholds | None = None
     ) -> None:
         """Initialize the stability framework.
-        
+
         Args:
             analyzer: Custom stability analyzer
             thresholds: Custom stability thresholds
         """
         self.thresholds = thresholds or StabilityThresholds()
         self.analyzer = analyzer or StatisticalStabilityAnalyzer(self.thresholds)
-        self.analysis_history: List[StabilityMetrics] = []
+        self.analysis_history: list[StabilityMetrics] = []
         self._setup_logging()
 
     def _setup_logging(self) -> None:
@@ -563,16 +563,16 @@ class StabilityFramework:
     def analyze_stability(
         self,
         data: TimeSeriesData,
-        timestamps: Optional[Sequence[Timestamp]] = None,
+        timestamps: Sequence[Timestamp] | None = None,
         **kwargs: Any
     ) -> StabilityMetrics:
         """Perform comprehensive stability analysis.
-        
+
         Args:
             data: Time series data to analyze
             timestamps: Optional timestamps for data points
             **kwargs: Additional analysis parameters
-            
+
         Returns:
             StabilityMetrics with computed stability measures
         """
@@ -600,12 +600,12 @@ class StabilityFramework:
     def get_stability_trends(
         self,
         window_size: int = 10
-    ) -> Optional[Dict[str, List[float]]]:
+    ) -> dict[str, list[float]] | None:
         """Get stability trends from analysis history.
-        
+
         Args:
             window_size: Size of rolling window for trend analysis
-            
+
         Returns:
             Dictionary with trend data or None if insufficient history
         """
@@ -624,11 +624,11 @@ class StabilityFramework:
 
     def export_analysis_results(
         self,
-        filepath: Union[str, Path],
+        filepath: str | Path,
         format_type: str = 'json'
     ) -> None:
         """Export analysis results to file.
-        
+
         Args:
             filepath: Output file path
             format_type: Export format ('json' or 'csv')
@@ -657,7 +657,7 @@ class StabilityFramework:
 
 # Factory functions for creating analyzers
 def create_statistical_analyzer(
-    thresholds: Optional[StabilityThresholds] = None,
+    thresholds: StabilityThresholds | None = None,
     **kwargs: Any
 ) -> StatisticalStabilityAnalyzer:
     """Create a statistical stability analyzer."""

@@ -8,7 +8,6 @@ Created: 2025-07-27
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 import jax.numpy as jnp
 
@@ -59,8 +58,8 @@ class CeramicMembrane(BaseMembraneModel):
         """Calculate ceramic membrane properties."""
         pass
 
-    def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
-                                   water_content: Optional[float] = None) -> float:
+    def calculate_ionic_conductivity(self, temperature: float | None = None,
+                                   water_content: float | None = None) -> float:
         """Calculate ceramic ionic conductivity."""
         if temperature is None:
             temperature = self.temperature

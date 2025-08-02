@@ -4,7 +4,7 @@ Unified Figure Generation Script for MFC Q-Learning Project
 
 This script consolidates all figure generation functionality from the following source files:
 - run_gpu_simulation.py
-- generate_performance_graphs.py  
+- generate_performance_graphs.py
 - create_summary_plots.py
 - generate_enhanced_pdf_report.py
 - generate_pdf_report.py
@@ -250,16 +250,16 @@ def generate_unified_markdown_report():
 
 This report documents the comprehensive data generation process for the Microbial Fuel Cell (MFC) Q-Learning optimization project. A total of **{len(GENERATED_REPORTS)} figures** were generated using advanced simulation techniques, each accompanied by structured datasets and detailed provenance documentation.
 
-**Generated on**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Script**: generate_all_figures.py  
-**Total Figures**: {len(GENERATED_REPORTS)}  
-**Data Formats**: CSV, JSON, Provenance Reports  
+**Generated on**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Script**: generate_all_figures.py
+**Total Figures**: {len(GENERATED_REPORTS)}
+**Data Formats**: CSV, JSON, Provenance Reports
 
 ## Project Overview
 
 ### Research Objectives
 - Optimize MFC performance using Q-learning algorithms
-- Compare different MFC configurations and control strategies  
+- Compare different MFC configurations and control strategies
 - Analyze long-term sustainability and economic viability
 - Develop comprehensive visualization framework
 
@@ -293,7 +293,7 @@ This report documents the comprehensive data generation process for the Microbia
 
         report_content += f"""### {i}. {figure_name.replace('_', ' ').title()}
 
-**Function**: `{function_name}()`  
+**Function**: `{function_name}()`
 **Description**: {description}
 
 **Generated Files**:
@@ -394,10 +394,10 @@ For questions about this dataset or methodology:
 
 ---
 
-**Report Generated**: {datetime.now().isoformat()}  
-**Total Figures**: {len(GENERATED_REPORTS)}  
-**Total Data Points**: Varies by figure (see individual reports)  
-**Data Quality**: High (validated against published research)  
+**Report Generated**: {datetime.now().isoformat()}
+**Total Figures**: {len(GENERATED_REPORTS)}
+**Total Data Points**: Varies by figure (see individual reports)
+**Data Quality**: High (validated against published research)
 **Reproducibility**: Full (deterministic algorithms with documented parameters)
 """
 
@@ -429,7 +429,7 @@ def generate_simulation_comparison():
     ax1.set_ylabel('Energy (Wh)', fontsize=12)
     ax1.grid(True, alpha=0.3)
     add_panel_label(ax1, get_next_panel_label())
-    for bar, val in zip(bars1, energy):
+    for bar, val in zip(bars1, energy, strict=False):
         ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(energy)*0.01,
                 f'{val:.1f}', ha='center', va='bottom', fontweight='bold')
 
@@ -439,7 +439,7 @@ def generate_simulation_comparison():
     ax2.set_ylabel('Runtime (seconds)', fontsize=12)
     ax2.grid(True, alpha=0.3)
     add_panel_label(ax2, get_next_panel_label())
-    for bar, val in zip(bars2, runtime):
+    for bar, val in zip(bars2, runtime, strict=False):
         ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(runtime)*0.01,
                 f'{val:.1f}s', ha='center', va='bottom', fontweight='bold')
 
@@ -449,7 +449,7 @@ def generate_simulation_comparison():
     ax3.set_ylabel('Efficiency (Wh/min)', fontsize=12)
     ax3.grid(True, alpha=0.3)
     add_panel_label(ax3, get_next_panel_label())
-    for bar, val in zip(bars3, efficiency):
+    for bar, val in zip(bars3, efficiency, strict=False):
         ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(efficiency)*0.01,
                 f'{val:.2f}', ha='center', va='bottom', fontweight='bold')
 
@@ -459,7 +459,7 @@ def generate_simulation_comparison():
     ax4.set_ylabel('Improvement (%)', fontsize=12)
     ax4.grid(True, alpha=0.3)
     add_panel_label(ax4, get_next_panel_label())
-    for bar, val in zip(bars4, improvement):
+    for bar, val in zip(bars4, improvement, strict=False):
         if val > 0:
             ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(improvement)*0.01,
                     f'+{val:.1f}%', ha='center', va='bottom', fontweight='bold')
@@ -517,7 +517,7 @@ def generate_cumulative_energy():
 
     # Normalize curves to match documented final values
     for i, (energy_curve, final_val, color, scenario) in enumerate(zip(
-        [energy_simple, energy_enhanced, energy_advanced], final_energies, colors_final, scenarios)):
+        [energy_simple, energy_enhanced, energy_advanced], final_energies, colors_final, scenarios, strict=False)):
 
         # Scale curve to match final documented value
         scaling_factor = final_val / energy_curve[-1] if energy_curve[-1] > 0 else 1
@@ -951,7 +951,7 @@ def generate_energy_sustainability():
     add_panel_label(ax2, get_next_panel_label())
 
     # Add efficiency percentages
-    for i, (bar, val) in enumerate(zip(bars, energy_flow)):
+    for i, (bar, val) in enumerate(zip(bars, energy_flow, strict=False)):
         if i > 0:
             efficiency = val / energy_flow[i-1] * 100
             ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2,
@@ -1221,7 +1221,7 @@ def generate_maintenance_schedule():
                         'Deep\nCleaning', 'Component\nReplacement']
     monthly_cost = [50, 30, 25, 100, 200]
     frequency = [4, 8, 6, 2, 0.5]  # per month
-    total_cost = [c * f for c, f in zip(monthly_cost, frequency)]
+    total_cost = [c * f for c, f in zip(monthly_cost, frequency, strict=False)]
 
     bars = ax4.bar(maintenance_items, total_cost, color=['lightblue', 'lightgreen', 'yellow', 'orange', 'red'])
     ax4.set_title('Monthly Maintenance Cost Breakdown', fontsize=14, fontweight='bold')
@@ -1230,7 +1230,7 @@ def generate_maintenance_schedule():
     add_panel_label(ax4, get_next_panel_label())
 
     # Add cost labels on bars
-    for bar, cost in zip(bars, total_cost):
+    for bar, cost in zip(bars, total_cost, strict=False):
         ax4.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(total_cost)*0.01,
                 f'${cost:.0f}', ha='center', va='bottom', fontweight='bold')
 
@@ -1288,7 +1288,7 @@ def generate_economic_analysis():
     ax1.grid(True, alpha=0.3)
     add_panel_label(ax1, get_next_panel_label())
 
-    for bar, cost in zip(bars1, costs):
+    for bar, cost in zip(bars1, costs, strict=False):
         ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(costs)*0.01,
                 f'${cost}', ha='center', va='bottom', fontweight='bold')
 
@@ -1305,7 +1305,7 @@ def generate_economic_analysis():
 
     # Add market growth factor
     market_growth = 1.03  # 3% market growth per year
-    revenues = [rev * (market_growth ** (year-1)) for year, rev in zip(years, revenues)]
+    revenues = [rev * (market_growth ** (year-1)) for year, rev in zip(years, revenues, strict=False)]
 
     ax2.plot(years, revenues, 'g-', linewidth=3, marker='o', markersize=6)
     ax2.fill_between(years, revenues, alpha=0.3, color='green')
@@ -1379,7 +1379,7 @@ def generate_economic_analysis():
     add_panel_label(ax4, get_next_panel_label())
 
     # Add value labels
-    for bar, value in zip(bars4, npv_impacts):
+    for bar, value in zip(bars4, npv_impacts, strict=False):
         width = bar.get_width()
         ax4.text(width + max(npv_impacts)*0.01, bar.get_y() + bar.get_height()/2,
                 f'${value:,.0f}', ha='left', va='center', fontweight='bold')

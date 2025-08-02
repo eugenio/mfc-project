@@ -8,10 +8,9 @@ import threading
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
-
 from config.real_time_processing import AlertLevel, AlertSystem
 from integrated_mfc_model import IntegratedMFCModel
 
@@ -35,8 +34,8 @@ class EmergencyAction(Enum):
 class SafetyThreshold:
     """Safety threshold configuration"""
     parameter: str
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
+    min_value: float | None = None
+    max_value: float | None = None
     warning_buffer: float = 0.1  # Buffer zone before critical
     critical_duration_s: float = 5.0  # Time before triggering action
     emergency_action: EmergencyAction = EmergencyAction.NONE
@@ -59,14 +58,14 @@ class SafetyProtocol:
     Safety protocol implementation for specific scenarios
     """
 
-    def __init__(self, name: str, triggers: List[str], actions: List[EmergencyAction]):
+    def __init__(self, name: str, triggers: list[str], actions: list[EmergencyAction]):
         self.name = name
         self.triggers = triggers  # Parameter names that trigger this protocol
         self.actions = actions    # Actions to execute in sequence
         self.is_active = False
         self.last_triggered = None
 
-    def should_trigger(self, safety_events: List[SafetyEvent]) -> bool:
+    def should_trigger(self, safety_events: list[SafetyEvent]) -> bool:
         """Check if protocol should be triggered"""
         active_parameters = {event.parameter for event in safety_events
                            if not event.resolved and event.safety_level in
@@ -74,7 +73,7 @@ class SafetyProtocol:
 
         return any(trigger in active_parameters for trigger in self.triggers)
 
-    def execute(self, mfc_controller) -> List[str]:
+    def execute(self, mfc_controller) -> list[str]:
         """Execute protocol actions"""
         executed_actions = []
 
@@ -111,7 +110,7 @@ class SafetyProtocol:
 class SafetyMonitor:
     """
     Comprehensive safety monitoring system for MFC operations
-    
+
     Features:
     - Real-time threshold monitoring
     - Automated emergency responses
@@ -120,7 +119,7 @@ class SafetyMonitor:
     - Historical safety analysis
     """
 
-    def __init__(self, mfc_model: Optional[IntegratedMFCModel] = None):
+    def __init__(self, mfc_model: IntegratedMFCModel | None = None):
         self.mfc_model = mfc_model
         self.is_monitoring = False
         self.monitoring_thread = None
@@ -130,8 +129,8 @@ class SafetyMonitor:
         self.safety_protocols = self._initialize_safety_protocols()
 
         # Event tracking
-        self.safety_events: List[SafetyEvent] = []
-        self.active_events: Dict[str, SafetyEvent] = {}
+        self.safety_events: list[SafetyEvent] = []
+        self.active_events: dict[str, SafetyEvent] = {}
 
         # Statistics
         self.stats = {
@@ -147,7 +146,7 @@ class SafetyMonitor:
         # Alert system integration
         self.alert_system = AlertSystem(alert_history_size=1000)
 
-    def _initialize_default_thresholds(self) -> Dict[str, SafetyThreshold]:
+    def _initialize_default_thresholds(self) -> dict[str, SafetyThreshold]:
         """Initialize default safety thresholds"""
         return {
             "temperature": SafetyThreshold(
@@ -204,7 +203,7 @@ class SafetyMonitor:
             )
         }
 
-    def _initialize_safety_protocols(self) -> Dict[str, SafetyProtocol]:
+    def _initialize_safety_protocols(self) -> dict[str, SafetyProtocol]:
         """Initialize safety protocols"""
         return {
             "thermal_runaway": SafetyProtocol(
@@ -280,7 +279,7 @@ class SafetyMonitor:
 
             time.sleep(interval_seconds)
 
-    def _get_current_measurements(self) -> Dict[str, float]:
+    def _get_current_measurements(self) -> dict[str, float]:
         """Get current system measurements"""
         if self.mfc_model and hasattr(self.mfc_model, 'get_current_state'):
             try:
@@ -309,7 +308,7 @@ class SafetyMonitor:
             "biofilm_thickness": 10.0 + np.random.normal(0, 2)
         }
 
-    def _check_safety_thresholds(self, measurements: Dict[str, float]) -> List[SafetyEvent]:
+    def _check_safety_thresholds(self, measurements: dict[str, float]) -> list[SafetyEvent]:
         """Check measurements against safety thresholds"""
         safety_events = []
         current_time = datetime.now()
@@ -417,7 +416,7 @@ class SafetyMonitor:
                    f"({event.safety_level.value}) - Response time: {response_time_ms:.1f}ms")
 
     def _execute_emergency_action(self, action: EmergencyAction,
-                                 event: SafetyEvent) -> List[str]:
+                                 event: SafetyEvent) -> list[str]:
         """Execute emergency action"""
         results = []
 
@@ -512,7 +511,7 @@ class SafetyMonitor:
                 return True
         return False
 
-    def get_safety_status(self) -> Dict[str, Any]:
+    def get_safety_status(self) -> dict[str, Any]:
         """Get current safety status"""
         current_time = datetime.now()
         active_events = [event for event in self.safety_events
@@ -552,7 +551,7 @@ class SafetyMonitor:
             "statistics": self.stats
         }
 
-    def update_threshold(self, parameter: str, threshold_data: Dict[str, Any]) -> bool:
+    def update_threshold(self, parameter: str, threshold_data: dict[str, Any]) -> bool:
         """Update safety threshold configuration"""
         if parameter not in self.safety_thresholds:
             return False
@@ -566,7 +565,7 @@ class SafetyMonitor:
         logger.info(f"Updated safety threshold for {parameter}: {threshold_data}")
         return True
 
-    def get_safety_report(self, hours: int = 24) -> Dict[str, Any]:
+    def get_safety_report(self, hours: int = 24) -> dict[str, Any]:
         """Generate safety report for specified time period"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
 

@@ -16,13 +16,11 @@ import numpy as np
 matplotlib.use('Agg')
 import json
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.integrate import odeint
-
 from path_config import get_figure_path, get_simulation_data_path
+from scipy.integrate import odeint
 
 
 @dataclass
@@ -129,7 +127,7 @@ class PhysicsAccurateBiofilmModel:
         inactive_fraction = min(0.8, thickness_factor * time_factor)
         return inactive_fraction
 
-    def biofilm_growth_ode(self, state: List[float], t: float, substrate_conc: float) -> List[float]:
+    def biofilm_growth_ode(self, state: list[float], t: float, substrate_conc: float) -> list[float]:
         """ODE system for biofilm growth with physics-based limitations"""
         thickness_um, biomass_density = state
         p = self.params
@@ -169,7 +167,7 @@ class PhysicsAccurateBiofilmModel:
         return [dthickness_dt, dbiomass_dt]
 
     def simulate_growth(self, time_hours: np.ndarray, substrate_conc: float = 1.0,
-                       initial_thickness_um: float = 0.1) -> Dict:
+                       initial_thickness_um: float = 0.1) -> dict:
         """Simulate biofilm growth over time"""
 
         # Initial conditions: [thickness_um, biomass_density_kg/m³]
@@ -241,7 +239,7 @@ class QCMSensorModel:
         return freq_shift
 
     def viscoelastic_correction(self, mass_per_area: float, thickness_um: float,
-                              elastic_modulus: float) -> Tuple[float, float]:
+                              elastic_modulus: float) -> tuple[float, float]:
         """Viscoelastic correction for soft biofilm layers"""
         p = self.params
 
@@ -277,8 +275,8 @@ class QCMSensorModel:
 
         return sensitivity
 
-    def measure_biofilm(self, biofilm_results: Dict, temperature_c: float = 25.0,
-                       add_noise: bool = True) -> Dict:
+    def measure_biofilm(self, biofilm_results: dict, temperature_c: float = 25.0,
+                       add_noise: bool = True) -> dict:
         """Simulate QCM measurement of biofilm growth"""
         p = self.params
 
@@ -346,7 +344,7 @@ class BiofilmQCMController:
         self.control_history = []
 
     def pid_control(self, measured_thickness: float, dt_hours: float,
-                   kp: float = 0.1, ki: float = 0.01, kd: float = 0.05) -> Dict:
+                   kp: float = 0.1, ki: float = 0.01, kd: float = 0.05) -> dict:
         """PID controller for biofilm thickness"""
 
         error = self.target_thickness - measured_thickness
@@ -386,7 +384,7 @@ class BiofilmQCMController:
 
         return control_actions
 
-def create_physics_visualization(biofilm_results: Dict, qcm_measurements: Dict) -> None:
+def create_physics_visualization(biofilm_results: dict, qcm_measurements: dict) -> None:
     """Create comprehensive visualization of physics-accurate biofilm model"""
 
     plt.figure(figsize=(16, 12))

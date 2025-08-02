@@ -8,7 +8,6 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -117,18 +116,18 @@ header {visibility: hidden;}
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.status-secure { 
-    color: #28a745; 
+.status-secure {
+    color: #28a745;
     font-weight: bold;
 }
 
-.status-running { 
-    color: #17a2b8; 
+.status-running {
+    color: #17a2b8;
     font-weight: bold;
 }
 
-.status-stopped { 
-    color: #dc3545; 
+.status-stopped {
+    color: #dc3545;
     font-weight: bold;
 }
 
@@ -175,7 +174,7 @@ class APIClient:
 
         return f"{protocol}://{host}:{port}"
 
-    def test_connection(self) -> Tuple[bool, str]:
+    def test_connection(self) -> tuple[bool, str]:
         """Test connection to API server"""
         try:
             response = self.session.get(f"{self.base_url}/health", timeout=10)
@@ -195,7 +194,7 @@ class APIClient:
         except Exception as e:
             return False, f"❌ Error: {str(e)}"
 
-    def get_simulation_status(self) -> Optional[Dict]:
+    def get_simulation_status(self) -> dict | None:
         """Get simulation status from API"""
         try:
             response = self.session.get(f"{self.base_url}/simulation/status", timeout=10)
@@ -205,7 +204,7 @@ class APIClient:
             logger.error(f"Failed to get simulation status: {e}")
             return None
 
-    def start_simulation(self, config: Dict) -> Tuple[bool, str]:
+    def start_simulation(self, config: dict) -> tuple[bool, str]:
         """Start simulation via API"""
         try:
             response = self.session.post(
@@ -218,7 +217,7 @@ class APIClient:
         except Exception as e:
             return False, f"Failed to start simulation: {str(e)}"
 
-    def stop_simulation(self) -> Tuple[bool, str]:
+    def stop_simulation(self) -> tuple[bool, str]:
         """Stop simulation via API"""
         try:
             response = self.session.post(f"{self.base_url}/simulation/stop", timeout=30)
@@ -227,7 +226,7 @@ class APIClient:
         except Exception as e:
             return False, f"Failed to stop simulation: {str(e)}"
 
-    def get_latest_data(self, limit: int = 100) -> Optional[List[Dict]]:
+    def get_latest_data(self, limit: int = 100) -> list[dict] | None:
         """Get latest simulation data"""
         try:
             response = self.session.get(
@@ -241,7 +240,7 @@ class APIClient:
             logger.error(f"Failed to get latest data: {e}")
             return None
 
-    def get_performance_metrics(self) -> Optional[Dict]:
+    def get_performance_metrics(self) -> dict | None:
         """Get performance metrics"""
         try:
             response = self.session.get(f"{self.base_url}/metrics/performance", timeout=10)
@@ -252,7 +251,7 @@ class APIClient:
             return None
 
 @st.cache_data(ttl=60)  # Cache for 1 minute
-def get_system_info(api_client: APIClient) -> Optional[Dict]:
+def get_system_info(api_client: APIClient) -> dict | None:
     """Get system information with caching"""
     try:
         response = api_client.session.get(f"{api_client.base_url}/system/info", timeout=10)
@@ -262,7 +261,7 @@ def get_system_info(api_client: APIClient) -> Optional[Dict]:
         logger.error(f"Failed to get system info: {e}")
         return None
 
-def create_real_time_plots(data: List[Dict]) -> Optional[go.Figure]:
+def create_real_time_plots(data: list[dict]) -> go.Figure | None:
     """Create real-time monitoring plots"""
     if not data:
         return None
@@ -737,8 +736,8 @@ def main():
     st.markdown(footer_text)
 
 def run_streamlit_https(
-    port: Optional[int] = None,
-    ssl_config_override: Optional[SSLConfig] = None
+    port: int | None = None,
+    ssl_config_override: SSLConfig | None = None
 ):
     """Run Streamlit with HTTPS configuration"""
 

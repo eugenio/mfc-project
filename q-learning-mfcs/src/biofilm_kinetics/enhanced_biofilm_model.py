@@ -14,7 +14,7 @@ actual sensor measurements as feedback for model validation and adaptation.
 
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -51,7 +51,7 @@ class SensorCalibrationError(Exception):
 class EnhancedBiofilmModel(BiofilmKineticsModel):
     """
     Enhanced biofilm model with integrated EIS/QCM sensor feedback.
-    
+
     Extends the base biofilm kinetics model with:
     - Real-time sensor feedback integration
     - Adaptive parameter calibration
@@ -65,7 +65,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
                  sensor_fusion_method: str = 'kalman_filter'):
         """
         Initialize enhanced biofilm model with sensor integration.
-        
+
         Args:
             species: Species type ('geobacter', 'shewanella', 'mixed')
             substrate: Substrate type ('acetate', 'lactate')
@@ -154,17 +154,17 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
 
     def step_biofilm_dynamics_with_sensors(self, dt: float, anode_potential: float,
                                          substrate_supply: float, time_hours: float = 0.0,
-                                         external_measurements: Optional[Dict] = None) -> Dict[str, Any]:
+                                         external_measurements: dict | None = None) -> dict[str, Any]:
         """
         Step biofilm dynamics with integrated sensor feedback.
-        
+
         Args:
             dt: Time step (hours)
             anode_potential: Anode potential (V vs SHE)
             substrate_supply: Substrate supply rate (mmol/L/h)
             time_hours: Current simulation time (hours)
             external_measurements: Optional external sensor data
-            
+
         Returns:
             Enhanced biofilm state with sensor validation
         """
@@ -215,16 +215,16 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
         return validated_state
 
     def _get_sensor_measurements(self, predicted_thickness: float, predicted_biomass: float,
-                               time_hours: float, external_measurements: Optional[Dict] = None) -> Optional[Dict]:
+                               time_hours: float, external_measurements: dict | None = None) -> dict | None:
         """
         Get sensor measurements (simulated or external).
-        
+
         Args:
             predicted_thickness: Model-predicted thickness (μm)
             predicted_biomass: Model-predicted biomass (g/L)
             time_hours: Current time (hours)
             external_measurements: External sensor data
-            
+
         Returns:
             Dictionary of sensor measurements or None
         """
@@ -284,16 +284,16 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
 
         return measurements if measurements else None
 
-    def _apply_sensor_feedback(self, base_state: Dict[str, Any],
-                             sensor_measurements: Dict, time_hours: float) -> Dict[str, Any]:
+    def _apply_sensor_feedback(self, base_state: dict[str, Any],
+                             sensor_measurements: dict, time_hours: float) -> dict[str, Any]:
         """
         Apply sensor feedback to validate and correct model predictions.
-        
+
         Args:
             base_state: Base biofilm state from model
             sensor_measurements: Sensor measurement data
             time_hours: Current time
-            
+
         Returns:
             Validated biofilm state
         """
@@ -397,11 +397,11 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
 
         return validated_state
 
-    def _update_adaptive_parameters(self, validated_state: Dict[str, Any],
-                                  sensor_measurements: Dict, time_hours: float):
+    def _update_adaptive_parameters(self, validated_state: dict[str, Any],
+                                  sensor_measurements: dict, time_hours: float):
         """
         Update model parameters based on sensor feedback.
-        
+
         Args:
             validated_state: Validated biofilm state
             sensor_measurements: Sensor measurements
@@ -447,7 +447,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
                               time_hours: float):
         """
         Recalibrate kinetic parameters based on sensor feedback.
-        
+
         Args:
             model_thickness: Model-predicted thickness
             sensor_thickness: Sensor-measured thickness
@@ -486,7 +486,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
         except Exception as e:
             print(f"Warning: Parameter recalibration failed: {e}")
 
-    def _update_confidence_levels(self, validated_state: Dict[str, Any]):
+    def _update_confidence_levels(self, validated_state: dict[str, Any]):
         """Update model and sensor confidence levels."""
         # Update model confidence based on prediction accuracy
         if hasattr(self, 'thickness_prediction_error'):
@@ -497,7 +497,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
         fusion_confidence = validated_state.get('fusion_confidence', 0.5)
         self.sensor_confidence = self.sensor_confidence * 0.9 + fusion_confidence * 0.1
 
-    def get_sensor_diagnostics(self) -> Dict[str, Any]:
+    def get_sensor_diagnostics(self) -> dict[str, Any]:
         """Get comprehensive sensor diagnostics."""
         diagnostics = {
             'sensor_configuration': {
@@ -575,7 +575,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
 
         print("Sensor calibration reset to initial state")
 
-    def validate_sensor_integration(self) -> Dict[str, bool]:
+    def validate_sensor_integration(self) -> dict[str, bool]:
         """Validate that sensor integration is working correctly."""
         validation_results = {
             'eis_model_available': self.eis_model is not None,

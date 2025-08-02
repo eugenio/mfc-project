@@ -300,7 +300,7 @@ def create_sustainability_visualization(results, optimization_scenarios):
     ax2.axhline(y=0, color='black', linestyle='-', linewidth=1)
 
     # Add value labels
-    for i, (bar, margin) in enumerate(zip(bars, margins)):
+    for i, (bar, margin) in enumerate(zip(bars, margins, strict=False)):
         ax2.text(bar.get_x() + bar.get_width()/2., margin + (10 if margin > 0 else -20),
                 f'{margin:.0f}', ha='center', va='bottom' if margin > 0 else 'top',
                 fontsize=10, fontweight='bold')

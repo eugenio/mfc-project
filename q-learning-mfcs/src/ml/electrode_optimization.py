@@ -20,8 +20,9 @@ Literature References:
 
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -64,11 +65,11 @@ from physics.advanced_electrode_model import AdvancedElectrodeModel, CellGeometr
 class OptimizationParameter:
     """Definition of a parameter to optimize."""
     name: str
-    bounds: Tuple[float, float]  # (min, max)
+    bounds: tuple[float, float]  # (min, max)
     parameter_type: str  # 'continuous', 'discrete', 'categorical'
     units: str = ""
     description: str = ""
-    discrete_values: Optional[List[Any]] = None  # For discrete/categorical parameters
+    discrete_values: list[Any] | None = None  # For discrete/categorical parameters
 
 
 @dataclass
@@ -77,19 +78,19 @@ class OptimizationObjective:
     name: str
     direction: str  # 'maximize' or 'minimize'
     weight: float = 1.0
-    constraint_type: Optional[str] = None  # 'hard', 'soft', None
-    constraint_value: Optional[float] = None
+    constraint_type: str | None = None  # 'hard', 'soft', None
+    constraint_value: float | None = None
 
 
 @dataclass
 class OptimizationResult:
     """Results from optimization process."""
-    best_parameters: Dict[str, float]
+    best_parameters: dict[str, float]
     best_objective_value: float
     optimization_history: pd.DataFrame
-    convergence_metrics: Dict[str, float]
-    model_performance: Dict[str, float]
-    computational_cost: Dict[str, float]
+    convergence_metrics: dict[str, float]
+    model_performance: dict[str, float]
+    computational_cost: dict[str, float]
 
 
 class SurrogateModel(ABC):
@@ -101,7 +102,7 @@ class SurrogateModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Predict mean and uncertainty."""
         pass
 
@@ -136,7 +137,7 @@ class GaussianProcessSurrogate(SurrogateModel):
         self.gp.fit(X_scaled, y)
         self.fitted = True
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Predict with uncertainty."""
         if not self.fitted:
             raise ValueError("Model must be fitted before prediction")
@@ -264,7 +265,7 @@ class NeuralNetworkSurrogate(SurrogateModel):
 
         self.fitted = True
 
-    def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Predict with uncertainty estimation."""
         if not self.fitted:
             raise ValueError("Model must be fitted before prediction")
@@ -299,10 +300,10 @@ class BayesianOptimizer:
     """Bayesian optimization for electrode parameters."""
 
     def __init__(self,
-                 parameters: List[OptimizationParameter],
-                 objectives: List[OptimizationObjective],
+                 parameters: list[OptimizationParameter],
+                 objectives: list[OptimizationObjective],
                  electrode_model_factory: Callable,
-                 surrogate_model: Optional[SurrogateModel] = None,
+                 surrogate_model: SurrogateModel | None = None,
                  acquisition_type: str = 'EI'):
 
         self.parameters = parameters
@@ -338,7 +339,7 @@ class BayesianOptimizer:
         """Evaluate objective function at given parameters."""
         try:
             # Create parameter dictionary
-            param_dict = dict(zip(self.param_names, parameters))
+            param_dict = dict(zip(self.param_names, parameters, strict=False))
 
             # Create electrode model with parameters
             model = self.electrode_model_factory(param_dict)
@@ -443,14 +444,14 @@ class BayesianOptimizer:
 
             self.optimization_history.append({
                 'iteration': iteration + n_initial + 1,
-                'parameters': dict(zip(self.param_names, x_next)),
+                'parameters': dict(zip(self.param_names, x_next, strict=False)),
                 'objective_value': y_next,
                 'best_so_far': best_so_far
             })
 
         # Return results
         best_idx = np.argmax(self.y_observed)
-        best_parameters = dict(zip(self.param_names, self.X_observed[best_idx]))
+        best_parameters = dict(zip(self.param_names, self.X_observed[best_idx], strict=False))
 
         return OptimizationResult(
             best_parameters=best_parameters,
@@ -478,8 +479,8 @@ class MultiObjectiveOptimizer:
     """Multi-objective optimization using NSGA-II algorithm."""
 
     def __init__(self,
-                 parameters: List[OptimizationParameter],
-                 objectives: List[OptimizationObjective],
+                 parameters: list[OptimizationParameter],
+                 objectives: list[OptimizationObjective],
                  electrode_model_factory: Callable,
                  population_size: int = 50):
 
@@ -496,7 +497,7 @@ class MultiObjectiveOptimizer:
         objective_values = []
 
         for individual in population:
-            param_dict = dict(zip(self.param_names, individual))
+            param_dict = dict(zip(self.param_names, individual, strict=False))
 
             try:
                 model = self.electrode_model_factory(param_dict)
@@ -525,7 +526,7 @@ class MultiObjectiveOptimizer:
 
         return np.array(objective_values)
 
-    def _fast_non_dominated_sort(self, objective_values: np.ndarray) -> List[List[int]]:
+    def _fast_non_dominated_sort(self, objective_values: np.ndarray) -> list[list[int]]:
         """Fast non-dominated sorting (NSGA-II)."""
         n = len(objective_values)
         domination_counts = np.zeros(n, dtype=int)
@@ -564,7 +565,7 @@ class MultiObjectiveOptimizer:
 
         return fronts[:-1]  # Remove empty last front
 
-    def _calculate_crowding_distance(self, front: List[int], objective_values: np.ndarray) -> np.ndarray:
+    def _calculate_crowding_distance(self, front: list[int], objective_values: np.ndarray) -> np.ndarray:
         """Calculate crowding distance for diversity preservation."""
         if len(front) <= 2:
             return np.full(len(front), np.inf)
@@ -592,7 +593,7 @@ class MultiObjectiveOptimizer:
 
         return distances
 
-    def optimize(self, n_generations: int = 100) -> Dict[str, Any]:
+    def optimize(self, n_generations: int = 100) -> dict[str, Any]:
         """Run multi-objective optimization using NSGA-II."""
         print(f"Starting multi-objective optimization with {self.population_size} individuals...")
 
@@ -619,7 +620,7 @@ class MultiObjectiveOptimizer:
                 best_fronts_history.append({
                     'generation': generation,
                     'pareto_front_size': len(pareto_front),
-                    'pareto_solutions': [dict(zip(self.param_names, population[i])) for i in pareto_front],
+                    'pareto_solutions': [dict(zip(self.param_names, population[i], strict=False)) for i in pareto_front],
                     'pareto_objectives': objective_values[pareto_front].tolist()
                 })
 
@@ -646,7 +647,7 @@ class MultiObjectiveOptimizer:
 
         return {
             'pareto_front_indices': pareto_front,
-            'pareto_solutions': [dict(zip(self.param_names, population[i])) for i in pareto_front],
+            'pareto_solutions': [dict(zip(self.param_names, population[i], strict=False)) for i in pareto_front],
             'pareto_objectives': objective_values[pareto_front].tolist() if len(pareto_front) > 0 else [],
             'optimization_history': best_fronts_history,
             'final_population': population,
@@ -662,7 +663,7 @@ class MultiObjectiveOptimizer:
 def create_electrode_model_factory(base_cell_geometry: CellGeometry) -> Callable:
     """Create factory function for electrode models with parameter variation."""
 
-    def model_factory(parameters: Dict[str, float]) -> AdvancedElectrodeModel:
+    def model_factory(parameters: dict[str, float]) -> AdvancedElectrodeModel:
         """Create electrode model with given parameters."""
         from config.electrode_config import create_electrode_config
 

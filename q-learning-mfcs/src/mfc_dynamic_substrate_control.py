@@ -30,7 +30,7 @@ class DynamicSubstrateController:
     def __init__(self, target_outlet_conc=8.0, kp=2.0, ki=0.05, kd=0.1):
         """
         PID controller for dynamic substrate concentration adjustment
-        
+
         Args:
             target_outlet_conc: Target outlet concentration (mmol/L)
             kp, ki, kd: PID controller gains
@@ -52,11 +52,11 @@ class DynamicSubstrateController:
     def update(self, current_outlet_conc, dt):
         """
         Update substrate concentration based on outlet concentration feedback
-        
+
         Args:
             current_outlet_conc: Current average outlet concentration (mmol/L)
             dt: Time step (seconds)
-            
+
         Returns:
             new_inlet_concentration: Adjusted inlet concentration (mmol/L)
         """
@@ -905,23 +905,23 @@ class MFCDynamicSubstrateSimulation:
         summary_text = f"""
         DUAL CONTROL OPTIMIZATION
         Q-Learning + PID Substrate Control
-        
+
         Energy Performance:
         Total Energy: {total_energy:.1f} Wh
         Average Power: {avg_power:.3f} W
         Final Power: {self.stack_powers[-1]:.3f} W
-        
+
         Flow Control (Q-Learning):
         Final Flow Rate: {final_flow_rate:.1f} mL/h
         Total Reward: {total_q_reward:.1f}
         Q-Table Size: {q_table_size} states
-        
+
         Substrate Control (PID):
         Target: {self.substrate_controller.target_outlet_conc:.1f} mmol/L
         Final Inlet: {final_inlet_conc:.2f} mmol/L
         Final Outlet: {final_outlet_conc:.2f} mmol/L
         Control RMSE: {control_metrics['rmse']:.3f}
-        
+
         ACHIEVEMENTS:
         ✓ Dual Control System
         ✓ Outlet Concentration Regulation
@@ -1028,25 +1028,25 @@ class MFCDynamicSubstrateSimulation:
         if len(valid_errors) > 0:
             control_stats_text = f"""
             PID CONTROL STATISTICS
-            
+
             Target Outlet: {self.substrate_controller.target_outlet_conc:.2f} mmol/L
             Final Outlet: {final_outlet_conc:.2f} mmol/L
             Final Error: {abs(final_outlet_conc - self.substrate_controller.target_outlet_conc):.3f} mmol/L
-            
+
             Error Statistics:
             Mean Error: {np.mean(valid_errors):.3f} mmol/L
             RMSE: {np.sqrt(np.mean(valid_errors**2)):.3f} mmol/L
             Std Error: {np.std(valid_errors):.3f} mmol/L
             Max Error: {np.max(np.abs(valid_errors)):.3f} mmol/L
-            
+
             Inlet Concentration Range:
             Min: {np.min(self.inlet_concentrations):.2f} mmol/L
             Max: {np.max(self.inlet_concentrations):.2f} mmol/L
             Final: {final_inlet_conc:.2f} mmol/L
-            
+
             CONTROL PERFORMANCE:
             ✓ Dynamic Concentration Control
-            ✓ Target Tracking Capability  
+            ✓ Target Tracking Capability
             ✓ Disturbance Rejection
             ✓ Stability Maintained
             """

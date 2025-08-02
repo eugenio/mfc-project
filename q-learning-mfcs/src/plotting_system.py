@@ -12,7 +12,6 @@ import json
 import string
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,17 +53,17 @@ class SubplotLabeler:
         return label
 
 
-def create_labeled_subplots(nrows: int, ncols: int, figsize: Tuple[float, float] = (12, 8),
-                           title: Optional[str] = None) -> Tuple[plt.Figure, List[plt.Axes], SubplotLabeler]:
+def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float] = (12, 8),
+                           title: str | None = None) -> tuple[plt.Figure, list[plt.Axes], SubplotLabeler]:
     """
     Create figure with subplots and Latin character labels
-    
+
     Args:
         nrows: Number of subplot rows
         ncols: Number of subplot columns
         figsize: Figure size (width, height)
         title: Optional figure title
-    
+
     Returns:
         fig: Matplotlib figure
         axes: Flattened list of axes
@@ -96,7 +95,7 @@ def create_labeled_subplots(nrows: int, ncols: int, figsize: Tuple[float, float]
 def add_subplot_label(ax: plt.Axes, label: str, fontsize: int = 14, fontweight: str = 'bold'):
     """
     Add Latin character label to subplot in upper left corner, outside plot area
-    
+
     Args:
         ax: Matplotlib axes object
         label: Label text (e.g., 'a', 'b', etc.)
@@ -114,7 +113,7 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
                grid: bool = True, legend: bool = True, legend_loc: str = 'best'):
     """
     Standard axis setup helper
-    
+
     Args:
         ax: Matplotlib axes object
         xlabel: X-axis label
@@ -135,12 +134,12 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
         ax.legend(loc=legend_loc)
 
 
-def plot_time_series(ax: plt.Axes, df: pd.DataFrame, time_col: str, y_cols: List[str],
-                    labels: Optional[List[str]] = None, colors: Optional[List[str]] = None,
-                    linestyles: Optional[List[str]] = None, linewidths: Optional[List[float]] = None):
+def plot_time_series(ax: plt.Axes, df: pd.DataFrame, time_col: str, y_cols: list[str],
+                    labels: list[str] | None = None, colors: list[str] | None = None,
+                    linestyles: list[str] | None = None, linewidths: list[float] | None = None):
     """
     Plot multiple time series on the same axes
-    
+
     Args:
         ax: Matplotlib axes object
         df: DataFrame with time series data
@@ -154,7 +153,7 @@ def plot_time_series(ax: plt.Axes, df: pd.DataFrame, time_col: str, y_cols: List
     if labels is None:
         labels = y_cols
 
-    for i, (col, label) in enumerate(zip(y_cols, labels)):
+    for i, (col, label) in enumerate(zip(y_cols, labels, strict=False)):
         plot_kwargs = {'label': label}
 
         if colors and i < len(colors):
@@ -182,7 +181,7 @@ def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.0
                        facecolor: str = 'wheat', alpha: float = 0.5):
     """
     Add text annotation box to axes
-    
+
     Args:
         ax: Matplotlib axes object
         text: Text to display
@@ -204,14 +203,14 @@ def save_figure(fig: plt.Figure, filename: str, dpi: int = 300, bbox_inches: str
     print(f"Figure saved to: {filename}")
 
 
-def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str = "mfc_results"):
+def plot_mfc_simulation_results(data_path: str | Path, output_prefix: str = "mfc_results"):
     """
     Create standardized plots for MFC simulation results
-    
+
     Args:
         data_path: Path to CSV file with simulation data
         output_prefix: Prefix for output filenames (can include directory path)
-    
+
     Returns:
         timestamp: Timestamp string used for output files
     """
@@ -445,16 +444,16 @@ def plot_mfc_simulation_results(data_path: Union[str, Path], output_prefix: str 
 
 # Convenience function for direct usage
 def plot_latest_simulation(pattern: str = "mfc_recirculation_control_*.csv",
-                          data_dir: Union[str, Path] = "../data/simulation_data",
+                          data_dir: str | Path = "../data/simulation_data",
                           output_prefix: str = "mfc_results"):
     """
     Plot the most recent simulation matching the given pattern
-    
+
     Args:
         pattern: Glob pattern for finding simulation files
         data_dir: Directory containing simulation data
         output_prefix: Prefix for output filenames
-    
+
     Returns:
         timestamp: Timestamp used for output files
     """
@@ -472,14 +471,14 @@ def plot_latest_simulation(pattern: str = "mfc_recirculation_control_*.csv",
     return plot_mfc_simulation_results(latest_file, output_prefix)
 
 
-def plot_gpu_simulation_results(data_dir: Union[str, Path], output_prefix: str = "gpu_simulation"):
+def plot_gpu_simulation_results(data_dir: str | Path, output_prefix: str = "gpu_simulation"):
     """
     Plot GPU-accelerated MFC simulation results with control failure analysis
-    
+
     Args:
         data_dir: Directory containing GPU simulation data files
         output_prefix: Prefix for output filenames
-    
+
     Returns:
         timestamp: Timestamp used for output files
     """

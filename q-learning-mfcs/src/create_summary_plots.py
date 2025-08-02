@@ -9,7 +9,6 @@ import numpy as np
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-
 from path_config import get_figure_path
 
 
@@ -227,7 +226,7 @@ def create_technical_summary():
     # Generate sample control actions
     np.random.seed(42)
 
-    for i, (control_type, (min_val, max_val)) in enumerate(zip(control_types, action_ranges)):
+    for i, (control_type, (min_val, max_val)) in enumerate(zip(control_types, action_ranges, strict=False)):
         # Simulate learned control distribution
         if control_type == 'Duty Cycle':
             actions = np.random.beta(5, 2) * (max_val - min_val) + min_val
@@ -269,7 +268,7 @@ def create_technical_summary():
     ax4.set_ylim(0, 1.1)
 
     # Add improvement percentages
-    for i, (baseline, qlearning) in enumerate(zip(baseline_scores, qlearning_scores)):
+    for i, (baseline, qlearning) in enumerate(zip(baseline_scores, qlearning_scores, strict=False)):
         improvement = ((qlearning - baseline) / baseline) * 100
         ax4.text(i, qlearning + 0.05, f'+{improvement:.0f}%',
                 ha='center', va='bottom', fontsize=10, fontweight='bold', color='green')

@@ -16,8 +16,9 @@ Integration Architecture:
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -66,7 +67,7 @@ class PhysicsMLConfig:
     acquisition_function: str = 'expected_improvement'  # 'EI', 'UCB'
 
     # Multi-objective weights
-    objective_weights: Dict[str, float] = field(default_factory=lambda: {
+    objective_weights: dict[str, float] = field(default_factory=lambda: {
         'current_density': 1.0,
         'substrate_utilization': 0.8,
         'pressure_drop': 0.6,
@@ -85,7 +86,7 @@ class PhysicsMLConfig:
 class PhysicsMLIntegrator:
     """
     Main integration class connecting Phase 2 physics with Phase 3 ML optimization.
-    
+
     This class orchestrates the optimization process by:
     1. Running physics simulations with different parameters
     2. Extracting optimization targets from physics results
@@ -95,7 +96,7 @@ class PhysicsMLIntegrator:
 
     def __init__(self,
                  base_cell_geometry: CellGeometry,
-                 config: Optional[PhysicsMLConfig] = None):
+                 config: PhysicsMLConfig | None = None):
 
         self.cell_geometry = base_cell_geometry
         self.config = config or PhysicsMLConfig()
@@ -116,7 +117,7 @@ class PhysicsMLIntegrator:
         self.best_parameters = {}
         self.best_performance = {}
 
-    def _create_optimization_parameters(self) -> List[OptimizationParameter]:
+    def _create_optimization_parameters(self) -> list[OptimizationParameter]:
         """Define optimization parameters for electrode design."""
 
         return [
@@ -171,7 +172,7 @@ class PhysicsMLIntegrator:
             )
         ]
 
-    def _create_optimization_objectives(self) -> List[OptimizationObjective]:
+    def _create_optimization_objectives(self) -> list[OptimizationObjective]:
         """Define optimization objectives based on physics targets."""
 
         return [
@@ -218,7 +219,7 @@ class PhysicsMLIntegrator:
     def _create_integrated_model_factory(self) -> Callable:
         """Create factory function that integrates physics parameters."""
 
-        def integrated_model_factory(parameters: Dict[str, float]) -> AdvancedElectrodeModel:
+        def integrated_model_factory(parameters: dict[str, float]) -> AdvancedElectrodeModel:
             """Create advanced electrode model with optimized parameters."""
 
             # Extract electrode geometry parameters
@@ -272,10 +273,10 @@ class PhysicsMLIntegrator:
 
         return integrated_model_factory
 
-    def evaluate_physics_performance(self, parameters: Dict[str, float]) -> Dict[str, float]:
+    def evaluate_physics_performance(self, parameters: dict[str, float]) -> dict[str, float]:
         """
         Evaluate physics performance for given parameters.
-        
+
         This is the key integration function that runs physics simulation
         and extracts optimization targets.
         """
@@ -341,7 +342,7 @@ class PhysicsMLIntegrator:
                 'convergence_achieved': False
             }
 
-    def _check_constraints(self, performance: Dict[str, float]) -> float:
+    def _check_constraints(self, performance: dict[str, float]) -> float:
         """Check constraint violations and return penalty."""
 
         violations = 0.0
@@ -365,7 +366,7 @@ class PhysicsMLIntegrator:
     def run_bayesian_optimization(self) -> OptimizationResult:
         """
         Run Bayesian optimization using Gaussian Process surrogate model.
-        
+
         This is the main ML optimization method that uses physics simulations
         as the objective function.
         """
@@ -374,7 +375,7 @@ class PhysicsMLIntegrator:
         print("=" * 70)
 
         # Create custom objective function that uses physics evaluation
-        def physics_objective_function(parameters: Dict[str, float]) -> float:
+        def physics_objective_function(parameters: dict[str, float]) -> float:
             """Objective function that evaluates physics performance."""
 
             performance = self.evaluate_physics_performance(parameters)
@@ -420,7 +421,7 @@ class PhysicsMLIntegrator:
 
         # Override the evaluation function to use our physics integration
         self.bayesian_optimizer._evaluate_objective = lambda params: physics_objective_function(
-            dict(zip([p.name for p in self.optimization_parameters], params))
+            dict(zip([p.name for p in self.optimization_parameters], params, strict=False))
         )
 
         # Run optimization
@@ -445,7 +446,7 @@ class PhysicsMLIntegrator:
 
         return results
 
-    def run_multi_objective_optimization(self) -> Dict[str, Any]:
+    def run_multi_objective_optimization(self) -> dict[str, Any]:
         """
         Run multi-objective optimization to find Pareto optimal solutions.
         """
@@ -469,7 +470,7 @@ class PhysicsMLIntegrator:
             objective_values = []
 
             for individual in population:
-                param_dict = dict(zip([p.name for p in self.optimization_parameters], individual))
+                param_dict = dict(zip([p.name for p in self.optimization_parameters], individual, strict=False))
                 performance = self.evaluate_physics_performance(param_dict)
 
                 # Extract objective values for each individual

@@ -30,10 +30,11 @@ Literature References:
 
 import logging
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -124,34 +125,34 @@ class ValidationResult:
     model_name: str
     dataset_name: str
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
 
     # Cross-validation results
-    cv_scores: Dict[str, np.ndarray] = field(default_factory=dict)
-    cv_mean_scores: Dict[str, float] = field(default_factory=dict)
-    cv_std_scores: Dict[str, float] = field(default_factory=dict)
+    cv_scores: dict[str, np.ndarray] = field(default_factory=dict)
+    cv_mean_scores: dict[str, float] = field(default_factory=dict)
+    cv_std_scores: dict[str, float] = field(default_factory=dict)
 
     # Overall performance
-    test_scores: Dict[str, float] = field(default_factory=dict)
-    train_scores: Dict[str, float] = field(default_factory=dict)
+    test_scores: dict[str, float] = field(default_factory=dict)
+    train_scores: dict[str, float] = field(default_factory=dict)
 
     # Predictions and residuals
-    predictions: Optional[np.ndarray] = None
-    residuals: Optional[np.ndarray] = None
-    prediction_intervals: Optional[Tuple[np.ndarray, np.ndarray]] = None
+    predictions: np.ndarray | None = None
+    residuals: np.ndarray | None = None
+    prediction_intervals: tuple[np.ndarray, np.ndarray] | None = None
 
     # Model diagnostics
-    model_complexity: Optional[Dict[str, Any]] = None
-    information_criteria: Dict[str, float] = field(default_factory=dict)
+    model_complexity: dict[str, Any] | None = None
+    information_criteria: dict[str, float] = field(default_factory=dict)
 
     # Statistical tests
-    normality_tests: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    heteroscedasticity_tests: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    autocorrelation_tests: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    normality_tests: dict[str, dict[str, float]] = field(default_factory=dict)
+    heteroscedasticity_tests: dict[str, dict[str, float]] = field(default_factory=dict)
+    autocorrelation_tests: dict[str, dict[str, float]] = field(default_factory=dict)
 
     # Bootstrap results
-    bootstrap_scores: Dict[str, np.ndarray] = field(default_factory=dict)
-    bootstrap_confidence_intervals: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    bootstrap_scores: dict[str, np.ndarray] = field(default_factory=dict)
+    bootstrap_confidence_intervals: dict[str, tuple[float, float]] = field(default_factory=dict)
 
     # Computation metadata
     computation_time: float = 0.0
@@ -175,39 +176,39 @@ class ComparisonResult:
     """Results container for model comparison."""
 
     # Models being compared
-    model_names: List[str]
+    model_names: list[str]
     comparison_method: str
 
     # Statistical test results
-    test_statistic: Optional[float] = None
-    p_value: Optional[float] = None
-    effect_size: Optional[float] = None
+    test_statistic: float | None = None
+    p_value: float | None = None
+    effect_size: float | None = None
 
     # Pairwise comparisons
-    pairwise_results: Dict[Tuple[str, str], Dict[str, float]] = field(default_factory=dict)
+    pairwise_results: dict[tuple[str, str], dict[str, float]] = field(default_factory=dict)
 
     # Rankings
-    model_rankings: Dict[str, float] = field(default_factory=dict)
+    model_rankings: dict[str, float] = field(default_factory=dict)
 
     # Critical difference (for Nemenyi test)
-    critical_difference: Optional[float] = None
+    critical_difference: float | None = None
 
     # Confidence level
     alpha: float = 0.05
 
     # Summary
-    best_model: Optional[str] = None
-    significant_differences: List[Tuple[str, str]] = field(default_factory=list)
+    best_model: str | None = None
+    significant_differences: list[tuple[str, str]] = field(default_factory=list)
 
 
 class ModelValidator:
     """Main framework for model validation and cross-validation."""
 
-    def __init__(self, metrics: Optional[List[PerformanceMetric]] = None,
-                 random_seed: Optional[int] = None):
+    def __init__(self, metrics: list[PerformanceMetric] | None = None,
+                 random_seed: int | None = None):
         """
         Initialize model validator.
-        
+
         Args:
             metrics: List of performance metrics to evaluate
             random_seed: Random seed for reproducibility
@@ -228,7 +229,7 @@ class ModelValidator:
                       **kwargs) -> ValidationResult:
         """
         Perform comprehensive model validation.
-        
+
         Args:
             model: Model to validate (must have fit/predict methods)
             X: Feature matrix
@@ -239,7 +240,7 @@ class ModelValidator:
             model_name: Name of the model
             dataset_name: Name of the dataset
             **kwargs: Additional validation parameters
-            
+
         Returns:
             Validation results
         """
@@ -298,7 +299,7 @@ class ModelValidator:
         return result
 
     def _k_fold_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                          n_folds: int, **kwargs) -> Dict[str, Any]:
+                          n_folds: int, **kwargs) -> dict[str, Any]:
         """Perform k-fold cross-validation."""
         if not HAS_SKLEARN:
             raise ImportError("Scikit-learn required for k-fold validation")
@@ -345,7 +346,7 @@ class ModelValidator:
         }
 
     def _time_series_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                               n_splits: int, **kwargs) -> Dict[str, Any]:
+                               n_splits: int, **kwargs) -> dict[str, Any]:
         """Perform time series cross-validation."""
         if not HAS_SKLEARN:
             raise ImportError("Scikit-learn required for time series validation")
@@ -392,7 +393,7 @@ class ModelValidator:
         }
 
     def _bootstrap_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                             n_bootstrap: int, **kwargs) -> Dict[str, Any]:
+                             n_bootstrap: int, **kwargs) -> dict[str, Any]:
         """Perform bootstrap validation."""
         cv_scores = {metric.name: [] for metric in self.metrics}
 
@@ -431,7 +432,7 @@ class ModelValidator:
         }
 
     def _holdout_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                           test_size: float, **kwargs) -> Dict[str, Any]:
+                           test_size: float, **kwargs) -> dict[str, Any]:
         """Perform holdout validation."""
         # Split data
         n_test = int(len(X) * test_size)
@@ -469,7 +470,7 @@ class ModelValidator:
         }
 
     def _calculate_information_criteria(self, y_true: np.ndarray, y_pred: np.ndarray,
-                                      n_features: int) -> Dict[str, float]:
+                                      n_features: int) -> dict[str, float]:
         """Calculate information criteria (AIC, BIC)."""
         n = len(y_true)
         mse = np.mean((y_true - y_pred) ** 2)
@@ -484,7 +485,7 @@ class ModelValidator:
             'log_likelihood': log_likelihood
         }
 
-    def _test_normality(self, residuals: np.ndarray) -> Dict[str, Dict[str, float]]:
+    def _test_normality(self, residuals: np.ndarray) -> dict[str, dict[str, float]]:
         """Test normality of residuals."""
         tests = {}
 
@@ -509,7 +510,7 @@ class ModelValidator:
         return tests
 
     def _test_heteroscedasticity(self, predictions: np.ndarray,
-                               residuals: np.ndarray) -> Dict[str, Dict[str, float]]:
+                               residuals: np.ndarray) -> dict[str, dict[str, float]]:
         """Test for heteroscedasticity in residuals."""
         tests = {}
 
@@ -541,7 +542,7 @@ class ModelValidator:
 
         return tests
 
-    def _test_autocorrelation(self, residuals: np.ndarray) -> Dict[str, Dict[str, float]]:
+    def _test_autocorrelation(self, residuals: np.ndarray) -> dict[str, dict[str, float]]:
         """Test for autocorrelation in residuals."""
         tests = {}
 
@@ -580,7 +581,7 @@ class ModelValidator:
 
     def _calculate_bootstrap_intervals(self, model: Any, X: np.ndarray, y: np.ndarray,
                                      n_bootstrap: int = 1000,
-                                     confidence_level: float = 0.95) -> Tuple[Dict[str, np.ndarray], Dict[str, Tuple[float, float]]]:
+                                     confidence_level: float = 0.95) -> tuple[dict[str, np.ndarray], dict[str, tuple[float, float]]]:
         """Calculate bootstrap confidence intervals."""
         bootstrap_scores = {metric.name: [] for metric in self.metrics}
 
@@ -617,7 +618,7 @@ class ModelValidator:
 
         return bootstrap_scores, confidence_intervals
 
-    def _get_default_metrics(self) -> List[PerformanceMetric]:
+    def _get_default_metrics(self) -> list[PerformanceMetric]:
         """Get default performance metrics."""
         metrics = []
 
@@ -666,24 +667,24 @@ class StatisticalTester:
     def __init__(self, alpha: float = 0.05):
         """
         Initialize statistical tester.
-        
+
         Args:
             alpha: Significance level
         """
         self.alpha = alpha
         self.logger = logging.getLogger(__name__)
 
-    def compare_models(self, validation_results: List[ValidationResult],
+    def compare_models(self, validation_results: list[ValidationResult],
                       metric_name: str = "RMSE",
                       test_type: StatisticalTest = StatisticalTest.T_TEST_PAIRED) -> ComparisonResult:
         """
         Compare multiple models using statistical tests.
-        
+
         Args:
             validation_results: List of validation results to compare
             metric_name: Name of metric to compare
             test_type: Statistical test to perform
-            
+
         Returns:
             Comparison results
         """
@@ -717,8 +718,8 @@ class StatisticalTester:
 
         return result
 
-    def _paired_t_test(self, scores: List[np.ndarray],
-                      model_names: List[str],
+    def _paired_t_test(self, scores: list[np.ndarray],
+                      model_names: list[str],
                       result: ComparisonResult) -> ComparisonResult:
         """Perform paired t-test between models."""
         if not HAS_SCIPY:
@@ -764,8 +765,8 @@ class StatisticalTester:
 
         return result
 
-    def _wilcoxon_test(self, scores: List[np.ndarray],
-                      model_names: List[str],
+    def _wilcoxon_test(self, scores: list[np.ndarray],
+                      model_names: list[str],
                       result: ComparisonResult) -> ComparisonResult:
         """Perform Wilcoxon signed-rank test."""
         if not HAS_SCIPY:
@@ -800,8 +801,8 @@ class StatisticalTester:
 
         return result
 
-    def _friedman_test(self, scores: List[np.ndarray],
-                      model_names: List[str],
+    def _friedman_test(self, scores: list[np.ndarray],
+                      model_names: list[str],
                       result: ComparisonResult) -> ComparisonResult:
         """Perform Friedman test for multiple model comparison."""
         if not HAS_SCIPY:
@@ -833,13 +834,13 @@ class StatisticalTester:
 
 
 # Utility functions for model validation
-def calculate_residual_diagnostics(residuals: np.ndarray) -> Dict[str, float]:
+def calculate_residual_diagnostics(residuals: np.ndarray) -> dict[str, float]:
     """
     Calculate comprehensive residual diagnostics.
-    
+
     Args:
         residuals: Model residuals
-        
+
     Returns:
         Dictionary of diagnostic statistics
     """
@@ -866,15 +867,15 @@ def calculate_residual_diagnostics(residuals: np.ndarray) -> Dict[str, float]:
     return diagnostics
 
 
-def create_validation_report(validation_results: List[ValidationResult],
-                           comparison_result: Optional[ComparisonResult] = None) -> str:
+def create_validation_report(validation_results: list[ValidationResult],
+                           comparison_result: ComparisonResult | None = None) -> str:
     """
     Create comprehensive validation report.
-    
+
     Args:
         validation_results: List of validation results
         comparison_result: Optional comparison results
-        
+
     Returns:
         Formatted validation report
     """

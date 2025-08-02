@@ -15,7 +15,7 @@ Created: 2025-07-26
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -69,7 +69,7 @@ class PlatinumParameters:
 class PlatinumCathodeModel(BaseCathodeModel):
     """
     Platinum cathode model with parametrizable literature-based constants.
-    
+
     Features:
     - All parameters configurable with literature defaults
     - Temperature-dependent kinetics (Arrhenius)
@@ -79,7 +79,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
     - Performance benchmarking
     """
 
-    def __init__(self, parameters: CathodeParameters, platinum_params: Optional[PlatinumParameters] = None):
+    def __init__(self, parameters: CathodeParameters, platinum_params: PlatinumParameters | None = None):
         self.pt_params = platinum_params or PlatinumParameters()
         super().__init__(parameters)
         self._setup_mass_transport_parameters()
@@ -141,14 +141,14 @@ class PlatinumCathodeModel(BaseCathodeModel):
                                                1.0/catalyst_layer_limiting)) ** -1
 
     def calculate_current_density(self, overpotential: float,
-                                oxygen_conc: Optional[float] = None) -> float:
+                                oxygen_conc: float | None = None) -> float:
         """
         Calculate current density with mass transport limitations.
-        
+
         Args:
             overpotential: Cathode overpotential in V
             oxygen_conc: Oxygen concentration in mol/L
-        
+
         Returns:
             Current density in A/m²
         """
@@ -222,7 +222,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
         return current_density
 
     def calculate_performance_metrics(self, operating_overpotential: float,
-                                    oxygen_conc: Optional[float] = None) -> Dict[str, float]:
+                                    oxygen_conc: float | None = None) -> dict[str, float]:
         """Calculate comprehensive performance metrics."""
         current_density = self.calculate_current_density(operating_overpotential, oxygen_conc)
         current = current_density * self.area_m2
@@ -267,7 +267,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
     def estimate_cost_per_area(self) -> float:
         """
         Estimate platinum cathode cost per unit area.
-        
+
         Returns:
             Cost in $/m²
         """
@@ -280,7 +280,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
 
         return total_cost_per_m2
 
-    def estimate_cost_analysis(self) -> Dict[str, float]:
+    def estimate_cost_analysis(self) -> dict[str, float]:
         """Comprehensive cost analysis."""
         # Material costs
         pt_loading_kg_m2 = self.pt_params.platinum_loading * 1e-6 * 1e4  # mg/cm² to kg/m²
@@ -302,10 +302,10 @@ class PlatinumCathodeModel(BaseCathodeModel):
             'manufacturing_factor': self.pt_params.manufacturing_cost_factor
         }
 
-    def compare_to_benchmark(self) -> Dict[str, Any]:
+    def compare_to_benchmark(self) -> dict[str, Any]:
         """
         Compare current parameters to literature benchmarks.
-        
+
         Returns:
             Dictionary with comparison metrics
         """
@@ -338,7 +338,7 @@ class PlatinumCathodeModel(BaseCathodeModel):
             }
         }
 
-    def get_all_parameters(self) -> Dict[str, Any]:
+    def get_all_parameters(self) -> dict[str, Any]:
         """Get all configurable parameters with current values."""
         return {
             'cathode_parameters': {
@@ -388,17 +388,17 @@ def create_platinum_cathode(area_cm2: float = 1.0,
                           temperature_C: float = 25.0,
                           oxygen_mg_L: float = 8.0,
                           platinum_loading_mg_cm2: float = 0.5,
-                          custom_pt_params: Optional[Dict[str, float]] = None) -> PlatinumCathodeModel:
+                          custom_pt_params: dict[str, float] | None = None) -> PlatinumCathodeModel:
     """
     Create platinum cathode with configurable parameters.
-    
+
     Args:
         area_cm2: Cathode area in cm²
-        temperature_C: Operating temperature in °C  
+        temperature_C: Operating temperature in °C
         oxygen_mg_L: Dissolved oxygen in mg/L
         platinum_loading_mg_cm2: Pt loading in mg/cm²
         custom_pt_params: Custom platinum parameters to override defaults
-    
+
     Returns:
         Configured PlatinumCathodeModel
     """

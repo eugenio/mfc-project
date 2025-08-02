@@ -5,7 +5,7 @@ Provides abstraction layer for both NVIDIA CUDA and AMD ROCm support.
 """
 
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -19,7 +19,7 @@ class GPUAccelerator:
     def __init__(self, prefer_backend: str = 'auto'):
         """
         Initialize GPU accelerator with backend preference.
-        
+
         Args:
             prefer_backend: 'auto', 'cuda', 'rocm', or 'cpu'
         """
@@ -260,7 +260,7 @@ class GPUAccelerator:
         }
         return dtype_map.get(np_dtype, self.torch.float32)
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """Get information about the current backend."""
         return {
             'backend': self.backend,
@@ -272,7 +272,7 @@ class GPUAccelerator:
         """Check if GPU acceleration is available."""
         return self.backend in ['cuda', 'rocm']
 
-    def get_memory_info(self) -> Optional[Dict[str, int]]:
+    def get_memory_info(self) -> dict[str, int] | None:
         """Get GPU memory information."""
         if self.backend == 'cuda' and self.cp:
             device = self.cp.cuda.Device()
@@ -460,12 +460,12 @@ _gpu_accelerator = None
 def get_gpu_accelerator(prefer_backend: str = 'auto', force_reinit: bool = False, test_functionality: bool = True) -> GPUAccelerator:
     """
     Get global GPU accelerator instance with automatic CPU fallback.
-    
+
     Args:
         prefer_backend: Preferred backend ('auto', 'cuda', 'rocm', 'cpu')
         force_reinit: Force reinitialization even if already created
         test_functionality: Test GPU functionality and fallback to CPU if needed
-    
+
     Returns:
         GPUAccelerator instance
     """

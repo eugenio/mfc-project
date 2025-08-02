@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import requests
 
@@ -24,10 +24,10 @@ import requests
 class PubMedQuery:
     """Container for PubMed search query parameters."""
 
-    search_terms: List[str]
-    mesh_terms: List[str] = field(default_factory=list)
-    publication_types: List[str] = field(default_factory=list)
-    date_range: Tuple[str, str] = ("", "")  # (start_date, end_date) format: YYYY/MM/DD
+    search_terms: list[str]
+    mesh_terms: list[str] = field(default_factory=list)
+    publication_types: list[str] = field(default_factory=list)
+    date_range: tuple[str, str] = ("", "")  # (start_date, end_date) format: YYYY/MM/DD
     max_results: int = 100
     sort_order: str = "relevance"  # "relevance", "pub_date", "first_author"
 
@@ -37,18 +37,18 @@ class PubMedArticle:
 
     pmid: str
     title: str
-    authors: List[str] = field(default_factory=list)
+    authors: list[str] = field(default_factory=list)
     journal: str = ""
     publication_date: str = ""
     doi: str = ""
     abstract: str = ""
-    mesh_terms: List[str] = field(default_factory=list)
-    keywords: List[str] = field(default_factory=list)
+    mesh_terms: list[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
 
 class PubMedConnector:
     """
     PubMed API connector for automated literature searches.
-    
+
     Provides rate-limited access to PubMed database with caching
     for parameter validation queries.
     """
@@ -56,7 +56,7 @@ class PubMedConnector:
     def __init__(self, cache_dir: str = "data/pubmed_cache", rate_limit: float = 0.34):
         """
         Initialize PubMed connector.
-        
+
         Args:
             cache_dir: Directory for caching query results
             rate_limit: Minimum seconds between API calls (max 3 requests/second)
@@ -132,14 +132,14 @@ class PubMedConnector:
         query_string = f"{query.search_terms}{query.mesh_terms}{query.date_range}{query.max_results}"
         return hashlib.md5(query_string.encode()).hexdigest()
 
-    def _check_search_cache(self, query_hash: str, max_age_days: int = 7) -> Optional[List[str]]:
+    def _check_search_cache(self, query_hash: str, max_age_days: int = 7) -> list[str] | None:
         """Check if search results are cached and recent."""
 
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         with sqlite3.connect(self.cache_db_path) as conn:
             cursor = conn.execute("""
-                SELECT pmids FROM search_cache 
+                SELECT pmids FROM search_cache
                 WHERE query_hash = ? AND created_at > ?
             """, (query_hash, cutoff_date))
 
@@ -150,12 +150,12 @@ class PubMedConnector:
 
         return None
 
-    def _cache_search_results(self, query_hash: str, query: PubMedQuery, pmids: List[str]):
+    def _cache_search_results(self, query_hash: str, query: PubMedQuery, pmids: list[str]):
         """Cache search results."""
 
         with sqlite3.connect(self.cache_db_path) as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO search_cache 
+                INSERT OR REPLACE INTO search_cache
                 (query_hash, query_terms, search_date, result_count, pmids)
                 VALUES (?, ?, ?, ?, ?)
             """, (
@@ -166,14 +166,14 @@ class PubMedConnector:
                 ','.join(pmids)
             ))
 
-    def _check_article_cache(self, pmid: str, max_age_days: int = 30) -> Optional[PubMedArticle]:
+    def _check_article_cache(self, pmid: str, max_age_days: int = 30) -> PubMedArticle | None:
         """Check if article details are cached."""
 
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         with sqlite3.connect(self.cache_db_path) as conn:
             cursor = conn.execute("""
-                SELECT * FROM article_cache 
+                SELECT * FROM article_cache
                 WHERE pmid = ? AND fetched_at > ?
             """, (pmid, cutoff_date))
 
@@ -199,7 +199,7 @@ class PubMedConnector:
 
         with sqlite3.connect(self.cache_db_path) as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO article_cache 
+                INSERT OR REPLACE INTO article_cache
                 (pmid, title, authors, journal, publication_date, doi, abstract, mesh_terms, keywords)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
@@ -214,13 +214,13 @@ class PubMedConnector:
                 json.dumps(article.keywords)
             ))
 
-    def search_literature(self, query: PubMedQuery) -> List[str]:
+    def search_literature(self, query: PubMedQuery) -> list[str]:
         """
         Search PubMed for articles matching query parameters.
-        
+
         Args:
             query: PubMed query parameters
-            
+
         Returns:
             List of PMIDs matching the search criteria
         """
@@ -280,13 +280,13 @@ class PubMedConnector:
             warnings.warn(f"PubMed search failed: {e}")
             return []
 
-    def fetch_article_details(self, pmids: List[str]) -> List[PubMedArticle]:
+    def fetch_article_details(self, pmids: list[str]) -> list[PubMedArticle]:
         """
         Fetch detailed article information for given PMIDs.
-        
+
         Args:
             pmids: List of PubMed IDs
-            
+
         Returns:
             List of PubMedArticle objects with detailed information
         """
@@ -311,7 +311,7 @@ class PubMedConnector:
 
         return articles
 
-    def _fetch_article_batch(self, pmids: List[str]) -> List[PubMedArticle]:
+    def _fetch_article_batch(self, pmids: list[str]) -> list[PubMedArticle]:
         """Fetch a batch of articles from PubMed."""
 
         if not pmids:
@@ -336,7 +336,7 @@ class PubMedConnector:
             warnings.warn(f"PubMed fetch failed: {e}")
             return []
 
-    def _parse_pubmed_xml(self, xml_text: str) -> List[PubMedArticle]:
+    def _parse_pubmed_xml(self, xml_text: str) -> list[PubMedArticle]:
         """Parse PubMed XML response into PubMedArticle objects."""
 
         articles = []
@@ -355,7 +355,7 @@ class PubMedConnector:
 
         return articles
 
-    def _parse_single_article(self, article_elem) -> Optional[PubMedArticle]:
+    def _parse_single_article(self, article_elem) -> PubMedArticle | None:
         """Parse single article XML element."""
 
         try:
@@ -444,14 +444,14 @@ class PubMedConnector:
 
         return "-".join(date_parts)
 
-    def search_mfc_parameters(self, parameter_name: str, organism: str = "") -> List[PubMedArticle]:
+    def search_mfc_parameters(self, parameter_name: str, organism: str = "") -> list[PubMedArticle]:
         """
         Search for literature related to specific MFC parameters.
-        
+
         Args:
             parameter_name: Name of the parameter to search for
             organism: Optional organism name to include in search
-            
+
         Returns:
             List of relevant articles
         """
@@ -483,7 +483,7 @@ class PubMedConnector:
         pmids = self.search_literature(query)
         return self.fetch_article_details(pmids)
 
-    def get_cache_statistics(self) -> Dict[str, Any]:
+    def get_cache_statistics(self) -> dict[str, Any]:
         """Get cache and API usage statistics."""
 
         with sqlite3.connect(self.cache_db_path) as conn:

@@ -6,7 +6,7 @@ for scientific researchers and practitioners working with MFC systems.
 
 Modules:
 - enhanced_components: Core enhanced UI components with scientific validation
-- qlearning_viz: Advanced Q-learning visualization and analysis tools  
+- qlearning_viz: Advanced Q-learning visualization and analysis tools
 - enhanced_mfc_gui: Main enhanced application interface
 
 Features:

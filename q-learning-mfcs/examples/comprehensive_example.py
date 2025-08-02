@@ -21,25 +21,40 @@ Author: Claude AI Assistant
 Date: 2025-07-25
 """
 
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
 import logging
-import warnings
-from pathlib import Path
 
 # Import the configuration system
 import sys
+import warnings
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
 sys.path.append('/home/uge/mfc-project/q-learning-mfcs/src')
 
 from config.config_manager import ConfigurationManager
-from config.sensitivity_analysis import SensitivityAnalyzer, ParameterSpace, ParameterDefinition, ParameterBounds
-from config.parameter_optimization import BayesianOptimizer, OptimizationObjective, ObjectiveType
-from config.uncertainty_quantification import MonteCarloAnalyzer, UncertainParameter, DistributionType
 from config.experimental_data_integration import ExperimentalDataManager
 from config.model_validation import ModelValidator
-from config.real_time_processing import MFCDataStream, StreamProcessor, RealTimeAnalyzer
+from config.parameter_optimization import (
+    BayesianOptimizer,
+    ObjectiveType,
+    OptimizationObjective,
+)
+from config.real_time_processing import MFCDataStream, RealTimeAnalyzer, StreamProcessor
+from config.sensitivity_analysis import (
+    ParameterBounds,
+    ParameterDefinition,
+    ParameterSpace,
+    SensitivityAnalyzer,
+)
 from config.statistical_analysis import StatisticalAnalyzer
+from config.uncertainty_quantification import (
+    DistributionType,
+    MonteCarloAnalyzer,
+    UncertainParameter,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -189,7 +204,11 @@ def demonstrate_parameter_optimization(config):
     logger.info("=== Parameter Optimization Demo ===")
 
     # Define parameter space for optimization
-    from config.sensitivity_analysis import ParameterSpace, ParameterDefinition, ParameterBounds
+    from config.sensitivity_analysis import (
+        ParameterBounds,
+        ParameterDefinition,
+        ParameterSpace,
+    )
 
     parameter_space = ParameterSpace([
         ParameterDefinition(
@@ -499,7 +518,7 @@ def demonstrate_statistical_analysis():
         logger.info(f"  Condition B: {desc_b.mean:.2f} ± {desc_b.std:.2f} (n={desc_b.n})")
 
         # Hypothesis testing
-        from config.statistical_analysis import StatisticalTest, HypothesisType
+        from config.statistical_analysis import HypothesisType, StatisticalTest
 
         # Two-sample t-test
         t_test_config = StatisticalTest(
@@ -561,7 +580,11 @@ def demonstrate_real_time_processing():
 
     try:
         # Create sample MFC sensor configuration
-        from config.real_time_processing import create_sample_mfc_config, create_sample_processing_config, create_sample_alert_config
+        from config.real_time_processing import (
+            create_sample_alert_config,
+            create_sample_mfc_config,
+            create_sample_processing_config,
+        )
 
         sensor_config = create_sample_mfc_config()
         processing_config = create_sample_processing_config()

@@ -9,23 +9,31 @@ This example demonstrates:
 - Dynamic species ratios
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+
 from config.biological_config import (
-    BacterialSpecies, get_geobacter_config, get_shewanella_config, get_default_biofilm_config
+    BacterialSpecies,
+    get_default_biofilm_config,
+    get_geobacter_config,
+    get_shewanella_config,
 )
 from config.substrate_config import (
-    SubstrateType, SubstrateKineticsConfig,
-    get_acetate_config, get_lactate_config, get_pyruvate_config
+    SubstrateKineticsConfig,
+    SubstrateType,
+    get_acetate_config,
+    get_lactate_config,
+    get_pyruvate_config,
 )
-from typing import Dict
+
 
 class MixedCultureConfig:
     """Configuration manager for mixed culture systems."""
 
-    def __init__(self, species_ratios: Dict[BacterialSpecies, float]):
+    def __init__(self, species_ratios: dict[BacterialSpecies, float]):
         """
         Initialize mixed culture configuration.
         
@@ -129,7 +137,7 @@ class MixedCultureConfig:
 
         return effective_kinetics
 
-    def calculate_substrate_competition(self, substrate_concentrations: Dict[SubstrateType, float]) -> Dict[SubstrateType, Dict[BacterialSpecies, float]]:
+    def calculate_substrate_competition(self, substrate_concentrations: dict[SubstrateType, float]) -> dict[SubstrateType, dict[BacterialSpecies, float]]:
         """
         Calculate substrate uptake rates considering competition.
         
@@ -168,7 +176,7 @@ class MixedCultureConfig:
 
         return uptake_rates
 
-    def calculate_synergy_factor(self, current_densities: Dict[BacterialSpecies, float]) -> float:
+    def calculate_synergy_factor(self, current_densities: dict[BacterialSpecies, float]) -> float:
         """
         Calculate synergy factor for mixed culture current production.
         
@@ -190,7 +198,7 @@ class MixedCultureConfig:
 
         return synergy_factor
 
-    def get_configuration_summary(self) -> Dict[str, any]:
+    def get_configuration_summary(self) -> dict[str, any]:
         """Get summary of mixed culture configuration."""
         return {
             'species_composition': {species.value: ratio for species, ratio in self.species_ratios.items()},

@@ -10,7 +10,6 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -54,7 +53,7 @@ class MCUSpecs:
     power_consumption_sleep_mw: float
     power_consumption_deep_sleep_mw: float
     operating_voltage_v: float
-    temperature_range: Tuple[float, float]  # °C
+    temperature_range: tuple[float, float]  # °C
     package_type: str
     cost: float  # USD
 
@@ -66,7 +65,7 @@ class ADCSpecs:
     sampling_rate_ksps: float  # kilo-samples per second
     channels: int
     reference_voltage_v: float
-    input_range_v: Tuple[float, float]
+    input_range_v: tuple[float, float]
     differential_inputs: bool
     internal_reference: bool
     noise_lsb: float  # Noise in LSB
@@ -83,7 +82,7 @@ class DACSpecs:
     update_rate_ksps: float
     channels: int
     reference_voltage_v: float
-    output_range_v: Tuple[float, float]
+    output_range_v: tuple[float, float]
     current_drive_ma: float
     settling_time_us: float
     linearity_error_lsb: float
@@ -96,7 +95,7 @@ class DACSpecs:
 class GPIOSpecs:
     """Specifications for general-purpose I/O"""
     pins: int
-    voltage_levels_v: List[float]  # Supported voltage levels
+    voltage_levels_v: list[float]  # Supported voltage levels
     current_drive_ma: float
     input_leakage_ua: float
     switching_frequency_mhz: float
@@ -126,11 +125,11 @@ class ElectronicsMeasurement:
     power_consumption_mw: float
     cpu_utilization_pct: float
     memory_usage_pct: float
-    adc_readings: Dict[int, float]  # Channel -> voltage
-    dac_outputs: Dict[int, float]  # Channel -> voltage
-    gpio_states: Dict[int, bool]  # Pin -> state
-    communication_activity: Dict[InterfaceType, float]  # Interface -> utilization %
-    fault_flags: List[str]
+    adc_readings: dict[int, float]  # Channel -> voltage
+    dac_outputs: dict[int, float]  # Channel -> voltage
+    gpio_states: dict[int, bool]  # Pin -> state
+    communication_activity: dict[InterfaceType, float]  # Interface -> utilization %
+    fault_flags: list[str]
 
 
 class ControlElectronics:
@@ -138,7 +137,7 @@ class ControlElectronics:
 
     def __init__(self, mcu_specs: MCUSpecs, adc_specs: ADCSpecs,
                  dac_specs: DACSpecs, gpio_specs: GPIOSpecs,
-                 communication_interfaces: List[CommunicationInterface]):
+                 communication_interfaces: list[CommunicationInterface]):
         self.mcu_specs = mcu_specs
         self.adc_specs = adc_specs
         self.dac_specs = dac_specs
@@ -179,11 +178,11 @@ class ControlElectronics:
     def read_adc(self, channel: int, samples: int = 1) -> float:
         """
         Read analog value from ADC channel
-        
+
         Args:
             channel: ADC channel number
             samples: Number of samples to average
-            
+
         Returns:
             Voltage reading in volts
         """
@@ -228,11 +227,11 @@ class ControlElectronics:
     def write_dac(self, channel: int, voltage: float) -> bool:
         """
         Write analog value to DAC channel
-        
+
         Args:
             channel: DAC channel number
             voltage: Voltage to output
-            
+
         Returns:
             True if successful
         """
@@ -268,12 +267,12 @@ class ControlElectronics:
     def set_gpio(self, pin: int, state: bool, direction: str = "output") -> bool:
         """
         Set GPIO pin state
-        
+
         Args:
             pin: GPIO pin number
             state: Pin state (True/False)
             direction: Pin direction ("input"/"output")
-            
+
         Returns:
             True if successful
         """
@@ -307,10 +306,10 @@ class ControlElectronics:
     def read_gpio(self, pin: int) -> bool:
         """
         Read GPIO pin state
-        
+
         Args:
             pin: GPIO pin number
-            
+
         Returns:
             Pin state
         """
@@ -334,15 +333,15 @@ class ControlElectronics:
             return self.gpio_states[pin]
 
     def communicate(self, interface_type: InterfaceType, data: bytes,
-                   target_address: Optional[int] = None) -> Tuple[bool, bytes]:
+                   target_address: int | None = None) -> tuple[bool, bytes]:
         """
         Send data via communication interface
-        
+
         Args:
             interface_type: Communication interface to use
             data: Data to send
             target_address: Target address (for multi-device buses)
-            
+
         Returns:
             (success, response_data)
         """
@@ -407,10 +406,10 @@ class ControlElectronics:
     def set_power_mode(self, mode: str) -> bool:
         """
         Set MCU power mode
-        
+
         Args:
             mode: Power mode ("active", "sleep", "deep_sleep")
-            
+
         Returns:
             True if successful
         """
@@ -434,7 +433,7 @@ class ControlElectronics:
     def get_power_consumption(self) -> float:
         """
         Get total power consumption in milliwatts
-        
+
         Returns:
             Total power consumption (mW)
         """
@@ -510,7 +509,7 @@ class ControlElectronics:
             fault_flags=self.fault_flags.copy()
         )
 
-    def get_cost_analysis(self) -> Dict[str, float]:
+    def get_cost_analysis(self) -> dict[str, float]:
         """Get comprehensive cost analysis"""
         # Component costs
         mcu_cost = self.mcu_specs.cost
@@ -544,7 +543,7 @@ class ControlElectronics:
         }
 
 
-def create_standard_control_electronics() -> Dict[str, ControlElectronics]:
+def create_standard_control_electronics() -> dict[str, ControlElectronics]:
     """Create standard control electronics configurations"""
 
     # High-performance configuration

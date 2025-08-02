@@ -20,12 +20,8 @@ Version: 2.0 (Enhanced Architecture)
 import logging
 import os
 import sys
-from datetime import datetime
-from typing import Any, Dict, Optional
 
 import streamlit as st
-import numpy as np
-import pandas as pd
 
 # Configure logging
 logging.getLogger('jax._src.xla_bridge').setLevel(logging.WARNING)
@@ -35,8 +31,8 @@ logging.getLogger('jax').setLevel(logging.WARNING)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import existing components for compatibility
-from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
 from gui.navigation_controller import NavigationController
+
 
 def main():
     """Main application entry point for Enhanced MFC Platform."""
@@ -44,7 +40,7 @@ def main():
         # Initialize and run the navigation controller
         nav_controller = NavigationController()
         nav_controller.run()
-        
+
     except Exception as e:
         st.error(f"Application Error: {str(e)}")
         st.exception(e)

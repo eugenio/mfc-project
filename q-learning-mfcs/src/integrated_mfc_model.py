@@ -15,7 +15,7 @@ import pickle
 import sys
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -45,20 +45,20 @@ class IntegratedMFCState:
     coulombic_efficiency: float
 
     # Biofilm state (per cell)
-    biofilm_thickness: List[float]
-    biomass_density: List[float]
-    attachment_fraction: List[float]
+    biofilm_thickness: list[float]
+    biomass_density: list[float]
+    attachment_fraction: list[float]
 
     # Metabolic state (per cell)
-    substrate_concentration: List[float]
-    nadh_ratio: List[float]
-    atp_level: List[float]
-    electron_flux: List[float]
+    substrate_concentration: list[float]
+    nadh_ratio: list[float]
+    atp_level: list[float]
+    electron_flux: list[float]
 
     # Electrochemical state (per cell)
-    cell_voltages: List[float]
-    current_densities: List[float]
-    anode_potentials: List[float]
+    cell_voltages: list[float]
+    current_densities: list[float]
+    anode_potentials: list[float]
 
     # Recirculation state
     reservoir_concentration: float
@@ -74,7 +74,7 @@ class IntegratedMFCState:
 class IntegratedMFCModel:
     """
     Comprehensive MFC model integrating biofilm, metabolic, and control systems.
-    
+
     Features:
     - Real-time coupling of biological and electrochemical models
     - GPU acceleration for all computations
@@ -88,7 +88,7 @@ class IntegratedMFCModel:
                  use_gpu: bool = True, simulation_hours: int = 100):
         """
         Initialize integrated MFC model.
-        
+
         Args:
             n_cells: Number of cells in stack
             species: Bacterial species ("geobacter", "shewanella", "mixed")
@@ -191,10 +191,10 @@ class IntegratedMFCModel:
     def step_integrated_dynamics(self, dt: float = 1.0) -> IntegratedMFCState:
         """
         Step the integrated model forward by dt hours.
-        
+
         Args:
             dt: Time step (hours)
-            
+
         Returns:
             IntegratedMFCState with current system state
         """
@@ -329,7 +329,7 @@ class IntegratedMFCModel:
             self.reservoir.add_substrate(substrate_addition, dt)
 
         # 8. Update energy and power tracking
-        total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents))
+        total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents, strict=False))
         self.total_energy_generated += total_power * dt
         self.pump_power_consumed += 0.001 * self.flow_rate_ml_h * dt  # Simplified pump power
 
@@ -366,23 +366,23 @@ class IntegratedMFCModel:
 
         return integrated_state
 
-    def _calculate_integrated_reward(self, mfc_state: Dict, biofilm_states: List[Dict],
-                                   metabolic_states: List[Any],
-                                   enhanced_currents: List[float]) -> float:
+    def _calculate_integrated_reward(self, mfc_state: dict, biofilm_states: list[dict],
+                                   metabolic_states: list[Any],
+                                   enhanced_currents: list[float]) -> float:
         """
         Calculate comprehensive reward considering all subsystems.
-        
+
         Args:
             mfc_state: MFC electrochemical state
             biofilm_states: Biofilm states for each cell
             metabolic_states: Metabolic states for each cell
             enhanced_currents: Enhanced current values
-            
+
         Returns:
             Integrated reward value
         """
         # Power generation reward
-        total_power = sum(v * i for v, i in zip(mfc_state['cell_voltages'], enhanced_currents))
+        total_power = sum(v * i for v, i in zip(mfc_state['cell_voltages'], enhanced_currents, strict=False))
         power_reward = total_power * 10.0
 
         # Biofilm health reward
@@ -420,14 +420,14 @@ class IntegratedMFCModel:
 
         return total_reward
 
-    def run_simulation(self, dt: float = 1.0, save_interval: int = 10) -> Dict[str, Any]:
+    def run_simulation(self, dt: float = 1.0, save_interval: int = 10) -> dict[str, Any]:
         """
         Run complete integrated simulation.
-        
+
         Args:
             dt: Time step (hours)
             save_interval: Save results every N hours
-            
+
         Returns:
             Dictionary with simulation results
         """
@@ -468,7 +468,7 @@ class IntegratedMFCModel:
 
         return results
 
-    def _compile_results(self) -> Dict[str, Any]:
+    def _compile_results(self) -> dict[str, Any]:
         """Compile simulation results."""
         if not self.history:
             return {}
@@ -519,7 +519,7 @@ class IntegratedMFCModel:
         with open(filename, 'wb') as f:
             pickle.dump(checkpoint, f)
 
-    def save_results(self, results: Dict[str, Any], prefix: str = "integrated"):
+    def save_results(self, results: dict[str, Any], prefix: str = "integrated"):
         """Save simulation results."""
         # Save summary
         summary_file = get_simulation_data_path(f'{prefix}_summary.json')
@@ -543,7 +543,7 @@ class IntegratedMFCModel:
         print(f"  Time series: {time_series_file}")
         print(f"  Q-table: {q_table_file}")
 
-    def plot_results(self, results: Dict[str, Any], save_plots: bool = True):
+    def plot_results(self, results: dict[str, Any], save_plots: bool = True):
         """Generate visualization plots."""
         import matplotlib.pyplot as plt
 

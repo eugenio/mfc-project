@@ -64,7 +64,7 @@ class ModelSEEDReaction:
 class ModelSEEDConnector:
     """
     Connector for accessing ModelSEED database through Mackinac.
-    
+
     Provides methods to search, download, and work with ModelSEED metabolic models.
     """
 
@@ -94,12 +94,12 @@ class ModelSEEDConnector:
                      limit: int = 50) -> list[ModelSEEDModelInfo]:
         """
         Search for ModelSEED models by organism name or genome ID.
-        
+
         Args:
             organism_name: Name of organism to search for
             genome_id: Specific genome ID to search for
             limit: Maximum number of results to return
-            
+
         Returns:
             List of ModelSEEDModelInfo objects
         """
@@ -171,10 +171,10 @@ class ModelSEEDConnector:
     def load_model_from_modelseed(self, model_id: str) -> COBRAModelWrapper | None:
         """
         Load a model from ModelSEED using Mackinac.
-        
+
         Args:
             model_id: ModelSEED model identifier
-            
+
         Returns:
             COBRAModelWrapper instance or None if failed
         """
@@ -236,10 +236,10 @@ class ModelSEEDConnector:
     def get_reaction_database(self, pathway_filter: str | None = None) -> list[ModelSEEDReaction]:
         """
         Get reactions from ModelSEED biochemical database.
-        
+
         Args:
             pathway_filter: Filter reactions by pathway (optional)
-            
+
         Returns:
             List of ModelSEEDReaction objects
         """
@@ -319,11 +319,11 @@ class ModelSEEDConnector:
                              community_id: str = "mfc_community") -> COBRAModelWrapper | None:
         """
         Create a multi-organism community model from individual ModelSEED models.
-        
+
         Args:
             model_ids: List of ModelSEED model IDs to combine
             community_id: Identifier for the community model
-            
+
         Returns:
             COBRAModelWrapper containing community model
         """
@@ -371,10 +371,10 @@ class ModelSEEDConnector:
     def validate_model_quality(self, model_wrapper: COBRAModelWrapper) -> dict[str, Any]:
         """
         Validate ModelSEED model quality using Mackinac tools.
-        
+
         Args:
             model_wrapper: COBRAModelWrapper to validate
-            
+
         Returns:
             Dictionary with validation results
         """
@@ -433,11 +433,11 @@ class ModelSEEDConnector:
                            output_file: str | None = None) -> dict[str, Any]:
         """
         Export comprehensive model summary with ModelSEED-specific information.
-        
+
         Args:
             model_wrapper: COBRAModelWrapper to summarize
             output_file: Optional file to save summary (JSON format)
-            
+
         Returns:
             Summary dictionary
         """
@@ -493,10 +493,10 @@ def get_mfc_relevant_models() -> list[str]:
 def setup_mfc_community_from_modelseed(organism_list: list[str] | None = None) -> COBRAModelWrapper | None:
     """
     Set up an MFC community model using ModelSEED organisms.
-    
+
     Args:
         organism_list: List of organism names or ModelSEED IDs
-        
+
     Returns:
         Community model wrapper
     """

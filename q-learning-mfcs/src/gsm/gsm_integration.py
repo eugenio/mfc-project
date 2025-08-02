@@ -11,7 +11,7 @@ Created: 2025-08-01
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,7 +20,7 @@ class MetabolicReaction:
 
     id: str
     name: str
-    stoichiometry: Dict[str, float]  # metabolite_id: coefficient
+    stoichiometry: dict[str, float]  # metabolite_id: coefficient
     lower_bound: float = 0.0  # mmol/g AFDW/h
     upper_bound: float = 1000.0  # mmol/g AFDW/h
     objective_coefficient: float = 0.0
@@ -69,24 +69,24 @@ class GSMModelConfig:
 class ShewanellaGSMModel:
     """
     Genome-scale metabolic model for Shewanella oneidensis MR-1.
-    
+
     Implements core metabolic pathways based on constraint-based modeling
     and integrates with electrode optimization framework.
     """
 
-    def __init__(self, config: Optional[GSMModelConfig] = None):
+    def __init__(self, config: GSMModelConfig | None = None):
         self.config = config or GSMModelConfig()
 
         # Initialize metabolic network
-        self.metabolites: Dict[str, Metabolite] = {}
-        self.reactions: Dict[str, MetabolicReaction] = {}
-        self.flux_solutions: Dict[str, Dict[str, float]] = {}
+        self.metabolites: dict[str, Metabolite] = {}
+        self.reactions: dict[str, MetabolicReaction] = {}
+        self.flux_solutions: dict[str, dict[str, float]] = {}
 
         # Build core metabolic network
         self._build_metabolic_network()
 
         # Current metabolic state
-        self.current_fluxes: Dict[str, float] = {}
+        self.current_fluxes: dict[str, float] = {}
         self.current_growth_rate = 0.0
         self.current_electron_production = 0.0
 
@@ -277,10 +277,10 @@ class ShewanellaGSMModel:
             )
         }
 
-    def solve_fba(self, objective_reaction: str = 'electrode_electron_transfer') -> Dict[str, float]:
+    def solve_fba(self, objective_reaction: str = 'electrode_electron_transfer') -> dict[str, float]:
         """
         Solve flux balance analysis to find optimal metabolic fluxes.
-        
+
         This is a simplified FBA implementation focusing on electron production.
         """
 
@@ -346,7 +346,7 @@ class ShewanellaGSMModel:
 
         return fluxes
 
-    def calculate_metabolic_objectives(self) -> Dict[str, float]:
+    def calculate_metabolic_objectives(self) -> dict[str, float]:
         """Calculate metabolic objectives for optimization integration."""
 
         # Solve current metabolic state
@@ -375,8 +375,8 @@ class ShewanellaGSMModel:
                                       substrate_concentration: float,
                                       oxygen_availability: float,
                                       electrode_potential: float,
-                                      temperature: Optional[float] = None,
-                                      ph: Optional[float] = None):
+                                      temperature: float | None = None,
+                                      ph: float | None = None):
         """Update environmental conditions affecting metabolism."""
 
         # Update substrate availability
@@ -403,7 +403,7 @@ class ShewanellaGSMModel:
         if ph is not None:
             self.config.ph = ph
 
-    def get_metabolic_summary(self) -> Dict[str, Any]:
+    def get_metabolic_summary(self) -> dict[str, Any]:
         """Get comprehensive metabolic summary."""
 
         objectives = self.calculate_metabolic_objectives()
@@ -431,21 +431,21 @@ class ShewanellaGSMModel:
 class GSMPhysicsIntegrator:
     """
     Integrator that connects GSM models with physics-based electrode models.
-    
+
     This class bridges metabolic predictions with physical electrode performance.
     """
 
     def __init__(self, gsm_model: ShewanellaGSMModel):
         self.gsm_model = gsm_model
-        self.integration_history: List[Dict[str, Any]] = []
+        self.integration_history: list[dict[str, Any]] = []
 
-    def integrate_with_electrode_model(self, electrode_results: Dict[str, Any]) -> Dict[str, float]:
+    def integrate_with_electrode_model(self, electrode_results: dict[str, Any]) -> dict[str, float]:
         """
         Integrate GSM predictions with electrode model results.
-        
+
         Args:
             electrode_results: Results from advanced electrode model
-            
+
         Returns:
             Integrated optimization objectives
         """
@@ -527,7 +527,7 @@ class GSMPhysicsIntegrator:
 
         return integrated_objectives
 
-    def get_optimization_targets_gsm(self) -> Dict[str, float]:
+    def get_optimization_targets_gsm(self) -> dict[str, float]:
         """Get GSM-enhanced optimization targets for electrode optimization."""
 
         if not self.integration_history:

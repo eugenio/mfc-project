@@ -29,7 +29,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -72,7 +72,7 @@ class DRLConfig:
     """Configuration for deep RL algorithms."""
 
     # Network architecture
-    hidden_layers: List[int] = None
+    hidden_layers: list[int] = None
     activation: str = "relu"
     dropout_rate: float = 0.1
     batch_norm: bool = True
@@ -116,7 +116,7 @@ class PriorityReplayBuffer:
     def __init__(self, capacity: int, alpha: float = 0.6):
         """
         Initialize priority replay buffer.
-        
+
         Args:
             capacity: Maximum buffer size
             alpha: Prioritization exponent (0 = uniform, 1 = full priority)
@@ -165,7 +165,7 @@ class PriorityReplayBuffer:
 
         self.pos = (self.pos + 1) % self.capacity
 
-    def sample(self, batch_size: int, beta: float = 0.4) -> Tuple[List, np.ndarray, np.ndarray]:
+    def sample(self, batch_size: int, beta: float = 0.4) -> tuple[list, np.ndarray, np.ndarray]:
         """Sample experiences with importance sampling."""
         indices = []
         priorities = []
@@ -209,7 +209,7 @@ class PriorityReplayBuffer:
 
     def update_priorities(self, indices: np.ndarray, priorities: np.ndarray):
         """Update priorities for given indices."""
-        for idx, priority in zip(indices, priorities):
+        for idx, priority in zip(indices, priorities, strict=False):
             tree_idx = idx + self.capacity - 1
             self.max_priority = max(self.max_priority, priority)
             self._update_tree(tree_idx, priority ** self.alpha)
@@ -224,7 +224,7 @@ class DuelingDQN(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
         """
         Initialize dueling DQN.
-        
+
         Args:
             state_dim: Input state dimension
             action_dim: Number of actions
@@ -314,7 +314,7 @@ class RainbowDQN(nn.Module):
                  atoms: int = 51, v_min: float = -10, v_max: float = 10):
         """
         Initialize Rainbow DQN.
-        
+
         Args:
             state_dim: Input state dimension
             action_dim: Number of actions
@@ -341,7 +341,7 @@ class RainbowDQN(nn.Module):
 
         logger.info(f"RainbowDQN initialized with {atoms} atoms, value range [{v_min}, {v_max}]")
 
-    def _build_noisy_layers(self, input_dim: int, hidden_dims: List[int]) -> nn.Module:
+    def _build_noisy_layers(self, input_dim: int, hidden_dims: list[int]) -> nn.Module:
         """Build noisy feature extraction layers."""
         layers = []
 
@@ -388,7 +388,7 @@ class NoisyLinear(nn.Module):
     def __init__(self, in_features: int, out_features: int, std_init: float = 0.4):
         """
         Initialize noisy linear layer.
-        
+
         Args:
             in_features: Input dimension
             out_features: Output dimension
@@ -449,18 +449,18 @@ class NoisyLinear(nn.Module):
 class DeepRLController:
     """
     Advanced Deep Reinforcement Learning Controller for MFC systems.
-    
+
     Integrates with Phase 2 components and provides multiple DRL algorithms
     with state-of-the-art techniques for continuous learning and adaptation.
     """
 
     def __init__(self, state_dim: int, action_dim: int,
                  algorithm: DRLAlgorithm = DRLAlgorithm.RAINBOW_DQN,
-                 config: Optional[DRLConfig] = None,
-                 device: Optional[str] = None):
+                 config: DRLConfig | None = None,
+                 device: str | None = None):
         """
         Initialize deep RL controller.
-        
+
         Args:
             state_dim: Dimension of state space
             action_dim: Number of discrete actions
@@ -551,10 +551,10 @@ class DeepRLController:
     def extract_state_features(self, system_state: SystemState) -> np.ndarray:
         """
         Extract features from system state for neural network input.
-        
+
         Args:
             system_state: Complete system state from Phase 2
-            
+
         Returns:
             Feature vector for neural network
         """
@@ -584,11 +584,11 @@ class DeepRLController:
     def select_action(self, state: np.ndarray, training: bool = True) -> int:
         """
         Select action using epsilon-greedy or noisy networks.
-        
+
         Args:
             state: Current state
             training: Whether in training mode
-            
+
         Returns:
             Selected action index
         """
@@ -622,10 +622,10 @@ class DeepRLController:
         else:
             self.replay_buffer.append((state, action, reward, next_state, done))
 
-    def train_step(self) -> Dict[str, float]:
+    def train_step(self) -> dict[str, float]:
         """
         Perform one training step.
-        
+
         Returns:
             Training metrics
         """
@@ -699,7 +699,7 @@ class DeepRLController:
 
     def _compute_dqn_loss(self, states: torch.Tensor, actions: torch.Tensor,
                          rewards: torch.Tensor, next_states: torch.Tensor,
-                         dones: torch.Tensor, is_weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                         dones: torch.Tensor, is_weights: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute DQN loss with importance sampling."""
         current_q_values = self.q_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
@@ -724,7 +724,7 @@ class DeepRLController:
 
     def _compute_distributional_loss(self, states: torch.Tensor, actions: torch.Tensor,
                                    rewards: torch.Tensor, next_states: torch.Tensor,
-                                   dones: torch.Tensor, is_weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                                   dones: torch.Tensor, is_weights: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute distributional (C51) loss."""
         batch_size = states.size(0)
 
@@ -778,7 +778,7 @@ class DeepRLController:
         """Update target network with soft or hard update."""
         if self.config.tau < 1.0:
             # Soft update
-            for target_param, param in zip(self.target_network.parameters(), self.q_network.parameters()):
+            for target_param, param in zip(self.target_network.parameters(), self.q_network.parameters(), strict=False):
                 target_param.data.copy_(
                     self.config.tau * param.data + (1.0 - self.config.tau) * target_param.data
                 )
@@ -804,13 +804,13 @@ class DeepRLController:
             self.q_network.apply(lambda m: m.reset_noise() if hasattr(m, 'reset_noise') else None)
             self.target_network.apply(lambda m: m.reset_noise() if hasattr(m, 'reset_noise') else None)
 
-    def control_step(self, system_state: SystemState) -> Tuple[int, Dict[str, Any]]:
+    def control_step(self, system_state: SystemState) -> tuple[int, dict[str, Any]]:
         """
         Execute one control step with deep RL.
-        
+
         Args:
             system_state: Current system state
-            
+
         Returns:
             Action and control information
         """
@@ -838,7 +838,7 @@ class DeepRLController:
                           next_state: SystemState, done: bool):
         """
         Update the controller with reward feedback.
-        
+
         Args:
             prev_state: Previous system state
             action: Action taken
@@ -898,7 +898,7 @@ class DeepRLController:
 
         logger.info(f"Model loaded from {path}")
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
         return {
             'algorithm': self.algorithm.value,
@@ -921,13 +921,13 @@ def create_deep_rl_controller(state_dim: int, action_dim: int,
                             **kwargs) -> DeepRLController:
     """
     Factory function to create deep RL controller.
-    
+
     Args:
         state_dim: State space dimension
         action_dim: Action space dimension
         algorithm: Algorithm name
         **kwargs: Additional configuration
-        
+
     Returns:
         Configured deep RL controller
     """

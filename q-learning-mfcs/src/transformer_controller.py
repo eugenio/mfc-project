@@ -30,7 +30,7 @@ import logging
 import math
 from collections import deque
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -100,7 +100,7 @@ class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_len: int = 5000):
         """
         Initialize positional encoding.
-        
+
         Args:
             d_model: Model dimension
             max_len: Maximum sequence length
@@ -132,7 +132,7 @@ class MultiHeadAttention(nn.Module):
                  attention_type: AttentionType = AttentionType.SELF_ATTENTION):
         """
         Initialize multi-head attention.
-        
+
         Args:
             d_model: Model dimension
             n_heads: Number of attention heads
@@ -163,16 +163,16 @@ class MultiHeadAttention(nn.Module):
         logger.info(f"Multi-head attention initialized: {attention_type.value}, {n_heads} heads")
 
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+                mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass through multi-head attention.
-        
+
         Args:
             query: Query tensor [batch_size, seq_len, d_model]
             key: Key tensor [batch_size, seq_len, d_model]
             value: Value tensor [batch_size, seq_len, d_model]
             mask: Attention mask [batch_size, seq_len, seq_len]
-            
+
         Returns:
             Output tensor and attention weights
         """
@@ -199,7 +199,7 @@ class MultiHeadAttention(nn.Module):
         return output, attention_weights
 
     def _scaled_dot_product_attention(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor,
-                                    mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+                                    mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """Scaled dot-product attention computation."""
         # Compute attention scores
         scores = torch.matmul(Q, K.transpose(-2, -1)) / self.scale
@@ -255,7 +255,7 @@ class TransformerEncoderLayer(nn.Module):
         # Dropout
         self.dropout = nn.Dropout(config.dropout)
 
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass through encoder layer."""
         # Multi-head self-attention with residual connection
         attn_output, attention_weights = self.self_attention(x, x, x, mask)
@@ -271,10 +271,10 @@ class TransformerEncoderLayer(nn.Module):
 class SensorFusionAttention(nn.Module):
     """Cross-modal attention for sensor fusion (EIS, QCM, etc.)."""
 
-    def __init__(self, config: TransformerConfig, sensor_dims: Dict[str, int]):
+    def __init__(self, config: TransformerConfig, sensor_dims: dict[str, int]):
         """
         Initialize sensor fusion attention.
-        
+
         Args:
             config: Transformer configuration
             sensor_dims: Dimensions for each sensor type
@@ -306,13 +306,13 @@ class SensorFusionAttention(nn.Module):
 
         logger.info(f"Sensor fusion attention initialized for sensors: {list(sensor_dims.keys())}")
 
-    def forward(self, sensor_data: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def forward(self, sensor_data: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass through sensor fusion attention.
-        
+
         Args:
             sensor_data: Dictionary of sensor data tensors
-            
+
         Returns:
             Fused representation and attention weights
         """
@@ -399,14 +399,14 @@ class TemporalAttentionModule(nn.Module):
 
         logger.info("Temporal attention module initialized")
 
-    def forward(self, x: torch.Tensor, temporal_mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, temporal_mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass through temporal attention.
-        
+
         Args:
             x: Input tensor [batch_size, seq_len, d_model]
             temporal_mask: Temporal attention mask
-            
+
         Returns:
             Output tensor and temporal attention weights
         """
@@ -433,16 +433,16 @@ class TemporalAttentionModule(nn.Module):
 class TransformerMFCController(nn.Module):
     """
     Complete Transformer-based MFC Controller with multiple attention mechanisms.
-    
+
     Integrates temporal attention, sensor fusion attention, and causal attention
     for sophisticated MFC control decision making.
     """
 
-    def __init__(self, input_dims: Dict[str, int], output_dim: int,
-                 config: Optional[TransformerConfig] = None):
+    def __init__(self, input_dims: dict[str, int], output_dim: int,
+                 config: TransformerConfig | None = None):
         """
         Initialize transformer MFC controller.
-        
+
         Args:
             input_dims: Input dimensions for different data types
             output_dim: Output dimension (number of actions)
@@ -502,17 +502,17 @@ class TransformerMFCController(nn.Module):
         logger.info(f"Number of layers: {self.config.n_layers}")
         logger.info(f"Number of heads: {self.config.n_heads}")
 
-    def forward(self, inputs: Dict[str, torch.Tensor],
-                health_context: Optional[torch.Tensor] = None,
-                return_attention: bool = False) -> Dict[str, torch.Tensor]:
+    def forward(self, inputs: dict[str, torch.Tensor],
+                health_context: torch.Tensor | None = None,
+                return_attention: bool = False) -> dict[str, torch.Tensor]:
         """
         Forward pass through transformer controller.
-        
+
         Args:
             inputs: Dictionary of input tensors
             health_context: Health context for attention
             return_attention: Whether to return attention weights
-            
+
         Returns:
             Dictionary of outputs including actions, values, and attention weights
         """
@@ -581,8 +581,8 @@ class TransformerMFCController(nn.Module):
 
         return outputs
 
-    def get_attention_maps(self, inputs: Dict[str, torch.Tensor],
-                          health_context: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def get_attention_maps(self, inputs: dict[str, torch.Tensor],
+                          health_context: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         """Get attention maps for interpretability."""
         with torch.no_grad():
             outputs = self.forward(inputs, health_context, return_attention=True)
@@ -592,15 +592,15 @@ class TransformerMFCController(nn.Module):
 class TransformerControllerManager:
     """
     Manager class for transformer-based MFC control with training and inference.
-    
+
     Integrates with Phase 2 and Phase 3 components for comprehensive control.
     """
 
     def __init__(self, state_dim: int, action_dim: int,
-                 config: Optional[TransformerConfig] = None):
+                 config: TransformerConfig | None = None):
         """
         Initialize transformer controller manager.
-        
+
         Args:
             state_dim: State space dimension
             action_dim: Action space dimension
@@ -658,13 +658,13 @@ class TransformerControllerManager:
         logger.info(f"Model parameters: {sum(p.numel() for p in self.model.parameters()):,}")
         logger.info(f"Device: {self.device}")
 
-    def extract_transformer_features(self, system_state: SystemState) -> Dict[str, torch.Tensor]:
+    def extract_transformer_features(self, system_state: SystemState) -> dict[str, torch.Tensor]:
         """
         Extract features from system state for transformer input.
-        
+
         Args:
             system_state: Complete system state
-            
+
         Returns:
             Dictionary of feature tensors
         """
@@ -701,13 +701,13 @@ class TransformerControllerManager:
 
         return features
 
-    def control_step(self, system_state: SystemState) -> Tuple[int, Dict[str, Any]]:
+    def control_step(self, system_state: SystemState) -> tuple[int, dict[str, Any]]:
         """
         Execute one control step with transformer.
-        
+
         Args:
             system_state: Current system state
-            
+
         Returns:
             Action and control information
         """
@@ -760,13 +760,13 @@ class TransformerControllerManager:
 
         return action, control_info
 
-    def visualize_attention(self, system_state: SystemState) -> Dict[str, Any]:
+    def visualize_attention(self, system_state: SystemState) -> dict[str, Any]:
         """
         Visualize attention patterns for interpretability.
-        
+
         Args:
             system_state: Current system state
-            
+
         Returns:
             Attention visualization data
         """
@@ -788,13 +788,13 @@ class TransformerControllerManager:
 
         return visualization_data
 
-    def train_step(self, batch_data: List[Dict[str, Any]]) -> Dict[str, float]:
+    def train_step(self, batch_data: list[dict[str, Any]]) -> dict[str, float]:
         """
         Train the transformer model on a batch of data.
-        
+
         Args:
             batch_data: Batch of training data
-            
+
         Returns:
             Training metrics
         """
@@ -830,7 +830,7 @@ class TransformerControllerManager:
         torch.save(save_dict, path)
         logger.info(f"Transformer model saved to {path}")
 
-    def get_model_summary(self) -> Dict[str, Any]:
+    def get_model_summary(self) -> dict[str, Any]:
         """Get transformer model summary."""
         return {
             'model_type': 'transformer_mfc_controller',
@@ -852,7 +852,7 @@ def create_transformer_controller(state_dim: int, action_dim: int,
                                 n_layers: int = 6, **kwargs) -> TransformerControllerManager:
     """
     Factory function to create transformer controller.
-    
+
     Args:
         state_dim: State space dimension
         action_dim: Action space dimension
@@ -860,7 +860,7 @@ def create_transformer_controller(state_dim: int, action_dim: int,
         n_heads: Number of attention heads
         n_layers: Number of transformer layers
         **kwargs: Additional configuration
-        
+
     Returns:
         Configured transformer controller
     """

@@ -19,11 +19,11 @@ def render_validation_analysis():
 def render_cell_calculations():
     """Render real-time cell calculations based on current configuration."""
     config = st.session_state.cell_config
-    
+
     st.metric("Cell Volume", f"{config.get('volume', 0):.1f} mL")
     st.metric("Electrode Area", f"{config.get('electrode_area', 0):.1f} cm²")
     st.metric("Electrode Spacing", f"{config.get('electrode_spacing', 0):.1f} cm")
-    
+
     # Power density estimation (simplified)
     if config.get('electrode_area', 0) > 0:
         power_density = 50 * (config.get('electrode_area', 0) / 100)  # Rough estimate

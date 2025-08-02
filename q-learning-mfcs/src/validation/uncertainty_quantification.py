@@ -9,8 +9,9 @@ Created: 2025-08-01
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -24,20 +25,20 @@ class ParameterUncertainty:
     nominal_value: float
     units: str
     distribution_type: str = 'normal'  # 'normal', 'lognormal', 'uniform', 'triangular'
-    uncertainty_bounds: Tuple[float, float] = (0.0, 0.0)
+    uncertainty_bounds: tuple[float, float] = (0.0, 0.0)
     confidence_level: float = 0.95
     source: str = ""
-    correlation_matrix: Dict[str, float] = field(default_factory=dict)
+    correlation_matrix: dict[str, float] = field(default_factory=dict)
 
 class MonteCarloAnalysis:
     """
     Monte Carlo uncertainty propagation analysis.
-    
+
     Propagates parameter uncertainties through the MFC model to quantify
     prediction uncertainty bounds.
     """
 
-    def __init__(self, parameter_uncertainties: Dict[str, ParameterUncertainty]):
+    def __init__(self, parameter_uncertainties: dict[str, ParameterUncertainty]):
         self.parameter_uncertainties = parameter_uncertainties
         self.sample_size = 1000
         self.results = {}
@@ -82,10 +83,10 @@ class MonteCarloAnalysis:
 
         return pd.DataFrame(samples)
 
-    def propagate_uncertainty(self, model_function: Callable, output_names: List[str]) -> Dict[str, Any]:
+    def propagate_uncertainty(self, model_function: Callable, output_names: list[str]) -> dict[str, Any]:
         """
         Propagate parameter uncertainty through model function.
-        
+
         Args:
             model_function: Function that takes parameter dict and returns output dict
             output_names: List of output variable names to analyze
@@ -163,10 +164,10 @@ class MonteCarloAnalysis:
         self.results = uncertainty_results
         return uncertainty_results
 
-    def sensitivity_analysis(self, model_function: Callable, output_name: str) -> Dict[str, float]:
+    def sensitivity_analysis(self, model_function: Callable, output_name: str) -> dict[str, float]:
         """
         Perform sensitivity analysis using correlation coefficients.
-        
+
         Args:
             model_function: Model function
             output_name: Name of output variable to analyze
@@ -328,10 +329,10 @@ class UncertaintyQuantificationFramework:
     def create_simplified_model_function(self):
         """Create simplified model function for uncertainty analysis."""
 
-        def simplified_mfc_model(params: Dict[str, float]) -> Dict[str, float]:
+        def simplified_mfc_model(params: dict[str, float]) -> dict[str, float]:
             """
             Simplified MFC model for uncertainty propagation.
-            
+
             This is a reduced-order model that captures the main relationships
             without full computational complexity.
             """
@@ -387,7 +388,7 @@ class UncertaintyQuantificationFramework:
 
         return simplified_mfc_model
 
-    def run_comprehensive_uncertainty_analysis(self) -> Dict[str, Any]:
+    def run_comprehensive_uncertainty_analysis(self) -> dict[str, Any]:
         """Run comprehensive uncertainty quantification analysis."""
 
         print("🎲 Running Comprehensive Uncertainty Analysis")
@@ -447,7 +448,7 @@ class UncertaintyQuantificationFramework:
 
         return comprehensive_results
 
-    def generate_uncertainty_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_uncertainty_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate uncertainty analysis summary."""
 
         output_stats = results['uncertainty_analysis']['output_statistics']

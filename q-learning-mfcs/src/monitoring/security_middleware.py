@@ -12,9 +12,10 @@ import logging
 import os
 import secrets
 import sys
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -22,14 +23,13 @@ sys.path.append(str(project_root))
 
 from fastapi import Depends, HTTPException, Request, Response  # noqa: E402
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer  # noqa: E402
-from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
-from starlette.responses import RedirectResponse  # noqa: E402
-
 from monitoring.ssl_config import (  # noqa: E402
     SecurityHeaders,
     SSLConfig,
     load_ssl_config,
 )
+from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
+from starlette.responses import RedirectResponse  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -59,8 +59,8 @@ class SecurityConfig:
         self.rate_limit_burst = 10
 
         # IP filtering
-        self.allowed_ips: List[str] = self._load_allowed_ips()
-        self.blocked_ips: List[str] = self._load_blocked_ips()
+        self.allowed_ips: list[str] = self._load_allowed_ips()
+        self.blocked_ips: list[str] = self._load_blocked_ips()
 
         # Content Security Policy
         self.csp_policy = self._get_default_csp()
@@ -77,7 +77,7 @@ class SecurityConfig:
         """Generate a secure random key"""
         return secrets.token_urlsafe(32)
 
-    def _load_allowed_ips(self) -> List[str]:
+    def _load_allowed_ips(self) -> list[str]:
         """Load allowed IP addresses"""
         allowed_file = Path("/etc/mfc/allowed-ips.txt")
         if allowed_file.exists():
@@ -90,7 +90,7 @@ class SecurityConfig:
         # Default allowed IPs (localhost and private networks)
         return ["127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 
-    def _load_blocked_ips(self) -> List[str]:
+    def _load_blocked_ips(self) -> list[str]:
         """Load blocked IP addresses"""
         blocked_file = Path("/etc/mfc/blocked-ips.txt")
         if blocked_file.exists():
@@ -121,9 +121,9 @@ class SessionManager:
 
     def __init__(self, config: SecurityConfig):
         self.config = config
-        self.active_sessions: Dict[str, Dict] = {}
+        self.active_sessions: dict[str, dict] = {}
 
-    def create_session(self, user_id: str, user_data: Optional[Dict[str, Any]] = None) -> str:
+    def create_session(self, user_id: str, user_data: dict[str, Any] | None = None) -> str:
         """Create a new session"""
         session_id = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(minutes=self.config.session_timeout_minutes)
@@ -139,7 +139,7 @@ class SessionManager:
         self.active_sessions[session_id] = session_data
         return session_id
 
-    def validate_session(self, session_id: str) -> Optional[Dict]:
+    def validate_session(self, session_id: str) -> dict | None:
         """Validate and return session data"""
         if not session_id or session_id not in self.active_sessions:
             return None
@@ -238,7 +238,7 @@ class RateLimiter:
 
     def __init__(self, config: SecurityConfig):
         self.config = config
-        self.request_counts: Dict[str, List[datetime]] = {}
+        self.request_counts: dict[str, list[datetime]] = {}
 
     def is_rate_limited(self, client_ip: str) -> bool:
         """Check if client is rate limited"""
@@ -268,7 +268,7 @@ class RateLimiter:
 class SecurityMiddleware(BaseHTTPMiddleware):
     """Comprehensive security middleware"""
 
-    def __init__(self, app, ssl_config: Optional[SSLConfig] = None):
+    def __init__(self, app, ssl_config: SSLConfig | None = None):
         super().__init__(app)
         self.ssl_config = ssl_config or load_ssl_config()
         self.security_config = SecurityConfig()
@@ -470,7 +470,7 @@ security_bearer = HTTPBearer(auto_error=False)
 async def get_current_session(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security_bearer)
-) -> Optional[Dict]:
+) -> dict | None:
     """Get current session from request"""
     # Get session manager from middleware
     session_manager = getattr(request.app.state, "session_manager", None)
@@ -489,13 +489,13 @@ async def get_current_session(
 
     return None
 
-async def require_authentication(session: Dict = Depends(get_current_session)) -> Dict:
+async def require_authentication(session: dict = Depends(get_current_session)) -> dict:
     """Require authentication for endpoint"""
     if not session:
         raise HTTPException(status_code=401, detail="Authentication required")
     return session
 
-def create_security_middleware(app, ssl_config: Optional[SSLConfig] = None) -> SecurityMiddleware:
+def create_security_middleware(app, ssl_config: SSLConfig | None = None) -> SecurityMiddleware:
     """Factory function to create security middleware"""
     middleware = SecurityMiddleware(app, ssl_config)
 

@@ -13,7 +13,6 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -46,16 +45,16 @@ logger = logging.getLogger(__name__)
 class MonitoringService:
     """Represents a monitoring service process"""
 
-    def __init__(self, name: str, command: List[str], port: int,
-                 check_url: Optional[str] = None, ssl_required: bool = False):
+    def __init__(self, name: str, command: list[str], port: int,
+                 check_url: str | None = None, ssl_required: bool = False):
         self.name = name
         self.command = command
         self.port = port
         self.check_url = check_url
         self.ssl_required = ssl_required
-        self.process: Optional[subprocess.Popen] = None
+        self.process: subprocess.Popen | None = None
         self.is_running = False
-        self.start_time: Optional[datetime] = None
+        self.start_time: datetime | None = None
         self.restart_count = 0
 
     def start(self) -> bool:
@@ -151,7 +150,7 @@ class MonitoringService:
 
         return False
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         """Get service status information"""
         uptime = None
         if self.start_time and self.is_running:
@@ -170,14 +169,14 @@ class MonitoringService:
 class MonitoringOrchestrator:
     """Orchestrates all monitoring services with HTTPS support"""
 
-    ssl_config: Optional[SSLConfig]
+    ssl_config: SSLConfig | None
 
-    def __init__(self, ssl_config: Optional[SSLConfig] = None):
+    def __init__(self, ssl_config: SSLConfig | None = None):
         self.ssl_config = ssl_config or load_ssl_config()
-        self.services: List[MonitoringService] = []
+        self.services: list[MonitoringService] = []
         self.shutdown_requested = False
         self.health_check_interval = 30  # seconds
-        self.health_check_thread: Optional[threading.Thread] = None
+        self.health_check_thread: threading.Thread | None = None
 
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -494,7 +493,7 @@ def main():
         ports = [ssl_config.https_port_api, ssl_config.https_port_frontend, ssl_config.wss_port_streaming]
         all_passed = True
 
-        for service, port in zip(["API", "Frontend", "WebSocket"], ports):
+        for service, port in zip(["API", "Frontend", "WebSocket"], ports, strict=False):
             if test_ssl_connection(ssl_config.domain, port, timeout=5):
                 print(f"✅ {service} SSL test passed (port {port})")
             else:

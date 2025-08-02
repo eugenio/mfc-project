@@ -96,13 +96,13 @@ class AdvancedPhysicsSimulator:
         """Calculate 3D flow field using CFD approximation."""
         # Simplified 3D flow field calculation
         nx, ny, nz = 50, 30, 20
-        x = np.linspace(0, 0.1, nx)  # 10 cm length
-        y = np.linspace(0, 0.05, ny)  # 5 cm width
+        np.linspace(0, 0.1, nx)  # 10 cm length
+        np.linspace(0, 0.05, ny)  # 5 cm width
         z = np.linspace(0, 0.02, nz)  # 2 cm height
 
         # Create velocity field based on Reynolds number
         flow_rate = params.get('flow_rate', 1e-4)
-        re_number = self._calculate_reynolds_number(flow_rate, params)
+        self._calculate_reynolds_number(flow_rate, params)
 
         # Parabolic velocity profile
         velocity = np.zeros((nx, ny, nz, 3))  # 3D velocity components
@@ -123,7 +123,7 @@ class AdvancedPhysicsSimulator:
 
         # Initial concentration
         c_bulk = params.get('substrate_concentration', 1.0)  # kg/m³
-        diffusivity = params.get('diffusivity', 1e-9)  # m²/s
+        params.get('diffusivity', 1e-9)  # m²/s
 
         # Simplified steady-state concentration profile
         concentration = np.zeros((nx, ny, nz))
@@ -390,10 +390,10 @@ def render_advanced_physics_page():
         run_simulation = st.button("Run Advanced Physics Simulation", type="primary", use_container_width=True)
 
     with col2:
-        simulation_time = st.selectbox("Simulation Time", ["1 hour", "6 hours", "1 day", "1 week"])
+        st.selectbox("Simulation Time", ["1 hour", "6 hours", "1 day", "1 week"])
 
     with col3:
-        mesh_resolution = st.selectbox("Mesh Resolution", ["Coarse", "Medium", "Fine"])
+        st.selectbox("Mesh Resolution", ["Coarse", "Medium", "Fine"])
 
     # Run simulation
     if run_simulation:
@@ -455,18 +455,18 @@ def render_advanced_physics_page():
     with st.expander("ℹ️ Physics Models Information"):
         st.markdown("""
         **Computational Models Used:**
-        
+
         - **Fluid Dynamics**: Simplified Navier-Stokes equations for porous media flow
         - **Mass Transport**: Advection-diffusion equation with biofilm consumption
         - **Biofilm Growth**: Monod kinetics with spatial distribution
         - **Electrochemistry**: Butler-Volmer kinetics (coupled to transport)
-        
+
         **Key Assumptions:**
         - Steady-state flow field
         - Uniform biofilm properties
         - Single substrate limitation
         - Isothermal conditions
-        
+
         **Validation Sources:**
         - Picioreanu et al. (2007) - Biofilm modeling framework
         - Torres et al. (2008) - MFC fluid dynamics

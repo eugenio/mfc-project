@@ -9,7 +9,6 @@ Created: 2025-07-27
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from .base_membrane import BaseMembraneModel, IonType, MembraneParameters
 
@@ -51,8 +50,8 @@ class BipolarMembrane(BaseMembraneModel):
         """Calculate bipolar membrane properties."""
         pass
 
-    def calculate_ionic_conductivity(self, temperature: Optional[float] = None,
-                                   water_content: Optional[float] = None) -> float:
+    def calculate_ionic_conductivity(self, temperature: float | None = None,
+                                   water_content: float | None = None) -> float:
         """Calculate combined ionic conductivity."""
         # Simplified: harmonic mean of PEM and AEM conductivities
         pem_conductivity = 0.1 * 100  # S/m

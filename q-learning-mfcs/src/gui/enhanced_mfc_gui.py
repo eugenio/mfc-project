@@ -7,7 +7,7 @@ for scientific researchers and practitioners working with MFC systems.
 
 Features:
 - Advanced parameter input with scientific validation
-- Interactive Q-learning visualization and analysis  
+- Interactive Q-learning visualization and analysis
 - Real-time monitoring with publication-ready exports
 - Collaborative research tools and data sharing
 - Comprehensive performance analysis dashboard
@@ -23,7 +23,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -364,7 +364,7 @@ class EnhancedMFCApp:
         except Exception:
             pass
 
-    def render_parameter_validation_summary(self, parameters: Dict[str, Any]):
+    def render_parameter_validation_summary(self, parameters: dict[str, Any]):
         """Render parameter validation summary."""
         st.markdown("### ✅ Parameter Validation Summary")
 
@@ -605,7 +605,7 @@ class EnhancedMFCApp:
             # Use the new interactive Q-table visualization component
             st.markdown("### 🔬 Advanced Q-Table Analysis")
             st.markdown("""
-            Comprehensive analysis of Q-learning behavior with convergence indicators, 
+            Comprehensive analysis of Q-learning behavior with convergence indicators,
             policy quality metrics, and interactive visualizations for research publication.
             """)
 
@@ -682,7 +682,7 @@ class EnhancedMFCApp:
                 - Policy quality assessment with entropy measures
                 - Literature-backed parameter ranges
                 - Export functionality for publications
-                
+
                 **Best for:** Research publications, detailed analysis, parameter optimization
                 """)
 
@@ -694,7 +694,7 @@ class EnhancedMFCApp:
                 - Simple convergence tracking
                 - Standard plotting capabilities
                 - Quick data loading
-                
+
                 **Best for:** Quick checks, basic monitoring, legacy compatibility
                 """)
 

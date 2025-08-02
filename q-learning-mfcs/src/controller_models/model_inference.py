@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -46,7 +46,7 @@ class InferenceSpecs:
     cpu_cores: int  # Available CPU cores
     ram_mb: float  # Available RAM
     storage_mb: float  # Storage for models
-    temperature_range: Tuple[float, float]  # Operating temperature range
+    temperature_range: tuple[float, float]  # Operating temperature range
 
 
 @dataclass
@@ -54,7 +54,7 @@ class InferenceMeasurement:
     """Single inference measurement"""
     timestamp: float
     input_state: np.ndarray
-    output_action: Union[int, np.ndarray]
+    output_action: int | np.ndarray
     confidence_score: float  # 0-1 confidence in output
     inference_time_ms: float
     memory_usage_mb: float
@@ -104,14 +104,14 @@ class ModelInferenceEngine:
             self.use_lookup_tables = True
             self.parallel_processing = True
 
-    def load_model(self, model_path: str, metadata_path: Optional[str] = None) -> bool:
+    def load_model(self, model_path: str, metadata_path: str | None = None) -> bool:
         """
         Load trained Q-learning model from file
-        
+
         Args:
             model_path: Path to model file
             metadata_path: Optional path to metadata file
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -153,7 +153,7 @@ class ModelInferenceEngine:
             logger.error(f"Failed to load model: {e}")
             return False
 
-    def _convert_json_to_qtable(self, model_data: Dict) -> np.ndarray:
+    def _convert_json_to_qtable(self, model_data: dict) -> np.ndarray:
         """Convert JSON Q-table to NumPy array"""
         if 'q_table' in model_data:
             # Handle nested dictionary format
@@ -222,11 +222,11 @@ class ModelInferenceEngine:
     def infer(self, state: np.ndarray, use_cache: bool = True) -> InferenceMeasurement:
         """
         Perform inference on input state
-        
+
         Args:
             state: Input state vector
             use_cache: Whether to use inference cache
-            
+
         Returns:
             InferenceMeasurement with results and performance metrics
         """
@@ -301,7 +301,7 @@ class ModelInferenceEngine:
 
         return measurement
 
-    def _execute_inference(self, state: np.ndarray) -> Tuple[Union[int, np.ndarray], float]:
+    def _execute_inference(self, state: np.ndarray) -> tuple[int | np.ndarray, float]:
         """Execute the actual inference based on model type"""
         if self.model is None:
             raise RuntimeError("No model loaded")
@@ -321,7 +321,7 @@ class ModelInferenceEngine:
             logger.error(f"Inference execution failed: {e}")
             return 0, 0.0  # Default action with zero confidence
 
-    def _infer_from_qtable_dict(self, state: np.ndarray) -> Tuple[int, float]:
+    def _infer_from_qtable_dict(self, state: np.ndarray) -> tuple[int, float]:
         """Infer action from dictionary-based Q-table"""
         # Discretize continuous state if necessary
         discrete_state = self._discretize_state(state)
@@ -350,7 +350,7 @@ class ModelInferenceEngine:
             logger.warning(f"State {state_key} not found in Q-table")
             return 0, 0.0
 
-    def _infer_from_qtable_array(self, state: np.ndarray) -> Tuple[int, float]:
+    def _infer_from_qtable_array(self, state: np.ndarray) -> tuple[int, float]:
         """Infer action from array-based Q-table"""
         # For 2D Q-table, assume first dimension is state, second is action
         if len(self.model.shape) == 2:
@@ -368,7 +368,7 @@ class ModelInferenceEngine:
 
         return 0, 0.0
 
-    def _infer_from_callable(self, state: np.ndarray) -> Tuple[Union[int, np.ndarray], float]:
+    def _infer_from_callable(self, state: np.ndarray) -> tuple[int | np.ndarray, float]:
         """Infer from callable model (neural network, etc.)"""
         try:
             output = self.model(state)
@@ -449,7 +449,7 @@ class ModelInferenceEngine:
         except ImportError:
             return 0.0
 
-    def batch_infer(self, states: List[np.ndarray]) -> List[InferenceMeasurement]:
+    def batch_infer(self, states: list[np.ndarray]) -> list[InferenceMeasurement]:
         """Perform batch inference on multiple states"""
         if not self.specs.batch_processing:
             # Fall back to individual inferences
@@ -471,7 +471,7 @@ class ModelInferenceEngine:
 
         return results
 
-    def _process_batch(self, states: List[np.ndarray]) -> List[InferenceMeasurement]:
+    def _process_batch(self, states: list[np.ndarray]) -> list[InferenceMeasurement]:
         """Process a batch of states efficiently"""
         results = []
 
@@ -485,7 +485,7 @@ class ModelInferenceEngine:
                 actions_batch = np.argmax(q_values_batch, axis=1)
                 confidences_batch = [self._calculate_confidence(q_values) for q_values in q_values_batch]
 
-                for i, (state, action, confidence) in enumerate(zip(states, actions_batch, confidences_batch)):
+                for i, (state, action, confidence) in enumerate(zip(states, actions_batch, confidences_batch, strict=False)):
                     measurement = InferenceMeasurement(
                         timestamp=time.time(),
                         input_state=state.copy(),
@@ -504,7 +504,7 @@ class ModelInferenceEngine:
 
         return results
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics"""
         cache_hit_rate = self.cache_hits / max(1, self.total_inferences)
         deadline_violation_rate = self.deadline_violations / max(1, self.total_inferences)
@@ -536,7 +536,7 @@ class ModelInferenceEngine:
 
         return base_power * cpu_factor * optimization_factor
 
-    def get_cost_analysis(self) -> Dict[str, float]:
+    def get_cost_analysis(self) -> dict[str, float]:
         """Get comprehensive cost analysis for inference engine"""
         initial_cost = self.specs.cost
 
@@ -562,7 +562,7 @@ class ModelInferenceEngine:
         }
 
 
-def create_standard_inference_engines() -> Dict[str, ModelInferenceEngine]:
+def create_standard_inference_engines() -> dict[str, ModelInferenceEngine]:
     """Create standard inference engine configurations"""
 
     # High-performance engine for real-time control

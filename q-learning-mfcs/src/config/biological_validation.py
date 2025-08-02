@@ -3,7 +3,6 @@ Validation functions for biological configuration parameters.
 Ensures biological plausibility and parameter consistency.
 """
 
-from typing import Dict
 
 from .biological_config import (
     BiofilmKineticsConfig,
@@ -24,14 +23,14 @@ from .substrate_config import (
 def validate_kinetic_parameters(params: KineticParameters, parameter_name: str = "kinetic_parameters") -> bool:
     """
     Validate kinetic parameters for biological plausibility.
-    
+
     Args:
         params: KineticParameters to validate
         parameter_name: Name for error messages
-        
+
     Returns:
         True if validation passes
-        
+
     Raises:
         ConfigValidationError: If any parameter is biologically implausible
     """
@@ -69,14 +68,14 @@ def validate_metabolic_reaction(reaction: MetabolicReactionConfig,
                               reaction_name: str = "metabolic_reaction") -> bool:
     """
     Validate metabolic reaction configuration.
-    
+
     Args:
         reaction: MetabolicReactionConfig to validate
         reaction_name: Name for error messages
-        
+
     Returns:
         True if validation passes
-        
+
     Raises:
         ConfigValidationError: If reaction is invalid
     """
@@ -121,14 +120,14 @@ def validate_species_metabolic_config(config: SpeciesMetabolicConfig,
                                     config_name: str = "species_config") -> bool:
     """
     Validate species-specific metabolic configuration.
-    
+
     Args:
         config: SpeciesMetabolicConfig to validate
         config_name: Name for error messages
-        
+
     Returns:
         True if validation passes
-        
+
     Raises:
         ConfigValidationError: If configuration is invalid
     """
@@ -191,14 +190,14 @@ def validate_biofilm_kinetics_config(config: BiofilmKineticsConfig,
                                     config_name: str = "biofilm_config") -> bool:
     """
     Validate biofilm kinetics configuration.
-    
+
     Args:
         config: BiofilmKineticsConfig to validate
         config_name: Name for error messages
-        
+
     Returns:
         True if validation passes
-        
+
     Raises:
         ConfigValidationError: If configuration is invalid
     """
@@ -279,11 +278,11 @@ def validate_substrate_kinetics_config(config: SubstrateKineticsConfig,
                                      config_name: str = "substrate_kinetics") -> bool:
     """
     Validate substrate kinetics configuration.
-    
+
     Args:
         config: SubstrateKineticsConfig to validate
         config_name: Name for error messages
-        
+
     Returns:
         True if validation passes
     """
@@ -332,11 +331,11 @@ def validate_substrate_degradation_pathway(pathway: SubstrateDegradationPathway,
                                          pathway_name: str = "degradation_pathway") -> bool:
     """
     Validate substrate degradation pathway.
-    
+
     Args:
         pathway: SubstrateDegradationPathway to validate
         pathway_name: Name for error messages
-        
+
     Returns:
         True if validation passes
     """
@@ -385,11 +384,11 @@ def validate_comprehensive_substrate_config(config: ComprehensiveSubstrateConfig
                                           config_name: str = "substrate_config") -> bool:
     """
     Validate comprehensive substrate configuration.
-    
+
     Args:
         config: ComprehensiveSubstrateConfig to validate
         config_name: Name for error messages
-        
+
     Returns:
         True if validation passes
     """
@@ -463,11 +462,11 @@ def validate_electrochemical_config(config: ElectrochemicalConfig,
                                    config_name: str = "electrochemical_config") -> bool:
     """
     Validate electrochemical configuration.
-    
+
     Args:
         config: ElectrochemicalConfig to validate
         config_name: Name for error messages
-        
+
     Returns:
         True if validation passes
     """
@@ -515,20 +514,20 @@ def validate_electrochemical_config(config: ElectrochemicalConfig,
 # Comprehensive validation function
 def validate_all_biological_configs(species_config: SpeciesMetabolicConfig,
                                    biofilm_config: BiofilmKineticsConfig,
-                                   substrate_configs: Dict[SubstrateType, ComprehensiveSubstrateConfig],
+                                   substrate_configs: dict[SubstrateType, ComprehensiveSubstrateConfig],
                                    electrochemical_config: ElectrochemicalConfig) -> bool:
     """
     Validate all biological configurations together for consistency.
-    
+
     Args:
         species_config: Species metabolic configuration
         biofilm_config: Biofilm kinetics configuration
         substrate_configs: Dictionary of substrate configurations
         electrochemical_config: Electrochemical configuration
-        
+
     Returns:
         True if all validations pass
-        
+
     Raises:
         ConfigValidationError: If any configuration is invalid
     """

@@ -10,8 +10,8 @@ Created: 2025-08-01
 """
 
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Tuple
 
 import numpy as np
 from scipy.optimize import minimize
@@ -30,7 +30,7 @@ class OptimizationBounds:
 class SimpleGaussianProcess:
     """
     Simplified Gaussian Process implementation for surrogate modeling.
-    
+
     Uses RBF kernel with noise for fast approximation.
     """
 
@@ -68,7 +68,7 @@ class SimpleGaussianProcess:
 
         self.fitted = True
 
-    def predict(self, X: np.ndarray, return_std: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: np.ndarray, return_std: bool = True) -> tuple[np.ndarray, np.ndarray]:
         """Predict mean and standard deviation at test points."""
         if not self.fitted:
             raise ValueError("Model must be fitted before prediction")
@@ -97,13 +97,13 @@ class SimpleGaussianProcess:
 class SimpleBayesianOptimizer:
     """
     Simplified Bayesian optimization for electrode parameter tuning.
-    
+
     Uses Gaussian Process surrogate model with Expected Improvement acquisition.
     """
 
     def __init__(self,
-                 parameter_bounds: List[OptimizationBounds],
-                 objective_function: Callable[[Dict[str, float]], float],
+                 parameter_bounds: list[OptimizationBounds],
+                 objective_function: Callable[[dict[str, float]], float],
                  acquisition_type: str = 'EI'):
 
         self.parameter_bounds = parameter_bounds
@@ -122,7 +122,7 @@ class SimpleBayesianOptimizer:
         self.best_params = None
         self.best_value = -np.inf
 
-    def _normalize_parameters(self, params: Dict[str, float]) -> np.ndarray:
+    def _normalize_parameters(self, params: dict[str, float]) -> np.ndarray:
         """Normalize parameters to [0,1] range."""
         normalized = []
         for bound in self.parameter_bounds:
@@ -131,7 +131,7 @@ class SimpleBayesianOptimizer:
             normalized.append(norm_value)
         return np.array(normalized)
 
-    def _denormalize_parameters(self, normalized: np.ndarray) -> Dict[str, float]:
+    def _denormalize_parameters(self, normalized: np.ndarray) -> dict[str, float]:
         """Convert normalized parameters back to original scale."""
         params = {}
         for i, bound in enumerate(self.parameter_bounds):
@@ -139,7 +139,7 @@ class SimpleBayesianOptimizer:
             params[bound.name] = value
         return params
 
-    def _sample_random_parameters(self, n_samples: int) -> List[Dict[str, float]]:
+    def _sample_random_parameters(self, n_samples: int) -> list[dict[str, float]]:
         """Sample random parameters within bounds."""
         samples = []
         for _ in range(n_samples):
@@ -170,7 +170,7 @@ class SimpleBayesianOptimizer:
 
         return ei
 
-    def _optimize_acquisition(self) -> Dict[str, float]:
+    def _optimize_acquisition(self) -> dict[str, float]:
         """Optimize acquisition function to find next sampling point."""
         best_acquisition = -np.inf
         best_params = None
@@ -202,14 +202,14 @@ class SimpleBayesianOptimizer:
 
         return best_params
 
-    def optimize(self, n_initial: int = 5, n_iterations: int = 20) -> Dict:
+    def optimize(self, n_initial: int = 5, n_iterations: int = 20) -> dict:
         """
         Run Bayesian optimization.
-        
+
         Args:
             n_initial: Number of initial random samples
             n_iterations: Number of optimization iterations
-            
+
         Returns:
             Optimization results dictionary
         """
@@ -297,7 +297,7 @@ class SimpleBayesianOptimizer:
 
         return results
 
-    def _create_results(self) -> Dict:
+    def _create_results(self) -> dict:
         """Create results dictionary."""
         return {
             'best_parameters': self.best_params,
@@ -308,7 +308,7 @@ class SimpleBayesianOptimizer:
             'parameter_bounds': {b.name: (b.lower, b.upper) for b in self.parameter_bounds}
         }
 
-def create_electrode_optimization_bounds() -> List[OptimizationBounds]:
+def create_electrode_optimization_bounds() -> list[OptimizationBounds]:
     """Create standard electrode optimization parameter bounds."""
     return [
         OptimizationBounds(

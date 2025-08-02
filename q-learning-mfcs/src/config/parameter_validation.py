@@ -3,7 +3,7 @@ Parameter validation framework for MFC configuration classes.
 Provides comprehensive validation for Q-learning and sensor parameters.
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -22,7 +22,7 @@ class ConfigValidationError(Exception):
 
 
 def validate_range(value: float, min_val: float, max_val: float,
-                  parameter: str, message_or_inclusive_min: Union[str, bool] = True,
+                  parameter: str, message_or_inclusive_min: str | bool = True,
                   inclusive_max: bool = True) -> None:
     """Validate that a value is within the specified range."""
     # Handle both old signature (with booleans) and new signature (with custom message)
@@ -75,13 +75,13 @@ def validate_probability(value: float, parameter: str) -> None:
 def validate_qlearning_config(config: QLearningConfig) -> bool:
     """
     Validate Q-learning configuration parameters.
-    
+
     Args:
         config: QLearningConfig instance to validate
-        
+
     Returns:
         bool: True if validation passes
-        
+
     Raises:
         ConfigValidationError: If any parameter is invalid
     """
@@ -174,13 +174,13 @@ def validate_qlearning_config(config: QLearningConfig) -> bool:
 def validate_qlearning_reward_weights(weights: QLearningRewardWeights) -> bool:
     """
     Validate Q-learning reward weights.
-    
+
     Args:
         weights: QLearningRewardWeights instance to validate
-        
+
     Returns:
         bool: True if validation passes
-        
+
     Raises:
         ConfigValidationError: If any weight is invalid
     """
@@ -218,13 +218,13 @@ def validate_qlearning_reward_weights(weights: QLearningRewardWeights) -> bool:
 def validate_sensor_config(config: SensorConfig) -> bool:
     """
     Validate sensor configuration parameters.
-    
+
     Args:
         config: SensorConfig instance to validate
-        
+
     Returns:
         bool: True if validation passes
-        
+
     Raises:
         ConfigValidationError: If any parameter is invalid
     """
@@ -343,18 +343,18 @@ def validate_sensor_fusion_config(config: SensorFusionConfig) -> bool:
     return True
 
 
-def validate_all_configurations(qlearning_config: Optional[QLearningConfig] = None,
-                               sensor_config: Optional[SensorConfig] = None) -> Dict[str, bool]:
+def validate_all_configurations(qlearning_config: QLearningConfig | None = None,
+                               sensor_config: SensorConfig | None = None) -> dict[str, bool]:
     """
     Validate all provided configurations.
-    
+
     Args:
         qlearning_config: Optional Q-learning configuration to validate
         sensor_config: Optional sensor configuration to validate
-        
+
     Returns:
         Dict[str, bool]: Validation results for each configuration
-        
+
     Raises:
         ConfigValidationError: If any validation fails
     """
@@ -371,16 +371,16 @@ def validate_all_configurations(qlearning_config: Optional[QLearningConfig] = No
 
 
 # Convenience function for quick validation
-def quick_validate(config: Union[QLearningConfig, SensorConfig]) -> bool:
+def quick_validate(config: QLearningConfig | SensorConfig) -> bool:
     """
     Quick validation for any supported configuration type.
-    
+
     Args:
         config: Configuration instance to validate
-        
+
     Returns:
         bool: True if validation passes
-        
+
     Raises:
         ConfigValidationError: If validation fails
         TypeError: If configuration type is not supported

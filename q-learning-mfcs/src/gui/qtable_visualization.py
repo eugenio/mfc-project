@@ -11,17 +11,17 @@ Last Modified: 2025-07-31
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 # Import Q-table analyzer
 from analysis.qtable_analyzer import QTABLE_ANALYZER, ConvergenceStatus, QTableMetrics
+from plotly.subplots import make_subplots
 
 
 class QTableVisualization:
@@ -39,10 +39,10 @@ class QTableVisualization:
         if 'comparison_results' not in st.session_state:
             st.session_state.comparison_results = {}
 
-    def render_qtable_analysis_interface(self) -> Dict[str, Any]:
+    def render_qtable_analysis_interface(self) -> dict[str, Any]:
         """
         Render the main Q-table analysis interface.
-        
+
         Returns:
             Analysis results and metadata
         """
@@ -125,7 +125,7 @@ class QTableVisualization:
             self._display_analysis_summary(analysis_results)
             self._display_detailed_metrics(analysis_results)
 
-    def _display_analysis_summary(self, results: Dict[str, QTableMetrics]):
+    def _display_analysis_summary(self, results: dict[str, QTableMetrics]):
         """Display summary of analysis results."""
         st.markdown("### 📊 Analysis Summary")
 
@@ -161,7 +161,7 @@ class QTableVisualization:
                 delta="Higher is better"
             )
 
-    def _display_detailed_metrics(self, results: Dict[str, QTableMetrics]):
+    def _display_detailed_metrics(self, results: dict[str, QTableMetrics]):
         """Display detailed metrics table."""
         st.markdown("### 📋 Detailed Metrics")
 

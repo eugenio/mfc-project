@@ -7,7 +7,7 @@ parameters and comprehensive performance analysis.
 
 Available models:
 - BaseCathodeModel: Abstract base class with Butler-Volmer kinetics
-- PlatinumCathodeModel: Platinum cathode with temperature dependency  
+- PlatinumCathodeModel: Platinum cathode with temperature dependency
 - BiologicalCathodeModel: Biological cathode with biofilm dynamics
 
 Convenience functions:

@@ -8,7 +8,7 @@ combining all components into a comprehensive simulation framework.
 import os
 import sys
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -48,10 +48,10 @@ class MetabolicState:
     """Container for metabolic system state."""
 
     # Metabolite concentrations (mmol/L)
-    metabolites: Dict[str, float]
+    metabolites: dict[str, float]
 
     # Reaction fluxes (mmol/gDW/h)
-    fluxes: Dict[str, float]
+    fluxes: dict[str, float]
 
     # Energy state
     atp_production: float      # mmol/gDW/h
@@ -71,7 +71,7 @@ class MetabolicState:
 class MetabolicModel:
     """
     Comprehensive metabolic model for MFC systems.
-    
+
     Features:
     - Species-specific metabolic pathways
     - Substrate metabolism with accurate stoichiometry
@@ -83,11 +83,11 @@ class MetabolicModel:
 
     def __init__(self, species: str = "mixed", substrate: str = "lactate",
                  membrane_type: str = "Nafion-117", use_gpu: bool = True,
-                 species_config: Optional[SpeciesMetabolicConfig] = None,
-                 substrate_config: Optional[ComprehensiveSubstrateConfig] = None):
+                 species_config: SpeciesMetabolicConfig | None = None,
+                 substrate_config: ComprehensiveSubstrateConfig | None = None):
         """
         Initialize metabolic model.
-        
+
         Args:
             species: Bacterial species ("geobacter", "shewanella", "mixed")
             substrate: Substrate type ("acetate", "lactate")
@@ -221,16 +221,16 @@ class MetabolicModel:
         self.energy_efficiency = 0.0
 
     def calculate_metabolic_fluxes(self, biomass: float, growth_rate: float,
-                                  anode_potential: float, substrate_supply: float) -> Dict[str, float]:
+                                  anode_potential: float, substrate_supply: float) -> dict[str, float]:
         """
         Calculate metabolic fluxes using simplified FBA.
-        
+
         Args:
             biomass: Biomass concentration (g/L)
             growth_rate: Specific growth rate (1/h)
             anode_potential: Anode potential (V)
             substrate_supply: Substrate supply rate (mmol/L/h)
-            
+
         Returns:
             Dictionary of reaction fluxes
         """
@@ -334,11 +334,11 @@ class MetabolicModel:
 
         return delta_g
 
-    def update_metabolite_concentrations(self, fluxes: Dict[str, float],
+    def update_metabolite_concentrations(self, fluxes: dict[str, float],
                                        dt: float, volume: float):
         """
         Update metabolite concentrations based on fluxes.
-        
+
         Args:
             fluxes: Reaction fluxes (mmol/gDW/h)
             dt: Time step (h)
@@ -376,12 +376,12 @@ class MetabolicModel:
                                          temperature: float = 303.0) -> float:
         """
         Calculate oxygen crossover and its metabolic effects.
-        
+
         Args:
             cathode_o2_conc: Cathode oxygen concentration (mol/m³)
             membrane_area: Membrane area (m²)
             temperature: Temperature (K)
-            
+
         Returns:
             Oxygen consumption rate due to crossover (mmol/L/h)
         """
@@ -402,7 +402,7 @@ class MetabolicModel:
                                           electrode_potential: float, dt: float):
         """
         Calculate electron shuttle production and consumption.
-        
+
         Args:
             biomass: Biomass concentration (g/L)
             growth_rate: Specific growth rate (1/h)
@@ -439,15 +439,15 @@ class MetabolicModel:
         )
 
     def calculate_current_output(self, biomass: float, volume: float,
-                               electrode_area: float) -> Tuple[float, float]:
+                               electrode_area: float) -> tuple[float, float]:
         """
         Calculate total current output from metabolism.
-        
+
         Args:
             biomass: Biomass concentration (g/L)
             volume: System volume (L)
             electrode_area: Electrode area (m²)
-            
+
         Returns:
             Tuple of (direct_current, mediated_current) in A/m²
         """
@@ -480,12 +480,12 @@ class MetabolicModel:
                                      dt: float) -> float:
         """
         Calculate coulombic efficiency.
-        
+
         Args:
             current_output: Total current (A)
             substrate_consumed: Substrate consumption (mmol)
             dt: Time period (h)
-            
+
         Returns:
             Coulombic efficiency (fraction)
         """
@@ -529,7 +529,7 @@ class MetabolicModel:
                       volume: float, electrode_area: float) -> MetabolicState:
         """
         Step metabolic model forward by dt.
-        
+
         Args:
             dt: Time step (h)
             biomass: Biomass concentration (g/L)
@@ -540,7 +540,7 @@ class MetabolicModel:
             membrane_area: Membrane area (m²)
             volume: System volume (L)
             electrode_area: Electrode area (m²)
-            
+
         Returns:
             MetabolicState with current system state
         """
@@ -606,15 +606,15 @@ class MetabolicModel:
         # Energy calculations
         atp_flux = sum(flux * reaction.stoichiometry.get("atp", 0)
                       for reaction, flux in zip(self.current_pathway.reactions,
-                                              self.fluxes.values()))
+                                              self.fluxes.values(), strict=False))
 
         nadh_flux = sum(flux * reaction.stoichiometry.get("nadh", 0)
                        for reaction, flux in zip(self.current_pathway.reactions,
-                                               self.fluxes.values()))
+                                               self.fluxes.values(), strict=False))
 
         electron_flux = sum(flux * reaction.stoichiometry.get("electron_anode", 0)
                           for reaction, flux in zip(self.current_pathway.reactions,
-                                                  self.fluxes.values()))
+                                                  self.fluxes.values(), strict=False))
 
         # Create state summary
         state = MetabolicState(
@@ -632,7 +632,7 @@ class MetabolicModel:
 
         return state
 
-    def get_metabolic_summary(self) -> Dict[str, Any]:
+    def get_metabolic_summary(self) -> dict[str, Any]:
         """Get summary of current metabolic state."""
         substrate_key = "acetate" if self.substrate == Substrate.ACETATE else "lactate"
 
@@ -654,14 +654,14 @@ class MetabolicModel:
         }
 
     def optimize_for_current_production(self, target_current: float,
-                                      constraints: Dict[str, float]) -> Dict[str, float]:
+                                      constraints: dict[str, float]) -> dict[str, float]:
         """
         Optimize metabolic fluxes for maximum current production.
-        
+
         Args:
             target_current: Target current density (A/m²)
             constraints: Constraints on metabolites/fluxes
-            
+
         Returns:
             Optimal flux distribution
         """

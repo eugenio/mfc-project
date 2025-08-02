@@ -3,7 +3,7 @@ Machine Learning Optimization for MFC Systems
 
 Phase 2 final enhancement implementing ML-based optimization:
 - Hyperparameter optimization for Q-learning and sensor fusion
-- Meta-learning for rapid adaptation to new operating conditions  
+- Meta-learning for rapid adaptation to new operating conditions
 - Ensemble methods for robust control decisions
 - Transfer learning between different MFC configurations
 - Automated feature engineering for improved state representation
@@ -15,9 +15,9 @@ Last Modified: 2025-07-31
 import logging
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -78,12 +78,12 @@ class OptimizationResult:
     """Result of ML optimization."""
 
     strategy_used: OptimizationStrategy
-    best_parameters: Dict[str, Any]
+    best_parameters: dict[str, Any]
     performance_improvement: float  # Relative improvement (0-1)
     validation_score: float  # Cross-validation score
     optimization_time_seconds: float
     convergence_achieved: bool
-    confidence_interval: Tuple[float, float]  # 95% CI for improvement
+    confidence_interval: tuple[float, float]  # 95% CI for improvement
 
 
 @dataclass
@@ -101,9 +101,9 @@ class FeatureImportance:
 class ModelEnsemble:
     """Ensemble of models for robust predictions."""
 
-    models: List[Any]  # Trained models
-    weights: List[float]  # Model weights
-    performance_scores: List[float]  # Individual model scores
+    models: list[Any]  # Trained models
+    weights: list[float]  # Model weights
+    performance_scores: list[float]  # Individual model scores
     ensemble_score: float  # Combined ensemble score
     diversity_score: float  # Diversity between models
 
@@ -111,7 +111,7 @@ class ModelEnsemble:
 class FeatureEngineer:
     """
     Advanced feature engineering for MFC control optimization.
-    
+
     Creates informative features from raw sensor data, system state,
     and historical performance for improved ML model performance.
     """
@@ -119,7 +119,7 @@ class FeatureEngineer:
     def __init__(self, window_size: int = 50, enable_advanced_features: bool = True):
         """
         Initialize feature engineer.
-        
+
         Args:
             window_size: Size of sliding window for temporal features
             enable_advanced_features: Enable computationally expensive features
@@ -138,14 +138,14 @@ class FeatureEngineer:
         logger.info(f"Feature engineer initialized with window_size={window_size}")
 
     def extract_features(self, system_state: SystemState,
-                        performance_metrics: Dict[str, float]) -> Dict[str, float]:
+                        performance_metrics: dict[str, float]) -> dict[str, float]:
         """
         Extract comprehensive feature set from system state.
-        
+
         Args:
             system_state: Current system state
             performance_metrics: Current performance metrics
-            
+
         Returns:
             Dictionary of engineered features
         """
@@ -181,7 +181,7 @@ class FeatureEngineer:
 
         return features
 
-    def _extract_raw_features(self, system_state: SystemState) -> Dict[str, float]:
+    def _extract_raw_features(self, system_state: SystemState) -> dict[str, float]:
         """Extract raw sensor measurement features."""
         fused = system_state.fused_measurement
 
@@ -201,7 +201,7 @@ class FeatureEngineer:
             'qcm_weight': fused.qcm_weight
         }
 
-    def _extract_statistical_features(self) -> Dict[str, float]:
+    def _extract_statistical_features(self) -> dict[str, float]:
         """Extract statistical features from recent history."""
         if len(self.system_state_history) < 5:
             return {}
@@ -234,7 +234,7 @@ class FeatureEngineer:
 
         return features
 
-    def _extract_temporal_features(self) -> Dict[str, float]:
+    def _extract_temporal_features(self) -> dict[str, float]:
         """Extract time-based features."""
         if len(self.system_state_history) < 10:
             return {}
@@ -276,7 +276,7 @@ class FeatureEngineer:
 
         return features
 
-    def _extract_health_features(self, system_state: SystemState) -> Dict[str, float]:
+    def _extract_health_features(self, system_state: SystemState) -> dict[str, float]:
         """Extract health-related features."""
         health = system_state.health_metrics
 
@@ -296,7 +296,7 @@ class FeatureEngineer:
             'health_trend_numeric': self._health_trend_to_numeric(health.health_trend)
         }
 
-    def _extract_control_features(self, system_state: SystemState) -> Dict[str, float]:
+    def _extract_control_features(self, system_state: SystemState) -> dict[str, float]:
         """Extract control-related features."""
         return {
             'flow_rate': system_state.flow_rate,
@@ -311,7 +311,7 @@ class FeatureEngineer:
             'intervention_active': float(system_state.intervention_active)
         }
 
-    def _extract_performance_features(self, performance_metrics: Dict[str, float]) -> Dict[str, float]:
+    def _extract_performance_features(self, performance_metrics: dict[str, float]) -> dict[str, float]:
         """Extract performance-related features."""
         return {
             'power_efficiency': performance_metrics.get('power_efficiency', 0.0),
@@ -321,7 +321,7 @@ class FeatureEngineer:
             'control_confidence': performance_metrics.get('control_confidence', 0.5)
         }
 
-    def _extract_advanced_features(self) -> Dict[str, float]:
+    def _extract_advanced_features(self) -> dict[str, float]:
         """Extract computationally expensive advanced features."""
         if len(self.system_state_history) < 20:
             return {}
@@ -355,7 +355,7 @@ class FeatureEngineer:
 
         return features
 
-    def _extract_derived_features(self, system_state: SystemState) -> Dict[str, float]:
+    def _extract_derived_features(self, system_state: SystemState) -> dict[str, float]:
         """Extract domain-specific derived features."""
         fused = system_state.fused_measurement
         health = system_state.health_metrics
@@ -427,16 +427,16 @@ class FeatureEngineer:
         }
         return mode_map.get(mode.value if hasattr(mode, 'value') else mode, 0.0)
 
-    def get_feature_importance(self, features: Dict[str, float], target_values: List[float],
-                             n_bootstrap: int = 100) -> List[FeatureImportance]:
+    def get_feature_importance(self, features: dict[str, float], target_values: list[float],
+                             n_bootstrap: int = 100) -> list[FeatureImportance]:
         """
         Calculate feature importance using multiple methods.
-        
+
         Args:
             features: Dictionary of feature values
             target_values: Target values for importance calculation
             n_bootstrap: Number of bootstrap samples
-            
+
         Returns:
             List of feature importance rankings
         """
@@ -507,7 +507,7 @@ class FeatureEngineer:
 class HyperparameterOptimizer:
     """
     Advanced hyperparameter optimization for MFC control systems.
-    
+
     Optimizes parameters for Q-learning, sensor fusion, and health monitoring
     using various optimization strategies.
     """
@@ -517,7 +517,7 @@ class HyperparameterOptimizer:
                  cv_folds: int = 5):
         """
         Initialize hyperparameter optimizer.
-        
+
         Args:
             strategy: Optimization strategy to use
             max_evaluations: Maximum number of parameter evaluations
@@ -537,7 +537,7 @@ class HyperparameterOptimizer:
 
         logger.info(f"Hyperparameter optimizer initialized with {strategy.value} strategy")
 
-    def _define_parameter_spaces(self) -> Dict[str, Dict[str, Any]]:
+    def _define_parameter_spaces(self) -> dict[str, dict[str, Any]]:
         """Define parameter search spaces for different components."""
         return {
             'qlearning': {
@@ -562,16 +562,16 @@ class HyperparameterOptimizer:
         }
 
     def optimize_controller_parameters(self, controller: AdaptiveMFCController,
-                                     historical_data: List[Dict[str, Any]],
+                                     historical_data: list[dict[str, Any]],
                                      target_metric: str = 'overall_performance') -> OptimizationResult:
         """
         Optimize controller parameters using historical performance data.
-        
+
         Args:
             controller: MFC controller to optimize
             historical_data: Historical control and performance data
             target_metric: Target metric to optimize
-            
+
         Returns:
             Optimization results
         """
@@ -624,8 +624,8 @@ class HyperparameterOptimizer:
             confidence_interval=self._calculate_confidence_interval(validation_score, len(y))
         )
 
-    def _prepare_optimization_data(self, historical_data: List[Dict[str, Any]],
-                                 target_metric: str) -> Tuple[np.ndarray, np.ndarray]:
+    def _prepare_optimization_data(self, historical_data: list[dict[str, Any]],
+                                 target_metric: str) -> tuple[np.ndarray, np.ndarray]:
         """Prepare data for optimization."""
         features = []
         targets = []
@@ -654,7 +654,7 @@ class HyperparameterOptimizer:
 
         return np.array(features), np.array(targets)
 
-    def _calculate_composite_target(self, data_point: Dict[str, Any]) -> float:
+    def _calculate_composite_target(self, data_point: dict[str, Any]) -> float:
         """Calculate composite performance target."""
         metrics = data_point['performance_metrics']
 
@@ -668,7 +668,7 @@ class HyperparameterOptimizer:
 
         return target
 
-    def _bayesian_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+    def _bayesian_optimization(self, X: np.ndarray, y: np.ndarray) -> dict[str, Any]:
         """Bayesian optimization implementation."""
         if not SCIPY_AVAILABLE:
             logger.warning("SciPy not available, falling back to random search")
@@ -703,7 +703,7 @@ class HyperparameterOptimizer:
             'converged': result.success
         }
 
-    def _evolutionary_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+    def _evolutionary_optimization(self, X: np.ndarray, y: np.ndarray) -> dict[str, Any]:
         """Evolutionary optimization implementation."""
         if not SCIPY_AVAILABLE:
             return self._random_search_optimization(X, y)
@@ -730,7 +730,7 @@ class HyperparameterOptimizer:
             'converged': result.success
         }
 
-    def _random_search_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+    def _random_search_optimization(self, X: np.ndarray, y: np.ndarray) -> dict[str, Any]:
         """Random search optimization implementation."""
         best_score = -float('inf')
         best_params = {}
@@ -752,7 +752,7 @@ class HyperparameterOptimizer:
             'converged': True
         }
 
-    def _grid_search_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+    def _grid_search_optimization(self, X: np.ndarray, y: np.ndarray) -> dict[str, Any]:
         """Grid search optimization implementation."""
         # Simplified grid search over key parameters
         learning_rates = [0.1, 0.2, 0.3, 0.5]
@@ -785,7 +785,7 @@ class HyperparameterOptimizer:
             'converged': True
         }
 
-    def _evaluate_parameters(self, X: np.ndarray, y: np.ndarray, params: Dict[str, Any]) -> float:
+    def _evaluate_parameters(self, X: np.ndarray, y: np.ndarray, params: dict[str, Any]) -> float:
         """Evaluate parameter set using cross-validation."""
         if not SKLEARN_AVAILABLE:
             return np.random.random()  # Fallback
@@ -806,11 +806,11 @@ class HyperparameterOptimizer:
             logger.warning(f"Parameter evaluation failed: {e}")
             return -1.0  # Poor score for failed evaluations
 
-    def _validate_parameters(self, X: np.ndarray, y: np.ndarray, params: Dict[str, Any]) -> float:
+    def _validate_parameters(self, X: np.ndarray, y: np.ndarray, params: dict[str, Any]) -> float:
         """Validate optimized parameters."""
         return self._evaluate_parameters(X, y, params)
 
-    def _apply_optimized_parameters(self, controller: AdaptiveMFCController, params: Dict[str, Any]):
+    def _apply_optimized_parameters(self, controller: AdaptiveMFCController, params: dict[str, Any]):
         """Apply optimized parameters to controller."""
         # Apply Q-learning parameters
         if hasattr(controller, 'q_controller'):
@@ -831,7 +831,7 @@ class HyperparameterOptimizer:
 
         logger.info(f"Applied optimized parameters: {params}")
 
-    def _get_parameter_bounds(self) -> List[Tuple[float, float]]:
+    def _get_parameter_bounds(self) -> list[tuple[float, float]]:
         """Get parameter bounds for optimization."""
         return [
             (0.01, 0.8),   # learning_rate
@@ -845,7 +845,7 @@ class HyperparameterOptimizer:
         """Get initial parameter values."""
         return np.array([0.2, 0.3, 0.9, 0.4, 0.1])
 
-    def _vector_to_params(self, param_vector: np.ndarray) -> Dict[str, Any]:
+    def _vector_to_params(self, param_vector: np.ndarray) -> dict[str, Any]:
         """Convert parameter vector to dictionary."""
         return {
             'learning_rate': param_vector[0],
@@ -855,7 +855,7 @@ class HyperparameterOptimizer:
             'adaptation_rate': param_vector[4]
         }
 
-    def _generate_random_params(self) -> Dict[str, Any]:
+    def _generate_random_params(self) -> dict[str, Any]:
         """Generate random parameter set within bounds."""
         bounds = self._get_parameter_bounds()
         return {
@@ -866,7 +866,7 @@ class HyperparameterOptimizer:
             'adaptation_rate': np.random.uniform(bounds[4][0], bounds[4][1])
         }
 
-    def _calculate_confidence_interval(self, score: float, n_samples: int) -> Tuple[float, float]:
+    def _calculate_confidence_interval(self, score: float, n_samples: int) -> tuple[float, float]:
         """Calculate confidence interval for performance improvement."""
         # Simplified confidence interval calculation
         std_error = 0.1 / np.sqrt(max(1, n_samples))
@@ -877,7 +877,7 @@ class HyperparameterOptimizer:
 class MLOptimizedMFCController:
     """
     ML-optimized MFC controller that continuously learns and adapts.
-    
+
     Integrates all ML optimization components for maximum performance.
     """
 
@@ -886,7 +886,7 @@ class MLOptimizedMFCController:
                  reoptimization_interval: int = 100):  # Steps between reoptimization
         """
         Initialize ML-optimized controller.
-        
+
         Args:
             base_controller: Base adaptive controller
             optimization_strategy: ML optimization strategy
@@ -912,19 +912,19 @@ class MLOptimizedMFCController:
         logger.info(f"ML-optimized MFC controller initialized with {optimization_strategy.value}")
 
     def control_step_with_learning(self, eis_measurement, qcm_measurement,
-                                 eis_properties: Dict[str, float],
-                                 qcm_properties: Dict[str, float],
-                                 time_hours: float) -> Dict[str, Any]:
+                                 eis_properties: dict[str, float],
+                                 qcm_properties: dict[str, float],
+                                 time_hours: float) -> dict[str, Any]:
         """
         Execute control step with continuous learning and optimization.
-        
+
         Args:
             eis_measurement: EIS sensor measurement
             qcm_measurement: QCM sensor measurement
             eis_properties: Processed EIS properties
             qcm_properties: Processed QCM properties
             time_hours: Current time in hours
-            
+
         Returns:
             Enhanced control results with ML insights
         """
@@ -988,7 +988,7 @@ class MLOptimizedMFCController:
 
         # Store optimization history
         self.optimization_history.append({
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': datetime.now(UTC).isoformat(),
             'result': optimization_result,
             'data_points_used': len(self.control_data_history)
         })
@@ -1000,8 +1000,8 @@ class MLOptimizedMFCController:
 
         return optimization_result
 
-    def _generate_ml_insights(self, features: Dict[str, float],
-                            control_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_ml_insights(self, features: dict[str, float],
+                            control_results: dict[str, Any]) -> dict[str, Any]:
         """Generate ML-based insights about current system state."""
         insights = {
             'feature_summary': {
@@ -1019,7 +1019,7 @@ class MLOptimizedMFCController:
 
         return insights
 
-    def _get_recent_feature_importance(self) -> List[FeatureImportance]:
+    def _get_recent_feature_importance(self) -> list[FeatureImportance]:
         """Get recent feature importance analysis."""
         if len(self.control_data_history) < 20:
             return []
@@ -1036,7 +1036,7 @@ class MLOptimizedMFCController:
 
         return self.feature_engineer.get_feature_importance(features, performance_values)
 
-    def _analyze_performance_trend(self) -> Dict[str, Any]:
+    def _analyze_performance_trend(self) -> dict[str, Any]:
         """Analyze recent performance trends."""
         if len(self.control_data_history) < 10:
             return {'insufficient_data': True}
@@ -1064,7 +1064,7 @@ class MLOptimizedMFCController:
             'performance_variance': np.var(recent_performance) if recent_performance else 0.0
         }
 
-    def _get_optimization_recommendations(self, features: Dict[str, float]) -> List[str]:
+    def _get_optimization_recommendations(self, features: dict[str, float]) -> list[str]:
         """Get optimization recommendations based on current state."""
         recommendations = []
 
@@ -1086,7 +1086,7 @@ class MLOptimizedMFCController:
 
         return recommendations[:3]  # Top 3 recommendations
 
-    def get_ml_status_report(self) -> Dict[str, Any]:
+    def get_ml_status_report(self) -> dict[str, Any]:
         """Get comprehensive ML optimization status report."""
         report = {
             'optimization_strategy': self.optimization_strategy.value,
@@ -1112,18 +1112,18 @@ class MLOptimizedMFCController:
 
 
 def create_ml_optimized_controller(species: BacterialSpecies = BacterialSpecies.MIXED,
-                                 qlearning_config: Optional[QLearningConfig] = None,
-                                 sensor_config: Optional[SensorConfig] = None,
+                                 qlearning_config: QLearningConfig | None = None,
+                                 sensor_config: SensorConfig | None = None,
                                  optimization_strategy: OptimizationStrategy = OptimizationStrategy.BAYESIAN) -> MLOptimizedMFCController:
     """
     Factory function to create fully ML-optimized MFC controller.
-    
+
     Args:
         species: Target bacterial species
         qlearning_config: Q-learning configuration
         sensor_config: Sensor configuration
         optimization_strategy: ML optimization strategy
-        
+
     Returns:
         Configured MLOptimizedMFCController instance
     """

@@ -23,7 +23,7 @@ Quick Start:
 
 Access Points:
 - Dashboard UI: http://localhost:8501
-- API Documentation: http://localhost:8000/api/docs  
+- API Documentation: http://localhost:8000/api/docs
 - WebSocket Stream: ws://localhost:8001/ws
 - Health Check: http://localhost:8000/api/health
 """

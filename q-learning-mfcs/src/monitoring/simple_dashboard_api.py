@@ -3,7 +3,7 @@ Simplified MFC Real-time Monitoring Dashboard API
 
 A minimal but functional monitoring API for MFC systems.
 """
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -19,9 +19,9 @@ class SystemMetrics(BaseModel):
     ph_level: float
     pressure_bar: float
     flow_rate_ml_min: float
-    cell_voltages: List[float]
+    cell_voltages: list[float]
 
 class ControlCommand(BaseModel):
     """Control command request"""
     command: str
-    parameters: Optional[Dict[str, Any]] = None
+    parameters: dict[str, Any] | None = None

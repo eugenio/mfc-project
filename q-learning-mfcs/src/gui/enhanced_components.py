@@ -2,7 +2,7 @@
 """
 Enhanced UI Components for Scientific Community Engagement
 
-This module provides advanced Streamlit components designed specifically for 
+This module provides advanced Streamlit components designed specifically for
 scientific researchers and practitioners working with MFC systems.
 
 Features:
@@ -24,10 +24,11 @@ import os
 
 # Import existing configurations
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -64,7 +65,7 @@ class ScientificParameterInput:
 
     def __init__(self, theme: UIThemeConfig = UIThemeConfig()):
         """Initialize scientific parameter input component.
-        
+
         Args:
             theme: UI theme configuration
         """
@@ -83,7 +84,7 @@ class ScientificParameterInput:
             margin: 10px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
-        
+
         .parameter-header {{
             color: {self.theme.primary_color};
             font-weight: bold;
@@ -92,7 +93,7 @@ class ScientificParameterInput:
             border-bottom: 2px solid {self.theme.accent_color};
             padding-bottom: 5px;
         }}
-        
+
         .literature-reference {{
             background-color: #F8F9FA;
             border-left: 4px solid {self.theme.secondary_color};
@@ -101,28 +102,28 @@ class ScientificParameterInput:
             font-style: italic;
             font-size: 12px;
         }}
-        
+
         .validation-success {{
             color: {self.theme.success_color};
             font-weight: bold;
         }}
-        
+
         .validation-warning {{
             color: {self.theme.warning_color};
             font-weight: bold;
         }}
-        
+
         .validation-error {{
             color: {self.theme.error_color};
             font-weight: bold;
         }}
-        
+
         .scientific-unit {{
             color: {self.theme.secondary_color};
             font-weight: bold;
             font-style: italic;
         }}
-        
+
         .parameter-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -135,16 +136,16 @@ class ScientificParameterInput:
     def render_parameter_section(
         self,
         title: str,
-        parameters: Dict[str, Dict[str, Any]],
+        parameters: dict[str, dict[str, Any]],
         key_prefix: str = ""
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Render a section of scientific parameters with validation.
-        
+
         Args:
             title: Section title
             parameters: Dictionary of parameter configurations
             key_prefix: Unique key prefix for Streamlit components
-            
+
         Returns:
             Dictionary of parameter values
         """
@@ -168,16 +169,16 @@ class ScientificParameterInput:
     def _render_single_parameter(
         self,
         param_name: str,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         key: str
-    ) -> Union[float, int, bool, str]:
+    ) -> float | int | bool | str:
         """Render a single parameter input with validation.
-        
+
         Args:
             param_name: Parameter name
             config: Parameter configuration
             key: Unique key for Streamlit component
-            
+
         Returns:
             Parameter value
         """
@@ -198,7 +199,7 @@ class ScientificParameterInput:
             st.markdown(f"*{description}*")
 
         # Input widget based on parameter type
-        value: Union[float, int, bool, str]
+        value: float | int | bool | str
         if param_type == 'float':
             value = st.number_input(
                 label="",
@@ -305,7 +306,7 @@ class InteractiveVisualization:
 
     def __init__(self, theme: UIThemeConfig = UIThemeConfig()):
         """Initialize interactive visualization component.
-        
+
         Args:
             theme: UI theme configuration
         """
@@ -314,17 +315,17 @@ class InteractiveVisualization:
 
     def render_multi_panel_dashboard(
         self,
-        data: Dict[str, pd.DataFrame],
+        data: dict[str, pd.DataFrame],
         layout: str = "2x2",
         title: str = "MFC Performance Dashboard"
     ) -> go.Figure:
         """Render multi-panel interactive dashboard.
-        
+
         Args:
             data: Dictionary of DataFrames for each panel
             layout: Layout configuration (e.g., "2x2", "1x4")
             title: Dashboard title
-            
+
         Returns:
             Plotly figure object
         """
@@ -401,12 +402,12 @@ class InteractiveVisualization:
 
     def render_real_time_monitor(
         self,
-        data_stream: Callable[[], Dict[str, float]],
+        data_stream: Callable[[], dict[str, float]],
         refresh_interval: int = 5,
         max_points: int = 100
     ):
         """Render real-time monitoring component.
-        
+
         Args:
             data_stream: Function that returns current data point
             refresh_interval: Refresh interval in seconds
@@ -464,7 +465,7 @@ class InteractiveVisualization:
 
     def _update_realtime_data(
         self,
-        data_stream: Callable[[], Dict[str, float]],
+        data_stream: Callable[[], dict[str, float]],
         max_points: int = 100
     ):
         """Update real-time data buffer."""
@@ -539,11 +540,11 @@ class ExportManager:
 
     def render_export_panel(
         self,
-        data: Optional[Dict[str, pd.DataFrame]] = None,
-        figures: Optional[Dict[str, go.Figure]] = None
+        data: dict[str, pd.DataFrame] | None = None,
+        figures: dict[str, go.Figure] | None = None
     ):
         """Render comprehensive export panel.
-        
+
         Args:
             data: Dictionary of DataFrames to export
             figures: Dictionary of figures to export
@@ -562,7 +563,7 @@ class ExportManager:
         with tab3:
             self._render_report_export(data, figures)
 
-    def _render_data_export(self, data: Optional[Dict[str, pd.DataFrame]]):
+    def _render_data_export(self, data: dict[str, pd.DataFrame] | None):
         """Render data export options."""
         if not data:
             st.info("No data available for export")
@@ -655,7 +656,7 @@ class ExportManager:
                         {name: data[name] for name in selected_datasets}
                     )
 
-    def _render_figure_export(self, figures: Optional[Dict[str, go.Figure]]):
+    def _render_figure_export(self, figures: dict[str, go.Figure] | None):
         """Render figure export options."""
         if not figures:
             st.info("No figures available for export")
@@ -706,8 +707,8 @@ class ExportManager:
 
     def _render_report_export(
         self,
-        data: Optional[Dict[str, pd.DataFrame]],
-        figures: Optional[Dict[str, go.Figure]]
+        data: dict[str, pd.DataFrame] | None,
+        figures: dict[str, go.Figure] | None
     ):
         """Render comprehensive report export."""
         st.markdown("#### Generate Comprehensive Report")
@@ -764,7 +765,7 @@ class ExportManager:
 
     def _export_data(
         self,
-        datasets: Dict[str, pd.DataFrame],
+        datasets: dict[str, pd.DataFrame],
         format: str,
         include_metadata: bool,
         compression_enabled: bool = False
@@ -993,7 +994,7 @@ Format: Apache Arrow Feather (fast binary)
 
     def _batch_export_all_formats(
         self,
-        datasets: Dict[str, pd.DataFrame],
+        datasets: dict[str, pd.DataFrame],
         include_metadata: bool
     ):
         """Export datasets in all supported formats as a single package."""
@@ -1069,7 +1070,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         except Exception as e:
             st.error(f"Batch export failed: {e}")
 
-    def _generate_export_summary(self, datasets: Dict[str, pd.DataFrame]):
+    def _generate_export_summary(self, datasets: dict[str, pd.DataFrame]):
         """Generate a summary of datasets for export planning."""
         st.markdown("#### Export Summary")
 
@@ -1125,7 +1126,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
 
     def _export_figures(
         self,
-        figures: Dict[str, go.Figure],
+        figures: dict[str, go.Figure],
         format: str,
         resolution: int,
         include_data: bool
@@ -1170,9 +1171,9 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         self,
         title: str,
         format: str,
-        sections: Dict[str, bool],
-        data: Optional[Dict[str, pd.DataFrame]],
-        figures: Optional[Dict[str, go.Figure]]
+        sections: dict[str, bool],
+        data: dict[str, pd.DataFrame] | None,
+        figures: dict[str, go.Figure] | None
     ):
         """Generate comprehensive research report."""
         try:
@@ -1194,9 +1195,9 @@ Metadata included: {'Yes' if include_metadata else 'No'}
     def _generate_html_report(
         self,
         title: str,
-        sections: Dict[str, bool],
-        data: Optional[Dict[str, pd.DataFrame]],
-        figures: Optional[Dict[str, go.Figure]]
+        sections: dict[str, bool],
+        data: dict[str, pd.DataFrame] | None,
+        figures: dict[str, go.Figure] | None
     ) -> str:
         """Generate HTML report content."""
         html_parts = [
@@ -1236,12 +1237,12 @@ Metadata included: {'Yes' if include_metadata else 'No'}
 
 # Utility functions for component integration
 
-def initialize_enhanced_ui(theme: ComponentTheme = ComponentTheme.SCIENTIFIC) -> Tuple[UIThemeConfig, Dict[str, Any]]:
+def initialize_enhanced_ui(theme: ComponentTheme = ComponentTheme.SCIENTIFIC) -> tuple[UIThemeConfig, dict[str, Any]]:
     """Initialize enhanced UI components with theme.
-    
+
     Args:
         theme: UI theme selection
-        
+
     Returns:
         Tuple of theme configuration and component instances
     """
@@ -1271,9 +1272,9 @@ def initialize_enhanced_ui(theme: ComponentTheme = ComponentTheme.SCIENTIFIC) ->
 
     return theme_config, components
 
-def render_enhanced_sidebar() -> Dict[str, Any]:
+def render_enhanced_sidebar() -> dict[str, Any]:
     """Render enhanced sidebar with scientific tools.
-    
+
     Returns:
         Dictionary of sidebar selections and configurations
     """

@@ -13,9 +13,9 @@ Last Modified: 2025-07-31
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -77,11 +77,11 @@ class ControlDecision:
 
     action_index: int
     action_description: str
-    expected_outcome: Dict[str, float]  # Expected changes in key metrics
+    expected_outcome: dict[str, float]  # Expected changes in key metrics
     confidence: float  # Decision confidence (0-1)
     rationale: str  # Explanation of decision
-    risk_assessment: Dict[str, float]  # Assessed risks
-    intervention_type: Optional[str] = None  # If this is an intervention
+    risk_assessment: dict[str, float]  # Assessed risks
+    intervention_type: str | None = None  # If this is an intervention
 
 
 @dataclass
@@ -90,12 +90,12 @@ class SystemState:
 
     # Sensor measurements
     fused_measurement: FusedMeasurement
-    prediction: Optional[PredictiveState]
-    anomalies: List[AnomalyDetection]
+    prediction: PredictiveState | None
+    anomalies: list[AnomalyDetection]
 
     # Health assessment
     health_metrics: HealthMetrics
-    health_alerts: List[HealthAlert]
+    health_alerts: list[HealthAlert]
 
     # System parameters
     flow_rate: float
@@ -113,7 +113,7 @@ class SystemState:
 class HealthAwareQLearning(SensingEnhancedQLearningController):
     """
     Enhanced Q-learning controller with health-aware reward function and adaptive parameters.
-    
+
     Extends the sensor-enhanced controller with:
     - Health-weighted reward functions
     - Adaptive exploration based on system health
@@ -121,13 +121,13 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
     - Risk-aware action selection
     """
 
-    def __init__(self, qlearning_config: Optional[QLearningConfig] = None,
-                 sensor_config: Optional[SensorConfig] = None,
+    def __init__(self, qlearning_config: QLearningConfig | None = None,
+                 sensor_config: SensorConfig | None = None,
                  health_weight: float = 0.4,
                  adaptation_rate: float = 0.1):
         """
         Initialize health-aware Q-learning controller.
-        
+
         Args:
             qlearning_config: Q-learning configuration
             sensor_config: Sensor configuration
@@ -183,13 +183,13 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
                                     system_state: SystemState, intervention_active: bool = False) -> float:
         """
         Calculate reward incorporating health metrics and system state.
-        
+
         Args:
             base_reward: Base power/performance reward
             health_metrics: Current health assessment
             system_state: Complete system state
             intervention_active: Whether an intervention is active
-            
+
         Returns:
             Health-aware reward value
         """
@@ -338,7 +338,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
 
         # Store adaptation event
         self.adaptation_history.append({
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': datetime.now(UTC).isoformat(),
             'learning_rate': self.learning_rate,
             'epsilon': self.epsilon,
             'discount_factor': self.discount_factor,
@@ -365,14 +365,14 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
         return ', '.join(triggers) if triggers else 'routine_adaptation'
 
     def choose_health_aware_action(self, system_state: SystemState,
-                                 available_actions: Optional[List] = None) -> ControlDecision:
+                                 available_actions: list | None = None) -> ControlDecision:
         """
         Choose action with health awareness and full decision rationale.
-        
+
         Args:
             system_state: Complete system state
             available_actions: Optional list of available actions
-            
+
         Returns:
             Control decision with rationale
         """
@@ -393,7 +393,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
 
         return decision
 
-    def _system_state_to_qlearning_state(self, system_state: SystemState) -> Tuple:
+    def _system_state_to_qlearning_state(self, system_state: SystemState) -> tuple:
         """Convert system state to Q-learning state tuple."""
         # Extract key parameters for state representation
         inlet_conc = system_state.inlet_concentration
@@ -411,7 +411,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
 
         return (inlet_bin, outlet_bin, current_bin)
 
-    def _prepare_sensor_data(self, system_state: SystemState) -> Dict[str, Any]:
+    def _prepare_sensor_data(self, system_state: SystemState) -> dict[str, Any]:
         """Prepare sensor data dictionary for enhanced controller."""
         fused = system_state.fused_measurement
 
@@ -438,7 +438,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
         return sensor_data
 
     def _generate_decision_rationale(self, action_idx: int, system_state: SystemState,
-                                   available_actions: Optional[List] = None) -> ControlDecision:
+                                   available_actions: list | None = None) -> ControlDecision:
         """Generate comprehensive decision rationale."""
         # Map action index to description
         action_descriptions = {
@@ -516,7 +516,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
             intervention_type=intervention_type
         )
 
-    def _predict_action_outcomes(self, action_idx: int, system_state: SystemState) -> Dict[str, float]:
+    def _predict_action_outcomes(self, action_idx: int, system_state: SystemState) -> dict[str, float]:
         """Predict expected outcomes of action."""
         # Simplified outcome prediction based on action type
         base_thickness = system_state.fused_measurement.thickness_um
@@ -579,7 +579,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
 
         return np.clip(confidence, 0.1, 1.0)
 
-    def _assess_decision_risks(self, action_idx: int, system_state: SystemState) -> Dict[str, float]:
+    def _assess_decision_risks(self, action_idx: int, system_state: SystemState) -> dict[str, float]:
         """Assess risks associated with decision."""
         risks = {
             'biofilm_damage': 0.0,
@@ -610,7 +610,7 @@ class HealthAwareQLearning(SensingEnhancedQLearningController):
 class AdaptiveMFCController:
     """
     Master adaptive MFC controller integrating all Phase 2 enhancements.
-    
+
     Coordinates:
     - Advanced sensor fusion with predictive capabilities
     - Predictive biofilm health monitoring
@@ -620,12 +620,12 @@ class AdaptiveMFCController:
     """
 
     def __init__(self, species: BacterialSpecies = BacterialSpecies.MIXED,
-                 qlearning_config: Optional[QLearningConfig] = None,
-                 sensor_config: Optional[SensorConfig] = None,
+                 qlearning_config: QLearningConfig | None = None,
+                 sensor_config: SensorConfig | None = None,
                  initial_strategy: ControlStrategy = ControlStrategy.BALANCED):
         """
         Initialize adaptive MFC controller.
-        
+
         Args:
             species: Target bacterial species
             qlearning_config: Q-learning configuration
@@ -666,18 +666,18 @@ class AdaptiveMFCController:
         logger.info(f"Adaptive MFC controller initialized for {species.value} with {initial_strategy.value} strategy")
 
     def control_step(self, eis_measurement: EISMeasurement, qcm_measurement: QCMMeasurement,
-                    eis_properties: Dict[str, float], qcm_properties: Dict[str, float],
-                    time_hours: float) -> Dict[str, Any]:
+                    eis_properties: dict[str, float], qcm_properties: dict[str, float],
+                    time_hours: float) -> dict[str, Any]:
         """
         Execute one control step with full system integration.
-        
+
         Args:
             eis_measurement: EIS sensor measurement
-            qcm_measurement: QCM sensor measurement  
+            qcm_measurement: QCM sensor measurement
             eis_properties: Processed EIS properties
             qcm_properties: Processed QCM properties
             time_hours: Current time in hours
-            
+
         Returns:
             Complete control step results
         """
@@ -805,7 +805,7 @@ class AdaptiveMFCController:
         else:
             return 'operational_optimization'
 
-    def _evaluate_interventions(self, system_state: SystemState) -> List[InterventionRecommendation]:
+    def _evaluate_interventions(self, system_state: SystemState) -> list[InterventionRecommendation]:
         """Evaluate and potentially execute interventions."""
         recommendations = self.health_monitor.generate_intervention_recommendations(system_state.health_metrics)
 
@@ -837,7 +837,7 @@ class AdaptiveMFCController:
         # In practice, this would interface with actual MFC hardware
         logger.info(f"Intervention executed: {intervention.intervention_type}")
 
-    def _execute_control_action(self, decision: ControlDecision, system_state: SystemState) -> Dict[str, Any]:
+    def _execute_control_action(self, decision: ControlDecision, system_state: SystemState) -> dict[str, Any]:
         """Execute control action and return results."""
         # Simulate action execution (in practice would control actual MFC)
         action_idx = decision.action_index
@@ -866,7 +866,7 @@ class AdaptiveMFCController:
             'estimated_outcome': decision.expected_outcome
         }
 
-    def _get_parameter_changes(self) -> Dict[str, float]:
+    def _get_parameter_changes(self) -> dict[str, float]:
         """Get recent parameter changes."""
         # Simplified - would track actual changes
         return {
@@ -874,7 +874,7 @@ class AdaptiveMFCController:
             'inlet_concentration': self.system_parameters['inlet_concentration']
         }
 
-    def _update_qlearning(self, system_state: SystemState, decision: ControlDecision, execution_results: Dict[str, Any]):
+    def _update_qlearning(self, system_state: SystemState, decision: ControlDecision, execution_results: dict[str, Any]):
         """Update Q-learning based on results."""
         # Calculate reward
         base_reward = 0.1  # Simplified power reward
@@ -892,7 +892,7 @@ class AdaptiveMFCController:
             current_state, decision.action_index, reward, next_state, sensor_data
         )
 
-    def _calculate_performance_metrics(self, system_state: SystemState) -> Dict[str, float]:
+    def _calculate_performance_metrics(self, system_state: SystemState) -> dict[str, float]:
         """Calculate comprehensive performance metrics."""
         return {
             'power_efficiency': self.system_parameters['power_output'] / max(0.01, self.system_parameters['flow_rate']),
@@ -902,7 +902,7 @@ class AdaptiveMFCController:
             'control_confidence': system_state.health_metrics.prediction_confidence
         }
 
-    def get_comprehensive_status(self) -> Dict[str, Any]:
+    def get_comprehensive_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         if not self.control_history:
             return {'error': 'No control history available'}
@@ -934,16 +934,16 @@ class AdaptiveMFCController:
 
 
 def create_adaptive_mfc_controller(species: BacterialSpecies = BacterialSpecies.MIXED,
-                                 qlearning_config: Optional[QLearningConfig] = None,
-                                 sensor_config: Optional[SensorConfig] = None) -> AdaptiveMFCController:
+                                 qlearning_config: QLearningConfig | None = None,
+                                 sensor_config: SensorConfig | None = None) -> AdaptiveMFCController:
     """
     Factory function to create fully integrated adaptive MFC controller.
-    
+
     Args:
         species: Target bacterial species
         qlearning_config: Q-learning configuration
         sensor_config: Sensor configuration
-        
+
     Returns:
         Configured AdaptiveMFCController instance
     """

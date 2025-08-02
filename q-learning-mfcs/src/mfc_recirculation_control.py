@@ -666,12 +666,12 @@ class MFCCellWithMonitoring:
 
 def simulate_mfc_with_recirculation(duration_hours=100, config=None, checkpoint_path=None):
     """Main simulation function with recirculation and advanced substrate control
-    
+
     Args:
         duration_hours: Simulation duration in hours
         config: Optional configuration object
         checkpoint_path: Optional path to Q-learning checkpoint to load
-    
+
     Returns:
         results: Dictionary containing time series data
         cells: List of MFC cell objects
@@ -938,7 +938,7 @@ def run_mfc_simulation(duration_hours, output_dir, config=None, n_cells=5,
                       verbose=True, generate_plots=True):
     """
     Run MFC simulation programmatically for optimization.
-    
+
     Args:
         duration_hours: Simulation duration in hours
         output_dir: Output directory path
@@ -948,7 +948,7 @@ def run_mfc_simulation(duration_hours, output_dir, config=None, n_cells=5,
         user_suffix: Suffix for output files
         verbose: Enable logging output
         generate_plots: Generate visualization plots
-        
+
     Returns:
         Dictionary with simulation results
     """
