@@ -151,6 +151,11 @@ def render_geometry_configuration() -> None:
             anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
             anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density")
 
+            # Option to input measured SSA
+            use_measured_ssa_anode = st.checkbox("Use measured SSA value", key="use_measured_ssa_anode")
+            if use_measured_ssa_anode:
+                anode_measured_ssa = st.number_input("Measured SSA (m²/g)", min_value=0.0, max_value=1000.0, value=238.0, step=0.1, key="anode_measured_ssa", help="Enter the experimentally measured specific surface area (e.g., from BET, mercury intrusion). Default: 238 m²/g for rayon-based graphite felt")
+
             # Calculate anode areas and mass
             anode_geometric_area = anode_length * anode_width
             anode_total_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
@@ -160,14 +165,22 @@ def render_geometry_configuration() -> None:
             anode_mass_kg = anode_volume_m3 * anode_density
             anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
 
-            # Calculate specific surface area (m²/g)
-            anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
-            anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_anode:
+                anode_specific_surface_area = anode_measured_ssa
+            else:
+                anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+                anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
 
         elif anode_geometry_type == "Cylindrical Rod":
             anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
             anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density_cyl")
+
+            # Option to input measured SSA
+            use_measured_ssa_anode_cyl = st.checkbox("Use measured SSA value", key="use_measured_ssa_anode_cyl")
+            if use_measured_ssa_anode_cyl:
+                anode_measured_ssa_cyl = st.number_input("Measured SSA (m²/g)", min_value=0.0, max_value=1000.0, value=1.0, step=0.1, key="anode_measured_ssa_cyl", help="Enter the experimentally measured specific surface area (e.g., from BET, mercury intrusion). Literature values: PAN-based carbon felt: 1.0 m²/g, Graphite felt: 238-267 m²/g")
 
             # Calculate anode areas and mass
             anode_radius = anode_diameter / 2
@@ -179,9 +192,12 @@ def render_geometry_configuration() -> None:
             anode_mass_kg = anode_volume_m3 * anode_density
             anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
 
-            # Calculate specific surface area (m²/g)
-            anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
-            anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_anode_cyl:
+                anode_specific_surface_area = anode_measured_ssa_cyl
+            else:
+                anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+                anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
 
         else:
             st.info("Anode geometry configuration coming soon!")
@@ -201,6 +217,11 @@ def render_geometry_configuration() -> None:
             cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
             cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density")
 
+            # Option to input measured SSA
+            use_measured_ssa_cathode = st.checkbox("Use measured SSA value", key="use_measured_ssa_cathode")
+            if use_measured_ssa_cathode:
+                cathode_measured_ssa = st.number_input("Measured SSA (m²/g)", min_value=0.0, max_value=1000.0, value=267.0, step=0.1, key="cathode_measured_ssa", help="Enter the experimentally measured specific surface area (e.g., from BET, mercury intrusion). Default: 267 m²/g for PAN-based graphite felt")
+
             # Calculate cathode areas and mass
             cathode_geometric_area = cathode_length * cathode_width
             cathode_total_surface_area = 2 * (cathode_length * cathode_width + cathode_length * cathode_thickness + cathode_width * cathode_thickness)
@@ -210,14 +231,22 @@ def render_geometry_configuration() -> None:
             cathode_mass_kg = cathode_volume_m3 * cathode_density
             cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
 
-            # Calculate specific surface area (m²/g)
-            cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
-            cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_cathode:
+                cathode_specific_surface_area = cathode_measured_ssa
+            else:
+                cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
+                cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
 
         elif cathode_geometry_type == "Cylindrical Rod":
             cathode_diameter = st.number_input("Cathode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="cathode_diameter")
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="cathode_length_cyl")
             cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density_cyl")
+
+            # Option to input measured SSA
+            use_measured_ssa_cathode_cyl = st.checkbox("Use measured SSA value", key="use_measured_ssa_cathode_cyl")
+            if use_measured_ssa_cathode_cyl:
+                cathode_measured_ssa_cyl = st.number_input("Measured SSA (m²/g)", min_value=0.0, max_value=1000.0, value=1.0, step=0.1, key="cathode_measured_ssa_cyl", help="Enter the experimentally measured specific surface area (e.g., from BET, mercury intrusion). Literature values: PAN-based carbon felt: 1.0 m²/g, Graphite felt: 238-267 m²/g")
 
             # Calculate cathode areas and mass
             cathode_radius = cathode_diameter / 2
@@ -229,9 +258,12 @@ def render_geometry_configuration() -> None:
             cathode_mass_kg = cathode_volume_m3 * cathode_density
             cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
 
-            # Calculate specific surface area (m²/g)
-            cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
-            cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_cathode_cyl:
+                cathode_specific_surface_area = cathode_measured_ssa_cyl
+            else:
+                cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
+                cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
 
         else:
             st.info("Cathode geometry configuration coming soon!")
@@ -241,7 +273,12 @@ def render_geometry_configuration() -> None:
         st.markdown("#### 📊 Anode Properties")
         if anode_geometric_area > 0:
             st.metric("Geometric Area", f"{anode_geometric_area:.2f} cm²")
-            st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2f} m²/g")
+            if anode_specific_surface_area < 0.01:
+                st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2e} m²/g")
+            elif anode_specific_surface_area < 1:
+                st.metric("Specific Surface Area", f"{anode_specific_surface_area:.4f} m²/g")
+            else:
+                st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{anode_total_surface_area:.2f} cm²")
 
             # Mass calculation and display for anode
@@ -264,7 +301,12 @@ def render_geometry_configuration() -> None:
         st.markdown("#### 📊 Cathode Properties")
         if cathode_geometric_area > 0:
             st.metric("Geometric Area", f"{cathode_geometric_area:.2f} cm²")
-            st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2f} m²/g")
+            if cathode_specific_surface_area < 0.01:
+                st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2e} m²/g")
+            elif cathode_specific_surface_area < 1:
+                st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.4f} m²/g")
+            else:
+                st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{cathode_total_surface_area:.2f} cm²")
 
             # Mass calculation and display for cathode
