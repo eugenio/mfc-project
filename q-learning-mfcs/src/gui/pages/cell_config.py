@@ -393,8 +393,8 @@ def render_mec_cell_parameters():
 def render_membrane_configuration():
     """
     Render membrane configuration interface for MFC cell design.
-    
-    This function integrates membrane selection, properties display, 
+
+    This function integrates membrane selection, properties display,
     custom membrane input, resistance calculations, and performance metrics
     following the same pattern as other cell configuration functions.
     """
@@ -621,12 +621,4 @@ def render_membrane_configuration():
 
 
 
-def render_3d_model_upload():
-    """Render 3D model upload interface."""
-    st.info("3D model upload functionality coming soon!")
-
-
-def render_validation_analysis():
-    """Render validation and analysis interface."""
-    st.info("Validation and analysis functionality coming soon!")
 

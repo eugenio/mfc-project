@@ -31,7 +31,7 @@ class MembraneMaterial(Enum):
 class MembraneProperties:
     """
     Membrane material properties with literature-based defaults.
-    
+
     All properties should be based on published MFC literature.
     """
 
@@ -78,7 +78,7 @@ class MembraneConfiguration:
     def calculate_resistance(self) -> float:
         """
         Calculate membrane resistance based on area and properties.
-        
+
         Returns:
             Resistance in Ω
         """
@@ -89,10 +89,10 @@ class MembraneConfiguration:
     def calculate_proton_flux(self, current_density: float) -> float:
         """
         Calculate proton flux through membrane.
-        
+
         Args:
             current_density: Current density in A/m²
-            
+
         Returns:
             Proton flux in mol/m²/s
         """
@@ -102,10 +102,10 @@ class MembraneConfiguration:
     def estimate_lifetime_factor(self, current_density: float) -> float:
         """
         Estimate lifetime reduction factor based on operating conditions.
-        
+
         Args:
             current_density: Operating current density in A/m²
-            
+
         Returns:
             Lifetime factor (0-1), where 1 is full expected lifetime
         """
@@ -218,12 +218,12 @@ def create_membrane_config(
 ) -> MembraneConfiguration:
     """
     Create membrane configuration with material selection.
-    
+
     Args:
         material: Membrane material type
         area: Membrane active area in m²
         custom_properties: Optional custom properties (for CUSTOM material)
-        
+
     Returns:
         Complete membrane configuration
     """
@@ -233,6 +233,7 @@ def create_membrane_config(
         properties = custom_properties
     else:
         properties = MEMBRANE_PROPERTIES_DATABASE.get(material)
+        assert properties is not None  # This should never happen due to check below
         if properties is None:
             raise ValueError(f"No properties defined for {material.value}")
 
