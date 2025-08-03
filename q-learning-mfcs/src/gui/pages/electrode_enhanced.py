@@ -190,12 +190,21 @@ def render_geometry_configuration() -> None:
 
             # Calculate anode areas and mass
             anode_geometric_area = anode_length * anode_width
-            anode_total_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
+            anode_geometric_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
 
             # Calculate volume and mass for specific surface area
             anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
             anode_mass_kg = anode_volume_m3 * anode_density
             anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if anode_volumetric_ssa > 0:
+                # Total surface area = Volumetric SSA × Volume
+                anode_total_surface_area_m2 = anode_volumetric_ssa * anode_volume_m3
+                anode_total_surface_area = anode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                anode_total_surface_area = anode_geometric_surface_area
 
             # Calculate or use measured specific surface area (m²/g)
             if use_measured_ssa_anode:
@@ -223,12 +232,21 @@ def render_geometry_configuration() -> None:
             # Calculate anode areas and mass
             anode_radius = anode_diameter / 2
             anode_geometric_area = np.pi * anode_radius**2
-            anode_total_surface_area = 2 * np.pi * anode_radius * (anode_radius + anode_length)
+            anode_geometric_surface_area = 2 * np.pi * anode_radius * (anode_radius + anode_length)
 
             # Calculate volume and mass for specific surface area
             anode_volume_m3 = np.pi * (anode_radius / 100)**2 * (anode_length / 100)  # Convert cm to m
             anode_mass_kg = anode_volume_m3 * anode_density
             anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if anode_volumetric_ssa_cyl > 0:
+                # Total surface area = Volumetric SSA × Volume
+                anode_total_surface_area_m2 = anode_volumetric_ssa_cyl * anode_volume_m3
+                anode_total_surface_area = anode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                anode_total_surface_area = anode_geometric_surface_area
 
             # Calculate or use measured specific surface area (m²/g)
             if use_measured_ssa_anode_cyl:
@@ -284,12 +302,21 @@ def render_geometry_configuration() -> None:
 
             # Calculate cathode areas and mass
             cathode_geometric_area = cathode_length * cathode_width
-            cathode_total_surface_area = 2 * (cathode_length * cathode_width + cathode_length * cathode_thickness + cathode_width * cathode_thickness)
+            cathode_geometric_surface_area = 2 * (cathode_length * cathode_width + cathode_length * cathode_thickness + cathode_width * cathode_thickness)
 
             # Calculate volume and mass for specific surface area
             cathode_volume_m3 = (cathode_length / 100) * (cathode_width / 100) * (cathode_thickness / 100)
             cathode_mass_kg = cathode_volume_m3 * cathode_density
             cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if cathode_volumetric_ssa > 0:
+                # Total surface area = Volumetric SSA × Volume
+                cathode_total_surface_area_m2 = cathode_volumetric_ssa * cathode_volume_m3
+                cathode_total_surface_area = cathode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                cathode_total_surface_area = cathode_geometric_surface_area
 
             # Calculate or use measured specific surface area (m²/g)
             if use_measured_ssa_cathode:
@@ -317,12 +344,21 @@ def render_geometry_configuration() -> None:
             # Calculate cathode areas and mass
             cathode_radius = cathode_diameter / 2
             cathode_geometric_area = np.pi * cathode_radius**2
-            cathode_total_surface_area = 2 * np.pi * cathode_radius * (cathode_radius + cathode_length)
+            cathode_geometric_surface_area = 2 * np.pi * cathode_radius * (cathode_radius + cathode_length)
 
             # Calculate volume and mass for specific surface area
             cathode_volume_m3 = np.pi * (cathode_radius / 100)**2 * (cathode_length / 100)  # Convert cm to m
             cathode_mass_kg = cathode_volume_m3 * cathode_density
             cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if cathode_volumetric_ssa_cyl > 0:
+                # Total surface area = Volumetric SSA × Volume
+                cathode_total_surface_area_m2 = cathode_volumetric_ssa_cyl * cathode_volume_m3
+                cathode_total_surface_area = cathode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                cathode_total_surface_area = cathode_geometric_surface_area
 
             # Calculate or use measured specific surface area (m²/g)
             if use_measured_ssa_cathode_cyl:
