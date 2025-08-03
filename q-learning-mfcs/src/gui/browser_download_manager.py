@@ -42,6 +42,7 @@ class BrowserDownloadManager:
 
     def __init__(self):
         """Initialize download manager."""
+        self.supported_formats = ['CSV', 'JSON', 'Excel', 'Parquet', 'HDF5', 'ZIP']
         self.format_handlers = {
             'csv': self._to_csv,
             'json': self._to_json,

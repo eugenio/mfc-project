@@ -851,9 +851,50 @@ if (Notification.permission === "granted") {
                     st.rerun()
 
 
+# Standalone utility functions
+def create_alert_rule(parameter: str, threshold: float, condition: str = "greater_than"):
+    """Create a new alert rule."""
+    return {
+        'parameter': parameter,
+        'threshold': threshold,
+        'condition': condition,
+        'created_at': datetime.now().isoformat()
+    }
+
+def check_alerts(current_values: dict, alert_rules: list):
+    """Check current values against alert rules."""
+    triggered_alerts = []
+    for rule in alert_rules:
+        param = rule['parameter']
+        if param in current_values:
+            value = current_values[param]
+            threshold = rule['threshold']
+            condition = rule['condition']
+            
+            triggered = False
+            if condition == "greater_than" and value > threshold:
+                triggered = True
+            elif condition == "less_than" and value < threshold:
+                triggered = True
+            elif condition == "equals" and abs(value - threshold) < 0.001:
+                triggered = True
+                
+            if triggered:
+                triggered_alerts.append({
+                    'rule': rule,
+                    'current_value': value,
+                    'timestamp': datetime.now().isoformat()
+                })
+    
+    return triggered_alerts
+
 # Integration function for the main GUI
-def render_alert_configuration(alert_manager: AlertManager):
+def render_alert_configuration(alert_manager: AlertManager = None):
     """Render the alert configuration UI."""
+    if alert_manager is None:
+        # Create a default manager for testing
+        alert_manager = AlertManager()
+    
     ui = AlertConfigurationUI(alert_manager)
     ui.render()
 
