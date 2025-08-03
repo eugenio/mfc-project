@@ -91,7 +91,6 @@ class ElectrodeGeometrySpec:
 
     # Material density
     density: float | None = None  # kg/m³ - material density
-
     def calculate_specific_surface_area(self) -> float:
         """Calculate specific surface area based on geometry type."""
         if self.specific_surface_area is not None:
