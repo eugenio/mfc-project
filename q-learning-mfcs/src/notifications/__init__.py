@@ -96,26 +96,16 @@ except ImportError:
 
 # TTS components
 try:
-    from .tts_handler import TTSNotificationHandler, TTSMode, TTSEngineType, Pyttsx3Engine
+    from .tts_handler import TTSNotificationHandler, TTSMode, TTSEngine
     __all__.extend([
         "TTSNotificationHandler",
         "TTSMode",
-        "TTSEngineType",
-        "Pyttsx3Engine"
+        "TTSEngine"
     ])
 except ImportError as e:
     # TTS components are optional
     import logging
     logging.getLogger(__name__).debug(f"TTS components not available: {e}")
-
-# Advanced TTS components (Coqui TTS)
-try:
-    from .coqui_tts_manager import CoquiTTSManager, CoquiTTSConfig, HybridTTSManager
-    __all__.extend(["CoquiTTSManager", "CoquiTTSConfig", "HybridTTSManager"])
-except ImportError as e:
-    # Coqui TTS is optional
-    import logging
-    logging.getLogger(__name__).debug(f"Coqui TTS components not available: {e}")
 
 # Convenience aliases for common usage patterns
 try:
