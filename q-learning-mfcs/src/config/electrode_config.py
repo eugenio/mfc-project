@@ -83,13 +83,13 @@ class ElectrodeGeometrySpec:
     thickness: float | None = None  # m
 
     # For custom geometries
-    projected_area: float | None = None  # m² - manually specified
+    specific_surface_area: float | None = None  # m²/g - manually specified
     total_surface_area: float | None = None  # m² - manually specified
 
     def calculate_projected_area(self) -> float:
         """Calculate projected area based on geometry type."""
-        if self.projected_area is not None:
-            return self.projected_area
+        if self.specific_surface_area is not None:
+            return self.specific_surface_area
 
         if self.geometry_type == ElectrodeGeometry.RECTANGULAR_PLATE:
             if self.length and self.width:
@@ -360,7 +360,7 @@ def create_electrode_config(
         height=dimensions.get('height'),
         diameter=dimensions.get('diameter'),
         thickness=dimensions.get('thickness'),
-        projected_area=dimensions.get('projected_area'),
+        specific_surface_area=dimensions.get('specific_surface_area'),
         total_surface_area=dimensions.get('total_surface_area')
     )
 
