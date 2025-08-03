@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Membrane configuration for MFC simulations
 
@@ -6,12 +7,125 @@ including literature-based parameters for common MFC membranes.
 
 Created: 2025-08-03
 """
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
 
+class MembraneMaterial(Enum):
+    """Common membrane materials used in MFCs."""
+    NAFION_117 = "nafion_117"
+    NAFION_112 = "nafion_112"
+    NAFION_115 = "nafion_115"
+    ULTREX_CMI_7000 = "ultrex_cmi_7000"
+    FUMASEP_FKE = "fumasep_fke"
+    FUMASEP_FAA = "fumasep_faa"
+    CELLULOSE_ACETATE = "cellulose_acetate"
+    BIPOLAR_MEMBRANE = "bipolar_membrane"
+    CERAMIC_SEPARATOR = "ceramic_separator"
+    J_CLOTH = "j_cloth"
+    CUSTOM = "custom"
+
+
+@dataclass
+class MembraneProperties:
+    """
+    Membrane material properties with literature-based defaults.
+    
+    All properties should be based on published MFC literature.
+    """
+    
+    # Ion transport properties
+    proton_conductivity: float  # S/cm - proton conductivity at 25°C
+    ion_exchange_capacity: float  # meq/g - ion exchange capacity
+    permselectivity: float  # dimensionless (0-1) - cation selectivity
+    
+    # Physical properties
+    thickness: float  # μm - membrane thickness
+    water_uptake: float  # % - water uptake percentage
+    density: float  # g/cm³ - dry membrane density
+    
+    # Transport resistances
+    area_resistance: float  # Ω·cm² - area-specific resistance
+    oxygen_permeability: float  # cm²/s - oxygen crossover coefficient
+    substrate_permeability: float  # cm²/s - substrate crossover coefficient
+    
+    # Mechanical properties
+    tensile_strength: float | None = None  # MPa - mechanical strength
+    max_operating_temp: float = 60.0  # °C - maximum temperature
+    
+    # Cost and lifetime
+    cost_per_m2: float | None = None  # $/m² - material cost
+    expected_lifetime: float = 1000.0  # hours - operational lifetime
+    
+    # Literature reference
+    reference: str = "User specified"
+
+
+@dataclass
+class MembraneConfiguration:
+    """Complete membrane configuration."""
+    
+    material: MembraneMaterial
+    properties: MembraneProperties
+    area: float  # m² - membrane active area
+    
+    # Operational conditions
+    operating_temperature: float = 25.0  # °C
+    ph_anode: float = 7.0  # pH at anode side
+    ph_cathode: float = 7.0  # pH at cathode side
+    
+    def calculate_resistance(self) -> float:
+        """
+        Calculate membrane resistance based on area and properties.
+        
+        Returns:
+            Resistance in Ω
+        """
+        # Convert area resistance from Ω·cm² to Ω·m²
+        area_resistance_m2 = self.properties.area_resistance * 1e-4
+        return area_resistance_m2 / self.area
+    
+    def calculate_proton_flux(self, current_density: float) -> float:
+        """
+        Calculate proton flux through membrane.
+        
+        Args:
+            current_density: Current density in A/m²
+            
+        Returns:
+            Proton flux in mol/m²/s
+        """
+        faraday = 96485  # C/mol
+        return current_density / faraday
+    
+    def estimate_lifetime_factor(self, current_density: float) -> float:
+        """
+        Estimate lifetime reduction factor based on operating conditions.
+        
+        Args:
+            current_density: Operating current density in A/m²
+            
+        Returns:
+            Lifetime factor (0-1), where 1 is full expected lifetime
+        """
+        # Higher current density reduces lifetime
+        current_factor = 1.0 / (1.0 + current_density / 1000.0)
+        
+        # Temperature effect (every 10°C doubles degradation rate)
+        temp_factor = 2.0 ** ((25.0 - self.operating_temperature) / 10.0)
+        
+        # pH gradient effect
+        ph_gradient = abs(self.ph_anode - self.ph_cathode)
+        ph_factor = 1.0 / (1.0 + ph_gradient / 4.0)
+        
+        return current_factor * temp_factor * ph_factor
+
+
+# Literature-based membrane properties database
 MEMBRANE_PROPERTIES_DATABASE = {
+    MembraneMaterial.NAFION_117: MembraneProperties(
         proton_conductivity=0.10,  # S/cm - Kim et al. (2007) Environ. Sci. Technol.
         ion_exchange_capacity=0.9,  # meq/g - DuPont specification
         permselectivity=0.95,  # High cation selectivity
@@ -127,116 +241,4 @@ def create_membrane_config(
         material=material,
         properties=properties,
         area=area
-class MembraneMaterial(Enum):
-    """Common membrane materials used in MFCs."""
-    NAFION_117 = "nafion_117"
-    NAFION_112 = "nafion_112"
-    NAFION_115 = "nafion_115"
-    ULTREX_CMI_7000 = "ultrex_cmi_7000"
-    FUMASEP_FKE = "fumasep_fke"
-    FUMASEP_FAA = "fumasep_faa"
-    CELLULOSE_ACETATE = "cellulose_acetate"
-    BIPOLAR_MEMBRANE = "bipolar_membrane"
-    CERAMIC_SEPARATOR = "ceramic_separator"
-    J_CLOTH = "j_cloth"
-    CUSTOM = "custom"
-
-@dataclass
-class MembraneProperties:
-    """
-    Membrane material properties with literature-based defaults.
-    
-    All properties should be based on published MFC literature.
-    """
-    
-    # Ion transport properties
-    proton_conductivity: float  # S/cm - proton conductivity at 25°C
-    ion_exchange_capacity: float  # meq/g - ion exchange capacity
-    permselectivity: float  # dimensionless (0-1) - cation selectivity
-    
-    # Physical properties
-    thickness: float  # μm - membrane thickness
-    water_uptake: float  # % - water uptake percentage
-    density: float  # g/cm³ - dry membrane density
-    
-    # Transport resistances
-    area_resistance: float  # Ω·cm² - area-specific resistance
-    oxygen_permeability: float  # cm²/s - oxygen crossover coefficient
-    substrate_permeability: float  # cm²/s - substrate crossover coefficient
-    
-    # Mechanical properties
-    tensile_strength: float | None = None  # MPa - mechanical strength
-    max_operating_temp: float = 60.0  # °C - maximum temperature
-    
-    # Cost and lifetime
-    cost_per_m2: float | None = None  # $/m² - material cost
-    expected_lifetime: float = 1000.0  # hours - operational lifetime
-    
-    # Literature reference
-    reference: str = "User specified"
-
-@dataclass
-class MembraneConfiguration:
-    """Complete membrane configuration."""
-    
-    material: MembraneMaterial
-    properties: MembraneProperties
-    area: float  # m² - membrane active area
-    
-    # Operational conditions
-    operating_temperature: float = 25.0  # °C
-    ph_anode: float = 7.0  # pH at anode side
-    ph_cathode: float = 7.0  # pH at cathode side
-    
-    def calculate_resistance(self) -> float:
-        """
-        Calculate membrane resistance based on area and properties.
-        
-        Returns:
-            Resistance in Ω
-        """
-        # Convert area resistance from Ω·cm² to Ω·m²
-        area_resistance_m2 = self.properties.area_resistance * 1e-4
-        return area_resistance_m2 / self.area
-    
-    def calculate_proton_flux(self, current_density: float) -> float:
-        """
-        Calculate proton flux through membrane.
-        
-        Args:
-            current_density: Current density in A/m²
-            
-        Returns:
-            Proton flux in mol/m²/s
-        """
-        faraday = 96485  # C/mol
-        return current_density / faraday
-    
-    def estimate_lifetime_factor(self, current_density: float) -> float:
-        """
-        Estimate lifetime reduction factor based on operating conditions.
-        
-        Args:
-            current_density: Operating current density in A/m²
-            
-        Returns:
-            Lifetime factor (0-1), where 1 is full expected lifetime
-        """
-        # Higher current density reduces lifetime
-        current_factor = 1.0 / (1.0 + current_density / 1000.0)
-        
-        # Temperature effect (every 10°C doubles degradation rate)
-        temp_factor = 2.0 ** ((25.0 - self.operating_temperature) / 10.0)
-        
-        # pH gradient effect
-        ph_gradient = abs(self.ph_anode - self.ph_cathode)
-        ph_factor = 1.0 / (1.0 + ph_gradient / 4.0)
-        
-        return current_factor * temp_factor * ph_factor
-
-
-# Literature-based membrane properties database
-def create_membrane_config(
-    material: MembraneMaterial,
-    area: float,
-    custom_properties: MembraneProperties | None = None
+    )
