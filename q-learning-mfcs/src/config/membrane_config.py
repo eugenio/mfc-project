@@ -10,7 +10,6 @@ Created: 2025-08-03
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class MembraneMaterial(Enum):
@@ -35,30 +34,30 @@ class MembraneProperties:
     
     All properties should be based on published MFC literature.
     """
-    
+
     # Ion transport properties
     proton_conductivity: float  # S/cm - proton conductivity at 25°C
     ion_exchange_capacity: float  # meq/g - ion exchange capacity
     permselectivity: float  # dimensionless (0-1) - cation selectivity
-    
+
     # Physical properties
     thickness: float  # μm - membrane thickness
     water_uptake: float  # % - water uptake percentage
     density: float  # g/cm³ - dry membrane density
-    
+
     # Transport resistances
     area_resistance: float  # Ω·cm² - area-specific resistance
     oxygen_permeability: float  # cm²/s - oxygen crossover coefficient
     substrate_permeability: float  # cm²/s - substrate crossover coefficient
-    
+
     # Mechanical properties
     tensile_strength: float | None = None  # MPa - mechanical strength
     max_operating_temp: float = 60.0  # °C - maximum temperature
-    
+
     # Cost and lifetime
     cost_per_m2: float | None = None  # $/m² - material cost
     expected_lifetime: float = 1000.0  # hours - operational lifetime
-    
+
     # Literature reference
     reference: str = "User specified"
 
@@ -66,16 +65,16 @@ class MembraneProperties:
 @dataclass
 class MembraneConfiguration:
     """Complete membrane configuration."""
-    
+
     material: MembraneMaterial
     properties: MembraneProperties
     area: float  # m² - membrane active area
-    
+
     # Operational conditions
     operating_temperature: float = 25.0  # °C
     ph_anode: float = 7.0  # pH at anode side
     ph_cathode: float = 7.0  # pH at cathode side
-    
+
     def calculate_resistance(self) -> float:
         """
         Calculate membrane resistance based on area and properties.
@@ -86,7 +85,7 @@ class MembraneConfiguration:
         # Convert area resistance from Ω·cm² to Ω·m²
         area_resistance_m2 = self.properties.area_resistance * 1e-4
         return area_resistance_m2 / self.area
-    
+
     def calculate_proton_flux(self, current_density: float) -> float:
         """
         Calculate proton flux through membrane.
@@ -99,7 +98,7 @@ class MembraneConfiguration:
         """
         faraday = 96485  # C/mol
         return current_density / faraday
-    
+
     def estimate_lifetime_factor(self, current_density: float) -> float:
         """
         Estimate lifetime reduction factor based on operating conditions.
@@ -112,14 +111,14 @@ class MembraneConfiguration:
         """
         # Higher current density reduces lifetime
         current_factor = 1.0 / (1.0 + current_density / 1000.0)
-        
+
         # Temperature effect (every 10°C doubles degradation rate)
         temp_factor = 2.0 ** ((25.0 - self.operating_temperature) / 10.0)
-        
+
         # pH gradient effect
         ph_gradient = abs(self.ph_anode - self.ph_cathode)
         ph_factor = 1.0 / (1.0 + ph_gradient / 4.0)
-        
+
         return current_factor * temp_factor * ph_factor
 
 
@@ -141,7 +140,7 @@ MEMBRANE_PROPERTIES_DATABASE = {
         expected_lifetime=5000,  # hours
         reference="Kim, J.R. et al. (2007) Environ. Sci. Technol. 41, 1004-1009"
     ),
-    
+
     MembraneMaterial.NAFION_112: MembraneProperties(
         proton_conductivity=0.08,  # S/cm - Thinner, slightly lower conductivity
         ion_exchange_capacity=0.9,  # meq/g
@@ -158,7 +157,7 @@ MEMBRANE_PROPERTIES_DATABASE = {
         expected_lifetime=3000,  # hours - shorter due to thickness
         reference="Chae, K.J. et al. (2008) Water Res. 42, 1501-1510"
     ),
-    
+
     MembraneMaterial.ULTREX_CMI_7000: MembraneProperties(
         proton_conductivity=0.02,  # S/cm - Lower than Nafion
         ion_exchange_capacity=1.4,  # meq/g - Higher IEC
@@ -175,7 +174,7 @@ MEMBRANE_PROPERTIES_DATABASE = {
         expected_lifetime=8000,  # hours - Longer lifetime
         reference="Zhang, F. et al. (2011) Energy Environ. Sci. 4, 4340-4346"
     ),
-    
+
     MembraneMaterial.FUMASEP_FKE: MembraneProperties(
         proton_conductivity=0.05,  # S/cm
         ion_exchange_capacity=1.2,  # meq/g
@@ -192,7 +191,7 @@ MEMBRANE_PROPERTIES_DATABASE = {
         expected_lifetime=6000,  # hours
         reference="Sleutels, T. et al. (2013) Int. J. Hydrogen Energy 38, 7201-7208"
     ),
-    
+
     MembraneMaterial.J_CLOTH: MembraneProperties(
         proton_conductivity=0.001,  # S/cm - Very low, not ion-selective
         ion_exchange_capacity=0.0,  # meq/g - No ion exchange
@@ -236,7 +235,7 @@ def create_membrane_config(
         properties = MEMBRANE_PROPERTIES_DATABASE.get(material)
         if properties is None:
             raise ValueError(f"No properties defined for {material.value}")
-    
+
     return MembraneConfiguration(
         material=material,
         properties=properties,
