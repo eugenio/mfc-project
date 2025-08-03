@@ -614,7 +614,9 @@ class ParameterInputComponent:
             )
 
         with col3:
-            fast_rate = metrics['fast_validations'] / max(metrics['total_validations'], 1)
+            fast_validations = metrics.get('fast_validations', 0)
+            total_validations = max(metrics.get('total_validations', 0), 1)
+            fast_rate = fast_validations / total_validations
             st.metric(
                 "Fast Validations",
                 f"{fast_rate:.1%}",
@@ -622,7 +624,8 @@ class ParameterInputComponent:
             )
 
         with col4:
-            instant_rate = metrics['instant_validations'] / max(metrics['total_validations'], 1)
+            instant_validations = metrics.get('instant_validations', 0)
+            instant_rate = instant_validations / total_validations
             st.metric(
                 "Instant Validations",
                 f"{instant_rate:.1%}",

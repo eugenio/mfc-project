@@ -89,14 +89,14 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
         self.qcm_model = None
         self.sensor_fusion = None
 
-        if EISModel and enable_eis:
-            # Map species names to enum
-            species_map = {
-                'geobacter': BacterialSpecies.GEOBACTER,
-                'shewanella': BacterialSpecies.SHEWANELLA,
-                'mixed': BacterialSpecies.MIXED
-            }
+        # Map species names to enum (needed for multiple sensor models)
+        species_map = {
+            'geobacter': BacterialSpecies.GEOBACTER,
+            'shewanella': BacterialSpecies.SHEWANELLA,
+            'mixed': BacterialSpecies.MIXED
+        }
 
+        if EISModel and enable_eis:
             self.eis_model = EISModel(
                 species=species_map.get(species, BacterialSpecies.MIXED),
                 electrode_area=1e-4,  # m² (1 cm² electrode) - fixed for optimal EIS sensing
