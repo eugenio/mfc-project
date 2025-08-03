@@ -65,6 +65,9 @@ class MaterialProperties:
     specific_surface_area: float | None = None  # m²/m³ - for porous materials
     porosity: float | None = None  # dimensionless - void fraction for porous materials
 
+    # Material density
+    density: float | None = None  # kg/m³ - material density
+
     # Literature reference
     reference: str = "User specified"
 
@@ -85,6 +88,9 @@ class ElectrodeGeometrySpec:
     # For custom geometries
     specific_surface_area: float | None = None  # m²/g - manually specified
     total_surface_area: float | None = None  # m² - manually specified
+
+    # Material density
+    density: float | None = None  # kg/m³ - material density
 
     def calculate_specific_surface_area(self) -> float:
         """Calculate specific surface area based on geometry type."""
@@ -108,6 +114,14 @@ class ElectrodeGeometrySpec:
                 return math.pi * (self.diameter / 2) ** 2  # Great circle area
 
         raise ValueError(f"Insufficient dimensions for {self.geometry_type}")
+
+    def calculate_mass(self) -> float:
+        """Calculate electrode mass based on volume and density."""
+        if self.density is None:
+            raise ValueError("Density not specified for mass calculation")
+
+        volume = self.calculate_volume()
+        return volume * self.density  # kg
 
     def calculate_total_surface_area(self) -> float:
         """Calculate total surface area available for microbial colonization."""
@@ -247,7 +261,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=75,  # degrees - Moderately hydrophobic
         surface_roughness=1.2,  # 20% rougher than smooth
         biofilm_adhesion_coefficient=1.0,  # Reference material
-        attachment_energy=-12.5,  # kJ/mol - Favorable attachment
+        attachment_energy=-12.5,
+        density=2200,  # kg/m³
         reference="Logan, B.E. (2008). Microbial Fuel Cells"
     ),
 
@@ -258,7 +273,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=75,  # degrees
         surface_roughness=1.1,  # Smoother than plate
         biofilm_adhesion_coefficient=0.95,  # Slightly lower due to geometry
-        attachment_energy=-12.0,  # kJ/mol
+        attachment_energy=-12.0,
+        density=2200,  # kg/m³
         reference="Logan, B.E. (2008). Microbial Fuel Cells"
     ),
 
@@ -269,7 +285,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=85,  # degrees - More hydrophobic
         surface_roughness=15.0,  # Very high surface area
         biofilm_adhesion_coefficient=2.5,  # Excellent for biofilm
-        attachment_energy=-18.0,  # kJ/mol - Very favorable
+        attachment_energy=-18.0,
+        density=120,  # kg/m³
         specific_surface_area=1500,  # m²/m³ - High specific surface area
         porosity=0.95,  # 95% void space
         reference="Wei, J. et al. (2011). Biosens. Bioelectron."
@@ -282,7 +299,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=80,  # degrees
         surface_roughness=8.0,  # High surface area
         biofilm_adhesion_coefficient=2.0,  # Very good
-        attachment_energy=-15.5,  # kJ/mol
+        attachment_energy=-15.5,
+        density=400,  # kg/m³
         specific_surface_area=800,  # m²/m³
         porosity=0.85,  # 85% void space
         reference="Santoro, C. et al. (2017). Chem. Soc. Rev."
@@ -295,7 +313,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=90,  # degrees - Hydrophobic
         surface_roughness=5.0,  # Moderate surface area
         biofilm_adhesion_coefficient=1.5,  # Good
-        attachment_energy=-14.0,  # kJ/mol
+        attachment_energy=-14.0,
+        density=450,  # kg/m³
         specific_surface_area=400,  # m²/m³
         porosity=0.70,  # 70% void space
         reference="Erable, B. et al. (2012). Electrochem. Commun."
@@ -308,7 +327,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=45,  # degrees - Hydrophilic
         surface_roughness=1.0,  # Smooth
         biofilm_adhesion_coefficient=0.3,  # Poor biofilm adhesion
-        attachment_energy=-5.0,  # kJ/mol - Less favorable
+        attachment_energy=-5.0,
+        density=7850,  # kg/m³
         reference="Torres, C.I. et al. (2010). Environ. Sci. Technol."
     ),
 
@@ -319,7 +339,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=40,  # degrees - Hydrophilic
         surface_roughness=1.0,  # Smooth
         biofilm_adhesion_coefficient=0.2,  # Poor for biofilm
-        attachment_energy=-3.0,  # kJ/mol - Unfavorable
+        attachment_energy=-3.0,
+        density=21450,  # kg/m³
         reference="Rabaey, K. & Verstraete, W. (2005). Trends Biotechnol."
     )
 }
