@@ -1,0 +1,1 @@
+"""Core notification interface unit tests."""

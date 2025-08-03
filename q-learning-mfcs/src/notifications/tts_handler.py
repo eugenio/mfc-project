@@ -9,11 +9,13 @@ from typing import Optional, Dict, Any, List
 from enum import Enum
 import time
 
+try:
     import pyttsx3
     PYTTSX3_AVAILABLE = True
 except ImportError:
     PYTTSX3_AVAILABLE = False
-from .base import NotificationHandler, NotificationConfig, NotificationLevel
+
+from .base import NotificationHandler, NotificationConfig, NotificationLevel, FallbackHandler
 
 logger = logging.getLogger(__name__)
 class TTSMode(Enum):
@@ -122,7 +124,7 @@ class TTSEngine:
                 pass
             self._is_initialized = False
 
-class TTSNotificationHandler(NotificationHandler):
+class TTSNotificationHandler(FallbackHandler):
     """Notification handler with TTS support and ding sound fallback."""
     
     def __init__(self, mode: TTSMode = TTSMode.TTS_WITH_FALLBACK):
