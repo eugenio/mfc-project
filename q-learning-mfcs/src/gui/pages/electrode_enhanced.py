@@ -133,48 +133,113 @@ def render_geometry_configuration():
     """Render geometry configuration interface."""
     st.subheader("📐 Electrode Geometry")
 
-    col1, col2 = st.columns(2)
+    # Four-column layout for dual electrode configuration
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        geometry_type = st.selectbox(
-            "Geometry Type:",
-            ["Rectangular Plate", "Cylindrical Rod", "Cylindrical Tube", "Spherical"]
+        st.markdown("#### ⚡ Anode Geometry")
+        anode_geometry_type = st.selectbox(
+            "Anode Geometry Type:",
+            ["Rectangular Plate", "Cylindrical Rod", "Cylindrical Tube", "Spherical"],
+            key="anode_geometry"
         )
 
-        if geometry_type == "Rectangular Plate":
-            length = st.number_input("Length (cm)", min_value=0.1, max_value=50.0, value=10.0)
-            width = st.number_input("Width (cm)", min_value=0.1, max_value=50.0, value=8.0)
-            thickness = st.number_input("Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3)
+        if anode_geometry_type == "Rectangular Plate":
+            anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="anode_length")
+            anode_width = st.number_input("Anode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="anode_width")
+            anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
 
-            # Calculate areas
-            geometric_area = length * width
-            projected_area = length * width
-            total_surface_area = 2 * (length * width + length * thickness + width * thickness)
+            # Calculate anode areas
+            anode_geometric_area = anode_length * anode_width
+            anode_specific_surface_area = anode_length * anode_width
+            anode_total_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
 
-        elif geometry_type == "Cylindrical Rod":
-            diameter = st.number_input("Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0)
-            length = st.number_input("Length (cm)", min_value=0.1, max_value=50.0, value=15.0)
+        elif anode_geometry_type == "Cylindrical Rod":
+            anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
+            anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
 
-            # Calculate areas
-            radius = diameter / 2
-            geometric_area = np.pi * radius**2
-            projected_area = diameter * length
-            total_surface_area = 2 * np.pi * radius * (radius + length)
+            # Calculate anode areas
+            anode_radius = anode_diameter / 2
+            anode_geometric_area = np.pi * anode_radius**2
+            anode_specific_surface_area = anode_diameter * anode_length
+            anode_total_surface_area = 2 * np.pi * anode_radius * (anode_radius + anode_length)
 
         else:
-            st.info("Geometry configuration coming soon!")
-            return
+            st.info("Anode geometry configuration coming soon!")
+            anode_geometric_area = anode_specific_surface_area = anode_total_surface_area = 0
 
     with col2:
-        st.markdown("#### 📊 Calculated Properties")
+        st.markdown("#### 🔋 Cathode Geometry")
+        cathode_geometry_type = st.selectbox(
+            "Cathode Geometry Type:",
+            ["Rectangular Plate", "Cylindrical Rod", "Cylindrical Tube", "Spherical"],
+            key="cathode_geometry"
+        )
 
-        st.metric("Geometric Area", f"{geometric_area:.2f} cm²")
-        st.metric("Projected Area", f"{projected_area:.2f} cm²")
-        st.metric("Total Surface Area", f"{total_surface_area:.2f} cm²")
+        if cathode_geometry_type == "Rectangular Plate":
+            cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="cathode_length")
+            cathode_width = st.number_input("Cathode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="cathode_width")
+            cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
 
-        # Biofilm capacity calculation
-        biofilm_capacity = total_surface_area * 0.1  # Rough estimate
-        st.metric("Est. Biofilm Capacity", f"{biofilm_capacity:.2f} mL")
+            # Calculate cathode areas
+            cathode_geometric_area = cathode_length * cathode_width
+            cathode_specific_surface_area = cathode_length * cathode_width
+            cathode_total_surface_area = 2 * (cathode_length * cathode_width + cathode_length * cathode_thickness + cathode_width * cathode_thickness)
+
+        elif cathode_geometry_type == "Cylindrical Rod":
+            cathode_diameter = st.number_input("Cathode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="cathode_diameter")
+            cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="cathode_length_cyl")
+
+            # Calculate cathode areas
+            cathode_radius = cathode_diameter / 2
+            cathode_geometric_area = np.pi * cathode_radius**2
+            cathode_specific_surface_area = cathode_diameter * cathode_length
+            cathode_total_surface_area = 2 * np.pi * cathode_radius * (cathode_radius + cathode_length)
+
+        else:
+            st.info("Cathode geometry configuration coming soon!")
+            cathode_geometric_area = cathode_specific_surface_area = cathode_total_surface_area = 0
+
+    with col3:
+        st.markdown("#### 📊 Anode Properties")
+        if anode_geometric_area > 0:
+            st.metric("Geometric Area", f"{anode_geometric_area:.2f} cm²")
+            st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2f} m²/g")
+            st.metric("Total Surface Area", f"{anode_total_surface_area:.2f} cm²")
+
+            # Biofilm capacity calculation for anode
+            anode_biofilm_capacity = anode_total_surface_area * 0.1  # Rough estimate
+            st.metric("Est. Biofilm Capacity", f"{anode_biofilm_capacity:.2f} mL")
+
+    with col4:
+        st.markdown("#### 📊 Cathode Properties")
+        if cathode_geometric_area > 0:
+            st.metric("Geometric Area", f"{cathode_geometric_area:.2f} cm²")
+            st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2f} m²/g")
+            st.metric("Total Surface Area", f"{cathode_total_surface_area:.2f} cm²")
+
+            # Biofilm capacity calculation for cathode
+            cathode_biofilm_capacity = cathode_total_surface_area * 0.1  # Rough estimate
+            st.metric("Est. Biofilm Capacity", f"{cathode_biofilm_capacity:.2f} mL")
+
+    # Overall system summary
+    if anode_geometric_area > 0 and cathode_geometric_area > 0:
+        st.markdown("---")
+        st.markdown("#### 🔄 System Summary")
+
+        summary_col1, summary_col2, summary_col3 = st.columns(3)
+
+        with summary_col1:
+            total_geometric_area = anode_geometric_area + cathode_geometric_area
+            st.metric("Total Geometric Area", f"{total_geometric_area:.2f} cm²")
+
+        with summary_col2:
+            electrode_ratio = anode_geometric_area / cathode_geometric_area if cathode_geometric_area > 0 else 0
+            st.metric("Anode/Cathode Ratio", f"{electrode_ratio:.2f}")
+
+        with summary_col3:
+            total_biofilm_capacity = (anode_total_surface_area + cathode_total_surface_area) * 0.1
+            st.metric("Total Biofilm Capacity", f"{total_biofilm_capacity:.2f} mL")
 
 def render_performance_analysis():
     """Render performance analysis interface."""
