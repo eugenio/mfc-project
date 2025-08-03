@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
+from config.electrode_config import MATERIAL_PROPERTIES_DATABASE, ElectrodeMaterial
 
 
 def render_enhanced_electrode_page() -> None:
@@ -138,7 +139,32 @@ def render_geometry_configuration() -> None:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("#### ⚡ Anode Geometry")
+        st.markdown("#### ⚡ Anode Configuration")
+
+        # Material selection
+        material_options = {
+            "Graphite Plate": ElectrodeMaterial.GRAPHITE_PLATE,
+            "Graphite Rod": ElectrodeMaterial.GRAPHITE_ROD,
+            "Carbon Felt": ElectrodeMaterial.CARBON_FELT,
+            "Carbon Cloth": ElectrodeMaterial.CARBON_CLOTH,
+            "Carbon Paper": ElectrodeMaterial.CARBON_PAPER,
+            "Stainless Steel": ElectrodeMaterial.STAINLESS_STEEL,
+            "Platinum": ElectrodeMaterial.PLATINUM,
+            "Gold": ElectrodeMaterial.GOLD
+        }
+
+        anode_material_name = st.selectbox(
+            "Anode Material:",
+            options=list(material_options.keys()),
+            index=2,  # Default to Carbon Felt
+            key="anode_material_select"
+        )
+        anode_material = material_options[anode_material_name]
+
+        # Get material properties
+        anode_mat_props = MATERIAL_PROPERTIES_DATABASE.get(anode_material)
+
+        # Geometry selection
         anode_geometry_type = st.selectbox(
             "Anode Geometry Type:",
             ["Rectangular Plate", "Cylindrical Rod", "Cylindrical Tube", "Spherical"],
@@ -149,7 +175,13 @@ def render_geometry_configuration() -> None:
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="anode_length")
             anode_width = st.number_input("Anode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="anode_width")
             anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
-            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density")
+            default_density = anode_mat_props.density if anode_mat_props else 2700.0
+            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_density, step=10.0, key="anode_density")
+
+            # Material properties
+            anode_porosity = st.number_input("Porosity (%)", min_value=0.0, max_value=99.9, value=85.0, step=0.1, key="anode_porosity", help="Typical values: Carbon felt: 85-95%, Graphite felt: 80-90%")
+            anode_volumetric_ssa = st.number_input("Volumetric SSA (m²/m³)", min_value=0.0, max_value=1e8, value=6.0e4, step=1000.0, format="%.2e", key="anode_volumetric_ssa", help="Specific surface area per unit volume. Literature: 6.0×10⁴ m²/m³ for carbon felt (SIGRI GmbH)")
+            anode_resistivity = st.number_input("Electrical Resistivity (Ω·m)", min_value=0.0, max_value=100.0, value=0.012, step=0.001, format="%.4f", key="anode_resistivity", help="Apparent electrical resistivity. Typical: 0.012 Ω·m for carbon felt, 0.005-0.01 Ω·m for graphite felt")
 
             # Option to input measured SSA
             use_measured_ssa_anode = st.checkbox("Use measured SSA value", key="use_measured_ssa_anode")
@@ -175,7 +207,13 @@ def render_geometry_configuration() -> None:
         elif anode_geometry_type == "Cylindrical Rod":
             anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
-            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density_cyl")
+            default_density_cyl = anode_mat_props.density if anode_mat_props else 2700.0
+            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_density_cyl, step=10.0, key="anode_density_cyl")
+
+            # Material properties
+            anode_porosity_cyl = st.number_input("Porosity (%)", min_value=0.0, max_value=99.9, value=85.0, step=0.1, key="anode_porosity_cyl", help="Typical values: Carbon felt: 85-95%, Graphite felt: 80-90%")
+            anode_volumetric_ssa_cyl = st.number_input("Volumetric SSA (m²/m³)", min_value=0.0, max_value=1e8, value=6.0e4, step=1000.0, format="%.2e", key="anode_volumetric_ssa_cyl", help="Specific surface area per unit volume. Literature: 6.0×10⁴ m²/m³ for carbon felt (SIGRI GmbH)")
+            anode_resistivity_cyl = st.number_input("Electrical Resistivity (Ω·m)", min_value=0.0, max_value=100.0, value=0.012, step=0.001, format="%.4f", key="anode_resistivity_cyl", help="Apparent electrical resistivity. Typical: 0.012 Ω·m for carbon felt, 0.005-0.01 Ω·m for graphite felt")
 
             # Option to input measured SSA
             use_measured_ssa_anode_cyl = st.checkbox("Use measured SSA value", key="use_measured_ssa_anode_cyl")
@@ -202,9 +240,25 @@ def render_geometry_configuration() -> None:
         else:
             st.info("Anode geometry configuration coming soon!")
             anode_geometric_area = anode_specific_surface_area = anode_total_surface_area = 0
+            anode_porosity = anode_volumetric_ssa = anode_resistivity = 0
+            anode_porosity_cyl = anode_volumetric_ssa_cyl = anode_resistivity_cyl = 0
 
     with col2:
-        st.markdown("#### 🔋 Cathode Geometry")
+        st.markdown("#### 🔋 Cathode Configuration")
+
+        # Material selection
+        cathode_material_name = st.selectbox(
+            "Cathode Material:",
+            options=list(material_options.keys()),
+            index=2,  # Default to Carbon Felt
+            key="cathode_material_select"
+        )
+        cathode_material = material_options[cathode_material_name]
+
+        # Get material properties
+        cathode_mat_props = MATERIAL_PROPERTIES_DATABASE.get(cathode_material)
+
+        # Geometry selection
         cathode_geometry_type = st.selectbox(
             "Cathode Geometry Type:",
             ["Rectangular Plate", "Cylindrical Rod", "Cylindrical Tube", "Spherical"],
@@ -215,7 +269,13 @@ def render_geometry_configuration() -> None:
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="cathode_length")
             cathode_width = st.number_input("Cathode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="cathode_width")
             cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
-            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density")
+            default_cathode_density = cathode_mat_props.density if cathode_mat_props else 2700.0
+            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_cathode_density, step=10.0, key="cathode_density")
+
+            # Material properties
+            cathode_porosity = st.number_input("Porosity (%)", min_value=0.0, max_value=99.9, value=90.0, step=0.1, key="cathode_porosity", help="Typical values: Carbon felt: 85-95%, Graphite felt: 80-90%")
+            cathode_volumetric_ssa = st.number_input("Volumetric SSA (m²/m³)", min_value=0.0, max_value=1e8, value=6.0e4, step=1000.0, format="%.2e", key="cathode_volumetric_ssa", help="Specific surface area per unit volume. Literature: 6.0×10⁴ m²/m³ for carbon felt (SIGRI GmbH)")
+            cathode_resistivity = st.number_input("Electrical Resistivity (Ω·m)", min_value=0.0, max_value=100.0, value=0.008, step=0.001, format="%.4f", key="cathode_resistivity", help="Apparent electrical resistivity. Typical: 0.012 Ω·m for carbon felt, 0.005-0.01 Ω·m for graphite felt")
 
             # Option to input measured SSA
             use_measured_ssa_cathode = st.checkbox("Use measured SSA value", key="use_measured_ssa_cathode")
@@ -241,7 +301,13 @@ def render_geometry_configuration() -> None:
         elif cathode_geometry_type == "Cylindrical Rod":
             cathode_diameter = st.number_input("Cathode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="cathode_diameter")
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="cathode_length_cyl")
-            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density_cyl")
+            default_cathode_density_cyl = cathode_mat_props.density if cathode_mat_props else 2700.0
+            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_cathode_density_cyl, step=10.0, key="cathode_density_cyl")
+
+            # Material properties
+            cathode_porosity_cyl = st.number_input("Porosity (%)", min_value=0.0, max_value=99.9, value=90.0, step=0.1, key="cathode_porosity_cyl", help="Typical values: Carbon felt: 85-95%, Graphite felt: 80-90%")
+            cathode_volumetric_ssa_cyl = st.number_input("Volumetric SSA (m²/m³)", min_value=0.0, max_value=1e8, value=6.0e4, step=1000.0, format="%.2e", key="cathode_volumetric_ssa_cyl", help="Specific surface area per unit volume. Literature: 6.0×10⁴ m²/m³ for carbon felt (SIGRI GmbH)")
+            cathode_resistivity_cyl = st.number_input("Electrical Resistivity (Ω·m)", min_value=0.0, max_value=100.0, value=0.008, step=0.001, format="%.4f", key="cathode_resistivity_cyl", help="Apparent electrical resistivity. Typical: 0.012 Ω·m for carbon felt, 0.005-0.01 Ω·m for graphite felt")
 
             # Option to input measured SSA
             use_measured_ssa_cathode_cyl = st.checkbox("Use measured SSA value", key="use_measured_ssa_cathode_cyl")
@@ -268,10 +334,13 @@ def render_geometry_configuration() -> None:
         else:
             st.info("Cathode geometry configuration coming soon!")
             cathode_geometric_area = cathode_specific_surface_area = cathode_total_surface_area = 0
+            cathode_porosity = cathode_volumetric_ssa = cathode_resistivity = 0
+            cathode_porosity_cyl = cathode_volumetric_ssa_cyl = cathode_resistivity_cyl = 0
 
     with col3:
         st.markdown("#### 📊 Anode Properties")
         if anode_geometric_area > 0:
+            st.metric("Material", anode_material_name)
             st.metric("Geometric Area", f"{anode_geometric_area:.2f} cm²")
             if anode_specific_surface_area < 0.01:
                 st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2e} m²/g")
@@ -293,6 +362,16 @@ def render_geometry_configuration() -> None:
 
                 st.metric("Mass", anode_mass_display)
 
+                # Display material properties
+                if anode_geometry_type == "Rectangular Plate":
+                    st.metric("Porosity", f"{anode_porosity:.1f}%")
+                    st.metric("Volumetric SSA", f"{anode_volumetric_ssa:.2e} m²/m³")
+                    st.metric("Resistivity", f"{anode_resistivity:.4f} Ω·m")
+                else:  # Cylindrical Rod
+                    st.metric("Porosity", f"{anode_porosity_cyl:.1f}%")
+                    st.metric("Volumetric SSA", f"{anode_volumetric_ssa_cyl:.2e} m²/m³")
+                    st.metric("Resistivity", f"{anode_resistivity_cyl:.4f} Ω·m")
+
             # Biofilm capacity calculation for anode
             anode_biofilm_capacity = anode_total_surface_area * 0.1  # Rough estimate
             st.metric("Est. Biofilm Capacity", f"{anode_biofilm_capacity:.2f} mL")
@@ -300,6 +379,7 @@ def render_geometry_configuration() -> None:
     with col4:
         st.markdown("#### 📊 Cathode Properties")
         if cathode_geometric_area > 0:
+            st.metric("Material", cathode_material_name)
             st.metric("Geometric Area", f"{cathode_geometric_area:.2f} cm²")
             if cathode_specific_surface_area < 0.01:
                 st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2e} m²/g")
@@ -320,6 +400,16 @@ def render_geometry_configuration() -> None:
                     cathode_mass_display = f"{cathode_mass_kg:.3f} kg"
 
                 st.metric("Mass", cathode_mass_display)
+
+                # Display material properties
+                if cathode_geometry_type == "Rectangular Plate":
+                    st.metric("Porosity", f"{cathode_porosity:.1f}%")
+                    st.metric("Volumetric SSA", f"{cathode_volumetric_ssa:.2e} m²/m³")
+                    st.metric("Resistivity", f"{cathode_resistivity:.4f} Ω·m")
+                else:  # Cylindrical Rod
+                    st.metric("Porosity", f"{cathode_porosity_cyl:.1f}%")
+                    st.metric("Volumetric SSA", f"{cathode_volumetric_ssa_cyl:.2e} m²/m³")
+                    st.metric("Resistivity", f"{cathode_resistivity_cyl:.4f} Ω·m")
 
             # Biofilm capacity calculation for cathode
             cathode_biofilm_capacity = cathode_total_surface_area * 0.1  # Rough estimate
