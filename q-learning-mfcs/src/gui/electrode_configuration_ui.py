@@ -184,9 +184,9 @@ class ElectrodeConfigurationUI:
 
         elif geometry == ElectrodeGeometry.CUSTOM:
             with col1:
-                dimensions['projected_area'] = st.number_input(
-                    "Projected Area (cm²)", min_value=0.01, max_value=1000.0, value=25.0, step=0.01,
-                    key=f"{electrode_type}_projected_area", help="Manually specified projected area"
+                dimensions['specific_surface_area'] = st.number_input(
+                    "Specific Surface Area (m²/g)", min_value=0.01, max_value=1000.0, value=25.0, step=0.01,
+                    key=f"{electrode_type}_specific_surface_area", help="Manually specified specific surface area per unit mass"
                 ) / 10000  # Convert to m²
 
             with col2:
@@ -302,7 +302,7 @@ class ElectrodeConfigurationUI:
         st.markdown(f"### 📊 {electrode_type.title()} Surface Area Analysis")
 
         try:
-            projected_area = config.geometry.calculate_projected_area()
+            specific_surface_area = config.geometry.calculate_specific_surface_area()
             total_geometric_area = config.geometry.calculate_total_surface_area()
             effective_area = config.calculate_effective_surface_area()
             biofilm_capacity = config.calculate_biofilm_capacity()
@@ -313,9 +313,9 @@ class ElectrodeConfigurationUI:
 
             with col1:
                 st.metric(
-                    "Projected Area",
-                    f"{projected_area * 10000:.2f} cm²",
-                    help="Cross-sectional or footprint area"
+                    "Specific Surface Area",
+                    f"{specific_surface_area * 10000:.2f} m²/g",
+                    help="Surface area per unit mass"
                 )
 
             with col2:
@@ -333,11 +333,11 @@ class ElectrodeConfigurationUI:
                 )
 
             with col4:
-                enhancement_factor = effective_area / projected_area
+                enhancement_factor = effective_area / specific_surface_area
                 st.metric(
                     "Area Enhancement",
                     f"{enhancement_factor:.1f}×",
-                    help="Effective area relative to projected area"
+                    help="Effective area relative to specific surface area"
                 )
 
             # Additional metrics
@@ -367,7 +367,7 @@ class ElectrodeConfigurationUI:
 
             # Store calculations for comparison
             st.session_state.electrode_calculations[electrode_type] = {
-                'projected_area_cm2': projected_area * 10000,
+                'specific_surface_area_m2_per_g': specific_surface_area * 10000,
                 'geometric_area_cm2': total_geometric_area * 10000,
                 'effective_area_cm2': effective_area * 10000,
                 'enhancement_factor': enhancement_factor,
@@ -392,7 +392,7 @@ class ElectrodeConfigurationUI:
         for electrode_type, calc in st.session_state.electrode_calculations.items():
             comparison_data.append({
                 'Electrode': electrode_type.title(),
-                'Projected Area (cm²)': calc['projected_area_cm2'],
+                'Specific Surface Area (m²/g)': calc['specific_surface_area_m2_per_g'],
                 'Effective Area (cm²)': calc['effective_area_cm2'],
                 'Enhancement Factor': calc['enhancement_factor'],
                 'Biofilm Capacity (μL)': calc['biofilm_capacity_ul'],
@@ -406,13 +406,13 @@ class ElectrodeConfigurationUI:
         fig = go.Figure()
 
         electrodes = df['Electrode'].tolist()
-        projected_areas = df['Projected Area (cm²)'].tolist()
+        specific_surface_areas = df['Specific Surface Area (m²/g)'].tolist()
         effective_areas = df['Effective Area (cm²)'].tolist()
 
         fig.add_trace(go.Bar(
-            name='Projected Area',
+            name='Specific Surface Area',
             x=electrodes,
-            y=projected_areas,
+            y=specific_surface_areas,
             marker_color='lightblue'
         ))
 
@@ -426,7 +426,7 @@ class ElectrodeConfigurationUI:
         fig.update_layout(
             title='Electrode Surface Area Comparison',
             xaxis_title='Electrode Type',
-            yaxis_title='Surface Area (cm²)',
+            yaxis_title='Surface Area (m²/g)',
             barmode='group',
             height=400
         )
@@ -445,7 +445,7 @@ class ElectrodeConfigurationUI:
         with col1:
             st.write(f"**Material:** {summary['material'].replace('_', ' ').title()}")
             st.write(f"**Geometry:** {summary['geometry'].replace('_', ' ').title()}")
-            st.write(f"**Projected Area:** {summary['projected_area_cm2']:.2f} cm²")
+            st.write(f"**Specific Surface Area:** {summary['specific_surface_area_m2_per_g']:.2f} m²/g")
             st.write(f"**Effective Area:** {summary['effective_area_cm2']:.2f} cm²")
 
         with col2:
