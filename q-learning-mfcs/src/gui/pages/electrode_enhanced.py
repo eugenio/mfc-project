@@ -31,21 +31,105 @@ def render_enhanced_configuration() -> None:
     """Render the main configuration interface."""
 
     # Configuration tabs
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🧪 Material Selection",
         "📐 Geometry Configuration",
         "📊 Performance Analysis",
         "⚗️ Custom Materials"
     ])
 
     with tab1:
-        render_geometry_configuration()
+        render_material_selection()
 
     with tab2:
-        render_performance_analysis()
+        render_geometry_configuration()
 
     with tab3:
+        render_performance_analysis()
+
+    with tab4:
         render_custom_material_creator()
 
+def render_material_selection() -> None:
+    """Render enhanced material selection interface."""
+    st.subheader("🧪 Electrode Material Properties")
+
+    # Dual electrode configuration
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### ⚡ Anode Configuration")
+        anode_material = render_material_selector("anode")
+
+    with col2:
+        st.markdown("#### 🔋 Cathode Configuration")
+        cathode_material = render_material_selector("cathode")
+
+    # Material comparison
+    if anode_material and cathode_material:
+        st.markdown("---")
+        render_material_comparison(anode_material, cathode_material)
+
+def render_material_selector(electrode_type: str) -> str | None:
+    """Render material selector for electrode type."""
+
+    materials = {
+        "Carbon Cloth": {
+            "conductivity": "1.2 S/cm",
+            "surface_area": "0.54 m²/g",
+            "cost": "Low",
+            "description": "Flexible, high surface area, biocompatible"
+        },
+        "Carbon Paper": {
+            "conductivity": "0.8 S/cm",
+            "surface_area": "0.32 m²/g",
+            "cost": "Low",
+            "description": "Rigid, moderate conductivity, gas diffusion"
+        },
+        "Graphite Plate": {
+            "conductivity": "2.5 S/cm",
+            "surface_area": "0.05 m²/g",
+            "cost": "Medium",
+            "description": "High conductivity, low surface area, durable"
+        },
+        "Stainless Steel": {
+            "conductivity": "1.4 S/cm",
+            "surface_area": "0.01 m²/g",
+            "cost": "Medium",
+            "description": "Corrosion resistant, moderate conductivity"
+        }
+    }
+
+    selected_material = st.selectbox(
+        f"Select {electrode_type} material:",
+        list(materials.keys()),
+        key=f"{electrode_type}_material"
+    )
+
+    if selected_material:
+        material_props = materials[selected_material]
+
+        # Display properties
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Conductivity", material_props["conductivity"])
+        with col2:
+            st.metric("Surface Area", material_props["surface_area"])
+        with col3:
+            st.metric("Cost", material_props["cost"])
+
+        st.info(f"💡 {material_props['description']}")
+
+        return selected_material
+
+    return None
+
+def render_material_comparison(anode_material: str, cathode_material: str) -> None:
+    """Render material comparison."""
+    st.subheader("⚔️ Material Comparison")
+    st.success(f"Anode: {anode_material} | Cathode: {cathode_material}")
+    st.info("💡 Configuration validated - materials are compatible for MFC operation")
 
 def render_geometry_configuration() -> None:
     """Render geometry configuration interface."""
