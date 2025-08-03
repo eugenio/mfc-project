@@ -151,20 +151,37 @@ def render_geometry_configuration() -> None:
             anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
             anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density")
 
-            # Calculate anode areas
+            # Calculate anode areas and mass
             anode_geometric_area = anode_length * anode_width
-            anode_specific_surface_area = anode_length * anode_width
             anode_total_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
+
+            # Calculate volume and mass for specific surface area
+            anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
+            anode_mass_kg = anode_volume_m3 * anode_density
+            anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate specific surface area (m²/g)
+            anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+            anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
 
         elif anode_geometry_type == "Cylindrical Rod":
             anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
+            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density_cyl")
 
-            # Calculate anode areas
+            # Calculate anode areas and mass
             anode_radius = anode_diameter / 2
             anode_geometric_area = np.pi * anode_radius**2
-            anode_specific_surface_area = anode_diameter * anode_length
             anode_total_surface_area = 2 * np.pi * anode_radius * (anode_radius + anode_length)
+
+            # Calculate volume and mass for specific surface area
+            anode_volume_m3 = np.pi * (anode_radius / 100)**2 * (anode_length / 100)  # Convert cm to m
+            anode_mass_kg = anode_volume_m3 * anode_density
+            anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate specific surface area (m²/g)
+            anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+            anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
 
         else:
             st.info("Anode geometry configuration coming soon!")
@@ -184,20 +201,37 @@ def render_geometry_configuration() -> None:
             cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
             cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density")
 
-            # Calculate cathode areas
+            # Calculate cathode areas and mass
             cathode_geometric_area = cathode_length * cathode_width
-            cathode_specific_surface_area = cathode_length * cathode_width
             cathode_total_surface_area = 2 * (cathode_length * cathode_width + cathode_length * cathode_thickness + cathode_width * cathode_thickness)
+
+            # Calculate volume and mass for specific surface area
+            cathode_volume_m3 = (cathode_length / 100) * (cathode_width / 100) * (cathode_thickness / 100)
+            cathode_mass_kg = cathode_volume_m3 * cathode_density
+            cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate specific surface area (m²/g)
+            cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
+            cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
 
         elif cathode_geometry_type == "Cylindrical Rod":
             cathode_diameter = st.number_input("Cathode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="cathode_diameter")
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="cathode_length_cyl")
+            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density_cyl")
 
-            # Calculate cathode areas
+            # Calculate cathode areas and mass
             cathode_radius = cathode_diameter / 2
             cathode_geometric_area = np.pi * cathode_radius**2
-            cathode_specific_surface_area = cathode_diameter * cathode_length
             cathode_total_surface_area = 2 * np.pi * cathode_radius * (cathode_radius + cathode_length)
+
+            # Calculate volume and mass for specific surface area
+            cathode_volume_m3 = np.pi * (cathode_radius / 100)**2 * (cathode_length / 100)  # Convert cm to m
+            cathode_mass_kg = cathode_volume_m3 * cathode_density
+            cathode_mass_g = cathode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate specific surface area (m²/g)
+            cathode_total_surface_area_m2 = cathode_total_surface_area / 10000  # Convert cm² to m²
+            cathode_specific_surface_area = cathode_total_surface_area_m2 / cathode_mass_g if cathode_mass_g > 0 else 0
 
         else:
             st.info("Cathode geometry configuration coming soon!")
@@ -210,12 +244,8 @@ def render_geometry_configuration() -> None:
             st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{anode_total_surface_area:.2f} cm²")
 
-            # Mass calculation for anode
-            if anode_geometry_type == "Rectangular Plate":
-                # Convert dimensions from cm to m and calculate volume
-                anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
-                anode_mass_kg = anode_volume_m3 * anode_density
-
+            # Mass calculation and display for anode
+            if anode_geometry_type in ["Rectangular Plate", "Cylindrical Rod"]:
                 # Display mass in appropriate units
                 if anode_mass_kg < 0.001:
                     anode_mass_display = f"{anode_mass_kg * 1000000:.2f} mg"
@@ -237,12 +267,8 @@ def render_geometry_configuration() -> None:
             st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{cathode_total_surface_area:.2f} cm²")
 
-            # Mass calculation for cathode
-            if cathode_geometry_type == "Rectangular Plate":
-                # Convert dimensions from cm to m and calculate volume
-                cathode_volume_m3 = (cathode_length / 100) * (cathode_width / 100) * (cathode_thickness / 100)
-                cathode_mass_kg = cathode_volume_m3 * cathode_density
-
+            # Mass calculation and display for cathode
+            if cathode_geometry_type in ["Rectangular Plate", "Cylindrical Rod"]:
                 # Display mass in appropriate units
                 if cathode_mass_kg < 0.001:
                     cathode_mass_display = f"{cathode_mass_kg * 1000000:.2f} mg"
