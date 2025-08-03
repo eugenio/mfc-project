@@ -1,5 +1,5 @@
 """
-TTS notification handler with pyttsx3 support and ding sound fallback.
+TTS notification handler with hybrid TTS support (pyttsx3 and Coqui TTS) and ding sound fallback.
 """
 import logging
 import threading
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from enum import Enum
 import time
+import os
 
 try:
     import pyttsx3
@@ -16,8 +17,16 @@ except ImportError:
     PYTTSX3_AVAILABLE = False
 
 from .base import NotificationHandler, NotificationConfig, NotificationLevel, FallbackHandler
+from .coqui_tts_manager import CoquiTTSManager, CoquiTTSConfig, HybridTTSManager
 
 logger = logging.getLogger(__name__)
+
+class TTSEngineType(Enum):
+    """Available TTS engines."""
+    PYTTSX3 = "pyttsx3"
+    COQUI = "coqui"
+    HYBRID = "hybrid"  # Tries Coqui first, falls back to pyttsx3
+
 class TTSMode(Enum):
     """TTS operation modes."""
     TTS_ONLY = "tts_only"
@@ -25,7 +34,7 @@ class TTSMode(Enum):
     TTS_WITH_FALLBACK = "tts_with_fallback"
     DISABLED = "disabled"
 
-class TTSEngine:
+class Pyttsx3Engine:
     """Wrapper for pyttsx3 engine with platform-specific configuration."""
     
     def __init__(self):
@@ -127,10 +136,16 @@ class TTSEngine:
 class TTSNotificationHandler(FallbackHandler):
     """Notification handler with TTS support and ding sound fallback."""
     
-    def __init__(self, mode: TTSMode = TTSMode.TTS_WITH_FALLBACK):
+    def __init__(
+        self, 
+        mode: TTSMode = TTSMode.TTS_WITH_FALLBACK,
+        engine_type: TTSEngineType = TTSEngineType.HYBRID,
+        coqui_config: Optional[CoquiTTSConfig] = None
+    ):
         super().__init__()
         self.mode = mode
-        self.tts_engine = TTSEngine()
+        self.engine_type = engine_type
+        self.tts_engine = None
         self.tts_available = False
         self._notification_queue = queue.Queue()
         self._worker_thread = None
@@ -144,22 +159,53 @@ class TTSNotificationHandler(FallbackHandler):
             'text_limit': 500,  # Max characters for TTS
         }
         
+        # Coqui-specific config
+        self.coqui_config = coqui_config or CoquiTTSConfig()
+        
         # Initialize components
+        self._initialize_tts_engine()
         self._initialize_tts()
         if self.mode != TTSMode.DISABLED:
             self._start_worker()
+    
+    def _initialize_tts_engine(self):
+        """Initialize the appropriate TTS engine based on configuration."""
+        if self.engine_type == TTSEngineType.PYTTSX3:
+            self.tts_engine = Pyttsx3Engine()
+        elif self.engine_type == TTSEngineType.COQUI:
+            self.tts_engine = CoquiTTSManager(self.coqui_config)
+        elif self.engine_type == TTSEngineType.HYBRID:
+            # Get preference from environment or config
+            prefer_coqui = os.getenv('TTS_PREFER_COQUI', 'true').lower() == 'true'
+            self.tts_engine = HybridTTSManager(
+                prefer_coqui=prefer_coqui,
+                coqui_config=self.coqui_config
+            )
+        else:
+            # Default to pyttsx3
+            self.tts_engine = Pyttsx3Engine()
             
     def _initialize_tts(self):
         """Initialize TTS engine if mode requires it."""
         if self.mode in [TTSMode.TTS_ONLY, TTSMode.TTS_WITH_FALLBACK]:
-            self.tts_available = self.tts_engine.initialize()
-            if self.tts_available:
-                self.tts_engine.set_rate(self.tts_config['rate'])
-                self.tts_engine.set_volume(self.tts_config['volume'])
-                if self.tts_config['voice_id']:
-                    self.tts_engine.set_voice(self.tts_config['voice_id'])
-                logger.info("TTS engine initialized successfully")
-            else:
+            # Check which type of engine we have
+            if isinstance(self.tts_engine, Pyttsx3Engine):
+                self.tts_available = self.tts_engine.initialize()
+                if self.tts_available:
+                    self.tts_engine.set_rate(self.tts_config['rate'])
+                    self.tts_engine.set_volume(self.tts_config['volume'])
+                    if self.tts_config['voice_id']:
+                        self.tts_engine.set_voice(self.tts_config['voice_id'])
+                    logger.info("pyttsx3 TTS engine initialized successfully")
+            elif isinstance(self.tts_engine, (CoquiTTSManager, HybridTTSManager)):
+                self.tts_available = self.tts_engine.is_available()
+                if self.tts_available:
+                    engine_name = "Coqui TTS" if isinstance(self.tts_engine, CoquiTTSManager) else "Hybrid TTS"
+                    logger.info(f"{engine_name} engine initialized successfully")
+                    if isinstance(self.tts_engine, HybridTTSManager):
+                        logger.info(f"Active engine: {self.tts_engine.get_active_engine()}")
+            
+            if not self.tts_available:
                 logger.warning("TTS engine initialization failed")
                 if self.mode == TTSMode.TTS_ONLY:
                     logger.error("TTS_ONLY mode but TTS unavailable")
@@ -242,23 +288,33 @@ class TTSNotificationHandler(FallbackHandler):
             return False
             
         try:
-            # Adjust speech parameters based on level
-            original_rate = self.tts_config['rate']
-            original_volume = self.tts_config['volume']
-            
-            if level == NotificationLevel.CRITICAL:
-                self.tts_engine.set_rate(int(original_rate * 1.2))
-                self.tts_engine.set_volume(min(1.0, original_volume * 1.2))
-            elif level == NotificationLevel.WARNING:
-                self.tts_engine.set_rate(int(original_rate * 1.1))
-                self.tts_engine.set_volume(min(1.0, original_volume * 1.1))
+            # For pyttsx3 engine, adjust parameters
+            if isinstance(self.tts_engine, Pyttsx3Engine):
+                # Adjust speech parameters based on level
+                original_rate = self.tts_config['rate']
+                original_volume = self.tts_config['volume']
                 
-            # Speak the text
-            success = self.tts_engine.speak(text)
-            
-            # Restore original settings
-            self.tts_engine.set_rate(original_rate)
-            self.tts_engine.set_volume(original_volume)
+                if level == NotificationLevel.CRITICAL:
+                    self.tts_engine.set_rate(int(original_rate * 1.2))
+                    self.tts_engine.set_volume(min(1.0, original_volume * 1.2))
+                elif level == NotificationLevel.WARNING:
+                    self.tts_engine.set_rate(int(original_rate * 1.1))
+                    self.tts_engine.set_volume(min(1.0, original_volume * 1.1))
+                    
+                # Speak the text
+                success = self.tts_engine.speak(text)
+                
+                # Restore original settings
+                self.tts_engine.set_rate(original_rate)
+                self.tts_engine.set_volume(original_volume)
+                
+            # For Coqui or Hybrid engines, use their speak method with level
+            elif isinstance(self.tts_engine, (CoquiTTSManager, HybridTTSManager)):
+                success = self.tts_engine.speak(text, level=level, blocking=True)
+            else:
+                # Fallback for unknown engine types
+                success = False
+                logger.warning(f"Unknown TTS engine type: {type(self.tts_engine)}")
             
             return success
             
