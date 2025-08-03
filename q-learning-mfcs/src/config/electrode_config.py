@@ -86,8 +86,8 @@ class ElectrodeGeometrySpec:
     specific_surface_area: float | None = None  # m²/g - manually specified
     total_surface_area: float | None = None  # m² - manually specified
 
-    def calculate_projected_area(self) -> float:
-        """Calculate projected area based on geometry type."""
+    def calculate_specific_surface_area(self) -> float:
+        """Calculate specific surface area based on geometry type."""
         if self.specific_surface_area is not None:
             return self.specific_surface_area
 
@@ -183,12 +183,12 @@ class ElectrodeConfiguration:
         Calculate effective surface area for microbial colonization.
         Accounts for material-specific surface area enhancement.
         """
-        projected_area = self.geometry.calculate_projected_area()
+        specific_surface_area = self.geometry.calculate_specific_surface_area()
 
         # For porous materials, use specific surface area
         if self.material_properties.specific_surface_area is not None:
             volume = self.geometry.calculate_volume()
-            return projected_area + (self.material_properties.specific_surface_area * volume)
+            return specific_surface_area + (self.material_properties.specific_surface_area * volume)
         else:
             # For non-porous materials, use geometric surface area
             total_area = self.geometry.calculate_total_surface_area()
@@ -228,7 +228,7 @@ class ElectrodeConfiguration:
         return {
             'material': self.material.value,
             'geometry': self.geometry.geometry_type.value,
-            'projected_area_cm2': self.geometry.calculate_projected_area() * 10000,  # Convert to cm²
+            'projected_area_cm2': self.geometry.calculate_specific_surface_area() * 10000,  # Convert to cm²
             'effective_area_cm2': self.calculate_effective_surface_area() * 10000,  # Convert to cm²
             'biofilm_capacity_ul': self.calculate_biofilm_capacity() * 1e9,  # Convert to μL
             'charge_transfer_coeff': self.calculate_charge_transfer_coefficient(),
