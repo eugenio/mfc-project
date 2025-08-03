@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Enhanced Electrode Configuration Page"""
 
+
 import numpy as np
 import pandas as pd
 import streamlit as st
 
 
-def render_enhanced_electrode_page():
+def render_enhanced_electrode_page() -> None:
     """Render the enhanced electrode configuration page."""
 
     # Page header
@@ -25,7 +26,7 @@ def render_enhanced_electrode_page():
     # Main interface
     render_enhanced_configuration()
 
-def render_enhanced_configuration():
+def render_enhanced_configuration() -> None:
     """Render the main configuration interface."""
 
     # Configuration tabs
@@ -48,7 +49,7 @@ def render_enhanced_configuration():
     with tab4:
         render_custom_material_creator()
 
-def render_material_selection():
+def render_material_selection() -> None:
     """Render enhanced material selection interface."""
     st.subheader("🧪 Electrode Material Properties")
 
@@ -68,7 +69,7 @@ def render_material_selection():
         st.markdown("---")
         render_material_comparison(anode_material, cathode_material)
 
-def render_material_selector(electrode_type: str):
+def render_material_selector(electrode_type: str) -> str | None:
     """Render material selector for electrode type."""
 
     materials = {
@@ -123,13 +124,13 @@ def render_material_selector(electrode_type: str):
 
     return None
 
-def render_material_comparison(anode_material: str, cathode_material: str):
+def render_material_comparison(anode_material: str, cathode_material: str) -> None:
     """Render material comparison."""
     st.subheader("⚔️ Material Comparison")
     st.success(f"Anode: {anode_material} | Cathode: {cathode_material}")
     st.info("💡 Configuration validated - materials are compatible for MFC operation")
 
-def render_geometry_configuration():
+def render_geometry_configuration() -> None:
     """Render geometry configuration interface."""
     st.subheader("📐 Electrode Geometry")
 
@@ -148,6 +149,7 @@ def render_geometry_configuration():
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="anode_length")
             anode_width = st.number_input("Anode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="anode_width")
             anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
+            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="anode_density")
 
             # Calculate anode areas
             anode_geometric_area = anode_length * anode_width
@@ -180,6 +182,7 @@ def render_geometry_configuration():
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="cathode_length")
             cathode_width = st.number_input("Cathode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="cathode_width")
             cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
+            cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=2700.0, step=10.0, key="cathode_density")
 
             # Calculate cathode areas
             cathode_geometric_area = cathode_length * cathode_width
@@ -207,6 +210,22 @@ def render_geometry_configuration():
             st.metric("Specific Surface Area", f"{anode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{anode_total_surface_area:.2f} cm²")
 
+            # Mass calculation for anode
+            if anode_geometry_type == "Rectangular Plate":
+                # Convert dimensions from cm to m and calculate volume
+                anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
+                anode_mass_kg = anode_volume_m3 * anode_density
+
+                # Display mass in appropriate units
+                if anode_mass_kg < 0.001:
+                    anode_mass_display = f"{anode_mass_kg * 1000000:.2f} mg"
+                elif anode_mass_kg < 1.0:
+                    anode_mass_display = f"{anode_mass_kg * 1000:.2f} g"
+                else:
+                    anode_mass_display = f"{anode_mass_kg:.3f} kg"
+
+                st.metric("Mass", anode_mass_display)
+
             # Biofilm capacity calculation for anode
             anode_biofilm_capacity = anode_total_surface_area * 0.1  # Rough estimate
             st.metric("Est. Biofilm Capacity", f"{anode_biofilm_capacity:.2f} mL")
@@ -217,6 +236,22 @@ def render_geometry_configuration():
             st.metric("Geometric Area", f"{cathode_geometric_area:.2f} cm²")
             st.metric("Specific Surface Area", f"{cathode_specific_surface_area:.2f} m²/g")
             st.metric("Total Surface Area", f"{cathode_total_surface_area:.2f} cm²")
+
+            # Mass calculation for cathode
+            if cathode_geometry_type == "Rectangular Plate":
+                # Convert dimensions from cm to m and calculate volume
+                cathode_volume_m3 = (cathode_length / 100) * (cathode_width / 100) * (cathode_thickness / 100)
+                cathode_mass_kg = cathode_volume_m3 * cathode_density
+
+                # Display mass in appropriate units
+                if cathode_mass_kg < 0.001:
+                    cathode_mass_display = f"{cathode_mass_kg * 1000000:.2f} mg"
+                elif cathode_mass_kg < 1.0:
+                    cathode_mass_display = f"{cathode_mass_kg * 1000:.2f} g"
+                else:
+                    cathode_mass_display = f"{cathode_mass_kg:.3f} kg"
+
+                st.metric("Mass", cathode_mass_display)
 
             # Biofilm capacity calculation for cathode
             cathode_biofilm_capacity = cathode_total_surface_area * 0.1  # Rough estimate
@@ -241,7 +276,7 @@ def render_geometry_configuration():
             total_biofilm_capacity = (anode_total_surface_area + cathode_total_surface_area) * 0.1
             st.metric("Total Biofilm Capacity", f"{total_biofilm_capacity:.2f} mL")
 
-def render_performance_analysis():
+def render_performance_analysis() -> None:
     """Render performance analysis interface."""
     st.subheader("📊 Performance Analysis")
 
@@ -275,7 +310,7 @@ def render_performance_analysis():
     st.line_chart(chart_data.set_index('Time (hours)'))
 
 
-def render_custom_material_creator():
+def render_custom_material_creator() -> None:
     """Render custom material creation interface."""
     st.subheader("⚗️ Create Custom Electrode Material")
 
@@ -361,7 +396,7 @@ def render_custom_material_creator():
             preview_performance(conductivity, surface_area, biofilm_adhesion)
 
 
-def validate_material_properties(conductivity, surface_area, contact_resistance):
+def validate_material_properties(conductivity: float, surface_area: float, contact_resistance: float) -> None:
     """Validate material properties against literature ranges."""
 
     # Conductivity validation
@@ -383,8 +418,8 @@ def validate_material_properties(conductivity, surface_area, contact_resistance)
         st.warning("⚠️ Contact resistance outside typical range (0.01-5.0 Ω·cm²)")
 
 
-def save_material_to_session(name, conductivity, surface_area, contact_resistance,
-                           biofilm_adhesion, porosity, literature_ref):
+def save_material_to_session(name: str, conductivity: float, surface_area: float, contact_resistance: float,
+                           biofilm_adhesion: float, porosity: float, literature_ref: str) -> None:
     """Save custom material to session state."""
 
     if 'custom_materials' not in st.session_state:
@@ -400,7 +435,7 @@ def save_material_to_session(name, conductivity, surface_area, contact_resistanc
     }
 
 
-def preview_performance(conductivity, surface_area, biofilm_adhesion):
+def preview_performance(conductivity: float, surface_area: float, biofilm_adhesion: float) -> None:
     """Preview estimated performance of custom material."""
 
     # Simple performance estimation
