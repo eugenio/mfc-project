@@ -9,12 +9,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
+
+
 class NotificationLevel(Enum):
     """Notification urgency levels."""
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
     SUCCESS = "success"
+
 
 @dataclass
 class NotificationConfig:
@@ -29,6 +32,7 @@ class NotificationConfig:
     actions: Optional[dict[str, str]] = None  # {"action_id": "label"}
     app_name: str = "MFC Monitor"
     category: str = "mfc.alert"
+
 
 class NotificationHandler(ABC):
     """Base class for platform-specific notification handlers."""
@@ -112,6 +116,7 @@ class NotificationHandler(ABC):
         log_level = level_map.get(config.level, logging.INFO)
         message = f"[{config.level.value.upper()}] {config.title}: {config.message}"
         self.logger.log(log_level, message)
+
 
 class FallbackHandler(NotificationHandler):
     """Fallback handler that logs notifications to console and logger."""

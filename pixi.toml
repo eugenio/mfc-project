@@ -47,6 +47,12 @@ test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration 
 # CI-friendly test (with XML output)
 test-ci = "cd q-learning-mfcs/tests && python -m pytest . --junitxml=test-results.xml --cov=../src --cov-report=xml"
 
+# TTS notification tasks
+tts-test-simple = "cd q-learning-mfcs && python -c 'from src.notifications.tts_handler import TTSNotificationHandler, TTSMode; from src.notifications.base import NotificationConfig, NotificationLevel; h = TTSNotificationHandler(TTSMode.TTS_WITH_FALLBACK); c = NotificationConfig(\"TTS Test\", \"Text-to-speech system is working\", NotificationLevel.SUCCESS); h.send_notification(c); import time; time.sleep(3)'"
+tts-list-voices = "cd q-learning-mfcs && python -c 'from src.notifications.tts_handler import TTSEngine; e = TTSEngine(); e.initialize(); voices = e.get_voices(); print(\"Available voices:\"); [print(f\"  - {v[\"id\"]}: {v[\"name\"]}\") for v in voices]'"
+tts-test-all-modes = "cd q-learning-mfcs && python -c 'from src.notifications.tts_handler import TTSNotificationHandler, TTSMode; from src.notifications.base import NotificationConfig, NotificationLevel; modes = [TTSMode.TTS_ONLY, TTSMode.SOUND_ONLY, TTSMode.TTS_WITH_FALLBACK]; [print(f\"Testing {m.value} mode...\") or TTSNotificationHandler(m).send_notification(NotificationConfig(f\"Mode: {m.value}\", \"Testing notification\", NotificationLevel.INFO)) for m in modes]'"
+test-tts-handler = "cd q-learning-mfcs && python -m pytest tests/test_tts_handler.py -v"
+
 # Linting and type checking
 ruff-check = "ruff check ."
 ruff-fix = "ruff check . --fix"
@@ -105,6 +111,24 @@ sync-to-main = "git checkout main && git pull origin main"
 play-success = "python scripts/audio_notifier.py success"
 play-failure = "python scripts/audio_notifier.py failure"
 play-completion = "python scripts/audio_notifier.py completion"
+
+# TTS (Text-to-Speech) notifications
+tts-test = "python scripts/tts_test.py --test-basic"
+tts-config = "python scripts/tts_test.py --config"
+tts-voices = "python scripts/tts_test.py --list-voices"
+tts-benchmark = "python scripts/tts_test.py --benchmark"
+tts-test-levels = "python scripts/tts_test.py --test-levels"
+tts-test-pronunciation = "python scripts/tts_test.py --test-pronunciation"
+tts-test-queue = "python scripts/tts_test.py --test-queue"
+
+# Notification System TDD Tests
+test-notifications = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py"
+test-notifications-coverage = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern='' --no-coverage=false"
+test-notifications-core = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern=core"
+test-notifications-audio = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern=audio"
+test-notifications-categories = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --categories"
+test-notifications-validate = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --validate"
+test-notifications-ci = "DISABLE_AUDIO=true MOCK_EMAIL=true cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --no-coverage"
 
 # GUI Tasks
 gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_main_app.py"
@@ -213,6 +237,7 @@ webdriver-manager = ">=4.0.2, <5"
 requests = ">=2.31.0"
 python-crontab = ">=3.3.0, <4"
 types-python-crontab = ">=3.3.0.20250715, <4"
+pyttsx3 = ">=2.90, <3.0"
 pubmedclient = ">=0.2.0, <0.3"
 cchooks = ">=0.1.2, <0.2"
 

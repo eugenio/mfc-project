@@ -4,13 +4,13 @@
 import streamlit as st
 
 
-def render_3d_model_upload():
+def render_3d_model_upload() -> None:
     """Render 3D model upload interface (placeholder)."""
     st.info("🚧 3D Model Upload functionality coming soon!")
     st.markdown("This will allow upload and analysis of custom MFC geometries from CAD files.")
 
 
-def render_validation_analysis():
+def render_validation_analysis() -> None:
     """Render validation and analysis interface for cell configuration."""
     st.markdown("### 🔬 Validation & Analysis")
     st.markdown("Comprehensive validation and performance analysis of your MFC configuration.")
@@ -94,6 +94,11 @@ def render_validation_analysis():
     with validation_tabs[1]:
         st.markdown("#### ⚡ Performance Analysis")
 
+        # Initialize default values
+        estimated_power_density = 0.0
+        coulombic_efficiency = 0.0
+        energy_efficiency = 0.0
+
         # Performance predictions
         if electrode_area > 0 and volume > 0:
             col1, col2 = st.columns(2)
@@ -130,6 +135,8 @@ def render_validation_analysis():
                 # Treatment efficiency (for wastewater applications)
                 treatment_efficiency = min(0.95, volume / 1000 * area_efficiency)
                 st.metric("Est. Treatment Efficiency", f"{treatment_efficiency:.1%}")
+        else:
+            st.warning("⚠️ Please configure electrode area and cell volume to see performance predictions")
 
         # Performance comparison
         st.markdown("#### 📊 Benchmark Comparison")
@@ -141,7 +148,7 @@ def render_validation_analysis():
             "Best Reported": ["4000+ mW/m²", "99%", "80%"]
         }
 
-        import pandas as pd
+        import pandas as pd  # type: ignore[import-untyped]
         df = pd.DataFrame(benchmark_data)
         st.dataframe(df, use_container_width=True)
 
@@ -227,7 +234,7 @@ Optimization Recommendations:
             )
 
 
-def render_cell_calculations():
+def render_cell_calculations() -> None:
     """Render real-time cell calculations based on current configuration."""
     config = st.session_state.cell_config
 
