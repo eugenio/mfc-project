@@ -175,7 +175,7 @@ def render_geometry_configuration() -> None:
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="anode_length")
             anode_width = st.number_input("Anode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="anode_width")
             anode_thickness = st.number_input("Anode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="anode_thickness")
-            default_density = anode_mat_props.density if anode_mat_props else 2700.0
+            default_density = float(anode_mat_props.density) if anode_mat_props else 2700.0
             anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_density, step=10.0, key="anode_density")
 
             # Material properties
@@ -207,7 +207,7 @@ def render_geometry_configuration() -> None:
         elif anode_geometry_type == "Cylindrical Rod":
             anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
             anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
-            default_density_cyl = anode_mat_props.density if anode_mat_props else 2700.0
+            default_density_cyl = float(anode_mat_props.density) if anode_mat_props else 2700.0
             anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_density_cyl, step=10.0, key="anode_density_cyl")
 
             # Material properties
@@ -269,7 +269,7 @@ def render_geometry_configuration() -> None:
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=10.0, key="cathode_length")
             cathode_width = st.number_input("Cathode Width (cm)", min_value=0.1, max_value=50.0, value=8.0, key="cathode_width")
             cathode_thickness = st.number_input("Cathode Thickness (cm)", min_value=0.01, max_value=5.0, value=0.3, key="cathode_thickness")
-            default_cathode_density = cathode_mat_props.density if cathode_mat_props else 2700.0
+            default_cathode_density = float(cathode_mat_props.density) if cathode_mat_props else 2700.0
             cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_cathode_density, step=10.0, key="cathode_density")
 
             # Material properties
@@ -301,7 +301,7 @@ def render_geometry_configuration() -> None:
         elif cathode_geometry_type == "Cylindrical Rod":
             cathode_diameter = st.number_input("Cathode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="cathode_diameter")
             cathode_length = st.number_input("Cathode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="cathode_length_cyl")
-            default_cathode_density_cyl = cathode_mat_props.density if cathode_mat_props else 2700.0
+            default_cathode_density_cyl = float(cathode_mat_props.density) if cathode_mat_props else 2700.0
             cathode_density = st.number_input("Cathode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_cathode_density_cyl, step=10.0, key="cathode_density_cyl")
 
             # Material properties
