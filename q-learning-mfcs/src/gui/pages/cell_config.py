@@ -400,32 +400,32 @@ def render_membrane_configuration():
     """
     st.subheader("🧬 Membrane Configuration")
     st.markdown("Configure membrane material and properties for ion transport modeling.")
-    
+
     # Import membrane configuration components
     try:
         from gui.membrane_configuration_ui import MembraneConfigurationUI
-        
+
         # Initialize membrane UI component
         membrane_ui = MembraneConfigurationUI()
-        
+
         # Create two main columns for layout
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("#### Material Selection & Properties")
-            
+
             # Material selector
             membrane_material = membrane_ui.render_material_selector()
-            
+
             # Area input
             membrane_area = membrane_ui.render_area_input()
-            
+
         with col2:
             st.markdown("#### Operating Conditions")
-            
+
             # Operating conditions
             temperature, ph_anode, ph_cathode = membrane_ui.render_operating_conditions()
-        
+
         # Custom properties section (full width if custom material)
         if hasattr(membrane_ui, 'render_custom_membrane_properties'):
             from config.membrane_config import MembraneMaterial
@@ -436,44 +436,44 @@ def render_membrane_configuration():
                 membrane_props = None
         else:
             membrane_props = None
-        
+
         # Create and display membrane configuration
         try:
             from config.membrane_config import create_membrane_config
-            
+
             membrane_config = create_membrane_config(
                 material=membrane_material,
                 area=membrane_area,
                 custom_properties=membrane_props
             )
-            
+
             # Set operating conditions
             membrane_config.operating_temperature = temperature
             membrane_config.ph_anode = ph_anode
             membrane_config.ph_cathode = ph_cathode
-            
+
             # Store in session state for integration with cell config
             st.session_state.membrane_config = membrane_config
-            
+
             # Display separator
             st.markdown("---")
-            
+
             # Performance analysis section
             st.markdown("#### Performance Analysis")
-            
+
             # Calculate key metrics
             resistance = membrane_config.calculate_resistance()
-            
+
             # Display key metrics in columns
             metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-            
+
             with metric_col1:
                 st.metric(
                     "Membrane Resistance",
                     f"{resistance:.3f} Ω",
                     help="Total membrane resistance based on area and material properties"
                 )
-            
+
             with metric_col2:
                 conductance = 1 / resistance if resistance > 0 else 0
                 st.metric(
@@ -481,7 +481,7 @@ def render_membrane_configuration():
                     f"{conductance:.3f} S",
                     help="Membrane conductance (inverse of resistance)"
                 )
-            
+
             with metric_col3:
                 ph_gradient = abs(ph_anode - ph_cathode)
                 st.metric(
@@ -489,7 +489,7 @@ def render_membrane_configuration():
                     f"{ph_gradient:.1f}",
                     help="pH difference across membrane affecting performance"
                 )
-            
+
             with metric_col4:
                 # Calculate proton flux at typical MFC current density (100 A/m²)
                 typical_current_density = 100.0  # A/m²
@@ -499,14 +499,14 @@ def render_membrane_configuration():
                     f"{proton_flux:.2e} mol/m²/s",
                     help=f"Proton flux at {typical_current_density} A/m²"
                 )
-            
+
             # Membrane properties summary table
             st.markdown("##### Membrane Properties Summary")
-            
+
             properties_data = {
                 "Property": [
                     "Proton Conductivity",
-                    "Ion Exchange Capacity", 
+                    "Ion Exchange Capacity",
                     "Permselectivity",
                     "Thickness",
                     "Area Resistance",
@@ -529,67 +529,67 @@ def render_membrane_configuration():
                     "Estimated operational lifetime"
                 ]
             }
-            
+
             import pandas as pd
             df_properties = pd.DataFrame(properties_data)
             st.dataframe(df_properties, use_container_width=True, hide_index=True)
-            
+
             # Integration with cell configuration
             if 'cell_config' in st.session_state:
                 st.markdown("##### Integration with Cell Geometry")
-                
+
                 cell_config = st.session_state.cell_config
-                
+
                 # Check if membrane area is compatible with cell geometry
                 cell_volume_ml = cell_config.get('volume', 0)
                 membrane_area_cm2 = membrane_area * 10000
-                
+
                 integration_col1, integration_col2 = st.columns(2)
-                
+
                 with integration_col1:
                     st.write(f"**Cell Volume:** {cell_volume_ml:.1f} mL")
                     st.write(f"**Membrane Area:** {membrane_area_cm2:.1f} cm²")
-                    
+
                     # Calculate area-to-volume ratio
                     if cell_volume_ml > 0:
                         area_to_volume = membrane_area_cm2 / cell_volume_ml
                         st.write(f"**Area-to-Volume Ratio:** {area_to_volume:.2f} cm²/mL")
-                
+
                 with integration_col2:
                     # Provide recommendations
                     if cell_volume_ml > 0:
                         recommended_area = cell_volume_ml * 0.1  # Typical ratio
                         area_ratio = membrane_area_cm2 / recommended_area if recommended_area > 0 else 0
-                        
+
                         if area_ratio < 0.5:
                             st.warning("⚠️ Membrane area may be too small for this cell volume")
                         elif area_ratio > 2.0:
                             st.warning("⚠️ Membrane area may be oversized for this cell volume")
                         else:
                             st.success("✅ Membrane area is appropriate for cell volume")
-            
+
             # Performance visualization option
             if st.checkbox("Show Advanced Membrane Analysis", value=False):
                 membrane_ui.render_membrane_visualization(membrane_config)
-                
+
         except ValueError as e:
             st.error(f"Membrane configuration error: {e}")
         except ImportError as e:
             st.error(f"Import error: {e}")
             st.warning("Please ensure membrane configuration modules are properly installed.")
-            
+
     except ImportError:
         st.error("Membrane configuration UI not available. Please install required modules.")
-        
+
         # Fallback basic membrane configuration
         st.markdown("#### Basic Membrane Configuration")
-        
+
         basic_material = st.selectbox(
             "Membrane Type",
             ["Nafion 117", "Nafion 112", "Ultrex CMI-7000", "J-Cloth", "Custom"],
             help="Select membrane material for basic configuration"
         )
-        
+
         basic_area = st.number_input(
             "Membrane Area (cm²)",
             min_value=0.1,
@@ -598,7 +598,7 @@ def render_membrane_configuration():
             step=0.1,
             help="Active membrane area"
         )
-        
+
         basic_resistance = st.number_input(
             "Area Resistance (Ω·cm²)",
             min_value=0.1,
@@ -607,7 +607,7 @@ def render_membrane_configuration():
             step=0.1,
             help="Membrane area-specific resistance"
         )
-        
+
         # Store basic configuration
         st.session_state.membrane_config = {
             'material': basic_material,
@@ -616,7 +616,7 @@ def render_membrane_configuration():
             'resistance_ohm_cm2': basic_resistance,
             'total_resistance_ohm': basic_resistance / basic_area
         }
-        
+
         st.info(f"Basic membrane configuration: {basic_material}, {basic_area} cm², {basic_resistance / basic_area:.3f} Ω total resistance")
 
 
