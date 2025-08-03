@@ -15,6 +15,7 @@ import math
 
 import streamlit as st
 from gui.scientific_widgets import ParameterSpec
+from gui.pages.cell_config_helpers import render_3d_model_upload, render_validation_analysis
 
 
 def render_cell_configuration_page():

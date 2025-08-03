@@ -23,33 +23,20 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+try:
     import pyarrow as pa
     import pyarrow.parquet as pq
     PARQUET_AVAILABLE = True
 except ImportError:
     PARQUET_AVAILABLE = False
+
+try:
     import h5py
     H5PY_AVAILABLE = True
 except ImportError:
     H5PY_AVAILABLE = False
-    download_manager = BrowserDownloadManager()
-    
-    # Combine all available data
-    all_data = {}
-    
-    if simulation_data:
-        all_data.update(simulation_data)
-        
-    if q_learning_data:
-        all_data.update(q_learning_data)
-        
-    if analysis_results:
-        all_data.update(analysis_results)
-        
-    # Render download interface
-    download_manager.render_download_interface(
-        all_data,
-        simulation_name="mfc_qlearning_results"
+
+
 class BrowserDownloadManager:
     """Manages browser-based downloads for simulation data."""
     
@@ -425,7 +412,9 @@ class BrowserDownloadManager:
         
     def _generate_readme(self, data: dict[str, Any]) -> str:
         """Generate README file for the archive."""
-        readme = f"""MFC Q-Learning Simulation Data Export
+        readme = f"""MFC Q-Learning Simulation Data Export"""
+        return readme
+        
     def _quick_download(self, data: dict[str, Any], format: str, name: str):
         """Quick download with default settings."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -449,3 +438,24 @@ def render_browser_downloads(
     simulation_data: dict[str, Any] | None = None,
     q_learning_data: dict[str, Any] | None = None,
     analysis_results: dict[str, Any] | None = None
+):
+    """Render browser download interface."""
+    download_manager = BrowserDownloadManager()
+    
+    # Combine all available data
+    all_data = {}
+    
+    if simulation_data:
+        all_data.update(simulation_data)
+        
+    if q_learning_data:
+        all_data.update(q_learning_data)
+        
+    if analysis_results:
+        all_data.update(analysis_results)
+        
+    # Render download interface
+    download_manager.render_download_interface(
+        all_data,
+        simulation_name="mfc_qlearning_results"
+    )
