@@ -10,6 +10,10 @@
   - `pixi run -e default ruff check q-learning-mfcs/src/config/electrode_config.py`
   - `pixi run ruff-check-mfc`
 
+- Add python from the mfc pixi environment to an environment variable if you need
+
+- Stop your work and fix any pixi environment issue that arises before continuing
+
 ## Geometry Configuration Approach
 
 - Instead of modifying the large file in chunks, let me create the density and mass functions and then add them to the existing geometry configuration section.

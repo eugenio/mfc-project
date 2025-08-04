@@ -35,8 +35,14 @@ test = "cd q-learning-mfcs/tests && python run_tests.py"
 test-gui = "cd q-learning-mfcs/tests && python -m pytest gui/ -v"
 test-selenium = "cd q-learning-mfcs/tests && python -m pytest selenium/ -v"
 test-monitoring = "cd q-learning-mfcs/tests && python -m pytest test_monitoring_system.py -v"
+test-monitoring-full = "cd q-learning-mfcs/tests && python -m pytest monitoring/ -v"
 test-config = "cd q-learning-mfcs/tests && python -m pytest config/ -v"
 test-all = "pixi run test && pixi run test-gui && pixi run test-monitoring"
+
+# TTS Monitoring System Tasks
+monitoring-demo = "cd q-learning-mfcs/src/monitoring && python tts_monitoring_integration.py --demo"
+monitoring-dashboard = "cd q-learning-mfcs/src/monitoring && python tts_monitoring_integration.py --dashboard"
+monitoring-dashboard-port = { cmd = "cd q-learning-mfcs/src/monitoring && python tts_monitoring_integration.py --dashboard --port {{ port }}", args = ["port"] }
 
 # Test with coverage
 test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
@@ -117,15 +123,6 @@ sync-to-main = "git checkout main && git pull origin main"
 play-success = "python scripts/audio_notifier.py success"
 play-failure = "python scripts/audio_notifier.py failure"
 play-completion = "python scripts/audio_notifier.py completion"
-
-# TTS (Text-to-Speech) notifications
-tts-test = "python scripts/tts_test.py --test-basic"
-tts-config = "python scripts/tts_test.py --config"
-tts-voices = "python scripts/tts_test.py --list-voices"
-tts-benchmark = "python scripts/tts_test.py --benchmark"
-tts-test-levels = "python scripts/tts_test.py --test-levels"
-tts-test-pronunciation = "python scripts/tts_test.py --test-pronunciation"
-tts-test-queue = "python scripts/tts_test.py --test-queue"
 
 # Notification System TDD Tests
 test-notifications = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py"
@@ -246,11 +243,12 @@ types-python-crontab = ">=3.3.0.20250715, <4"
 pyttsx3 = ">=2.90, <3.0"
 pubmedclient = ">=0.2.0, <0.3"
 cchooks = ">=0.1.2, <0.2"
+rope-mcp = { path = "/home/uge/rope-mcp/" }
 
 # API and web server components
 [feature.api.pypi-dependencies]
 fastapi = ">=0.104.0, <1.0"
-uvicorn = {version = ">=0.24.0", extras = ["standard"]}
+uvicorn = ">=0.24.0"
 websockets = ">=12.0"
 cryptography = ">=41.0.0"
 pyjwt = ">=2.8.0"
@@ -265,11 +263,6 @@ python-gitlab = ">=4.0.0"
 [feature.advanced-ml.pypi-dependencies]
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
-
-# Advanced TTS features (Coqui TTS)
-[feature.advanced-tts.pypi-dependencies]
-TTS = "*"  # Coqui TTS for neural voice synthesis - let pixi resolve compatible version
-librosa = ">=0.10.0"  # Audio processing for TTS
 
 # GPU acceleration (optional features)
 # WARNING: JAX/JAXlib versions are frozen for compatibility between jax and jaxlib
@@ -338,8 +331,8 @@ mojo-dev = ["dev", "modular", "tools"]
 amd-gpu = ["amd-gpu", "ml", "api", "gui", "dev"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
-# TTS development environment with advanced features
-tts-dev = ["dev", "advanced-tts", "gui"]
+# TTS development environment with advanced features - TEMPORARILY DISABLED
+# tts-dev = ["dev", "advanced-tts", "gui"]
 
-# Complete environment (should be avoided in production)
-complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular", "advanced-tts"]
+# Complete environment (should be avoided in production) - TEMPORARILY DISABLED
+# complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular", "advanced-tts"]
