@@ -84,14 +84,19 @@ def create_navigation_sidebar() -> str:
     return nav_options[selected_page]
 
 def create_page_layout(title: str):
-    """Create standardized page layout."""
+    """Create standardized page layout with navigation and header."""
+    # Apply theme
     apply_enhanced_theme()
-    st.title(title)
-    return {
-        "header": st.container(),
-        "content": st.container(),
-        "sidebar": st.sidebar
-    }
+    
+    # Create navigation
+    selected_page = create_navigation_sidebar()
+    
+    # Create main content area
+    main_container = st.container()
+    with main_container:
+        st.title(title)
+    
+    return main_container
 
 def render_header(title: str, subtitle: str = None):
     """Render standardized page header."""
