@@ -4,8 +4,8 @@ Comprehensive Notification System for MFC Monitoring
 
 This module provides a complete notification system with:
 - Cross-platform desktop notifications
-- Audio playback with ding sounds  
-- Text-to-Speech (TTS) synthesis
+- Audio playback with ding sounds
+- Enhanced notification management
 - Priority-based queue management
 - Platform-specific optimizations
 - Comprehensive fallback mechanisms
@@ -18,20 +18,20 @@ Main Components:
 
 Usage:
     from notifications import NotificationManager, NotificationLevel
-    
+
     # Initialize notification system
     manager = NotificationManager()
-    
+
     # Send notifications
-    manager.notify("Alert", "System status critical", 
-                   NotificationLevel.CRITICAL, 
-                   sound_enabled=True, tts_enabled=True)
-    
+    manager.notify("Alert", "System status critical",
+                   NotificationLevel.CRITICAL,
+                   sound_enabled=True)
+
     # Or use convenience methods
     manager.critical("System Failure", "Database connection lost")
     manager.success("Task Complete", "Data processing finished")
 
-Created: 2025-08-03  
+Created: 2025-08-03
 Author: Agent Delta - Audio Integration Specialist
 """
 
@@ -56,9 +56,8 @@ try:
         NotificationQueueManager,
         QueueConfig,
         QueuePriority,
-        TTSManager,
     )
-    __all__.extend(["NotificationQueueManager", "QueueConfig", "QueuePriority", "TTSManager"])
+    __all__.extend(["NotificationQueueManager", "QueueConfig", "QueuePriority"])
 except ImportError:
     pass
 
@@ -108,33 +107,7 @@ try:
 except ImportError:
     pass
 
-# TTS components
-try:
-    from .tts_handler import (
-        Pyttsx3Engine,
-        TTSEngineType,
-        TTSMode,
-        TTSNotificationHandler,
-    )
-    __all__.extend([
-        "TTSNotificationHandler",
-        "TTSMode",
-        "TTSEngineType",
-        "Pyttsx3Engine"
-    ])
-except ImportError as e:
-    # TTS components are optional
-    import logging
-    logging.getLogger(__name__).debug(f"TTS components not available: {e}")
-
-# Advanced TTS components (Coqui TTS)
-try:
-    from .coqui_tts_manager import CoquiTTSConfig, CoquiTTSManager, HybridTTSManager
-    __all__.extend(["CoquiTTSManager", "CoquiTTSConfig", "HybridTTSManager"])
-except ImportError as e:
-    # Coqui TTS is optional
-    import logging
-    logging.getLogger(__name__).debug(f"Coqui TTS components not available: {e}")
+# TTS integration was removed - no TTS components available
 
 # Convenience aliases for common usage patterns
 try:
@@ -144,10 +117,10 @@ try:
     def notify(title: str, message: str = "", level: NotificationLevel = NotificationLevel.INFO, **kwargs):
         """
         Send a notification using the default manager.
-        
+
         Args:
             title: Notification title
-            message: Notification message  
+            message: Notification message
             level: Notification level
             **kwargs: Additional arguments passed to NotificationManager.notify()
         """
@@ -179,12 +152,7 @@ try:
             _default_manager = get_notification_manager()
         return _default_manager.play_ding(level, **kwargs)
 
-    def speak(text: str, level: NotificationLevel = NotificationLevel.INFO, **kwargs):
-        """Speak text using TTS."""
-        global _default_manager
-        if _default_manager is None:
-            _default_manager = get_notification_manager()
-        return _default_manager.speak(text, level, **kwargs)
+    # TTS speak function removed - TTS integration was removed
 
     __all__.extend([
         "notify", "info", "warning", "critical", "success",

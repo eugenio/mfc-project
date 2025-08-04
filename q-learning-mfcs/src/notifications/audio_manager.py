@@ -25,6 +25,7 @@ import logging
 import platform
 import subprocess
 import threading
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,7 +58,7 @@ class AudioEvent:
     volume: float | None = None
     priority: int = 1  # 1=low, 2=normal, 3=high, 4=critical
     timeout: float | None = None
-    callback: callable | None = None
+    callback: Callable | None = None
 
 
 class AudioDevice:
@@ -89,13 +90,13 @@ class AudioPlayer:
                    blocking: bool = False) -> bool:
         """
         Play a sound file or system sound.
-        
+
         Args:
             sound_path: Path to sound file, None for system sound
             level: Notification level for system sound selection
             volume: Override volume (0.0-1.0)
             blocking: Wait for playback to complete
-            
+
         Returns:
             bool: True if playback started successfully
         """
@@ -115,7 +116,7 @@ class AudioPlayer:
             if blocking:
                 return self._play_file_sync(sound_path, volume)
             else:
-                future = self._executor.submit(self._play_file_sync, sound_path, volume)
+                self._executor.submit(self._play_file_sync, sound_path, volume)
                 return True
         else:
             # Fall back to system sound
@@ -123,7 +124,7 @@ class AudioPlayer:
                 if blocking:
                     return self._play_system_sound_sync(level, volume)
                 else:
-                    future = self._executor.submit(self._play_system_sound_sync, level, volume)
+                    self._executor.submit(self._play_system_sound_sync, level, volume)
                     return True
 
         return False
@@ -206,7 +207,7 @@ class AudioPlayer:
 
             cmd.append(str(sound_path))
 
-            result = subprocess.run(cmd,
+            subprocess.run(cmd,
                                   capture_output=True,
                                   timeout=self.config.timeout_seconds,
                                   check=True)
@@ -257,7 +258,7 @@ class AudioPlayer:
         except ImportError:
             # Fallback to PowerShell
             try:
-                volume_percent = int(volume * 100)
+                int(volume * 100)
                 cmd = [
                     "powershell", "-c",
                     f"(New-Object Media.SoundPlayer '{sound_path}').PlaySync()"
@@ -471,13 +472,13 @@ class AudioManager:
                               blocking: bool = False) -> bool:
         """
         Play notification sound for given level.
-        
+
         Args:
             level: Notification level
             custom_sound: Custom sound file path
             volume: Override volume
             blocking: Wait for playback completion
-            
+
         Returns:
             bool: True if playback started successfully
         """

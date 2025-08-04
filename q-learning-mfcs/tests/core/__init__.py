@@ -1,0 +1,1 @@
+"""Core architecture tests for MFC system."""

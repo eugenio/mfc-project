@@ -16,7 +16,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def send_completion_email(results_file, recipient_email=None):
+def send_completion_email(results_file: str, recipient_email: str | None = None) -> None:
     """
     Send email notification when simulation completes.
 
@@ -46,6 +46,17 @@ def send_completion_email(results_file, recipient_email=None):
         perf = results.get("performance_summary", {})
         maint = results.get("maintenance_requirements", {})
 
+        # Helper function to format numbers safely
+        def format_number(value: float | int | None, decimals: int = 2) -> str:
+            try:
+                return f"{value:.{decimals}f}"
+            except (TypeError, ValueError):
+                return "N/A"
+
+        def safe_get(dictionary: dict, key: str, default: str = "N/A") -> str:
+            value = dictionary.get(key, default)
+            return value if value != default else default
+
         body = f"""
 MFC 1-Year Continuous Operation Simulation Complete!
 
@@ -57,21 +68,21 @@ Target Concentration: 25.0 mM
 
 PERFORMANCE RESULTS:
 ===================
-Final Reservoir Concentration: {perf.get('final_reservoir_concentration_mM', 'N/A'):.2f} mM
-Mean Concentration: {perf.get('mean_reservoir_concentration_mM', 'N/A'):.2f} ± {perf.get('std_reservoir_concentration_mM', 'N/A'):.2f} mM
-Final Power Output: {perf.get('final_power_output_W', 'N/A'):.2f} W
-Mean Power Output: {perf.get('mean_power_output_W', 'N/A'):.2f} W
+Final Reservoir Concentration: {format_number(perf.get('final_reservoir_concentration_mM'))} mM
+Mean Concentration: {format_number(perf.get('mean_reservoir_concentration_mM'))} ± {format_number(perf.get('std_reservoir_concentration_mM'))} mM
+Final Power Output: {format_number(perf.get('final_power_output_W'))} W
+Mean Power Output: {format_number(perf.get('mean_power_output_W'))} W
 
 SUBSTRATE CONSUMPTION:
 =====================
-Total Consumed: {perf.get('total_substrate_consumed_mmol', 'N/A'):.2f} mmol
-Daily Rate: {perf.get('substrate_consumption_rate_mmol_per_day', 'N/A'):.2f} mmol/day
+Total Consumed: {format_number(perf.get('total_substrate_consumed_mmol'))} mmol
+Daily Rate: {format_number(perf.get('substrate_consumption_rate_mmol_per_day'))} mmol/day
 
 MAINTENANCE REQUIREMENTS:
 ========================
-Substrate Refill: {maint.get('maintenance_schedule', {}).get('substrate_refill_frequency', 'N/A')}
-Buffer Refill: {maint.get('maintenance_schedule', {}).get('buffer_refill_frequency', 'N/A')}
-Stock Bottles/Year: {maint.get('substrate_requirements', {}).get('stock_bottles_per_year', 'N/A'):.0f} substrate, {maint.get('buffer_requirements', {}).get('stock_bottles_per_year', 'N/A'):.0f} buffer
+Substrate Refill: {safe_get(maint.get('maintenance_schedule', {}), 'substrate_refill_frequency')}
+Buffer Refill: {safe_get(maint.get('maintenance_schedule', {}), 'buffer_refill_frequency')}
+Stock Bottles/Year: {format_number(maint.get('substrate_requirements', {}).get('stock_bottles_per_year'), 0)} substrate, {format_number(maint.get('buffer_requirements', {}).get('stock_bottles_per_year'), 0)} buffer
 
 Results saved to: {results_file}
 
@@ -118,7 +129,7 @@ MFC Simulation System
         print("   export RECIPIENT_EMAIL='recipient@gmail.com'")
 
 
-def setup_email_monitoring(pid_file, log_file):
+def setup_email_monitoring(pid_file: str, log_file: str) -> None:
     """
     Monitor simulation process and send email when complete.
 

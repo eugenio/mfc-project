@@ -3,11 +3,12 @@
 Analysis of substrate utilization performance between unified and non-unified MFC models
 """
 
+
 import numpy as np
 import pandas as pd
 
 
-def load_and_analyze_data():
+def load_and_analyze_data() -> None:
     """Load and analyze the MFC simulation data"""
 
     # Read the data files
@@ -61,12 +62,12 @@ def load_and_analyze_data():
 
     # Time to reach steady state (when utilization stabilizes)
     # Find when substrate utilization changes become small (< 0.001 change per 100 time steps)
-    def find_steady_state_time(data, threshold=0.001, window=1000):
+    def find_steady_state_time(data: pd.DataFrame, threshold: float = 0.001, window: int = 1000) -> float | None:
         """Find when substrate utilization reaches steady state"""
         for i in range(window, len(data)):
             recent_window = data['substrate_utilization'].iloc[i-window:i]
             if recent_window.std() < threshold:
-                return data['time_hours'].iloc[i]
+                return float(data['time_hours'].iloc[i])
         return None
 
     unified_steady_time = find_steady_state_time(unified_data)

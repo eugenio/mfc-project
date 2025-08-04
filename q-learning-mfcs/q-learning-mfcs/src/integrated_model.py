@@ -3,7 +3,7 @@
 Integrated Model for Cross-System MFC Integration
 
 This module provides a high-level integration framework that combines:
-- Physics models (biofilm, metabolic, electrochemical)  
+- Physics models (biofilm, metabolic, electrochemical)
 - Machine learning controllers (Q-learning, transformer, etc.)
 - Control systems (flow, substrate, temperature)
 - Hardware interfaces (sensors, actuators)
@@ -601,20 +601,20 @@ class IntegratedModelManager:
         if hasattr(obj, '__dict__'):
             result = {}
             for key, value in obj.__dict__.items():
-                if isinstance(value, (int, float, str, bool, type(None))):
+                if isinstance(value, int | float | str | bool | type(None)):
                     result[key] = value
                 elif isinstance(value, datetime):
                     result[key] = value.isoformat()
                 elif isinstance(value, np.ndarray):
                     result[key] = value.tolist()
-                elif isinstance(value, (list, tuple)):
+                elif isinstance(value, list | tuple):
                     result[key] = [self._make_serializable(item) for item in value]
                 elif isinstance(value, dict):
                     result[key] = {k: self._make_serializable(v) for k, v in value.items()}
                 else:
                     result[key] = str(value)  # Fallback to string representation
             return result
-        elif isinstance(obj, (list, tuple)):
+        elif isinstance(obj, list | tuple):
             return [self._make_serializable(item) for item in obj]
         elif isinstance(obj, dict):
             return {k: self._make_serializable(v) for k, v in obj.items()}

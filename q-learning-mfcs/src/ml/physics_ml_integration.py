@@ -24,31 +24,59 @@ import numpy as np
 import pandas as pd
 
 # Import Configuration System
-from ..config.electrode_config import (
-    ElectrodeGeometry,
-    ElectrodeMaterial,
-    create_electrode_config,
+try:
+    from ..config.electrode_config import (
+        ElectrodeGeometry,
+        ElectrodeMaterial,
+        create_electrode_config,
+    )
+except ImportError:
+    # Fall back to absolute import for testing
+    from config.electrode_config import (
+        ElectrodeGeometry,
+        ElectrodeMaterial,
+        create_electrode_config,
 )
 
 # Import Phase 2 Physics Models
-from ..physics.advanced_electrode_model import (
-    AdvancedElectrodeModel,
-    BiofilmDynamics,
-    CellGeometry,
-    FluidDynamicsProperties,
-    MassTransportProperties,
-)
+try:
+    from ..physics.advanced_electrode_model import (
+        AdvancedElectrodeModel,
+        BiofilmDynamics,
+        CellGeometry,
+        FluidDynamicsProperties,
+        MassTransportProperties,
+    )
+except ImportError:
+    from physics.advanced_electrode_model import (
+        AdvancedElectrodeModel,
+        BiofilmDynamics,
+        CellGeometry,
+        FluidDynamicsProperties,
+        MassTransportProperties,
+    )
 
 # Import Phase 3 ML Optimization
-from .electrode_optimization import (
-    BayesianOptimizer,
-    GaussianProcessSurrogate,
-    MultiObjectiveOptimizer,
-    NeuralNetworkSurrogate,
-    OptimizationObjective,
-    OptimizationParameter,
-    OptimizationResult,
-)
+try:
+    from .electrode_optimization import (
+        BayesianOptimizer,
+        GaussianProcessSurrogate,
+        MultiObjectiveOptimizer,
+        NeuralNetworkSurrogate,
+        OptimizationObjective,
+        OptimizationParameter,
+        OptimizationResult,
+    )
+except ImportError:  
+    from ml.electrode_optimization import (
+        BayesianOptimizer,
+        GaussianProcessSurrogate,
+        MultiObjectiveOptimizer,
+        NeuralNetworkSurrogate,
+        OptimizationObjective,
+        OptimizationParameter,
+        OptimizationResult,
+    )
 
 
 @dataclass

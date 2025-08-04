@@ -1,5 +1,5 @@
 """
-Log Management System for TTS Service
+Log Management System
 Agent Zeta - Deployment and Process Management
 
 Handles log rotation, compression, retention, and monitoring
@@ -47,15 +47,15 @@ class LogMonitoringConfig:
     warning_threshold: int = 50    # Alert after this many warnings per minute
     monitor_interval: int = 60     # Monitoring interval in seconds
     alert_callback: Callable | None = None
-class TTSLogFormatter(logging.Formatter):
-    """Custom log formatter for TTS service"""
+class LogFormatter(logging.Formatter):
+    """Custom log formatter for services"""
 
     def __init__(self):
         super().__init__()
         self.format_string = "%(asctime)s - %(name)s - %(levelname)s - [%(process)d:%(thread)d] - %(message)s"
 
     def format(self, record):
-        # Add TTS-specific context
+        # Add service-specific context
         if hasattr(record, 'engine_type'):
             record.name = f"{record.name}[{record.engine_type}]"
 
@@ -129,9 +129,9 @@ class RotatingCompressedFileHandler(logging.handlers.RotatingFileHandler):
         except Exception as e:
             print(f"Failed to compress {file_path}: {e}", file=sys.stderr)
 class LogManager:
-    """Centralized log management for TTS service"""
+    """Centralized log management for services"""
 
-    def __init__(self, log_dir: str = "/tmp/tts-service-logs"):
+    def __init__(self, log_dir: str = "/tmp/service-logs"):
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
 
@@ -180,7 +180,7 @@ class LogManager:
         # Clear any existing handlers
         logger.handlers = []
 
-        formatter = TTSLogFormatter()
+        formatter = LogFormatter()
 
         # File handler with rotation
         if log_to_file:
@@ -430,7 +430,7 @@ class LogManager:
         """Create compressed archive of all logs"""
         if not archive_name:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            archive_name = f"tts_logs_{timestamp}"
+            archive_name = f"service_logs_{timestamp}"
 
         archive_path = Path(f"/tmp/{archive_name}.tar.gz")
 
@@ -463,9 +463,9 @@ def get_log_manager() -> LogManager:
     if _log_manager is None:
         _log_manager = LogManager()
     return _log_manager
-def setup_tts_logging(service_name: str = "tts-service",
+def setup_service_logging(service_name: str = "service",
                      environment: str = "production") -> logging.Logger:
-    """Setup logging for TTS service"""
+    """Setup logging for service"""
     log_manager = get_log_manager()
 
     # Configure based on environment
@@ -488,8 +488,8 @@ def setup_tts_logging(service_name: str = "tts-service",
 
     # Create component loggers
     component_loggers = [
-        "tts-handler",
-        "tts-engine",
+        "handler",
+        "engine",
         "service-manager",
         "health-monitor",
         "deployment"
@@ -509,7 +509,7 @@ def setup_tts_logging(service_name: str = "tts-service",
     return logger
 def main():
     """Main entry point for log management utilities"""
-    parser = argparse.ArgumentParser(description="TTS Log Management")
+    parser = argparse.ArgumentParser(description="Service Log Management")
     parser.add_argument("--stats", action="store_true", help="Show log statistics")
     parser.add_argument("--export", help="Export logs to JSON file")
     parser.add_argument("--archive", action="store_true", help="Create log archive")
