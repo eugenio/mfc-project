@@ -303,6 +303,41 @@ class TestElectronShuttles(unittest.TestCase):
         actual = self.shuttle_model.shuttle_concentrations[ShuttleType.RIBOFLAVIN]
         self.assertAlmostEqual(actual, expected, places=5)
 
+    def test_species_shuttle_efficiency_coverage(self):
+        """Test electron shuttle efficiency methods for coverage."""
+        # Test get_species_shuttle_efficiency for unknown species
+        unknown_efficiencies = self.shuttle_model.get_species_shuttle_efficiency("unknown_species")
+        
+        # Should return dict with efficiency 0.0 for all shuttles the model knows about
+        self.assertIsInstance(unknown_efficiencies, dict)
+        # All returned efficiencies should be 0.0 for unknown species
+        for shuttle_type, efficiency in unknown_efficiencies.items():
+            self.assertEqual(efficiency, 0.0)
+        
+        # Test for known species
+        known_efficiencies = self.shuttle_model.get_species_shuttle_efficiency("shewanella_oneidensis")
+        self.assertIsInstance(known_efficiencies, dict)
+        # At least some efficiency should be non-zero for known species
+        has_nonzero = any(eff > 0.0 for eff in known_efficiencies.values())
+        self.assertTrue(has_nonzero)
+    
+    def test_estimate_optimal_shuttle_concentration(self):
+        """Test optimal shuttle concentration estimation."""
+        # Test the estimation method with required area parameter
+        optimal_conc = self.shuttle_model.estimate_optimal_shuttle_concentration(
+            target_current=0.1,  # A
+            electrode_potential=0.2,  # V
+            volume=0.001,  # m³
+            area=0.01  # m²
+        )
+        
+        # Should return dict with concentrations
+        self.assertIsInstance(optimal_conc, dict)
+        
+        # All concentrations should be non-negative
+        for shuttle_type, concentration in optimal_conc.items():
+            self.assertGreaterEqual(concentration, 0.0)
+
 
 class TestMetabolicModel(unittest.TestCase):
     """Test integrated metabolic model functionality."""

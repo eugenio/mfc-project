@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,28 +24,28 @@ class NotificationConfig:
     title: str
     message: str
     level: NotificationLevel = NotificationLevel.INFO
-    timeout_ms: Optional[int] = 5000  # None for persistent
-    icon_path: Optional[Path] = None
+    timeout_ms: int | None = 5000  # None for persistent
+    icon_path: Path | None = None
     sound_enabled: bool = True
-    sound_path: Optional[Path] = None
-    actions: Optional[dict[str, str]] = None  # {"action_id": "label"}
+    sound_path: Path | None = None
+    actions: dict[str, str] | None = None  # {"action_id": "label"}
     app_name: str = "MFC Monitor"
     category: str = "mfc.alert"
 
 
 class NotificationHandler(ABC):
     """Base class for platform-specific notification handlers."""
-    
+
     def __init__(self, app_name: str = "MFC Monitor"):
         self.app_name = app_name
         self.logger = logging.getLogger(self.__class__.__name__)
         self._is_available = None
-    
+
     @abstractmethod
     def is_available(self) -> bool:
         """Check if this notification handler can be used on the current system."""
         pass
-    
+
     @abstractmethod
     def send_notification(self, config: NotificationConfig) -> bool:
         """
@@ -56,7 +55,7 @@ class NotificationHandler(ABC):
             bool: True if notification was sent successfully, False otherwise
         """
         pass
-    
+
     @abstractmethod
     def get_capabilities(self) -> dict[str, bool]:
         """
@@ -66,8 +65,8 @@ class NotificationHandler(ABC):
             dict: Capabilities like {"actions": True, "sound": True, "icons": True}
         """
         pass
-    
-    def play_sound(self, sound_path: Optional[Path] = None, level: NotificationLevel = NotificationLevel.INFO) -> bool:
+
+    def play_sound(self, sound_path: Path | None = None, level: NotificationLevel = NotificationLevel.INFO) -> bool:
         """
         Play notification sound.
         
@@ -86,24 +85,24 @@ class NotificationHandler(ABC):
         except Exception as e:
             self.logger.error(f"Failed to play sound: {e}")
             return False
-    
+
     @abstractmethod
     def _play_custom_sound(self, sound_path: Path) -> bool:
         """Play a custom sound file."""
         pass
-    
+
     @abstractmethod
     def _play_system_sound(self, level: NotificationLevel) -> bool:
         """Play system sound for notification level."""
         pass
-    
+
     def validate_config(self, config: NotificationConfig) -> bool:
         """Validate notification configuration for this handler."""
         if not config.title or not config.message:
             self.logger.error("Title and message are required")
             return False
         return True
-    
+
     def log_fallback(self, config: NotificationConfig) -> None:
         """Log notification as fallback when GUI notifications fail."""
         level_map = {
@@ -112,7 +111,7 @@ class NotificationHandler(ABC):
             NotificationLevel.CRITICAL: logging.CRITICAL,
             NotificationLevel.SUCCESS: logging.INFO
         }
-        
+
         log_level = level_map.get(config.level, logging.INFO)
         message = f"[{config.level.value.upper()}] {config.title}: {config.message}"
         self.logger.log(log_level, message)
@@ -120,16 +119,16 @@ class NotificationHandler(ABC):
 
 class FallbackHandler(NotificationHandler):
     """Fallback handler that logs notifications to console and logger."""
-    
+
     def is_available(self) -> bool:
         """Fallback is always available."""
         return True
-    
+
     def send_notification(self, config: NotificationConfig) -> bool:
         """Send notification via console output and logging."""
         if not self.validate_config(config):
             return False
-        
+
         # Console output with formatting
         icon_map = {
             NotificationLevel.INFO: "ℹ️",
@@ -137,23 +136,23 @@ class FallbackHandler(NotificationHandler):
             NotificationLevel.CRITICAL: "🚨",
             NotificationLevel.SUCCESS: "✅"
         }
-        
+
         icon = icon_map.get(config.level, "📢")
         print(f"\n{icon} {config.title}")
         print(f"   {config.message}")
         if config.timeout_ms:
             print(f"   (Auto-dismiss in {config.timeout_ms/1000:.1f}s)")
         print()
-        
+
         # Log the notification
         self.log_fallback(config)
-        
+
         # Play sound if enabled
         if config.sound_enabled:
             self.play_sound(config.sound_path, config.level)
-        
+
         return True
-    
+
     def get_capabilities(self) -> dict[str, bool]:
         """Get fallback handler capabilities."""
         return {
@@ -163,12 +162,12 @@ class FallbackHandler(NotificationHandler):
             "persistence": False,
             "urgency": False
         }
-    
+
     def _play_custom_sound(self, sound_path: Path) -> bool:
         """Attempt to play custom sound via system commands."""
         import platform
         import subprocess
-        
+
         system = platform.system()
         try:
             if system == "Linux":
@@ -185,19 +184,19 @@ class FallbackHandler(NotificationHandler):
         except Exception as e:
             self.logger.debug(f"Failed to play custom sound: {e}")
             return False
-    
+
     def _play_system_sound(self, level: NotificationLevel) -> bool:
         """Play system notification sound."""
         import platform
         import subprocess
-        
+
         system = platform.system()
         try:
             if system == "Linux":
                 # Use paplay with system sounds
                 sound_map = {
                     NotificationLevel.INFO: "/usr/share/sounds/alsa/Front_Left.wav",
-                    NotificationLevel.WARNING: "/usr/share/sounds/alsa/Front_Right.wav", 
+                    NotificationLevel.WARNING: "/usr/share/sounds/alsa/Front_Right.wav",
                     NotificationLevel.CRITICAL: "/usr/share/sounds/alsa/Rear_Center.wav",
                     NotificationLevel.SUCCESS: "/usr/share/sounds/alsa/Front_Center.wav"
                 }
@@ -205,19 +204,19 @@ class FallbackHandler(NotificationHandler):
                 if sound_file and Path(sound_file).exists():
                     subprocess.run(["paplay", sound_file], check=True, capture_output=True)
                     return True
-                    
+
             elif system == "Darwin":  # macOS
                 sound_map = {
                     NotificationLevel.INFO: "Glass",
                     NotificationLevel.WARNING: "Ping",
-                    NotificationLevel.CRITICAL: "Basso", 
+                    NotificationLevel.CRITICAL: "Basso",
                     NotificationLevel.SUCCESS: "Blow"
                 }
                 sound_name = sound_map.get(level, "Glass")
-                subprocess.run(["afplay", f"/System/Library/Sounds/{sound_name}.aiff"], 
+                subprocess.run(["afplay", f"/System/Library/Sounds/{sound_name}.aiff"],
                              check=True, capture_output=True)
                 return True
-                
+
             elif system == "Windows":
                 import winsound
                 sound_map = {
@@ -229,8 +228,8 @@ class FallbackHandler(NotificationHandler):
                 sound_type = sound_map.get(level, winsound.MB_OK)
                 winsound.MessageBeep(sound_type)
                 return True
-                
+
         except Exception as e:
             self.logger.debug(f"Failed to play system sound: {e}")
-            
+
         return False

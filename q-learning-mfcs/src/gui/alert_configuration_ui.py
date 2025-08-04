@@ -870,7 +870,7 @@ def check_alerts(current_values: dict, alert_rules: list):
             value = current_values[param]
             threshold = rule['threshold']
             condition = rule['condition']
-            
+
             triggered = False
             if condition == "greater_than" and value > threshold:
                 triggered = True
@@ -878,14 +878,14 @@ def check_alerts(current_values: dict, alert_rules: list):
                 triggered = True
             elif condition == "equals" and abs(value - threshold) < 0.001:
                 triggered = True
-                
+
             if triggered:
                 triggered_alerts.append({
                     'rule': rule,
                     'current_value': value,
                     'timestamp': datetime.now().isoformat()
                 })
-    
+
     return triggered_alerts
 
 # Integration function for the main GUI
@@ -894,7 +894,7 @@ def render_alert_configuration(alert_manager: AlertManager = None):
     if alert_manager is None:
         # Create a default manager for testing
         alert_manager = AlertManager()
-    
+
     ui = AlertConfigurationUI(alert_manager)
     ui.render()
 

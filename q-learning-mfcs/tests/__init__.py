@@ -1,1 +1,3 @@
-"""Test suite for MFC Q-Learning project path outputs."""
+"""
+Test package for q-learning-mfcs
+"""
