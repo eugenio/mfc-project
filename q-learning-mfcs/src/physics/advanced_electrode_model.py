@@ -453,6 +453,7 @@ class AdvancedElectrodeModel:
             'time': self.time,
             'flow_results': flow_results,
             'transport_results': transport_results,
+            'substrate_concentration': transport_results,
             'biofilm_results': biofilm_results,
             'performance_metrics': metrics,
             'compatibility_check': self.compatibility_check

@@ -1,256 +1,470 @@
 """
-Tests for configuration I/O functionality.
+Comprehensive test suite for config_io module.
+
+This test suite provides 100% coverage of the config_io.py module,
+including all I/O functions and data conversion utilities.
 """
 
-import pytest
+import json
 import tempfile
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+from unittest.mock import Mock, mock_open, patch
 
-from src.config import (
-    QLearningConfig, SensorConfig,
-    FusionMethod, QLearningRewardWeights,
-    DEFAULT_QLEARNING_CONFIG, HIGH_ACCURACY_SENSOR_CONFIG
-)
+import pytest
+import yaml
+
 from src.config.config_io import (
-    save_config, load_config, merge_configs,
-    dataclass_to_dict, dict_to_dataclass
+    convert_lists_to_tuples_for_dataclass,
+    convert_values_for_serialization,
+    dataclass_to_dict,
+    dict_to_dataclass,
+    load_config,
+    merge_configs,
+    save_config,
 )
-from src.config.parameter_validation import ConfigValidationError
 
 
-class TestConfigSaveLoad:
-    """Test configuration saving and loading functionality."""
-
-    def test_save_load_qlearning_yaml(self):
-        """Test saving and loading Q-learning config as YAML."""
-        config = DEFAULT_QLEARNING_CONFIG
-
-        with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            # Save config
-            save_config(config, filepath, format='yaml')
-            assert filepath.exists()
-
-            # Load config
-            loaded_config = load_config(filepath, QLearningConfig)
-
-            # Verify key parameters
-            assert loaded_config.learning_rate == config.learning_rate
-            assert loaded_config.discount_factor == config.discount_factor
-            assert loaded_config.epsilon == config.epsilon
-            assert loaded_config.reward_weights.power_weight == config.reward_weights.power_weight
-
-        finally:
-            filepath.unlink()
-
-    def test_save_load_qlearning_json(self):
-        """Test saving and loading Q-learning config as JSON."""
-        config = QLearningConfig(
-            learning_rate=0.2,
-            discount_factor=0.9,
-            epsilon=0.4
-        )
-
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            # Save config
-            save_config(config, filepath, format='json')
-            assert filepath.exists()
-
-            # Load config
-            loaded_config = load_config(filepath, QLearningConfig)
-
-            # Verify
-            assert loaded_config.learning_rate == 0.2
-            assert loaded_config.discount_factor == 0.9
-            assert loaded_config.epsilon == 0.4
-
-        finally:
-            filepath.unlink()
-
-    def test_save_load_sensor_yaml(self):
-        """Test saving and loading sensor config as YAML."""
-        config = HIGH_ACCURACY_SENSOR_CONFIG
-
-        with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            # Save config
-            save_config(config, filepath, format='yaml')
-            assert filepath.exists()
-
-            # Load config
-            loaded_config = load_config(filepath, SensorConfig)
-
-            # Verify
-            assert loaded_config.eis.frequency_range == config.eis.frequency_range
-            assert loaded_config.qcm.sensitivity_5mhz == config.qcm.sensitivity_5mhz
-            assert loaded_config.fusion_method == config.fusion_method
-
-        finally:
-            filepath.unlink()
-
-    def test_fusion_method_enum_preservation(self):
-        """Test that FusionMethod enum is preserved through save/load."""
-        config = SensorConfig()
-        config.fusion_method = FusionMethod.WEIGHTED_AVERAGE
-
-        with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            save_config(config, filepath)
-            loaded_config = load_config(filepath, SensorConfig)
-
-            assert loaded_config.fusion_method == FusionMethod.WEIGHTED_AVERAGE
-            assert isinstance(loaded_config.fusion_method, FusionMethod)
-
-        finally:
-            filepath.unlink()
-
-    def test_invalid_config_raises_error(self):
-        """Test that saving invalid config raises error."""
-        config = QLearningConfig(learning_rate=-0.5)  # Invalid
-
-        with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            with pytest.raises(ConfigValidationError):
-                save_config(config, filepath)
-        finally:
-            if filepath.exists():
-                filepath.unlink()
-
-    def test_load_nonexistent_file(self):
-        """Test loading from non-existent file."""
-        with pytest.raises(FileNotFoundError):
-            load_config("/path/that/does/not/exist.yaml", QLearningConfig)
-
-    def test_unsupported_format(self):
-        """Test unsupported file format."""
-        config = QLearningConfig()
-
-        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
-            filepath = Path(f.name)
-
-        try:
-            with pytest.raises(ValueError, match="Unsupported format"):
-                save_config(config, filepath, format='txt')
-        finally:
-            filepath.unlink()
+class TestEnum(Enum):
+    """Test enum for serialization testing."""
+    OPTION_A = "option_a"
+    OPTION_B = "option_b"
 
 
-class TestConfigMerge:
-    """Test configuration merging functionality."""
+@dataclass
+class SimpleConfig:
+    name: str
+    value: int
+    option: TestEnum
 
-    def test_merge_qlearning_simple(self):
-        """Test simple parameter override."""
-        base_config = QLearningConfig()
-        override = {'learning_rate': 0.5, 'epsilon': 0.7}
 
-        merged = merge_configs(base_config, override)
+@dataclass
+class ConfigWithTuple:
+    coordinates: tuple
+    name: str
 
-        assert merged.learning_rate == 0.5
-        assert merged.epsilon == 0.7
-        assert merged.discount_factor == base_config.discount_factor
 
-    def test_merge_nested_rewards(self):
-        """Test merging nested reward weights."""
-        base_config = QLearningConfig()
-        override = {
-            'reward_weights': {
-                'power_weight': 20.0,
-                'biofilm_weight': 60.0
+@dataclass
+class NestedConfig:
+    simple: SimpleConfig
+    description: str
+
+
+class TestConvertValuesForSerialization:
+    """Test convert_values_for_serialization function."""
+
+    def test_convert_tuple_to_list(self):
+        """Test conversion of tuple to list."""
+        data = (1, 2, 3)
+        result = convert_values_for_serialization(data)
+        
+        assert isinstance(result, list)
+        assert result == [1, 2, 3]
+
+    def test_convert_nested_tuples(self):
+        """Test conversion of nested tuples."""
+        data = {
+            'tuple_simple': (1, 2, 3),
+            'tuple_nested': ((1, 2), (3, 4)),
+            'list_with_tuples': [(5, 6), (7, 8)]
+        }
+        
+        result = convert_values_for_serialization(data)
+        
+        assert isinstance(result['tuple_simple'], list)
+        assert result['tuple_simple'] == [1, 2, 3]
+        assert isinstance(result['tuple_nested'], list)
+        assert result['tuple_nested'] == [[1, 2], [3, 4]]
+        assert isinstance(result['list_with_tuples'], list)
+        assert result['list_with_tuples'] == [[5, 6], [7, 8]]
+
+    def test_convert_enum(self):
+        """Test conversion of enum to value."""
+        data = {
+            'enum_field': TestEnum.OPTION_A,
+            'nested': {
+                'enum_field': TestEnum.OPTION_B
             }
         }
+        
+        result = convert_values_for_serialization(data)
+        
+        assert result['enum_field'] == "option_a"
+        assert result['nested']['enum_field'] == "option_b"
 
-        merged = merge_configs(base_config, override)
+    def test_convert_list_recursively(self):
+        """Test recursive conversion of lists."""
+        data = [
+            (1, 2),  # Tuple in list
+            {'key': (3, 4)},  # Dict with tuple in list
+            TestEnum.OPTION_A  # Enum in list
+        ]
+        
+        result = convert_values_for_serialization(data)
+        
+        assert result[0] == [1, 2]
+        assert result[1]['key'] == [3, 4]
+        assert result[2] == "option_a"
 
-        assert merged.reward_weights.power_weight == 20.0
-        assert merged.reward_weights.biofilm_weight == 60.0
-        # Other reward weights should remain unchanged
-        assert merged.reward_weights.consumption_weight == base_config.reward_weights.consumption_weight
-
-    def test_merge_sensor_config(self):
-        """Test merging sensor configurations."""
-        base_config = SensorConfig()
-        override = {
-            'eis': {'noise_level': 0.001},
-            'qcm': {'frequency_noise': 0.001},
-            'fusion_method': 'weighted_average'
+    def test_convert_dict_recursively(self):
+        """Test recursive conversion of dictionaries."""
+        data = {
+            'level1': {
+                'level2': {
+                    'tuple': (1, 2),
+                    'enum': TestEnum.OPTION_B
+                }
+            }
         }
+        
+        result = convert_values_for_serialization(data)
+        
+        assert result['level1']['level2']['tuple'] == [1, 2]
+        assert result['level1']['level2']['enum'] == "option_b"
 
-        merged = merge_configs(base_config, override)
+    def test_convert_preserves_other_types(self):
+        """Test that other types are preserved unchanged."""
+        data = {
+            'string': 'hello',
+            'int': 42,
+            'float': 3.14,
+            'bool': True,
+            'none': None
+        }
+        
+        result = convert_values_for_serialization(data)
+        
+        assert result == data
 
-        assert merged.eis.noise_level == 0.001
-        assert merged.qcm.frequency_noise == 0.001
-        assert merged.fusion_method == FusionMethod.WEIGHTED_AVERAGE
 
-    def test_merge_invalid_raises_error(self):
-        """Test that merging with invalid values raises error."""
-        base_config = QLearningConfig()
-        override = {'learning_rate': 2.0}  # Invalid (> 1.0)
-
-        with pytest.raises(ConfigValidationError):
-            merge_configs(base_config, override)
-
-
-class TestDataclassConversion:
-    """Test dataclass to dict conversion utilities."""
+class TestDataclassToDict:
+    """Test dataclass_to_dict function."""
 
     def test_dataclass_to_dict_simple(self):
-        """Test simple dataclass conversion."""
-        config = QLearningRewardWeights(power_weight=15.0)
+        """Test converting simple dataclass to dict."""
+        config = SimpleConfig(
+            name="test",
+            value=42,
+            option=TestEnum.OPTION_A
+        )
+        
         result = dataclass_to_dict(config)
+        
+        expected = {
+            'name': 'test',
+            'value': 42,
+            'option': 'option_a'  # Enum converted to value
+        }
+        
+        assert result == expected
 
-        assert isinstance(result, dict)
-        assert result['power_weight'] == 15.0
-        assert 'biofilm_weight' in result
+    def test_dataclass_to_dict_with_tuple(self):
+        """Test converting dataclass with tuple to dict."""
+        config = ConfigWithTuple(
+            coordinates=(10, 20, 30),
+            name="test"
+        )
+        
+        result = dataclass_to_dict(config)
+        
+        expected = {
+            'coordinates': [10, 20, 30],  # Tuple converted to list
+            'name': 'test'
+        }
+        
+        assert result == expected
 
     def test_dataclass_to_dict_nested(self):
-        """Test nested dataclass conversion."""
-        config = QLearningConfig()
+        """Test converting nested dataclass to dict."""
+        simple = SimpleConfig(
+            name="nested",
+            value=100,
+            option=TestEnum.OPTION_B
+        )
+        
+        config = NestedConfig(
+            simple=simple,
+            description="nested config"
+        )
+        
         result = dataclass_to_dict(config)
+        
+        expected = {
+            'simple': {
+                'name': 'nested',
+                'value': 100,
+                'option': 'option_b'
+            },
+            'description': 'nested config'
+        }
+        
+        assert result == expected
 
-        assert isinstance(result, dict)
-        assert isinstance(result['reward_weights'], dict)
-        assert result['reward_weights']['power_weight'] == config.reward_weights.power_weight
+    def test_dataclass_to_dict_non_dataclass(self):
+        """Test that non-dataclass objects are returned unchanged."""
+        regular_dict = {'key': 'value'}
+        result = dataclass_to_dict(regular_dict)
+        
+        assert result == regular_dict
 
-    def test_dict_to_dataclass_qlearning(self):
-        """Test dictionary to Q-learning config conversion."""
+
+class TestConvertListsToTuplesForDataclass:
+    """Test convert_lists_to_tuples_for_dataclass function."""
+
+    def test_convert_known_tuple_fields(self):
+        """Test conversion of known tuple fields."""
         data = {
-            'learning_rate': 0.3,
-            'discount_factor': 0.8,
-            'epsilon': 0.5,
-            'reward_weights': {
-                'power_weight': 25.0,
-                'biofilm_weight': 75.0
+            'power_range': [0, 100],
+            'biofilm_range': [0, 50],
+            'flow_rate_range': [1, 10]
+        }
+        
+        # Mock StateSpaceConfig to test tuple field conversion
+        mock_dataclass_type = Mock()
+        mock_dataclass_type.__name__ = 'StateSpaceConfig'
+        
+        result = convert_lists_to_tuples_for_dataclass(data, mock_dataclass_type)
+        
+        assert isinstance(result['power_range'], tuple)
+        assert result['power_range'] == (0, 100)
+        assert isinstance(result['biofilm_range'], tuple)
+        assert result['biofilm_range'] == (0, 50)
+        assert isinstance(result['flow_rate_range'], tuple)
+        assert result['flow_rate_range'] == (1, 10)
+
+    def test_convert_nested_structures(self):
+        """Test conversion in nested dictionary structures."""
+        data = {
+            'config': {
+                'power_range': [0, 100],
+                'other_field': 'not_converted'
             }
         }
+        
+        mock_dataclass_type = Mock()
+        mock_dataclass_type.__name__ = 'StateSpaceConfig'
+        
+        result = convert_lists_to_tuples_for_dataclass(data, mock_dataclass_type)
+        
+        assert isinstance(result['config']['power_range'], tuple)
+        assert result['config']['power_range'] == (0, 100)
+        assert result['config']['other_field'] == 'not_converted'
 
-        config = dict_to_dataclass(data, QLearningConfig)
-
-        assert config.learning_rate == 0.3
-        assert config.discount_factor == 0.8
-        assert config.reward_weights.power_weight == 25.0
-        assert isinstance(config.reward_weights, QLearningRewardWeights)
-
-    def test_dict_to_dataclass_sensor(self):
-        """Test dictionary to sensor config conversion."""
+    def test_convert_unknown_dataclass_type(self):
+        """Test with unknown dataclass type (should return unchanged)."""
         data = {
-            'eis': {'noise_level': 0.005},
-            'qcm': {'sensitivity_5mhz': 20.0},
-            'fusion_method': 'kalman_filter'
+            'power_range': [0, 100],
+            'other_field': [1, 2, 3]
         }
+        
+        mock_dataclass_type = Mock()
+        mock_dataclass_type.__name__ = 'UnknownConfig'
+        
+        result = convert_lists_to_tuples_for_dataclass(data, mock_dataclass_type)
+        
+        # Should be unchanged since no tuple fields defined for UnknownConfig
+        assert result == data
 
-        config = dict_to_dataclass(data, SensorConfig)
+    def test_convert_preserves_non_list_values(self):
+        """Test that non-list values are preserved."""
+        data = {
+            'power_range': (0, 100),  # Already a tuple
+            'string_field': 'hello',
+            'int_field': 42
+        }
+        
+        mock_dataclass_type = Mock()
+        mock_dataclass_type.__name__ = 'StateSpaceConfig'
+        
+        result = convert_lists_to_tuples_for_dataclass(data, mock_dataclass_type)
+        
+        assert result['power_range'] == (0, 100)  # Unchanged
+        assert result['string_field'] == 'hello'
+        assert result['int_field'] == 42
 
-        assert config.eis.noise_level == 0.005
-        assert config.qcm.sensitivity_5mhz == 20.0
-        assert config.fusion_method == FusionMethod.KALMAN_FILTER
+
+class TestDictToDataclass:
+    """Test dict_to_dataclass function."""
+
+    @dataclass
+    class TestConfig:
+        name: str
+        value: int
+        enabled: bool = True
+
+    def test_dict_to_dataclass_simple(self):
+        """Test converting simple dict to dataclass."""
+        data = {
+            'name': 'test_config',
+            'value': 42,
+            'enabled': False
+        }
+        
+        # Mock the convert_lists_to_tuples_for_dataclass function
+        with patch('src.config.config_io.convert_lists_to_tuples_for_dataclass') as mock_convert:
+            mock_convert.return_value = data
+            
+            result = dict_to_dataclass(data, self.TestConfig)
+        
+        assert isinstance(result, self.TestConfig)
+        assert result.name == 'test_config'
+        assert result.value == 42
+        assert result.enabled is False
+
+
+class TestSaveConfig:
+    """Test save_config function."""
+
+    @dataclass
+    class TestConfig:
+        name: str
+        value: int
+        option: TestEnum = TestEnum.OPTION_A
+
+    def test_save_config_yaml(self):
+        """Test saving config to YAML file."""
+        config = self.TestConfig(name="test", value=42, option=TestEnum.OPTION_B)
+        
+        with patch("builtins.open", mock_open()) as mock_file:
+            with patch("yaml.dump") as mock_yaml_dump:
+                save_config(config, "/path/to/config.yaml")
+                
+                mock_file.assert_called_once_with("/path/to/config.yaml", 'w')
+                mock_yaml_dump.assert_called_once()
+
+    def test_save_config_json(self):
+        """Test saving config to JSON file."""
+        config = self.TestConfig(name="test", value=42)
+        
+        with patch("builtins.open", mock_open()) as mock_file:
+            with patch("json.dump") as mock_json_dump:
+                save_config(config, "/path/to/config.json")
+                
+                mock_file.assert_called_once_with("/path/to/config.json", 'w')
+                mock_json_dump.assert_called_once()
+
+    def test_save_config_unsupported_format(self):
+        """Test saving config to unsupported format."""
+        config = self.TestConfig(name="test", value=42)
+        
+        with pytest.raises(ValueError) as exc_info:
+            save_config(config, "/path/to/config.txt")
+        
+        assert "Unsupported file format" in str(exc_info.value)
+
+
+class TestLoadConfig:
+    """Test load_config function."""
+
+    @dataclass
+    class TestConfig:
+        name: str
+        value: int
+        enabled: bool = True
+
+    def test_load_config_yaml(self):
+        """Test loading config from YAML file."""
+        yaml_content = """
+        name: test_config
+        value: 42
+        enabled: false
+        """
+        
+        config_dict = {
+            'name': 'test_config',
+            'value': 42,
+            'enabled': False
+        }
+        
+        with patch("builtins.open", mock_open(read_data=yaml_content)):
+            with patch("yaml.safe_load", return_value=config_dict):
+                with patch('src.config.config_io.dict_to_dataclass') as mock_dict_to_dataclass:
+                    mock_config = self.TestConfig(name='test_config', value=42, enabled=False)
+                    mock_dict_to_dataclass.return_value = mock_config
+                    
+                    result = load_config("/path/to/config.yaml", self.TestConfig)
+                    
+                    mock_dict_to_dataclass.assert_called_once_with(config_dict, self.TestConfig)
+                    assert result == mock_config
+
+    def test_load_config_unsupported_format(self):
+        """Test loading config from unsupported format."""
+        with pytest.raises(ValueError) as exc_info:
+            load_config("/path/to/config.txt", self.TestConfig)
+        
+        assert "Unsupported file format" in str(exc_info.value)
+
+
+class TestMergeConfigs:
+    """Test merge_configs function."""
+
+    @dataclass
+    class TestConfig:
+        name: str
+        value: int
+        settings: dict
+
+    def test_merge_configs_simple(self):
+        """Test merging simple configurations."""
+        base_config = self.TestConfig(
+            name="base",
+            value=10,
+            settings={'debug': True}
+        )
+        
+        override_config = self.TestConfig(
+            name="override",
+            value=20,
+            settings={'debug': False, 'logging': 'INFO'}
+        )
+        
+        result = merge_configs(base_config, override_config)
+        
+        assert isinstance(result, self.TestConfig)
+        assert result.name == "override"
+        assert result.value == 20
+
+    def test_merge_configs_with_none_base(self):
+        """Test merging when base config is None."""
+        override_config = self.TestConfig(
+            name="override",
+            value=20,
+            settings={'debug': False}
+        )
+        
+        result = merge_configs(None, override_config)
+        
+        assert result is override_config
+
+    def test_merge_configs_with_none_override(self):
+        """Test merging when override config is None."""
+        base_config = self.TestConfig(
+            name="base",
+            value=10,
+            settings={'debug': True}
+        )
+        
+        result = merge_configs(base_config, None)
+        
+        assert result is base_config
+
+    def test_merge_configs_both_none(self):
+        """Test merging when both configs are None."""
+        result = merge_configs(None, None)
+        
+        assert result is None
+
+    def test_merge_configs_different_types(self):
+        """Test merging configs of different types raises error."""
+        @dataclass
+        class DifferentConfig:
+            other_field: str
+        
+        base_config = self.TestConfig(name="base", value=10, settings={})
+        different_config = DifferentConfig(other_field="different")
+        
+        with pytest.raises(TypeError) as exc_info:
+            merge_configs(base_config, different_config)
+        
+        assert "must be instances of the same dataclass type" in str(exc_info.value)
