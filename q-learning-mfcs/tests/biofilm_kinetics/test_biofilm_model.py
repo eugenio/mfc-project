@@ -1,29 +1,26 @@
 """
-Comprehensive tests for biofilm kinetics model.
+Test suite for BiofilmKineticsModel class.
 
-Tests cover:
-- Species parameter loading and validation
-- Substrate parameter loading and validation  
-- Environmental compensation (pH, temperature)
-- Biofilm dynamics simulation
-- GPU acceleration functionality
-- Mixed culture synergy calculations
+This module contains comprehensive unit tests for the biofilm kinetics model,
+including growth dynamics, substrate consumption, current generation,
+and environmental effects using pytest framework.
 """
-
 import unittest
+
+import pytest
+import numpy as np
+from unittest.mock import Mock, patch, MagicMock
+from typing import Dict, Any
 import sys
 import os
-import warnings
 
-# Add source path first
+# Add source path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-import matplotlib
-from biofilm_kinetics import BiofilmKineticsModel, SpeciesParameters, SubstrateParameters
-
-# Configure matplotlib after imports
-warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
-matplotlib.use('Agg')  # Non-interactive backend
+# Import the classes under test
+from biofilm_kinetics.biofilm_model import BiofilmKineticsModel
+from biofilm_kinetics.species_params import SpeciesParameters, KineticParameters
+from biofilm_kinetics.substrate_params import SubstrateParameters, SubstrateProperties
 
 
 class TestSpeciesParameters(unittest.TestCase):

@@ -1,0 +1,1 @@
+"""Energy sustainability analysis tests package."""

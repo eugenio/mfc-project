@@ -1,11 +1,5 @@
-"""
-Performance Optimization and Benchmarking Module
+"""Performance monitoring and optimization modules."""
 
-Provides GPU memory management, performance benchmarking,
-and system optimization for MFC simulations.
-"""
-
-from .benchmark_suite import BenchmarkResult, PerformanceBenchmark, run_benchmark_demo
 from .gpu_memory_manager import (
     GPUMemoryManager,
     ManagedGPUContext,
@@ -14,11 +8,8 @@ from .gpu_memory_manager import (
 )
 
 __all__ = [
-    'GPUMemoryManager',
-    'ManagedGPUContext',
-    'MemoryStats',
-    'PerformanceProfile',
-    'PerformanceBenchmark',
-    'BenchmarkResult',
-    'run_benchmark_demo'
+    "GPUMemoryManager",
+    "ManagedGPUContext", 
+    "MemoryStats",
+    "PerformanceProfile",
 ]

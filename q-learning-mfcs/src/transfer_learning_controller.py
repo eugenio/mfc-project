@@ -159,7 +159,7 @@ class DomainAdaptationNetwork(nn.Module):
 
     def forward(self, features: torch.Tensor, alpha: float = 1.0) -> torch.Tensor:
         """Forward pass with gradient reversal."""
-        reversed_features = self.gradient_reversal(features, alpha)
+        reversed_features = GradientReversalLayer.apply(features, alpha)
         domain_pred = self.domain_classifier(reversed_features)
         return domain_pred
 
@@ -210,25 +210,31 @@ class ProgressiveNetwork(nn.Module):
             layer_input_dim = input_dim
 
             for i, hidden_dim in enumerate(hidden_dims):
-                # Add lateral connection dimension if not the first column
+                # For columns after the first, add lateral connection dimensions
                 if lateral_connections and col > 0:
-                    lateral_dim = sum(prev_hidden for prev_hidden in hidden_dims[:i+1])
-                    layer_input_dim += lateral_dim
+                    # Lateral connections add hidden_dim features from each previous column
+                    layer_input_dim += col * hidden_dim
 
                 column_layers.append(nn.Linear(layer_input_dim, hidden_dim))
                 column_layers.append(nn.ReLU())
                 layer_input_dim = hidden_dim
 
             # Output layer
-            column_layers.append(nn.Linear(hidden_dims[-1], output_dim))
+            if hidden_dims:
+                column_layers.append(nn.Linear(hidden_dims[-1], output_dim))
+            else:
+                # Direct connection from input to output if no hidden layers
+                column_layers.append(nn.Linear(input_dim, output_dim))
 
             self.columns.append(nn.Sequential(*column_layers))
 
-            # Lateral adapters for this column
-            if lateral_connections and col > 0:
+            # Lateral adapters for this column (if not the first column)
+            if lateral_connections and col > 0 and hidden_dims:
                 adapters = []
                 for layer_idx in range(len(hidden_dims)):
-                    adapter_input_dim = sum(hidden_dims[:layer_idx+1])
+                    # Each previous column contributes hidden_dims[layer_idx] features
+                    # We have 'col' previous columns
+                    adapter_input_dim = col * hidden_dims[layer_idx]
                     adapter_output_dim = hidden_dims[layer_idx]
                     adapters.append(nn.Linear(adapter_input_dim, adapter_output_dim))
                 self.lateral_adapters.append(nn.ModuleList(adapters))
@@ -240,58 +246,63 @@ class ProgressiveNetwork(nn.Module):
         if column_idx == -1:
             column_idx = self.num_columns - 1
 
-        # Store intermediate activations for lateral connections
+        # If no hidden layers, just use the specified column directly
+        if not self.hidden_dims:
+            return self.columns[column_idx](x)
+
+        # Store layer outputs from each column for lateral connections
+        # prev_activations[col][layer_idx] = output_after_activation
         prev_activations = []
 
         # Process each column up to the target column
         for col in range(column_idx + 1):
-            col_input = x
             col_activations = []
+            current_input = x
 
-            # Add lateral connections from previous columns
-            if self.lateral_connections and col > 0:
-                lateral_inputs = []
-                for layer_idx in range(len(self.hidden_dims)):
-                    if layer_idx < len(prev_activations[0]):
-                        # Collect activations from all previous columns at this layer
-                        layer_activations = []
-                        for prev_col in range(col):
-                            if layer_idx < len(prev_activations[prev_col]):
-                                layer_activations.append(prev_activations[prev_col][layer_idx])
+            # Go through layers in pairs: Linear + ReLU
+            layer_pairs = []
+            layers = list(self.columns[col])
+            
+            # Group layers into (Linear, ReLU) pairs, handle output layer separately
+            i = 0
+            while i < len(layers) - 1:  # -1 to handle output layer separately
+                if isinstance(layers[i], nn.Linear) and isinstance(layers[i+1], nn.ReLU):
+                    layer_pairs.append((layers[i], layers[i+1]))
+                    i += 2
+                else:
+                    i += 1
+            
+            # Process hidden layer pairs
+            for layer_idx, (linear, relu) in enumerate(layer_pairs):
+                # Add lateral connections if available
+                if (self.lateral_connections and col > 0 and 
+                    layer_idx < len(self.hidden_dims) and 
+                    len(prev_activations) == col):  # Have all previous columns processed
+                    
+                    # Collect activations from all previous columns at this layer
+                    lateral_features = []
+                    for prev_col in range(col):
+                        if layer_idx < len(prev_activations[prev_col]):
+                            lateral_features.append(prev_activations[prev_col][layer_idx])
+                    
+                    if lateral_features:
+                        lateral_input = torch.cat(lateral_features, dim=-1)
+                        adapted_lateral = self.lateral_adapters[col-1][layer_idx](lateral_input)
+                        # Concatenate with current input
+                        current_input = torch.cat([current_input, adapted_lateral], dim=-1)
 
-                        if layer_activations:
-                            lateral_input = torch.cat(layer_activations, dim=-1)
-                            adapted_lateral = self.lateral_adapters[col-1][layer_idx](lateral_input)
-                            lateral_inputs.append(adapted_lateral)
+                # Process through linear + relu
+                current_input = linear(current_input)
+                current_input = relu(current_input)
+                col_activations.append(current_input)
 
-                # Combine with current layer processing
-                current_input = col_input
-                layer_idx = 0
-
-                for _i, layer in enumerate(self.columns[col]):
-                    if isinstance(layer, nn.Linear):
-                        if layer_idx < len(lateral_inputs):
-                            # Concatenate lateral input
-                            current_input = torch.cat([current_input, lateral_inputs[layer_idx]], dim=-1)
-                        current_input = layer(current_input)
-                        col_activations.append(current_input)
-                        layer_idx += 1
-                    else:
-                        current_input = layer(current_input)
-
-                output = current_input
-            else:
-                # Standard forward pass
-                current_input = col_input
-                for layer in self.columns[col]:
-                    current_input = layer(current_input)
-                    if isinstance(layer, nn.Linear):
-                        col_activations.append(current_input)
-                output = current_input
+            # Process output layer (last layer)
+            if len(layers) > 0 and isinstance(layers[-1], nn.Linear):
+                current_input = layers[-1](current_input)
 
             prev_activations.append(col_activations)
 
-        return output
+        return current_input
 
     def add_column(self):
         """Add a new column to the progressive network."""
@@ -368,7 +379,7 @@ class MultiTaskNetwork(nn.Module):
 
         for task, task_dims in task_layers.items():
             task_modules = []
-            task_input_dim = shared_layers[-1]
+            task_input_dim = shared_layers[-1] if shared_layers else input_dim
 
             for hidden_dim in task_dims:
                 task_modules.append(nn.Linear(task_input_dim, hidden_dim))
@@ -377,7 +388,7 @@ class MultiTaskNetwork(nn.Module):
                 task_input_dim = hidden_dim
 
             # Output layer for this task
-            task_modules.append(nn.Linear(task_dims[-1], task_outputs[task]))
+            task_modules.append(nn.Linear(task_input_dim, task_outputs[task]))
 
             self.task_heads[task.value] = nn.Sequential(*task_modules)
 
@@ -422,7 +433,8 @@ class MAMLController(nn.Module):
             layers.append(nn.ReLU())
             layer_input_dim = hidden_dim
 
-        layers.append(nn.Linear(hidden_dims[-1], output_dim))
+        # Output layer
+        layers.append(nn.Linear(layer_input_dim, output_dim))
 
         self.network = nn.Sequential(*layers)
 

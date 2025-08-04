@@ -156,7 +156,7 @@ class PerformanceCollector:
         cpu_percent = psutil.cpu_percent(interval=0.1, percpu=True)
         cpu_freq = psutil.cpu_freq()
         load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0.0, 0.0, 0.0]
-        boot_time = psutil.boot_time()
+        psutil.boot_time()
         cpu_stats = psutil.cpu_stats()
 
         cpu_metrics = CPUMetrics(
@@ -228,14 +228,14 @@ class PerformanceCollector:
                     try:
                         temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
                         temperature_c.append(temp)
-                    except:
+                    except Exception:
                         temperature_c.append(0.0)
 
                     # Power
                     try:
                         power = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.0  # Convert to watts
                         power_watts.append(power)
-                    except:
+                    except Exception:
                         power_watts.append(0.0)
 
                 return GPUMetrics(
@@ -260,7 +260,7 @@ class PerformanceCollector:
                                       capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     # Parse rocm-smi output
-                    lines = result.stdout.split('\n')
+                    result.stdout.split('\n')
                     # This is a simplified parser - would need more robust parsing
                     return GPUMetrics(
                         gpu_count=1,  # Simplified
@@ -273,7 +273,7 @@ class PerformanceCollector:
                         backend_type='rocm',
                         timestamp=timestamp
                     )
-            except:
+            except Exception:
                 pass
 
             # Try PyTorch for basic GPU info
@@ -298,7 +298,7 @@ class PerformanceCollector:
                         backend_type=backend_type,
                         timestamp=timestamp
                     )
-            except:
+            except Exception:
                 pass
 
         except Exception as e:
@@ -457,7 +457,7 @@ class PerformanceBenchmark:
 
         # Addition benchmark
         start_time = time.perf_counter()
-        c = a + b
+        a + b
         end_time = time.perf_counter()
 
         execution_time_ms = (end_time - start_time) * 1000
@@ -484,7 +484,7 @@ class PerformanceBenchmark:
                 b_mat = b.reshape(matrix_size, matrix_size)
 
                 start_time = time.perf_counter()
-                c_mat = np.dot(a_mat, b_mat)
+                np.dot(a_mat, b_mat)
                 end_time = time.perf_counter()
 
                 execution_time_ms = (end_time - start_time) * 1000
@@ -518,12 +518,12 @@ class PerformanceBenchmark:
             b = cp.random.rand(size, dtype=cp.float32)
 
             # Warm up
-            c = a + b
+            a + b
             cp.cuda.Stream.null.synchronize()
 
             # Addition benchmark
             start_time = time.perf_counter()
-            c = a + b
+            a + b
             cp.cuda.Stream.null.synchronize()
             end_time = time.perf_counter()
 
@@ -563,12 +563,12 @@ class PerformanceBenchmark:
             b = torch.rand(size, dtype=torch.float32, device='cuda')
 
             # Warm up
-            c = a + b
+            a + b
             torch.cuda.synchronize()
 
             # Addition benchmark
             start_time = time.perf_counter()
-            c = a + b
+            a + b
             torch.cuda.synchronize()
             end_time = time.perf_counter()
 

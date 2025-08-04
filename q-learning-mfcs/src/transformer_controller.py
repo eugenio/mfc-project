@@ -176,12 +176,14 @@ class MultiHeadAttention(nn.Module):
         Returns:
             Output tensor and attention weights
         """
-        batch_size, seq_len, _ = query.size()
+        batch_size, seq_len_q, _ = query.size()
+        _, seq_len_k, _ = key.size()
+        _, seq_len_v, _ = value.size()
 
         # Linear projections and reshape for multi-head
-        Q = self.w_q(query).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        K = self.w_k(key).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        V = self.w_v(value).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
+        Q = self.w_q(query).view(batch_size, seq_len_q, self.n_heads, self.d_k).transpose(1, 2)
+        K = self.w_k(key).view(batch_size, seq_len_k, self.n_heads, self.d_k).transpose(1, 2)
+        V = self.w_v(value).view(batch_size, seq_len_v, self.n_heads, self.d_k).transpose(1, 2)
 
         # Scaled dot-product attention
         attention_output, attention_weights = self._scaled_dot_product_attention(
@@ -190,7 +192,7 @@ class MultiHeadAttention(nn.Module):
 
         # Concatenate heads
         attention_output = attention_output.transpose(1, 2).contiguous().view(
-            batch_size, seq_len, self.d_model
+            batch_size, seq_len_q, self.d_model
         )
 
         # Final linear projection

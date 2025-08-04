@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_and_analyze_data():
+def load_and_analyze_data() -> dict:
     """Load and analyze the MFC simulation data with corrected substrate utilization calculation"""
 
     # Read the data files
@@ -85,12 +85,12 @@ def load_and_analyze_data():
     print(f"   More stable:       {'Unified' if unified_std_util < non_unified_std_util else 'Non-unified'}")
 
     # Time to reach steady state analysis
-    def find_steady_state_time(data, substrate_util, threshold=0.1, window=1000):
+    def find_steady_state_time(data: pd.DataFrame, substrate_util: pd.Series, threshold: float = 0.1, window: int = 1000) -> float | None:
         """Find when substrate utilization reaches steady state"""
         for i in range(window, len(data)):
             recent_window = substrate_util.iloc[i-window:i]
             if recent_window.std() < threshold:
-                return data['time_hours'].iloc[i]
+                return float(data['time_hours'].iloc[i])
         return None
 
     unified_steady_time = find_steady_state_time(unified_data, unified_substrate_util_corrected)

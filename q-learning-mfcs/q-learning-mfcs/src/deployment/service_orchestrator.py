@@ -143,7 +143,7 @@ class ServiceInfo:
 class ServiceOrchestrator:
     """
     Orchestrates multiple services with dependency management and monitoring.
-    
+
     This class provides comprehensive service management including:
     - Dependency-aware startup sequencing
     - Health monitoring and auto-recovery
@@ -157,7 +157,7 @@ class ServiceOrchestrator:
                  log_level: str = "INFO"):
         """
         Initialize the service orchestrator.
-        
+
         Args:
             deployment_dir: Directory for deployment files and logs
             log_level: Logging level for the orchestrator
@@ -213,13 +213,13 @@ class ServiceOrchestrator:
     def add_service(self, config: ServiceConfig) -> ServiceInfo:
         """
         Add a service to the orchestrator.
-        
+
         Args:
             config: Service configuration
-            
+
         Returns:
             ServiceInfo: Created service information
-            
+
         Raises:
             ValueError: If service already exists or has invalid configuration
         """
@@ -305,10 +305,10 @@ class ServiceOrchestrator:
     def remove_service(self, service_name: str) -> bool:
         """
         Remove a service from the orchestrator.
-        
+
         Args:
             service_name: Name of service to remove
-            
+
         Returns:
             bool: True if service was removed, False if not found
         """
@@ -341,10 +341,10 @@ class ServiceOrchestrator:
     def start_service(self, service_name: str) -> bool:
         """
         Start a specific service and its dependencies.
-        
+
         Args:
             service_name: Name of service to start
-            
+
         Returns:
             bool: True if service started successfully
         """
@@ -513,11 +513,11 @@ class ServiceOrchestrator:
     def stop_service(self, service_name: str, timeout: float | None = None) -> bool:
         """
         Stop a specific service and its dependents.
-        
+
         Args:
             service_name: Name of service to stop
             timeout: Shutdown timeout override
-            
+
         Returns:
             bool: True if service stopped successfully
         """
@@ -646,10 +646,10 @@ class ServiceOrchestrator:
     def restart_service(self, service_name: str) -> bool:
         """
         Restart a specific service.
-        
+
         Args:
             service_name: Name of service to restart
-            
+
         Returns:
             bool: True if service restarted successfully
         """
@@ -672,7 +672,7 @@ class ServiceOrchestrator:
     def start_all(self) -> dict[str, bool]:
         """
         Start all services in dependency order.
-        
+
         Returns:
             Dict[str, bool]: Results for each service
         """
@@ -689,7 +689,7 @@ class ServiceOrchestrator:
     def stop_all(self) -> dict[str, bool]:
         """
         Stop all services in reverse dependency order.
-        
+
         Returns:
             Dict[str, bool]: Results for each service
         """
@@ -885,7 +885,7 @@ class ServiceOrchestrator:
     def save_configuration(self, config_file: str) -> None:
         """
         Save the current service configuration to a file.
-        
+
         Args:
             config_file: Path to configuration file
         """
@@ -951,7 +951,7 @@ class ServiceOrchestrator:
     def load_configuration(self, config_file: str) -> None:
         """
         Load service configuration from a file.
-        
+
         Args:
             config_file: Path to configuration file
         """
@@ -1023,10 +1023,10 @@ class ServiceOrchestrator:
 def get_service_orchestrator(deployment_dir: str = "/tmp/mfc-deployment") -> ServiceOrchestrator:
     """
     Get the global service orchestrator instance.
-    
+
     Args:
         deployment_dir: Deployment directory for first-time initialization
-        
+
     Returns:
         ServiceOrchestrator: Global instance
     """
