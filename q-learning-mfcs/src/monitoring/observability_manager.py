@@ -16,7 +16,7 @@ import logging
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
@@ -76,6 +76,204 @@ class Alert:
     triggered_at: datetime
     resolved_at: datetime | None = None
     acknowledged: bool = False
+
+
+class MetricType(Enum):
+    """Types of metrics."""
+    COUNTER = "counter"
+    GAUGE = "gauge"
+    HISTOGRAM = "histogram"
+    TIMER = "timer"
+
+
+@dataclass
+class Metric:
+    """Represents a metric data point."""
+    name: str
+    value: float
+    metric_type: MetricType
+    service: str
+    labels: dict[str, str] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+class MetricsCollector:
+    """Collects and manages metrics for observability."""
+
+    def __init__(self, retention_hours: int = 24):
+        """Initialize the metrics collector.
+
+        Args:
+            retention_hours: Hours to retain metrics in memory
+        """
+        self.retention_hours = retention_hours
+        self.metrics: dict[str, list[Metric]] = {}
+        self._counters: dict[str, float] = {}
+        self._gauges: dict[str, float] = {}
+        self._histograms: dict[str, list[float]] = {}
+        self._timers: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def record_metric(self, metric: Metric) -> None:
+        """Record a metric data point.
+
+        Args:
+            metric: The metric to record
+        """
+        with self._lock:
+            key = f"{metric.service}.{metric.name}"
+
+            if metric.metric_type == MetricType.COUNTER:
+                # Counters only increase
+                if key not in self._counters:
+                    self._counters[key] = 0
+                self._counters[key] += metric.value
+
+            elif metric.metric_type == MetricType.GAUGE:
+                # Gauges can go up or down
+                self._gauges[key] = metric.value
+
+            elif metric.metric_type == MetricType.HISTOGRAM:
+                # Store histogram values
+                if key not in self._histograms:
+                    self._histograms[key] = []
+                self._histograms[key].append(metric.value)
+
+            elif metric.metric_type == MetricType.TIMER:
+                # Store timer values
+                if key not in self._timers:
+                    self._timers[key] = []
+                self._timers[key].append(metric.value)
+
+            # Store metric history
+            if key not in self.metrics:
+                self.metrics[key] = []
+            self.metrics[key].append(metric)
+
+            # Clean up old metrics
+            self._cleanup_old_metrics(key)
+
+    def get_counter_value(self, service: str, name: str) -> float:
+        """Get current value of a counter.
+
+        Args:
+            service: Service name
+            name: Metric name
+
+        Returns:
+            Current counter value
+        """
+        key = f"{service}.{name}"
+        return self._counters.get(key, 0)
+
+    def get_gauge_value(self, service: str, name: str) -> float | None:
+        """Get current value of a gauge.
+
+        Args:
+            service: Service name
+            name: Metric name
+
+        Returns:
+            Current gauge value or None if not set
+        """
+        key = f"{service}.{name}"
+        return self._gauges.get(key)
+
+    def get_histogram_stats(self, service: str, name: str) -> dict[str, float]:
+        """Get histogram statistics.
+
+        Args:
+            service: Service name
+            name: Metric name
+
+        Returns:
+            Dictionary with histogram statistics
+        """
+        key = f"{service}.{name}"
+        values = self._histograms.get(key, [])
+
+        if not values:
+            return {"count": 0, "min": 0, "max": 0, "mean": 0}
+
+        return {
+            "count": len(values),
+            "min": min(values),
+            "max": max(values),
+            "mean": sum(values) / len(values)
+        }
+
+    def get_timer_stats(self, service: str, name: str) -> dict[str, float]:
+        """Get timer statistics.
+
+        Args:
+            service: Service name
+            name: Metric name
+
+        Returns:
+            Dictionary with timer statistics
+        """
+        key = f"{service}.{name}"
+        values = self._timers.get(key, [])
+
+        if not values:
+            return {"count": 0, "min": 0, "max": 0, "mean": 0}
+
+        return {
+            "count": len(values),
+            "min": min(values),
+            "max": max(values),
+            "mean": sum(values) / len(values)
+        }
+
+    def get_metrics_summary(self) -> dict[str, Any]:
+        """Get comprehensive metrics summary.
+
+        Returns:
+            Dictionary containing all metrics organized by type
+        """
+        return {
+            "counters": self._counters.copy(),
+            "gauges": self._gauges.copy(),
+            "histograms": {k: self.get_histogram_stats(*k.split('.', 1)) for k in self._histograms.keys()},
+            "timers": {k: self.get_timer_stats(*k.split('.', 1)) for k in self._timers.keys()}
+        }
+
+    def get_metric_history(self, service: str, name: str,
+                          minutes: int = 60) -> list[Metric]:
+        """Get metric history for the specified time period.
+
+        Args:
+            service: Service name
+            name: Metric name
+            minutes: Number of minutes of history to retrieve
+
+        Returns:
+            List of metrics within the time period
+        """
+        key = f"{service}.{name}"
+        if key not in self.metrics:
+            return []
+
+        cutoff_time = datetime.now() - timedelta(minutes=minutes)
+        return [m for m in self.metrics[key] if m.timestamp >= cutoff_time]
+
+    def _cleanup_old_metrics(self, key: str | None = None) -> None:
+        """Remove metrics older than retention period.
+
+        Args:
+            key: Specific metric key to clean up. If None, clean all metrics.
+        """
+        cutoff_time = datetime.now() - timedelta(hours=self.retention_hours)
+
+        if key:
+            if key in self.metrics:
+                self.metrics[key] = [m for m in self.metrics[key] if m.timestamp >= cutoff_time]
+        else:
+            # Clean up all metrics
+            for k in list(self.metrics.keys()):
+                self.metrics[k] = [m for m in self.metrics[k] if m.timestamp >= cutoff_time]
+                if not self.metrics[k]:
+                    del self.metrics[k]
 
 
 class ObservabilityManager:
