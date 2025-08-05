@@ -262,7 +262,7 @@ class ProgressiveNetwork(nn.Module):
             # Go through layers in pairs: Linear + ReLU
             layer_pairs = []
             layers = list(self.columns[col])
-            
+
             # Group layers into (Linear, ReLU) pairs, handle output layer separately
             i = 0
             while i < len(layers) - 1:  # -1 to handle output layer separately
@@ -271,20 +271,20 @@ class ProgressiveNetwork(nn.Module):
                     i += 2
                 else:
                     i += 1
-            
+
             # Process hidden layer pairs
             for layer_idx, (linear, relu) in enumerate(layer_pairs):
                 # Add lateral connections if available
-                if (self.lateral_connections and col > 0 and 
-                    layer_idx < len(self.hidden_dims) and 
+                if (self.lateral_connections and col > 0 and
+                    layer_idx < len(self.hidden_dims) and
                     len(prev_activations) == col):  # Have all previous columns processed
-                    
+
                     # Collect activations from all previous columns at this layer
                     lateral_features = []
                     for prev_col in range(col):
                         if layer_idx < len(prev_activations[prev_col]):
                             lateral_features.append(prev_activations[prev_col][layer_idx])
-                    
+
                     if lateral_features:
                         lateral_input = torch.cat(lateral_features, dim=-1)
                         adapted_lateral = self.lateral_adapters[col-1][layer_idx](lateral_input)
