@@ -9,16 +9,17 @@ This module provides advanced security monitoring capabilities including:
 - Security metrics collection and reporting
 - Real-time monitoring with threat pattern matching
 """
+import json
 import logging
+import re
 import threading
 import time
-import json
-import re
 import uuid
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Callable
-from dataclasses import dataclass, asdict, field
 from enum import Enum
+from typing import Any
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class ThreatPattern:
     """Threat pattern definition for detection."""
     name: str
     pattern_type: str  # 'regex', 'payload_content', 'behavioral', etc.
-    regex_pattern: Optional[str] = None
+    regex_pattern: str | None = None
     threat_type: str = ""
     severity: ThreatSeverity = ThreatSeverity.MEDIUM
     description: str = ""
@@ -71,9 +72,9 @@ class SecurityAlert:
     message: str
     source: str
     timestamp: datetime
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
     resolution_notes: str = ""
 
 @dataclass
@@ -85,11 +86,11 @@ class SecurityIncident:
     severity: ThreatSeverity
     status: str  # 'active', 'investigating', 'resolved', 'closed'
     created_at: datetime
-    updated_at: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
-    related_threat_ids: List[str] = field(default_factory=list)
-    affected_systems: List[str] = field(default_factory=list)
-    response_actions: List[str] = field(default_factory=list)
+    updated_at: datetime | None = None
+    resolved_at: datetime | None = None
+    related_threat_ids: list[str] = field(default_factory=list)
+    affected_systems: list[str] = field(default_factory=list)
+    response_actions: list[str] = field(default_factory=list)
 
 @dataclass
 class SecurityThreat:
@@ -97,10 +98,10 @@ class SecurityThreat:
     threat_id: str
     threat_type: str
     severity: ThreatSeverity
-    source_ip: Optional[str] = None
-    target_system: Optional[str] = None
+    source_ip: str | None = None
+    target_system: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     status: str = "active"  # 'active', 'mitigated', 'false_positive'
 
 @dataclass
@@ -126,7 +127,7 @@ class SecurityMonitor:
     and incident response capabilities with configurable patterns and thresholds.
     """
 
-    def __init__(self, config: Optional[SecurityConfig] = None):
+    def __init__(self, config: SecurityConfig | None = None):
         """
         Initialize SecurityMonitor with configuration.
         
@@ -135,32 +136,32 @@ class SecurityMonitor:
         """
         self.config = config or SecurityConfig()
         self.is_monitoring = False
-        self._monitoring_thread: Optional[threading.Thread] = None
+        self._monitoring_thread: threading.Thread | None = None
         self._lock = threading.Lock()
-        
+
         # Storage for security data
-        self.active_threats: Dict[str, SecurityThreat] = {}
-        self.active_alerts: Dict[str, SecurityAlert] = {}
-        self.active_incidents: Dict[str, SecurityIncident] = {}
-        self.archived_threats: List[SecurityThreat] = []
-        self.alert_history: List[SecurityAlert] = []
-        self.incident_history: List[SecurityIncident] = []
-        
+        self.active_threats: dict[str, SecurityThreat] = {}
+        self.active_alerts: dict[str, SecurityAlert] = {}
+        self.active_incidents: dict[str, SecurityIncident] = {}
+        self.archived_threats: list[SecurityThreat] = []
+        self.alert_history: list[SecurityAlert] = []
+        self.incident_history: list[SecurityIncident] = []
+
         # Metrics tracking
         self.metrics = SecurityMetrics()
-        
+
         # Threat patterns for detection
-        self.threat_patterns: List[ThreatPattern] = []
+        self.threat_patterns: list[ThreatPattern] = []
         self._initialize_default_threat_patterns()
-        
+
         # Anomaly thresholds
-        self.anomaly_thresholds: Dict[str, AnomalyThreshold] = {}
+        self.anomaly_thresholds: dict[str, AnomalyThreshold] = {}
         self._initialize_default_anomaly_thresholds()
-        
+
         # Event handlers
-        self.alert_handlers: Dict[str, Callable] = {}
-        self.incident_response_handlers: Dict[str, Callable] = {}
-        
+        self.alert_handlers: dict[str, Callable] = {}
+        self.incident_response_handlers: dict[str, Callable] = {}
+
         logger.info("SecurityMonitor initialized with configuration")
 
     def _initialize_default_threat_patterns(self):
@@ -176,7 +177,7 @@ class SecurityMonitor:
             ),
             ThreatPattern(
                 name="xss_attack",
-                pattern_type="payload_content", 
+                pattern_type="payload_content",
                 regex_pattern=r".*(<script|javascript:|on\w+\s*=).*",
                 threat_type="xss_attempt",
                 severity=ThreatSeverity.HIGH,
@@ -204,7 +205,7 @@ class SecurityMonitor:
                 description="General suspicious activity detection"
             )
         ]
-        
+
         self.threat_patterns.extend(default_patterns)
 
     def _initialize_default_anomaly_thresholds(self):
@@ -217,7 +218,7 @@ class SecurityMonitor:
             "error_rate": AnomalyThreshold("error_rate", 5.0, "gt"),
             "response_time": AnomalyThreshold("response_time", 5000.0, "gt")
         }
-        
+
         self.anomaly_thresholds.update(default_thresholds)
 
     def start_monitoring(self):
@@ -225,22 +226,22 @@ class SecurityMonitor:
         if self.is_monitoring:
             logger.warning("Security monitoring is already running")
             return
-        
+
         self.is_monitoring = True
         self._monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self._monitoring_thread.start()
-        
+
         logger.info("Security monitoring started")
 
     def stop_monitoring(self):
         """Stop the security monitoring system."""
         if not self.is_monitoring:
             return
-        
+
         self.is_monitoring = False
         if self._monitoring_thread:
             self._monitoring_thread.join(timeout=10.0)
-        
+
         logger.info("Security monitoring stopped")
 
     def _monitoring_loop(self):
@@ -254,7 +255,7 @@ class SecurityMonitor:
             except Exception as e:
                 logger.error(f"Error in monitoring loop: {e}")
 
-    def process_security_event(self, event_data: Dict[str, Any]):
+    def process_security_event(self, event_data: dict[str, Any]):
         """
         Process a security event and check for threats.
         
@@ -264,27 +265,27 @@ class SecurityMonitor:
         if not event_data or not isinstance(event_data, dict):
             logger.warning("Invalid event data received")
             return
-        
+
         try:
             with self._lock:
                 self.metrics.total_events += 1
-                
+
                 # Update specific metrics based on event type
                 event_type = event_data.get('event_type', '')
                 self._update_event_metrics(event_type, event_data)
-                
+
                 # Check for threats
                 threats = self._detect_threats(event_data)
                 for threat in threats:
                     self._handle_threat(threat, event_data)
-                
+
                 # Log the event
                 logger.info(f"Processed security event: {event_type}")
-                
+
         except Exception as e:
             logger.error(f"Error processing security event: {e}")
 
-    def _update_event_metrics(self, event_type: str, event_data: Dict[str, Any]):
+    def _update_event_metrics(self, event_type: str, event_data: dict[str, Any]):
         """Update metrics based on event type."""
         if event_type == 'authentication_success':
             self.metrics.authentication_attempts += 1
@@ -296,21 +297,21 @@ class SecurityMonitor:
         elif event_type in ['blocked_request', 'request_blocked']:
             self.metrics.blocked_requests += 1
 
-    def _detect_threats(self, event_data: Dict[str, Any]) -> List[SecurityThreat]:
+    def _detect_threats(self, event_data: dict[str, Any]) -> list[SecurityThreat]:
         """Detect threats based on event data and patterns."""
         threats = []
-        
+
         for pattern in self.threat_patterns:
             if not pattern.enabled:
                 continue
-            
+
             threat = self._check_pattern(pattern, event_data)
             if threat:
                 threats.append(threat)
-        
+
         return threats
 
-    def _check_pattern(self, pattern: ThreatPattern, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_pattern(self, pattern: ThreatPattern, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check if event matches a threat pattern."""
         try:
             if pattern.pattern_type == "payload_content":
@@ -323,14 +324,14 @@ class SecurityMonitor:
             logger.error(f"Error checking pattern {pattern.name}: {e}")
             return None
 
-    def _check_payload_pattern(self, pattern: ThreatPattern, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_payload_pattern(self, pattern: ThreatPattern, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check payload content against regex patterns."""
         if not pattern.regex_pattern:
             return None
-        
+
         # Check various fields that might contain payload
         content_fields = ['payload', 'query', 'data', 'message', 'content']
-        
+
         for field in content_fields:
             if field in event_data:
                 content = str(event_data[field])
@@ -347,44 +348,44 @@ class SecurityMonitor:
                             'content_sample': content[:100]
                         }
                     )
-        
+
         return None
 
-    def _check_behavioral_pattern(self, pattern: ThreatPattern, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_behavioral_pattern(self, pattern: ThreatPattern, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check behavioral patterns like brute force, privilege escalation."""
         event_type = event_data.get('event_type', '')
-        
+
         if pattern.threat_type == "brute_force_attack":
             return self._check_brute_force(event_data)
         elif pattern.threat_type == "privilege_escalation_attempt":
             return self._check_privilege_escalation(event_data)
         elif pattern.threat_type == "suspicious_activity":
             return self._check_suspicious_activity(event_data)
-        
+
         return None
 
-    def _check_brute_force(self, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_brute_force(self, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check for brute force attack patterns."""
         if event_data.get('event_type') != 'authentication_failure':
             return None
-        
+
         source_ip = event_data.get('source_ip')
         if not source_ip:
             return None
-        
+
         # Count recent failures from same IP
         current_time = datetime.now()
         failure_count = 0
-        
+
         for threat in self.active_threats.values():
-            if (threat.threat_type == 'brute_force_attack' and 
+            if (threat.threat_type == 'brute_force_attack' and
                 threat.source_ip == source_ip and
                 (current_time - threat.timestamp).seconds < 300):  # 5 minutes
                 failure_count += 1
-        
+
         # Consider login failure events in last 5 minutes
         failure_count += 1  # Current failure
-        
+
         if failure_count >= 5:  # Threshold for brute force
             return SecurityThreat(
                 threat_id=str(uuid.uuid4()),
@@ -394,23 +395,23 @@ class SecurityMonitor:
                 timestamp=current_time,
                 details={'failure_count': failure_count}
             )
-        
+
         return None
 
-    def _check_privilege_escalation(self, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_privilege_escalation(self, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check for privilege escalation attempts."""
         if event_data.get('event_type') != 'access_attempt':
             return None
-        
+
         required_role = event_data.get('required_role', '')
         user_role = event_data.get('user_role', '')
-        
+
         # Simple role hierarchy check
         role_levels = {'user': 1, 'admin': 2, 'super_admin': 3}
-        
+
         required_level = role_levels.get(required_role, 0)
         user_level = role_levels.get(user_role, 0)
-        
+
         if required_level > user_level:
             return SecurityThreat(
                 threat_id=str(uuid.uuid4()),
@@ -424,26 +425,26 @@ class SecurityMonitor:
                     'resource': event_data.get('resource')
                 }
             )
-        
+
         return None
 
-    def _check_suspicious_activity(self, event_data: Dict[str, Any]) -> Optional[SecurityThreat]:
+    def _check_suspicious_activity(self, event_data: dict[str, Any]) -> SecurityThreat | None:
         """Check for general suspicious activity."""
         suspicious_indicators = [
             'port_scan', 'directory_traversal', 'file_inclusion',
             'command_injection', 'malware', 'ransomware'
         ]
-        
+
         event_type = event_data.get('event_type', '')
         activity_type = event_data.get('activity_type', '')
         attack_type = event_data.get('attack_type', '')
-        
-        if (event_type in suspicious_indicators or 
+
+        if (event_type in suspicious_indicators or
             activity_type in suspicious_indicators or
             attack_type in suspicious_indicators):
-            
+
             severity = ThreatSeverity.CRITICAL if attack_type == 'ransomware' else ThreatSeverity.MEDIUM
-            
+
             return SecurityThreat(
                 threat_id=str(uuid.uuid4()),
                 threat_type="suspicious_activity",
@@ -452,27 +453,27 @@ class SecurityMonitor:
                 timestamp=event_data.get('timestamp', datetime.now()),
                 details=event_data
             )
-        
+
         return None
 
-    def _handle_threat(self, threat: SecurityThreat, event_data: Dict[str, Any]):
+    def _handle_threat(self, threat: SecurityThreat, event_data: dict[str, Any]):
         """Handle detected threat by creating alerts and potentially incidents."""
         # Store the threat
         self.active_threats[threat.threat_id] = threat
         self.metrics.threats_detected += 1
-        
+
         # Create security alert
         alert = self._create_threat_alert(threat)
         self.active_alerts[alert.alert_id] = alert
         self.alert_history.append(alert)
         self.metrics.alerts_generated += 1
-        
+
         # Check if we need to create an incident
         self._evaluate_incident_creation(threat)
-        
+
         # Trigger alert handlers
         self._trigger_alert_handlers(alert)
-        
+
         logger.warning(f"Threat detected: {threat.threat_type} - {threat.severity.value}")
 
     def _create_threat_alert(self, threat: SecurityThreat) -> SecurityAlert:
@@ -503,29 +504,29 @@ class SecurityMonitor:
             if len(related_threats) >= 2:  # Including current threat
                 self._create_incident(related_threats)
 
-    def _find_related_threats(self, threat: SecurityThreat) -> List[SecurityThreat]:
+    def _find_related_threats(self, threat: SecurityThreat) -> list[SecurityThreat]:
         """Find threats related to the given threat."""
         related = [threat]
         current_time = datetime.now()
-        
+
         for existing_threat in self.active_threats.values():
             if (existing_threat.threat_id != threat.threat_id and
                 existing_threat.source_ip == threat.source_ip and
                 (current_time - existing_threat.timestamp).seconds < 3600):  # 1 hour window
                 related.append(existing_threat)
-        
+
         return related
 
-    def _create_incident(self, threats: List[SecurityThreat]):
+    def _create_incident(self, threats: list[SecurityThreat]):
         """Create a security incident from multiple threats."""
         incident_id = str(uuid.uuid4())
-        
+
         # Determine highest severity
         max_severity = max(threat.severity for threat in threats)
-        
+
         incident = SecurityIncident(
             incident_id=incident_id,
-            title=f"Security Incident - Multiple threats detected",
+            title="Security Incident - Multiple threats detected",
             description=f"Incident created from {len(threats)} related threats",
             severity=max_severity,
             status="active",
@@ -533,21 +534,21 @@ class SecurityMonitor:
             related_threat_ids=[t.threat_id for t in threats],
             affected_systems=list(set(t.target_system for t in threats if t.target_system))
         )
-        
+
         self.active_incidents[incident_id] = incident
         self.incident_history.append(incident)
         self.metrics.incidents_created += 1
-        
+
         # Trigger incident response
         self._trigger_incident_response(incident)
-        
+
         logger.error(f"Security incident created: {incident_id}")
 
     def _trigger_alert_handlers(self, alert: SecurityAlert):
         """Trigger registered alert handlers."""
         if not self.config.alert_notifications_enabled:
             return
-        
+
         for handler_name, handler in self.alert_handlers.items():
             try:
                 handler(alert)
@@ -558,7 +559,7 @@ class SecurityMonitor:
         """Trigger automated incident response."""
         if not self.config.incident_response_enabled:
             return
-        
+
         for handler_name, handler in self.incident_response_handlers.items():
             try:
                 handler(incident)
@@ -566,38 +567,38 @@ class SecurityMonitor:
             except Exception as e:
                 logger.error(f"Error in incident response handler {handler_name}: {e}")
 
-    def process_metrics_data(self, metrics_data: Dict[str, Any]):
+    def process_metrics_data(self, metrics_data: dict[str, Any]):
         """Process system metrics and check for anomalies."""
         if not self.config.anomaly_detection_enabled:
             return
-        
+
         try:
             metric_type = metrics_data.get('metric_type', '')
             timestamp = metrics_data.get('timestamp', datetime.now())
-            
+
             for metric_name, value in metrics_data.items():
                 if metric_name in ['metric_type', 'timestamp']:
                     continue
-                
+
                 if isinstance(value, (int, float)):
                     anomaly = self._check_anomaly(metric_name, value, timestamp)
                     if anomaly:
                         self._handle_anomaly(anomaly, metrics_data)
-                        
+
         except Exception as e:
             logger.error(f"Error processing metrics data: {e}")
 
-    def _check_anomaly(self, metric_name: str, value: float, timestamp: datetime) -> Optional[Dict[str, Any]]:
+    def _check_anomaly(self, metric_name: str, value: float, timestamp: datetime) -> dict[str, Any] | None:
         """Check if metric value represents an anomaly."""
         if metric_name not in self.anomaly_thresholds:
             return None
-        
+
         threshold = self.anomaly_thresholds[metric_name]
         if not threshold.enabled:
             return None
-        
+
         is_anomaly = False
-        
+
         if threshold.comparison == "gt" and value > threshold.threshold_value:
             is_anomaly = True
         elif threshold.comparison == "gte" and value >= threshold.threshold_value:
@@ -608,7 +609,7 @@ class SecurityMonitor:
             is_anomaly = True
         elif threshold.comparison == "eq" and value == threshold.threshold_value:
             is_anomaly = True
-        
+
         if is_anomaly:
             return {
                 'metric_name': metric_name,
@@ -617,10 +618,10 @@ class SecurityMonitor:
                 'comparison': threshold.comparison,
                 'timestamp': timestamp
             }
-        
+
         return None
 
-    def _handle_anomaly(self, anomaly: Dict[str, Any], metrics_data: Dict[str, Any]):
+    def _handle_anomaly(self, anomaly: dict[str, Any], metrics_data: dict[str, Any]):
         """Handle detected anomaly by creating alert."""
         alert = SecurityAlert(
             alert_id=str(uuid.uuid4()),
@@ -631,28 +632,28 @@ class SecurityMonitor:
             timestamp=anomaly['timestamp'],
             details=anomaly
         )
-        
+
         self.active_alerts[alert.alert_id] = alert
         self.alert_history.append(alert)
         self.metrics.alerts_generated += 1
-        
+
         # Trigger alert handlers
         self._trigger_alert_handlers(alert)
-        
+
         logger.warning(f"Anomaly detected: {anomaly['metric_name']} = {anomaly['value']}")
 
     def _collect_system_metrics(self):
         """Collect system metrics for monitoring."""
         if not self.config.metrics_collection_enabled:
             return
-        
+
         try:
             # Update metrics timestamp
             self.metrics.last_updated = datetime.now()
-            
+
             # This would integrate with actual system monitoring
             # For now, we'll just update the timestamp
-            
+
         except Exception as e:
             logger.error(f"Error collecting system metrics: {e}")
 
@@ -667,21 +668,21 @@ class SecurityMonitor:
         try:
             current_time = datetime.now()
             retention_period = timedelta(days=self.config.threat_retention_days)
-            
+
             # Archive old threats
             threats_to_archive = []
             for threat_id, threat in list(self.active_threats.items()):
                 if current_time - threat.timestamp > retention_period:
                     threats_to_archive.append(threat_id)
-            
+
             for threat_id in threats_to_archive:
                 threat = self.active_threats.pop(threat_id)
                 self.archived_threats.append(threat)
-            
+
             # Limit archived threats to prevent memory issues
             if len(self.archived_threats) > 10000:
                 self.archived_threats = self.archived_threats[-5000:]
-            
+
         except Exception as e:
             logger.error(f"Error cleaning up old data: {e}")
 
@@ -699,7 +700,7 @@ class SecurityMonitor:
         )
         logger.info(f"Updated anomaly threshold for {metric_name}: {threshold_value}")
 
-    def get_anomaly_threshold(self, metric_name: str) -> Optional[float]:
+    def get_anomaly_threshold(self, metric_name: str) -> float | None:
         """Get current anomaly threshold for a metric."""
         threshold = self.anomaly_thresholds.get(metric_name)
         return threshold.threshold_value if threshold else None
@@ -714,22 +715,22 @@ class SecurityMonitor:
         self.incident_response_handlers[handler_name] = handler
         logger.info(f"Added incident response handler: {handler_name}")
 
-    def get_active_threats(self) -> List[SecurityThreat]:
+    def get_active_threats(self) -> list[SecurityThreat]:
         """Get list of active security threats."""
         with self._lock:
             return list(self.active_threats.values())
 
-    def get_active_alerts(self) -> List[SecurityAlert]:
+    def get_active_alerts(self) -> list[SecurityAlert]:
         """Get list of active security alerts."""
         with self._lock:
             return list(self.active_alerts.values())
 
-    def get_active_incidents(self) -> List[SecurityIncident]:
+    def get_active_incidents(self) -> list[SecurityIncident]:
         """Get list of active security incidents."""
         with self._lock:
             return list(self.active_incidents.values())
 
-    def get_archived_threats(self) -> List[SecurityThreat]:
+    def get_archived_threats(self) -> list[SecurityThreat]:
         """Get list of archived threats."""
         return self.archived_threats.copy()
 
@@ -759,7 +760,7 @@ class SecurityMonitor:
     def calculate_security_score(self) -> float:
         """Calculate overall security score (0-100)."""
         base_score = 100.0
-        
+
         # Deduct points for active threats
         for threat in self.active_threats.values():
             if threat.severity == ThreatSeverity.CRITICAL:
@@ -770,17 +771,17 @@ class SecurityMonitor:
                 base_score -= 5.0
             elif threat.severity == ThreatSeverity.LOW:
                 base_score -= 2.0
-        
+
         # Deduct points for active incidents
         for incident in self.active_incidents.values():
             if incident.severity == ThreatSeverity.CRITICAL:
                 base_score -= 15.0
             elif incident.severity == ThreatSeverity.HIGH:
                 base_score -= 8.0
-        
+
         return max(0.0, base_score)
 
-    def generate_security_report(self) -> Dict[str, Any]:
+    def generate_security_report(self) -> dict[str, Any]:
         """Generate comprehensive security report."""
         return {
             'timestamp': datetime.now().isoformat(),
@@ -791,19 +792,19 @@ class SecurityMonitor:
             'recommendations': self._generate_recommendations()
         }
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate security recommendations based on current state."""
         recommendations = []
-        
+
         if len(self.active_threats) > 10:
             recommendations.append("High number of active threats detected. Consider reviewing security policies.")
-        
+
         if len(self.active_incidents) > 0:
             recommendations.append("Active security incidents require immediate attention.")
-        
+
         if self.calculate_security_score() < 80:
             recommendations.append("Security score is below optimal. Review and address security issues.")
-        
+
         return recommendations
 
     def export_security_data(self, format: str = 'json') -> str:
@@ -815,7 +816,7 @@ class SecurityMonitor:
             'metrics': asdict(self.metrics),
             'timestamp': datetime.now().isoformat()
         }
-        
+
         if format.lower() == 'json':
             return json.dumps(data, indent=2, default=str)
         else:

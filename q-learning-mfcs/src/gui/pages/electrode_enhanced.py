@@ -232,7 +232,8 @@ def render_geometry_configuration() -> None:
             # Calculate anode areas and mass
             anode_radius = anode_diameter / 2
             anode_geometric_area = np.pi * anode_radius**2
-            anode_geometric_surface_area = 2 * np.pi * anode_radius * (anode_radius + anode_length)
+            # Correct formula: lateral surface area + two end caps
+            anode_geometric_surface_area = np.pi * anode_diameter * anode_length + 2 * np.pi * anode_radius**2
 
             # Calculate volume and mass for specific surface area
             anode_volume_m3 = np.pi * (anode_radius / 100)**2 * (anode_length / 100)  # Convert cm to m
@@ -344,7 +345,8 @@ def render_geometry_configuration() -> None:
             # Calculate cathode areas and mass
             cathode_radius = cathode_diameter / 2
             cathode_geometric_area = np.pi * cathode_radius**2
-            cathode_geometric_surface_area = 2 * np.pi * cathode_radius * (cathode_radius + cathode_length)
+            # Correct formula: lateral surface area + two end caps
+            cathode_geometric_surface_area = np.pi * cathode_diameter * cathode_length + 2 * np.pi * cathode_radius**2
 
             # Calculate volume and mass for specific surface area
             cathode_volume_m3 = np.pi * (cathode_radius / 100)**2 * (cathode_length / 100)  # Convert cm to m
