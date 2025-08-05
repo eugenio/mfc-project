@@ -30,6 +30,15 @@ Access Points:
 
 from .api_models import AlertMessage, SystemMetrics, SystemStatus
 from .dashboard_api import app as dashboard_app
+from .observability_manager import (
+    Alert,
+    AlertCondition,
+    AlertSeverity,
+    HealthStatus,
+    ObservabilityManager,
+    ServiceHealth,
+    get_default_manager,
+)
 from .realtime_streamer import DataStreamManager
 from .safety_monitor import EmergencyAction, SafetyLevel, SafetyMonitor, SafetyThreshold
 
@@ -47,5 +56,12 @@ __all__ = [
     "SafetyThreshold",
     "RealTimeStreamer",
     "StreamEventType",
-    "StreamEvent"
+    "StreamEvent",
+    "ObservabilityManager",
+    "HealthStatus",
+    "AlertSeverity",
+    "ServiceHealth",
+    "AlertCondition",
+    "Alert",
+    "get_default_manager",
 ]

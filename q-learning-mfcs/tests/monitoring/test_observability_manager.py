@@ -22,18 +22,14 @@ import os
 # Add source path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
-from monitoring.observability_manager import (
+from src.monitoring.observability_manager import (
     ObservabilityManager,
-    MetricsCollector,
-    DistributedTracer,
-    CentralizedLogger,
-    TTSServiceMonitor,
-    TraceSpan,
-    Metric,
-    LogEntry,
-    MetricType,
-    ServiceType,
-    trace_operation
+    HealthStatus,
+    AlertSeverity,
+    ServiceHealth,
+    AlertCondition,
+    Alert,
+    get_default_manager,
 )
 
 
