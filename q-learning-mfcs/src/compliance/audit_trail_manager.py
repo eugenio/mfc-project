@@ -3,27 +3,28 @@ AuditTrailManager - Secure audit trail management with cryptographic integrity
 
 This module provides comprehensive audit trail management with:
 - Immutable audit logs
-- Cryptographic signatures  
+- Cryptographic signatures
 - Chain of custody
 - Forensic analysis capabilities
 - Compliance reporting
 """
+import base64
 import hashlib
 import hmac
 import json
-import uuid
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-import threading
-import base64
 import os
-from dataclasses import dataclass, asdict
+import threading
+import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 
 @dataclass(frozen=True)
 class AuditEntry:
     """Immutable audit log entry with cryptographic integrity."""
-    
+
     event_id: str
     timestamp: str
     event_type: str
@@ -32,25 +33,25 @@ class AuditEntry:
     source_ip: str
     action: str
     resource: str
-    old_value: Optional[Dict[str, Any]]
-    new_value: Optional[Dict[str, Any]]
+    old_value: dict[str, Any] | None
+    new_value: dict[str, Any] | None
     outcome: str
     risk_level: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     content_hash: str
-    signature: Optional[str] = None
-    previous_hash: Optional[str] = None
+    signature: str | None = None
+    previous_hash: str | None = None
     chain_index: int = 0
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert audit entry to dictionary."""
         return asdict(self)
-    
+
     def verify_integrity(self, secret_key: str) -> bool:
         """Verify the integrity of this audit entry."""
         expected_hash = self._generate_content_hash()
         return hmac.compare_digest(self.content_hash, expected_hash)
-    
+
     def _generate_content_hash(self) -> str:
         """Generate SHA-256 hash of entry contents."""
         content = {
@@ -74,7 +75,7 @@ class AuditEntry:
 class AuditTrailManager:
     """
     Secure audit trail manager with cryptographic integrity and forensic capabilities.
-    
+
     Features:
     - Immutable audit log entries
     - Cryptographic signatures and chain of custody
@@ -83,10 +84,10 @@ class AuditTrailManager:
     - Compliance reporting for multiple regulations
     - Secure log rotation and archival
     """
-    
-    def __init__(self, 
-                 audit_dir: Union[str, Path],
-                 secret_key: Optional[str] = None,
+
+    def __init__(self,
+                 audit_dir: str | Path,
+                 secret_key: str | None = None,
                  max_log_size: int = 10 * 1024 * 1024,  # 10MB
                  max_entries_per_file: int = 10000,
                  enable_encryption: bool = True,
@@ -104,24 +105,24 @@ class AuditTrailManager:
         """
         self.audit_dir = Path(audit_dir)
         self.audit_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.secret_key = secret_key or self._generate_secret_key()
         self.max_log_size = max_log_size
         self.max_entries_per_file = max_entries_per_file
         self.enable_encryption = enable_encryption
         self.compliance_mode = compliance_mode
-        
+
         # Thread safety
         self._lock = threading.RLock()
-        
+
         # Audit chain state
-        self._audit_chain: List[AuditEntry] = []
-        self._chain_integrity_hash = None
-        self._current_file_path = None
+        self._audit_chain: list[AuditEntry] = []
+        self._chain_integrity_hash: str | None = None
+        self._current_file_path: Path | None = None
         self._current_file_entries = 0
-        
+
         # Statistics
-        self._stats = {
+        self._stats: dict[str, Any] = {
             'total_entries': 0,
             'security_events': 0,
             'failed_logins': 0,
@@ -129,14 +130,14 @@ class AuditTrailManager:
             'data_access_events': 0,
             'last_rotation': None
         }
-        
+
         # Load existing audit chain
         self._load_existing_chain()
-    
+
     def _generate_secret_key(self) -> str:
         """Generate a secure secret key for HMAC."""
         return base64.b64encode(os.urandom(32)).decode()
-    
+
     def _load_existing_chain(self) -> None:
         """Load existing audit chain from storage."""
         # Find the most recent audit file
@@ -144,30 +145,30 @@ class AuditTrailManager:
         if audit_files:
             latest_file = audit_files[-1]
             self._current_file_path = latest_file
-            
+
             try:
-                with open(latest_file, 'r') as f:
+                with open(latest_file) as f:
                     entries = [json.loads(line) for line in f if line.strip()]
                     self._current_file_entries = len(entries)
                     if entries:
                         last_entry = entries[-1]
                         self._chain_integrity_hash = last_entry.get('content_hash')
-            except Exception as e:
+            except Exception:
                 # Log error but continue - we'll start fresh
                 pass
-    
+
     def create_audit_entry(self,
                          event_type: str,
                          user_id: str,
                          action: str,
                          resource: str,
-                         session_id: Optional[str] = None,
-                         source_ip: Optional[str] = None,
-                         old_value: Optional[Dict[str, Any]] = None,
-                         new_value: Optional[Dict[str, Any]] = None,
+                         session_id: str | None = None,
+                         source_ip: str | None = None,
+                         old_value: dict[str, Any] | None = None,
+                         new_value: dict[str, Any] | None = None,
                          outcome: str = "success",
                          risk_level: str = "low",
-                         metadata: Optional[Dict[str, Any]] = None) -> AuditEntry:
+                         metadata: dict[str, Any] | None = None) -> AuditEntry:
         """
         Create an immutable audit log entry with cryptographic integrity.
         
@@ -191,12 +192,12 @@ class AuditTrailManager:
             # Generate unique event ID
             event_id = str(uuid.uuid4())
             timestamp = datetime.utcnow().isoformat()
-            
+
             # Set defaults
             session_id = session_id or "unknown"
             source_ip = source_ip or "unknown"
             metadata = metadata or {}
-            
+
             # Create entry data
             entry_data = {
                 'event_id': event_id,
@@ -216,14 +217,14 @@ class AuditTrailManager:
                 'previous_hash': self._chain_integrity_hash,
                 'chain_index': len(self._audit_chain)
             }
-            
+
             # Generate content hash
-            content_str = json.dumps({k: v for k, v in entry_data.items() 
-                                    if k not in ['content_hash', 'signature']}, 
+            content_str = json.dumps({k: v for k, v in entry_data.items()
+                                    if k not in ['content_hash', 'signature']},
                                    sort_keys=True, default=str)
             content_hash = hashlib.sha256(content_str.encode()).hexdigest()
             entry_data['content_hash'] = content_hash
-            
+
             # Generate HMAC signature
             signature = hmac.new(
                 self.secret_key.encode(),
@@ -231,61 +232,62 @@ class AuditTrailManager:
                 hashlib.sha256
             ).hexdigest()
             entry_data['signature'] = signature
-            
+
             # Create immutable entry
             entry = AuditEntry(**entry_data)
-            
+
             # Add to chain
             self._audit_chain.append(entry)
             self._chain_integrity_hash = content_hash
-            
+
             # Update statistics
             self._update_statistics(entry)
-            
+
             # Persist to storage
             self._persist_entry(entry)
-            
+
             return entry
-    
+
     def _update_statistics(self, entry: AuditEntry) -> None:
         """Update audit statistics based on entry."""
-        self._stats['total_entries'] += 1
-        
+        self._stats['total_entries'] = self._stats.get('total_entries', 0) + 1
+
         if entry.risk_level in ['high', 'critical']:
-            self._stats['security_events'] += 1
-        
+            self._stats['security_events'] = self._stats.get('security_events', 0) + 1
+
         if entry.action == 'login' and entry.outcome == 'failure':
-            self._stats['failed_logins'] += 1
-        
+            self._stats['failed_logins'] = self._stats.get('failed_logins', 0) + 1
+
         if 'privilege' in entry.action.lower():
-            self._stats['privilege_escalations'] += 1
-        
+            self._stats['privilege_escalations'] = self._stats.get('privilege_escalations', 0) + 1
+
         if entry.event_type == 'data_access':
-            self._stats['data_access_events'] += 1
-    
+            self._stats['data_access_events'] = self._stats.get('data_access_events', 0) + 1
+
     def _persist_entry(self, entry: AuditEntry) -> None:
         """Persist audit entry to storage with rotation."""
         # Check if rotation is needed
-        if (self._current_file_path is None or 
+        if (self._current_file_path is None or
             self._current_file_entries >= self.max_entries_per_file or
-            (self._current_file_path and 
+            (self._current_file_path and
              self._current_file_path.stat().st_size >= self.max_log_size)):
             self._rotate_log_file()
-        
+
         # Write entry to current file
-        with open(self._current_file_path, 'a') as f:
-            f.write(json.dumps(entry.to_dict(), default=str) + '\n')
-        
+        if self._current_file_path:
+            with open(self._current_file_path, 'a') as f:
+                f.write(json.dumps(entry.to_dict(), default=str) + '\n')
+
         self._current_file_entries += 1
-    
+
     def _rotate_log_file(self) -> None:
         """Rotate the audit log file."""
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         self._current_file_path = self.audit_dir / f"audit_{timestamp}.json"
         self._current_file_entries = 0
         self._stats['last_rotation'] = datetime.utcnow().isoformat()
-    
-    def verify_chain_integrity(self) -> Dict[str, Any]:
+
+    def verify_chain_integrity(self) -> dict[str, Any]:
         """
         Verify the integrity of the entire audit chain.
         
@@ -301,7 +303,7 @@ class AuditTrailManager:
                 'integrity_violations': [],
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             previous_hash = None
             for i, entry in enumerate(self._audit_chain):
                 # Verify content hash
@@ -312,7 +314,7 @@ class AuditTrailManager:
                         'event_id': entry.event_id,
                         'error': 'Content hash verification failed'
                     })
-                
+
                 # Verify chain linkage
                 if entry.previous_hash != previous_hash:
                     results['chain_valid'] = False
@@ -323,14 +325,14 @@ class AuditTrailManager:
                         'expected_previous_hash': previous_hash,
                         'actual_previous_hash': entry.previous_hash
                     })
-                
+
                 # Verify signature
                 expected_signature = hmac.new(
                     self.secret_key.encode(),
                     entry.content_hash.encode(),
                     hashlib.sha256
                 ).hexdigest()
-                
+
                 if not hmac.compare_digest(entry.signature or '', expected_signature):
                     results['chain_valid'] = False
                     results['failed_entries'].append({
@@ -338,17 +340,17 @@ class AuditTrailManager:
                         'event_id': entry.event_id,
                         'error': 'Signature verification failed'
                     })
-                
+
                 if not results['failed_entries'] or results['failed_entries'][-1]['index'] != i:
                     results['verified_entries'] += 1
-                
+
                 previous_hash = entry.content_hash
-            
+
             return results
-    
-    def perform_forensic_analysis(self, 
-                                time_range: Optional[tuple] = None,
-                                risk_threshold: str = "medium") -> Dict[str, Any]:
+
+    def perform_forensic_analysis(self,
+                                time_range: tuple | None = None,
+                                risk_threshold: str = "medium") -> dict[str, Any]:
         """
         Perform forensic analysis on audit logs to detect suspicious patterns.
         
@@ -362,7 +364,7 @@ class AuditTrailManager:
         with self._lock:
             risk_levels = {'low': 0, 'medium': 1, 'high': 2, 'critical': 3}
             threshold_level = risk_levels.get(risk_threshold, 1)
-            
+
             results = {
                 'analysis_timestamp': datetime.utcnow().isoformat(),
                 'time_range': time_range,
@@ -373,14 +375,14 @@ class AuditTrailManager:
                 'high_risk_events': [],
                 'user_behavior_anomalies': []
             }
-            
+
             # Filter entries by time range if specified
             entries = self._audit_chain
             if time_range:
                 start_time, end_time = time_range
-                entries = [e for e in entries 
+                entries = [e for e in entries
                           if start_time <= e.timestamp <= end_time]
-            
+
             # Analyze high-risk events
             for entry in entries:
                 entry_risk_level = risk_levels.get(entry.risk_level, 0)
@@ -394,10 +396,10 @@ class AuditTrailManager:
                         'risk_level': entry.risk_level,
                         'outcome': entry.outcome
                     })
-            
+
             # Detect privilege escalation attempts
-            privilege_events = [e for e in entries 
-                               if 'privilege' in e.action.lower() or 
+            privilege_events = [e for e in entries
+                               if 'privilege' in e.action.lower() or
                                   'admin' in e.resource.lower()]
             results['privilege_escalations'] = [
                 {
@@ -410,11 +412,11 @@ class AuditTrailManager:
                 }
                 for e in privilege_events
             ]
-            
+
             # Detect failed login clusters
-            failed_logins = [e for e in entries 
+            failed_logins = [e for e in entries
                             if e.action == 'login' and e.outcome == 'failure']
-            
+
             # Group by user and time windows
             user_failures = {}
             for event in failed_logins:
@@ -422,7 +424,7 @@ class AuditTrailManager:
                 if user_id not in user_failures:
                     user_failures[user_id] = []
                 user_failures[user_id].append(event)
-            
+
             # Identify clusters (3+ failures within 5 minutes)
             for user_id, failures in user_failures.items():
                 if len(failures) >= 3:
@@ -434,7 +436,7 @@ class AuditTrailManager:
                             event_time = datetime.fromisoformat(failures[j].timestamp)
                             if (event_time - start_time).total_seconds() <= 300:  # 5 minutes
                                 window_failures.append(failures[j])
-                        
+
                         if len(window_failures) >= 3:
                             results['failed_login_clusters'].append({
                                 'user_id': user_id,
@@ -445,12 +447,12 @@ class AuditTrailManager:
                                 'events': [e.event_id for e in window_failures]
                             })
                             break
-            
+
             return results
-    
-    def generate_compliance_report(self, 
+
+    def generate_compliance_report(self,
                                  regulation: str = "general",
-                                 time_range: Optional[tuple] = None) -> Dict[str, Any]:
+                                 time_range: tuple | None = None) -> dict[str, Any]:
         """
         Generate compliance report for regulatory requirements.
         
@@ -472,14 +474,14 @@ class AuditTrailManager:
                 'violations': [],
                 'recommendations': []
             }
-            
+
             # Filter entries by time range
             entries = self._audit_chain
             if time_range:
                 start_time, end_time = time_range
-                entries = [e for e in entries 
+                entries = [e for e in entries
                           if start_time <= e.timestamp <= end_time]
-            
+
             # Generate summary statistics
             report['summary'] = {
                 'total_audit_entries': len(entries),
@@ -489,7 +491,7 @@ class AuditTrailManager:
                 'failed_operations': len([e for e in entries if e.outcome == 'failure']),
                 'data_access_events': len([e for e in entries if e.event_type == 'data_access'])
             }
-            
+
             # Regulation-specific compliance checks
             if regulation == "gdpr":
                 report['gdpr_compliance'] = self._check_gdpr_compliance(entries)
@@ -497,7 +499,7 @@ class AuditTrailManager:
                 report['hipaa_compliance'] = self._check_hipaa_compliance(entries)
             elif regulation == "sox":
                 report['sox_compliance'] = self._check_sox_compliance(entries)
-            
+
             # Chain integrity verification
             integrity_results = self.verify_chain_integrity()
             if not integrity_results['chain_valid']:
@@ -508,10 +510,10 @@ class AuditTrailManager:
                     'description': 'Audit chain integrity compromised',
                     'details': integrity_results
                 })
-            
+
             return report
-    
-    def _check_gdpr_compliance(self, entries: List[AuditEntry]) -> Dict[str, Any]:
+
+    def _check_gdpr_compliance(self, entries: list[AuditEntry]) -> dict[str, Any]:
         """Check GDPR compliance requirements."""
         return {
             'data_processing_logged': True,
@@ -520,8 +522,8 @@ class AuditTrailManager:
             'right_to_erasure_events': len([e for e in entries if e.action == 'data_deletion']),
             'data_breach_notifications': len([e for e in entries if e.event_type == 'data_breach'])
         }
-    
-    def _check_hipaa_compliance(self, entries: List[AuditEntry]) -> Dict[str, Any]:
+
+    def _check_hipaa_compliance(self, entries: list[AuditEntry]) -> dict[str, Any]:
         """Check HIPAA compliance requirements."""
         return {
             'phi_access_logged': True,
@@ -529,8 +531,8 @@ class AuditTrailManager:
             'authorization_tracking': len([e for e in entries if 'authorization' in e.metadata.get('tags', [])]),
             'security_incidents': len([e for e in entries if e.risk_level == 'critical'])
         }
-    
-    def _check_sox_compliance(self, entries: List[AuditEntry]) -> Dict[str, Any]:
+
+    def _check_sox_compliance(self, entries: list[AuditEntry]) -> dict[str, Any]:
         """Check SOX compliance requirements."""
         return {
             'financial_system_access': len([e for e in entries if 'financial' in e.resource.lower()]),
@@ -538,8 +540,8 @@ class AuditTrailManager:
             'change_management': len([e for e in entries if e.action in ['create', 'update', 'delete']]),
             'executive_access': len([e for e in entries if 'executive' in e.metadata.get('role', '')])
         }
-    
-    def get_audit_statistics(self) -> Dict[str, Any]:
+
+    def get_audit_statistics(self) -> dict[str, Any]:
         """Get current audit trail statistics."""
         with self._lock:
             return {
@@ -549,10 +551,10 @@ class AuditTrailManager:
                 'current_file_entries': self._current_file_entries,
                 'chain_integrity_hash': self._chain_integrity_hash
             }
-    
+
     def search_audit_logs(self,
-                         query: Dict[str, Any],
-                         limit: int = 100) -> List[AuditEntry]:
+                         query: dict[str, Any],
+                         limit: int = 100) -> list[AuditEntry]:
         """
         Search audit logs with role-based access control.
         
@@ -565,26 +567,26 @@ class AuditTrailManager:
         """
         with self._lock:
             results = []
-            
+
             for entry in self._audit_chain:
                 if len(results) >= limit:
                     break
-                
+
                 match = True
                 for key, value in query.items():
                     entry_value = getattr(entry, key, None)
                     if entry_value != value:
                         match = False
                         break
-                
+
                 if match:
                     results.append(entry)
-            
+
             return results
-    
+
     def export_audit_logs(self,
                          export_format: str = "json",
-                         time_range: Optional[tuple] = None,
+                         time_range: tuple | None = None,
                          include_signatures: bool = True) -> str:
         """
         Export audit logs for external analysis.
@@ -599,13 +601,13 @@ class AuditTrailManager:
         """
         with self._lock:
             entries = self._audit_chain
-            
+
             # Filter by time range if specified
             if time_range:
                 start_time, end_time = time_range
-                entries = [e for e in entries 
+                entries = [e for e in entries
                           if start_time <= e.timestamp <= end_time]
-            
+
             if export_format == "json":
                 export_data = []
                 for entry in entries:
@@ -613,30 +615,30 @@ class AuditTrailManager:
                     if not include_signatures:
                         entry_dict.pop('signature', None)
                     export_data.append(entry_dict)
-                
+
                 return json.dumps(export_data, indent=2, default=str)
-            
+
             elif export_format == "csv":
                 # Implement CSV export
                 import csv
                 import io
-                
+
                 output = io.StringIO()
                 if entries:
                     fieldnames = list(entries[0].to_dict().keys())
                     if not include_signatures and 'signature' in fieldnames:
                         fieldnames.remove('signature')
-                    
+
                     writer = csv.DictWriter(output, fieldnames=fieldnames)
                     writer.writeheader()
-                    
+
                     for entry in entries:
                         entry_dict = entry.to_dict()
                         if not include_signatures:
                             entry_dict.pop('signature', None)
                         writer.writerow(entry_dict)
-                
+
                 return output.getvalue()
-            
+
             else:
                 raise ValueError(f"Unsupported export format: {export_format}")
