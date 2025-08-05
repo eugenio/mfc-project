@@ -15,19 +15,22 @@ __version__ = "1.0.0"
 __author__ = "TDD Agent 50"
 
 # Import quantum modules
-from .hybrid_algorithms import HybridQuantumClassicalController
 from .quantum_circuits import CircuitValidator, QuantumCircuit, QuantumGate
-from .quantum_ml import QuantumBiofilmClassifier, QuantumMLModel
-from .quantum_optimization import QAOAOptimizer, QuantumParameterOptimizer, VQEOptimizer
+
+# TODO: Add other modules when they're implemented
+# from .hybrid_algorithms import HybridQuantumClassicalController
+# from .quantum_ml import QuantumBiofilmClassifier, QuantumMLModel
+# from .quantum_optimization import QAOAOptimizer, QuantumParameterOptimizer, VQEOptimizer
 
 __all__ = [
     "QuantumCircuit",
     "QuantumGate",
-    "CircuitValidator",
-    "QAOAOptimizer",
-    "VQEOptimizer",
-    "QuantumParameterOptimizer",
-    "QuantumMLModel",
-    "QuantumBiofilmClassifier",
-    "HybridQuantumClassicalController"
+    "CircuitValidator"
+    # TODO: Add other classes when modules are implemented
+    # "QAOAOptimizer",
+    # "VQEOptimizer",
+    # "QuantumParameterOptimizer",
+    # "QuantumMLModel",
+    # "QuantumBiofilmClassifier",
+    # "HybridQuantumClassicalController"
 ]

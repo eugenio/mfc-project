@@ -356,15 +356,48 @@ class SensorFusionAttention(nn.Module):
 
         # Fuse all sensor representations
         if attention_outputs:
+            # Calculate the actual dimension needed for fusion
+            available_sensors = list(attention_outputs.keys())
+            expected_dim = self.config.d_model * len(self.sensor_types)
+            actual_dim = self.config.d_model * len(available_sensors)
+
             fused_tensor = torch.cat(list(attention_outputs.values()), dim=-1)
+
+            # Pad if necessary to match expected fusion layer input
+            if actual_dim < expected_dim:
+                batch_size, seq_len, _ = fused_tensor.shape
+                padding_dim = expected_dim - actual_dim
+                padding = torch.zeros(batch_size, seq_len, padding_dim, device=fused_tensor.device)
+                fused_tensor = torch.cat([fused_tensor, padding], dim=-1)
+
             fused_output = self.fusion_layer(fused_tensor)
         else:
             # Fallback if no cross-modal attention
             if projected_sensors:
-                fused_tensor = torch.cat(list(projected_sensors.values()), dim=-1)
+                # Use available projected sensors
+                available_tensors = list(projected_sensors.values())
+                fused_tensor = torch.cat(available_tensors, dim=-1)
+
+                # Ensure correct dimensions for fusion layer
+                batch_size, seq_len, current_dim = fused_tensor.shape
+                expected_dim = self.config.d_model * len(self.sensor_types)
+
+                if current_dim < expected_dim:
+                    padding_dim = expected_dim - current_dim
+                    padding = torch.zeros(batch_size, seq_len, padding_dim, device=fused_tensor.device)
+                    fused_tensor = torch.cat([fused_tensor, padding], dim=-1)
+                elif current_dim > expected_dim:
+                    fused_tensor = fused_tensor[:, :, :expected_dim]
+
                 fused_output = self.fusion_layer(fused_tensor)
             else:
-                fused_output = torch.zeros(1, 1, self.config.d_model)
+                # Last resort: return zero tensor with correct shape
+                batch_size = 1  # Default batch size
+                seq_len = 1     # Default sequence length
+                if sensor_data:
+                    first_tensor = next(iter(sensor_data.values()))
+                    batch_size, seq_len = first_tensor.shape[:2]
+                fused_output = torch.zeros(batch_size, seq_len, self.config.d_model)
 
         return fused_output, attention_weights
 
@@ -525,11 +558,29 @@ class TransformerMFCController(nn.Module):
         projected_inputs = {}
         for input_type, data in inputs.items():
             if input_type in self.input_projections:
+                # Ensure data has correct shape [batch_size, seq_len, input_dim]
+                if data.dim() == 2:
+                    # Add sequence dimension if missing
+                    data = data.unsqueeze(1)
+                elif data.dim() == 1:
+                    # Add both batch and sequence dimensions
+                    data = data.unsqueeze(0).unsqueeze(0)
+
                 projected_inputs[input_type] = self.input_projections[input_type](data)
 
         # Sensor fusion attention
-        if len(projected_inputs) > 1:
-            fused_representation, sensor_attention = self.sensor_fusion(projected_inputs)
+        if len(inputs) > 1:
+            # Pass original inputs to sensor fusion, not projected
+            original_inputs = {}
+            for input_type, data in inputs.items():
+                # Ensure data has correct shape [batch_size, seq_len, input_dim]
+                if data.dim() == 2:
+                    data = data.unsqueeze(1)
+                elif data.dim() == 1:
+                    data = data.unsqueeze(0).unsqueeze(0)
+                original_inputs[input_type] = data
+
+            fused_representation, sensor_attention = self.sensor_fusion(original_inputs)
         else:
             fused_representation = list(projected_inputs.values())[0]
             sensor_attention = {}
@@ -612,8 +663,11 @@ class TransformerControllerManager:
         self.action_dim = action_dim
         self.config = config or TransformerConfig()
 
-        # Device selection
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # Device selection - ensure consistent device format
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda:0')  # Explicitly specify device index
+        else:
+            self.device = torch.device('cpu')
 
         # Define input dimensions for different data types
         self.input_dims = {
@@ -733,13 +787,18 @@ class TransformerControllerManager:
 
         # Health context for attention
         health_metrics = system_state.health_metrics
-        health_context = torch.FloatTensor([
+        health_vector = torch.FloatTensor([
             health_metrics.overall_health_score,
             health_metrics.thickness_health,
             health_metrics.conductivity_health,
             health_metrics.growth_health,
             health_metrics.stability_health
-        ]).unsqueeze(0).unsqueeze(0).to(self.device)  # [1, 1, 5]
+        ]).to(self.device)  # [5]
+
+        # Project health vector to model dimension
+        health_context = torch.zeros(1, 1, self.config.d_model, device=self.device)
+        # Fill the first 5 dimensions with health metrics
+        health_context[0, 0, :5] = health_vector
 
         # Forward pass
         with torch.no_grad():
@@ -929,7 +988,8 @@ if __name__ == "__main__":
         'system_features': torch.randn(1, 4, input_dims['system_features']).to(device)
     }
 
-    dummy_health = torch.randn(1, 1, 5).to(device)
+    # Create health context with correct dimensions (should match d_model)
+    dummy_health = torch.randn(1, 1, controller.config.d_model).to(device)
 
     print("\nTesting forward pass...")
     try:
