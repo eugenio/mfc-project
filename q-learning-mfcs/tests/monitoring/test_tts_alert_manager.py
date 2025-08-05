@@ -20,15 +20,12 @@ import os
 # Add source path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
-from monitoring.observability_manager import ObservabilityManager
-from monitoring.tts_alert_manager import (
-    TTSAlertManager,
-    TTSAlert,
-    TTSAlertType,
-    TTSAlertSeverity,
-    TTSThreshold,
-    TTSHealthCheck,
-    TTSPerformanceAnalyzer
+from src.monitoring.observability_manager import ObservabilityManager
+from src.monitoring.alert_management import (
+    AlertManager,
+    Alert,
+    AlertThreshold,
+    EscalationRule,
 )
 
 
