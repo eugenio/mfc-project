@@ -67,7 +67,7 @@ try:
         OptimizationParameter,
         OptimizationResult,
     )
-except ImportError:  
+except ImportError:
     from ml.electrode_optimization import (
         BayesianOptimizer,
         GaussianProcessSurrogate,

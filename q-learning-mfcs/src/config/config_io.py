@@ -113,14 +113,14 @@ def convert_lists_to_tuples_for_dataclass(data: dict[str, Any], dataclass_type: 
                     result[key] = convert_recursive(value)
                 else:
                     result[key] = value
-            
+
             # Apply tuple conversions to the current level
             class_name = dataclass_type.__name__
             if class_name in tuple_fields:
                 for field in tuple_fields[class_name]:
                     if field in result and isinstance(result[field], list):
                         result[field] = tuple(result[field])
-            
+
             return result
         return obj
 
@@ -219,10 +219,13 @@ def save_config(config: Any,
     """
     # Import here to avoid circular imports
     try:
+        from .parameter_validation import (
+            validate_qlearning_config,
+            validate_sensor_config,
+        )
         from .qlearning_config import QLearningConfig
         from .sensor_config import SensorConfig
-        from .parameter_validation import validate_qlearning_config, validate_sensor_config
-        
+
         # Validate known configuration types
         if isinstance(config, QLearningConfig):
             validate_qlearning_config(config)
