@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 class QuantumGateType(Enum):
@@ -33,7 +34,7 @@ class QuantumGate:
     control_qubits: list[int] | None = None
     parameters: list[float] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate gate parameters after initialization."""
         if self.gate_type in [QuantumGateType.RX, QuantumGateType.RY, QuantumGateType.RZ]:
             if not self.parameters or len(self.parameters) != 1:
@@ -154,7 +155,7 @@ class QuantumCircuit:
 
     def get_gate_count(self) -> dict[str, int]:
         """Get count of each gate type."""
-        counts = {}
+        counts: dict[str, int] = {}
         for gate in self.gates:
             gate_name = gate.gate_type.value
             counts[gate_name] = counts.get(gate_name, 0) + 1
@@ -252,7 +253,7 @@ class CircuitValidator:
         Returns:
             Validation report with errors, warnings, and metrics
         """
-        report = {
+        report: dict[str, Any] = {
             "valid": True,
             "errors": [],
             "warnings": [],
@@ -265,7 +266,7 @@ class CircuitValidator:
             report["warnings"].append("Circuit contains no gates")
 
         # Check gate sequence validity
-        ["ready"] * circuit.num_qubits
+        # qubit_states = ["ready"] * circuit.num_qubits  # TODO: Implement qubit state tracking
 
         for i, gate in enumerate(circuit.gates):
             # Validate gate parameters
@@ -416,12 +417,16 @@ class QuantumSimulator:
         logger.info(f"Simulated circuit {circuit.name} with {self.shots} shots")
         return results
 
-    def get_statevector(self, circuit: QuantumCircuit) -> np.ndarray:
+    def get_statevector(self, circuit: QuantumCircuit) -> npt.NDArray[np.complex128]:
         """Get statevector for circuit (mock implementation)."""
         # Return normalized random complex vector
         size = 2**circuit.num_qubits
-        statevector = np.random.random(size) + 1j * np.random.random(size)
-        return statevector / np.linalg.norm(statevector)
+        real_part = np.random.random(size)
+        imag_part = np.random.random(size)
+        statevector = (real_part + 1j * imag_part).astype(np.complex128)
+        norm = float(np.linalg.norm(statevector))
+        result: npt.NDArray[np.complex128] = statevector / norm
+        return result
 
     def get_expectation_value(self, circuit: QuantumCircuit, observable: str) -> float:
         """Calculate expectation value of observable (mock implementation)."""
