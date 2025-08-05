@@ -46,8 +46,6 @@ except ImportError:
 # Statistical analysis
 try:
     from scipy import stats
-    from scipy.optimize import minimize
-    from scipy.signal import find_peaks
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False

@@ -105,6 +105,19 @@ class DRLConfig:
     warmup_steps: int = 10000
     max_episodes: int = 10000
 
+    # PPO specific parameters
+    ppo_clip_ratio: float = 0.2
+    ppo_epochs: int = 10
+    ppo_value_loss_coef: float = 0.5
+    ppo_entropy_coef: float = 0.01
+    ppo_gae_lambda: float = 0.95
+
+    # A3C specific parameters
+    a3c_update_steps: int = 20
+    a3c_num_workers: int = 4
+    a3c_entropy_coef: float = 0.01
+    a3c_value_loss_coef: float = 0.5
+
     def __post_init__(self):
         if self.hidden_layers is None:
             self.hidden_layers = [512, 256, 128]
@@ -446,6 +459,170 @@ class NoisyLinear(nn.Module):
         return F.linear(x, weight, bias)
 
 
+class ActorCriticNetwork(nn.Module):
+    """Actor-Critic network for PPO and A3C algorithms."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """
+        Initialize actor-critic network.
+
+        Args:
+            state_dim: Input state dimension
+            action_dim: Number of actions
+            config: DRL configuration
+        """
+        super().__init__()
+
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.config = config
+
+        # Shared feature extraction layers
+        layers = []
+        input_dim = state_dim
+
+        for hidden_dim in config.hidden_layers[:-1]:  # All but last layer
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            if config.batch_norm:
+                layers.append(nn.BatchNorm1d(hidden_dim))
+            layers.append(self._get_activation(config.activation))
+            if config.dropout_rate > 0:
+                layers.append(nn.Dropout(config.dropout_rate))
+            input_dim = hidden_dim
+
+        self.shared_layers = nn.Sequential(*layers)
+
+        # Actor head (policy network)
+        self.actor = nn.Sequential(
+            nn.Linear(input_dim, config.hidden_layers[-1]),
+            self._get_activation(config.activation),
+            nn.Linear(config.hidden_layers[-1], action_dim),
+            nn.Softmax(dim=-1)
+        )
+
+        # Critic head (value network)
+        self.critic = nn.Sequential(
+            nn.Linear(input_dim, config.hidden_layers[-1]),
+            self._get_activation(config.activation),
+            nn.Linear(config.hidden_layers[-1], 1)
+        )
+
+        # Initialize weights
+        self.apply(self._init_weights)
+
+        logger.info(f"ActorCriticNetwork initialized: {state_dim}→{config.hidden_layers}→{action_dim}")
+
+    def _get_activation(self, activation: str) -> nn.Module:
+        """Get activation function."""
+        activations = {
+            'relu': nn.ReLU(),
+            'leaky_relu': nn.LeakyReLU(),
+            'tanh': nn.Tanh(),
+            'elu': nn.ELU(),
+            'swish': nn.SiLU()
+        }
+        return activations.get(activation, nn.ReLU())
+
+    def _init_weights(self, m):
+        """Initialize network weights."""
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            torch.nn.init.constant_(m.bias, 0)
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass through actor-critic network.
+
+        Args:
+            x: Input state tensor
+
+        Returns:
+            Tuple of (action_probabilities, state_value)
+        """
+        shared_features = self.shared_layers(x)
+
+        action_probs = self.actor(shared_features)
+        state_value = self.critic(shared_features)
+
+        return action_probs, state_value
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Get action, log probability, and value for PPO.
+
+        Args:
+            x: Input state tensor
+
+        Returns:
+            Tuple of (action, log_prob, value)
+        """
+        action_probs, value = self.forward(x)
+
+        # Sample action from probability distribution
+        dist = torch.distributions.Categorical(action_probs)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+
+        return action, log_prob, value
+
+
+class PPONetwork(nn.Module):
+    """PPO-specific network with clipped surrogate objective."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """Initialize PPO network."""
+        super().__init__()
+
+        self.actor_critic = ActorCriticNetwork(state_dim, action_dim, config)
+        self.config = config
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass."""
+        return self.actor_critic.forward(x)
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get action and value for PPO training."""
+        return self.actor_critic.get_action_and_value(x)
+
+    def evaluate_actions(self, x: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Evaluate actions for PPO loss computation.
+
+        Args:
+            x: State tensor
+            actions: Action tensor
+
+        Returns:
+            Tuple of (log_probs, values, entropy)
+        """
+        action_probs, values = self.forward(x)
+
+        dist = torch.distributions.Categorical(action_probs)
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy()
+
+        return log_probs, values.squeeze(-1), entropy
+
+
+class A3CNetwork(nn.Module):
+    """A3C-specific network with shared parameters."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """Initialize A3C network."""
+        super().__init__()
+
+        self.actor_critic = ActorCriticNetwork(state_dim, action_dim, config)
+        self.config = config
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass."""
+        return self.actor_critic.forward(x)
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get action and value for A3C training."""
+        return self.actor_critic.get_action_and_value(x)
+
+
 class DeepRLController:
     """
     Advanced Deep Reinforcement Learning Controller for MFC systems.
@@ -524,6 +701,21 @@ class DeepRLController:
             self.target_network = RainbowDQN(
                 self.state_dim, self.action_dim, self.config
             ).to(self.device)
+            # Copy parameters to target network
+            self.target_network.load_state_dict(self.q_network.state_dict())
+            self.target_network.eval()
+        elif self.algorithm == DRLAlgorithm.PPO:
+            self.policy_network = PPONetwork(
+                self.state_dim, self.action_dim, self.config
+            ).to(self.device)
+            # PPO doesn't use target network
+            self.target_network = None
+        elif self.algorithm == DRLAlgorithm.A3C:
+            self.policy_network = A3CNetwork(
+                self.state_dim, self.action_dim, self.config
+            ).to(self.device)
+            # A3C doesn't use target network
+            self.target_network = None
         else:
             # Default to Dueling DQN
             self.q_network = DuelingDQN(
@@ -532,16 +724,21 @@ class DeepRLController:
             self.target_network = DuelingDQN(
                 self.state_dim, self.action_dim, self.config
             ).to(self.device)
+            # Copy parameters to target network
+            self.target_network.load_state_dict(self.q_network.state_dict())
+            self.target_network.eval()
 
-        # Copy parameters to target network
-        self.target_network.load_state_dict(self.q_network.state_dict())
-        self.target_network.eval()
-
-        # Optimizer
-        self.optimizer = optim.Adam(
-            self.q_network.parameters(),
-            lr=self.config.learning_rate
-        )
+        # Optimizer - select correct network
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            self.optimizer = optim.Adam(
+                self.policy_network.parameters(),
+                lr=self.config.learning_rate
+            )
+        else:
+            self.optimizer = optim.Adam(
+                self.q_network.parameters(),
+                lr=self.config.learning_rate
+            )
 
         # Learning rate scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
@@ -583,7 +780,7 @@ class DeepRLController:
 
     def select_action(self, state: np.ndarray, training: bool = True) -> int:
         """
-        Select action using epsilon-greedy or noisy networks.
+        Select action using epsilon-greedy or policy networks.
 
         Args:
             state: Current state
@@ -592,25 +789,41 @@ class DeepRLController:
         Returns:
             Selected action index
         """
-        if training and self.algorithm != DRLAlgorithm.RAINBOW_DQN:
-            # Epsilon-greedy exploration
-            if random.random() < self.epsilon:
-                return random.randint(0, self.action_dim - 1)
-
-        # Neural network action selection
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
-                q_values = self.q_network.get_q_values(state_tensor)
+            if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+                # Policy-based action selection
+                action_probs, value = self.policy_network(state_tensor)
+                if training:
+                    # Sample from probability distribution
+                    dist = torch.distributions.Categorical(action_probs)
+                    action = dist.sample().item()
+                else:
+                    # Greedy action selection
+                    action = action_probs.argmax(dim=1).item()
+
+                # Log value for monitoring
+                if len(self.q_value_history) == 0 or self.steps % 100 == 0:
+                    self.q_value_history.append(value.item())
+
             else:
-                q_values = self.q_network(state_tensor)
+                # Q-learning based action selection
+                if training and self.algorithm != DRLAlgorithm.RAINBOW_DQN:
+                    # Epsilon-greedy exploration
+                    if random.random() < self.epsilon:
+                        return random.randint(0, self.action_dim - 1)
 
-            action = q_values.argmax(dim=1).item()
+                if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
+                    q_values = self.q_network.get_q_values(state_tensor)
+                else:
+                    q_values = self.q_network(state_tensor)
 
-        # Log Q-values for monitoring
-        if len(self.q_value_history) == 0 or self.steps % 100 == 0:
-            self.q_value_history.append(q_values.mean().item())
+                action = q_values.argmax(dim=1).item()
+
+                # Log Q-values for monitoring
+                if len(self.q_value_history) == 0 or self.steps % 100 == 0:
+                    self.q_value_history.append(q_values.mean().item())
 
         return action
 
@@ -632,6 +845,13 @@ class DeepRLController:
         if len(self.replay_buffer) < self.config.warmup_steps:
             return {'loss': 0.0, 'q_value': 0.0}
 
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            return self._train_policy_gradient()
+        else:
+            return self._train_dqn()
+
+    def _train_dqn(self) -> dict[str, float]:
+        """Train DQN-based algorithms."""
         # Sample batch
         if self.config.priority_replay:
             batch, indices, is_weights = self.replay_buffer.sample(
@@ -694,8 +914,100 @@ class DeepRLController:
         }
 
         self.loss_history.append(loss.item())
-
         return metrics
+
+    def _train_policy_gradient(self) -> dict[str, float]:
+        """Train policy gradient algorithms (PPO, A3C)."""
+        # For PPO and A3C, we need trajectory data, not single transitions
+        # This is a simplified version - in practice, you'd collect full trajectories
+
+        if not hasattr(self, 'trajectory_buffer'):
+            self.trajectory_buffer = []
+
+        # If we don't have enough trajectory data, skip training
+        if len(self.trajectory_buffer) < self.config.batch_size:
+            return {'loss': 0.0, 'policy_loss': 0.0, 'value_loss': 0.0}
+
+        # Sample trajectory data
+        batch = random.sample(self.trajectory_buffer, min(self.config.batch_size, len(self.trajectory_buffer)))
+
+        # Unpack trajectory batch (simplified)
+        states = torch.FloatTensor([e[0] for e in batch]).to(self.device)
+        actions = torch.LongTensor([e[1] for e in batch]).to(self.device)
+        rewards = torch.FloatTensor([e[2] for e in batch]).to(self.device)
+        next_states = torch.FloatTensor([e[3] for e in batch]).to(self.device)
+        dones = torch.BoolTensor([e[4] for e in batch]).to(self.device)
+
+        if self.algorithm == DRLAlgorithm.PPO:
+            # PPO requires old log probabilities and advantages
+            # This is simplified - in practice, you'd store these during collection
+            with torch.no_grad():
+                old_log_probs, _, _ = self.policy_network.evaluate_actions(states, actions)
+                _, values = self.policy_network(states)
+
+            # Compute advantages using GAE (simplified)
+            advantages = rewards - values.squeeze(-1).detach()  # Simple advantage estimation
+            returns = rewards + self.config.gamma * values.squeeze(-1).detach()  # Simple return estimation
+
+            # PPO training with multiple epochs
+            total_metrics = {'total_loss': 0.0, 'policy_loss': 0.0, 'value_loss': 0.0, 'entropy_loss': 0.0}
+
+            for _ in range(self.config.ppo_epochs):
+                loss_dict = self._compute_ppo_loss(
+                    states, actions, rewards, next_states, dones,
+                    old_log_probs, advantages, returns
+                )
+
+                self.optimizer.zero_grad()
+                loss_dict['total_loss'].backward()
+                torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), self.config.gradient_clip)
+                self.optimizer.step()
+
+                # Accumulate metrics
+                for key, value in loss_dict.items():
+                    if key in total_metrics:
+                        total_metrics[key] += value.item()
+
+            # Average metrics over epochs
+            for key in total_metrics:
+                total_metrics[key] /= self.config.ppo_epochs
+
+        elif self.algorithm == DRLAlgorithm.A3C:
+            # A3C training
+            # Compute returns (simplified n-step returns)
+            returns = []
+            R = 0
+            for i in reversed(range(len(rewards))):
+                R = rewards[i] + self.config.gamma * R * (1 - dones[i])
+                returns.insert(0, R)
+            returns = torch.FloatTensor(returns).to(self.device)
+
+            loss_dict = self._compute_a3c_loss(
+                states, actions, rewards, next_states, dones, returns
+            )
+
+            self.optimizer.zero_grad()
+            loss_dict['total_loss'].backward()
+            torch.nn.utils.clip_grad_norm_(self.policy_network.parameters(), self.config.gradient_clip)
+            self.optimizer.step()
+
+            total_metrics = {key: value.item() for key, value in loss_dict.items()}
+        else:
+            total_metrics = {'loss': 0.0}
+
+        self.scheduler.step()
+
+        # Update metrics
+        if 'total_loss' in total_metrics:
+            self.loss_history.append(total_metrics['total_loss'])
+
+        # Add standard metrics
+        total_metrics.update({
+            'learning_rate': self.scheduler.get_last_lr()[0],
+            'q_value': self.q_value_history[-1] if self.q_value_history else 0.0
+        })
+
+        return total_metrics
 
     def _compute_dqn_loss(self, states: torch.Tensor, actions: torch.Tensor,
                          rewards: torch.Tensor, next_states: torch.Tensor,
@@ -774,6 +1086,138 @@ class DeepRLController:
 
         return loss, td_errors
 
+    def _compute_ppo_loss(self, states: torch.Tensor, actions: torch.Tensor,
+                         rewards: torch.Tensor, next_states: torch.Tensor,
+                         dones: torch.Tensor, old_log_probs: torch.Tensor,
+                         advantages: torch.Tensor, returns: torch.Tensor) -> dict[str, torch.Tensor]:
+        """
+        Compute PPO loss with clipped surrogate objective.
+
+        Args:
+            states: State tensor
+            actions: Action tensor
+            rewards: Reward tensor (unused in PPO)
+            next_states: Next state tensor (unused in PPO)
+            dones: Done flags (unused in PPO)
+            old_log_probs: Old action log probabilities
+            advantages: Computed advantages
+            returns: Computed returns
+
+        Returns:
+            Dictionary of loss components
+        """
+        # Get current policy outputs
+        new_log_probs, values, entropy = self.policy_network.evaluate_actions(states, actions)
+
+        # Compute ratio for clipped surrogate objective
+        ratio = torch.exp(new_log_probs - old_log_probs)
+
+        # Clipped surrogate objective
+        surr1 = ratio * advantages
+        surr2 = torch.clamp(ratio, 1 - self.config.ppo_clip_ratio, 1 + self.config.ppo_clip_ratio) * advantages
+        policy_loss = -torch.min(surr1, surr2).mean()
+
+        # Value function loss
+        value_loss = F.mse_loss(values, returns)
+
+        # Entropy bonus for exploration
+        entropy_loss = -entropy.mean()
+
+        # Total loss
+        total_loss = (policy_loss +
+                     self.config.ppo_value_loss_coef * value_loss +
+                     self.config.ppo_entropy_coef * entropy_loss)
+
+        return {
+            'total_loss': total_loss,
+            'policy_loss': policy_loss,
+            'value_loss': value_loss,
+            'entropy_loss': entropy_loss,
+            'ratio_mean': ratio.mean(),
+            'advantages_mean': advantages.mean()
+        }
+
+    def _compute_a3c_loss(self, states: torch.Tensor, actions: torch.Tensor,
+                         rewards: torch.Tensor, next_states: torch.Tensor,
+                         dones: torch.Tensor, returns: torch.Tensor) -> dict[str, torch.Tensor]:
+        """
+        Compute A3C loss with advantage actor-critic.
+
+        Args:
+            states: State tensor
+            actions: Action tensor
+            rewards: Reward tensor (unused directly)
+            next_states: Next state tensor (unused directly)
+            dones: Done flags (unused directly)
+            returns: Computed returns
+
+        Returns:
+            Dictionary of loss components
+        """
+        # Get policy outputs
+        action_probs, values = self.policy_network(states)
+
+        # Compute advantages
+        advantages = returns - values.squeeze(-1)
+
+        # Policy loss (negative log likelihood weighted by advantage)
+        dist = torch.distributions.Categorical(action_probs)
+        log_probs = dist.log_prob(actions)
+        policy_loss = -(log_probs * advantages.detach()).mean()
+
+        # Value function loss
+        value_loss = F.mse_loss(values.squeeze(-1), returns)
+
+        # Entropy bonus
+        entropy = dist.entropy()
+        entropy_loss = -entropy.mean()
+
+        # Total loss
+        total_loss = (policy_loss +
+                     self.config.a3c_value_loss_coef * value_loss +
+                     self.config.a3c_entropy_coef * entropy_loss)
+
+        return {
+            'total_loss': total_loss,
+            'policy_loss': policy_loss,
+            'value_loss': value_loss,
+            'entropy_loss': entropy_loss,
+            'advantages_mean': advantages.mean(),
+            'entropy_mean': entropy.mean()
+        }
+
+    def _compute_gae_advantages(self, rewards: list[float], values: list[float],
+                               dones: list[bool], next_value: float = 0.0) -> tuple[list[float], list[float]]:
+        """
+        Compute Generalized Advantage Estimation (GAE) for PPO.
+
+        Args:
+            rewards: List of rewards
+            values: List of state values
+            dones: List of done flags
+            next_value: Value of next state
+
+        Returns:
+            Tuple of (advantages, returns)
+        """
+        advantages = []
+        returns = []
+
+        gae = 0
+        for i in reversed(range(len(rewards))):
+            if i == len(rewards) - 1:
+                next_value_i = next_value
+            else:
+                next_value_i = values[i + 1] * (1 - dones[i])
+
+            delta = rewards[i] + self.config.gamma * next_value_i - values[i]
+            gae = delta + self.config.gamma * self.config.ppo_gae_lambda * (1 - dones[i]) * gae
+
+            advantages.insert(0, gae)
+            returns.insert(0, gae + values[i])
+
+        return advantages, returns
+
     def _update_target_network(self):
         """Update target network with soft or hard update."""
         if self.config.tau < 1.0:
@@ -820,6 +1264,14 @@ class DeepRLController:
         # Select action
         action = self.select_action(state_features)
 
+        self.steps += 1
+
+        # Get network parameters count
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            network_params = sum(p.numel() for p in self.policy_network.parameters())
+        else:
+            network_params = sum(p.numel() for p in self.q_network.parameters())
+
         # Control information
         control_info = {
             'algorithm': self.algorithm.value,
@@ -827,10 +1279,8 @@ class DeepRLController:
             'steps': self.steps,
             'q_values': self.q_value_history[-1] if self.q_value_history else 0.0,
             'state_features': state_features,
-            'network_parameters': sum(p.numel() for p in self.q_network.parameters())
+            'network_parameters': network_params
         }
-
-        self.steps += 1
 
         return action, control_info
 
@@ -859,16 +1309,16 @@ class DeepRLController:
 
             # Log to tensorboard if available
             if self.writer is not None:
-                self.writer.add_scalar('Loss/Training', metrics['loss'], self.steps)
-                self.writer.add_scalar('Q_Value/Average', metrics['q_value'], self.steps)
-                self.writer.add_scalar('Exploration/Epsilon', metrics['epsilon'], self.steps)
-                self.writer.add_scalar('Learning/Rate', metrics['learning_rate'], self.steps)
+                self.writer.add_scalar('Loss/Training', metrics.get('loss', metrics.get('total_loss', 0)), self.steps)
+                self.writer.add_scalar('Q_Value/Average', metrics.get('q_value', 0), self.steps)
+                if 'epsilon' in metrics:
+                    self.writer.add_scalar('Exploration/Epsilon', metrics['epsilon'], self.steps)
+                if 'learning_rate' in metrics:
+                    self.writer.add_scalar('Learning/Rate', metrics['learning_rate'], self.steps)
 
     def save_model(self, path: str):
         """Save model and training state."""
         save_dict = {
-            'q_network': self.q_network.state_dict(),
-            'target_network': self.target_network.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'scheduler': self.scheduler.state_dict(),
             'steps': self.steps,
@@ -879,15 +1329,29 @@ class DeepRLController:
             'algorithm': self.algorithm.value
         }
 
+        # Save appropriate network based on algorithm
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            save_dict['policy_network'] = self.policy_network.state_dict()
+        else:
+            save_dict['q_network'] = self.q_network.state_dict()
+            if self.target_network is not None:
+                save_dict['target_network'] = self.target_network.state_dict()
+
         torch.save(save_dict, path)
         logger.info(f"Model saved to {path}")
 
     def load_model(self, path: str):
         """Load model and training state."""
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
 
-        self.q_network.load_state_dict(checkpoint['q_network'])
-        self.target_network.load_state_dict(checkpoint['target_network'])
+        # Load appropriate network based on algorithm
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            self.policy_network.load_state_dict(checkpoint['policy_network'])
+        else:
+            self.q_network.load_state_dict(checkpoint['q_network'])
+            if self.target_network is not None and 'target_network' in checkpoint:
+                self.target_network.load_state_dict(checkpoint['target_network'])
+
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.scheduler.load_state_dict(checkpoint['scheduler'])
 
@@ -900,6 +1364,12 @@ class DeepRLController:
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
+        # Get network parameters count
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            network_params = sum(p.numel() for p in self.policy_network.parameters())
+        else:
+            network_params = sum(p.numel() for p in self.q_network.parameters())
+
         return {
             'algorithm': self.algorithm.value,
             'steps': self.steps,
@@ -912,7 +1382,7 @@ class DeepRLController:
             'beta': self.beta,
             'replay_buffer_size': len(self.replay_buffer),
             'device': str(self.device),
-            'network_parameters': sum(p.numel() for p in self.q_network.parameters())
+            'network_parameters': network_params
         }
 
 
@@ -979,7 +1449,13 @@ if __name__ == "__main__":
     print(f"State dimension: {state_dim}")
     print(f"Action dimension: {action_dim}")
     print(f"Device: {controller.device}")
-    print(f"Network parameters: {sum(p.numel() for p in controller.q_network.parameters()):,}")
+
+    # Get network parameters based on algorithm
+    if controller.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+        network_params = sum(p.numel() for p in controller.policy_network.parameters())
+    else:
+        network_params = sum(p.numel() for p in controller.q_network.parameters())
+    print(f"Network parameters: {network_params:,}")
 
     # Test forward pass
     dummy_state = np.random.randn(state_dim).astype(np.float32)
