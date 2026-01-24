@@ -16,6 +16,11 @@ Key Features:
 The controller builds upon Phase 2 and Phase 3.1 components to provide
 intelligent knowledge transfer and multi-objective optimization.
 
+This controller extends BaseController for shared functionality including:
+- Device management (GPU/CPU selection)
+- Feature engineering integration
+- Performance tracking and model size utilities
+
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
@@ -33,8 +38,10 @@ from typing import TYPE_CHECKING, Any
 import torch
 import torch.nn.functional as F
 
+# Import base controller for shared functionality
+from base_controller import NeuralNetworkController
+
 # Import Phase 2 and 3.1 components
-from ml_optimization import FeatureEngineer
 from sensing_models.sensor_fusion import BacterialSpecies
 from torch import nn, optim
 
@@ -42,8 +49,6 @@ if TYPE_CHECKING:
     import numpy as np
     from adaptive_mfc_controller import SystemState
     from deep_rl_controller import DeepRLController
-
-# Import configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -527,9 +532,10 @@ class MAMLController(nn.Module):
         return adapted_model
 
 
-class TransferLearningController:
+class TransferLearningController(NeuralNetworkController):
     """Advanced Transfer Learning and Multi-Task Learning Controller.
 
+    Extends NeuralNetworkController with transfer learning functionality.
     Integrates multiple transfer learning techniques for knowledge sharing
     across different MFC configurations and operating conditions.
     """
@@ -550,12 +556,16 @@ class TransferLearningController:
             base_controller: Base deep RL controller for transfer
 
         """
-        self.state_dim = state_dim
-        self.action_dim = action_dim
         self.config = config or TransferConfig()
 
-        # Device selection
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Initialize base class (handles device selection, feature engineering, etc.)
+        super().__init__(
+            state_dim=state_dim,
+            action_dim=action_dim,
+            learning_rate=self.config.meta_lr,
+            device=None,  # Auto-select device
+            history_maxlen=1000,
+        )
 
         # Base controller for transfer
         self.base_controller = base_controller
@@ -566,9 +576,6 @@ class TransferLearningController:
 
         # Initialize networks based on transfer method
         self._initialize_networks()
-
-        # Feature engineering
-        self.feature_engineer = FeatureEngineer()
 
         # Performance tracking
         self.transfer_performance = defaultdict(list)
@@ -918,13 +925,17 @@ class TransferLearningController:
 
     def save_transfer_model(self, path: str) -> None:
         """Save transfer learning model."""
-        save_dict = {
-            "config": self.config,
-            "state_dim": self.state_dim,
-            "action_dim": self.action_dim,
-            "transfer_performance": dict(self.transfer_performance),
-            "adaptation_history": self.adaptation_history,
-        }
+        # Get base state from parent class
+        save_dict = self._save_base_state()
+
+        # Add transfer learning specific state
+        save_dict.update(
+            {
+                "config": self.config,
+                "transfer_performance": dict(self.transfer_performance),
+                "adaptation_history": self.adaptation_history,
+            }
+        )
 
         # Save method-specific models
         if hasattr(self, "domain_adapter"):
@@ -939,7 +950,9 @@ class TransferLearningController:
         torch.save(save_dict, path)
         logger.info(f"Transfer learning model saved to {path}")
 
-    def prepare_for_edge_deployment(self, target_resources: dict[str, Any]) -> dict[str, Any]:
+    def prepare_for_edge_deployment(
+        self, target_resources: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Prepare model for edge computing deployment.
 
@@ -951,67 +964,75 @@ class TransferLearningController:
             Deployment configuration and optimized model
         """
         deployment_config = {
-            'original_model_size': self._get_model_size(),
-            'target_resources': target_resources,
-            'optimizations_applied': [],
-            'deployment_ready': False
+            "original_model_size": self._get_model_size(),
+            "target_resources": target_resources,
+            "optimizations_applied": [],
+            "deployment_ready": False,
         }
 
         # Check resource constraints
-        required_memory = deployment_config['original_model_size']['memory_mb']
-        available_memory = target_resources.get('memory_mb', 512)
+        required_memory = deployment_config["original_model_size"]["memory_mb"]
+        available_memory = target_resources.get("memory_mb", 512)
 
         if required_memory > available_memory:
-            deployment_config['optimizations_applied'].extend([
-                'model_quantization', 'weight_pruning'
-            ])
+            deployment_config["optimizations_applied"].extend(
+                ["model_quantization", "weight_pruning"]
+            )
 
             # Apply quantization if needed
-            if hasattr(self, 'multi_task_net'):
-                deployment_config['quantization_applied'] = True
+            if hasattr(self, "multi_task_net"):
+                deployment_config["quantization_applied"] = True
                 # Note: Actual quantization would be implemented here
 
         # Check compute constraints
-        cpu_cores = target_resources.get('cpu_cores', 1)
+        cpu_cores = target_resources.get("cpu_cores", 1)
         if cpu_cores < 2:
-            deployment_config['optimizations_applied'].append('inference_optimization')
+            deployment_config["optimizations_applied"].append("inference_optimization")
 
         # GPU availability check
-        if not target_resources.get('gpu_available', False) and self.device.type == 'cuda':
-            deployment_config['device_change'] = 'cuda -> cpu'
+        if (
+            not target_resources.get("gpu_available", False)
+            and self.device.type == "cuda"
+        ):
+            deployment_config["device_change"] = "cuda -> cpu"
 
-        deployment_config['deployment_ready'] = True
-        deployment_config['estimated_inference_time_ms'] = self._estimate_inference_time(target_resources)
+        deployment_config["deployment_ready"] = True
+        deployment_config["estimated_inference_time_ms"] = (
+            self._estimate_inference_time(target_resources)
+        )
 
-        logger.info(f"Model prepared for edge deployment with optimizations: {deployment_config['optimizations_applied']}")
+        logger.info(
+            f"Model prepared for edge deployment with optimizations: {deployment_config['optimizations_applied']}"
+        )
         return deployment_config
 
     def _get_model_size(self) -> dict[str, Any]:
-        """Get model size metrics."""
-        total_params = 0
-        total_size_mb = 0
-
+        """Get model size metrics using base class method."""
         models = []
-        if hasattr(self, 'domain_adapter'):
-            models.append(('domain_adapter', self.domain_adapter))
-        if hasattr(self, 'progressive_net'):
-            models.append(('progressive_net', self.progressive_net))
-        if hasattr(self, 'multi_task_net'):
-            models.append(('multi_task_net', self.multi_task_net))
-        if hasattr(self, 'maml_controller'):
-            models.append(('maml_controller', self.maml_controller))
+        if hasattr(self, "domain_adapter"):
+            models.append(self.domain_adapter)
+        if hasattr(self, "progressive_net"):
+            models.append(self.progressive_net)
+        if hasattr(self, "multi_task_net"):
+            models.append(self.multi_task_net)
+        if hasattr(self, "maml_controller"):
+            models.append(self.maml_controller)
 
-        for _name, model in models:
-            params = sum(p.numel() for p in model.parameters())
-            total_params += params
+        total_params = 0
+        total_trainable = 0
+        for model in models:
+            size_info = self.get_model_size(model)
+            total_params += size_info["total_parameters"]
+            total_trainable += size_info.get("trainable_parameters", 0)
 
         # Estimate memory usage (4 bytes per float32 parameter)
         total_size_mb = total_params * 4 / (1024 * 1024)
 
         return {
-            'total_parameters': total_params,
-            'memory_mb': total_size_mb,
-            'models_count': len(models)
+            "total_parameters": total_params,
+            "trainable_parameters": total_trainable,
+            "memory_mb": total_size_mb,
+            "models_count": len(models),
         }
 
     def _estimate_inference_time(self, resources: dict[str, Any]) -> float:
@@ -1019,20 +1040,22 @@ class TransferLearningController:
         base_time_ms = 10.0  # Base inference time
 
         # Adjust for CPU cores
-        cpu_cores = resources.get('cpu_cores', 1)
+        cpu_cores = resources.get("cpu_cores", 1)
         cpu_factor = max(0.5, 2.0 / cpu_cores)
 
         # Adjust for memory constraints
-        memory_mb = resources.get('memory_mb', 512)
+        memory_mb = resources.get("memory_mb", 512)
         memory_factor = 1.0 if memory_mb >= 1024 else 1.5
 
         # Adjust for GPU availability
-        gpu_factor = 0.3 if resources.get('gpu_available', False) else 1.0
+        gpu_factor = 0.3 if resources.get("gpu_available", False) else 1.0
 
         estimated_time = base_time_ms * cpu_factor * memory_factor * gpu_factor
         return estimated_time
 
-    def enable_federated_learning(self, client_id: str, federation_config: dict[str, Any]) -> dict[str, Any]:
+    def enable_federated_learning(
+        self, client_id: str, federation_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Enable federated learning integration for edge computing.
 
@@ -1048,28 +1071,36 @@ class TransferLearningController:
 
         # Initialize federated learning components
         federated_setup = {
-            'client_id': client_id,
-            'server_address': federation_config.get('server_address', 'localhost:8080'),
-            'communication_protocol': federation_config.get('protocol', 'grpc'),
-            'privacy_enabled': federation_config.get('differential_privacy', False),
-            'compression_enabled': federation_config.get('model_compression', True),
-            'aggregation_method': federation_config.get('aggregation', 'federated_averaging'),
-            'ready_for_federation': False
+            "client_id": client_id,
+            "server_address": federation_config.get("server_address", "localhost:8080"),
+            "communication_protocol": federation_config.get("protocol", "grpc"),
+            "privacy_enabled": federation_config.get("differential_privacy", False),
+            "compression_enabled": federation_config.get("model_compression", True),
+            "aggregation_method": federation_config.get(
+                "aggregation", "federated_averaging"
+            ),
+            "ready_for_federation": False,
         }
 
         # Validate federated learning compatibility
-        if self.config.transfer_method in [TransferLearningMethod.MULTI_TASK,
-                                         TransferLearningMethod.META_LEARNING]:
-            federated_setup['compatible_method'] = True
-            federated_setup['ready_for_federation'] = True
+        if self.config.transfer_method in [
+            TransferLearningMethod.MULTI_TASK,
+            TransferLearningMethod.META_LEARNING,
+        ]:
+            federated_setup["compatible_method"] = True
+            federated_setup["ready_for_federation"] = True
         else:
-            federated_setup['compatible_method'] = False
-            federated_setup['recommendation'] = 'Use MULTI_TASK or META_LEARNING for better federated compatibility'
+            federated_setup["compatible_method"] = False
+            federated_setup["recommendation"] = (
+                "Use MULTI_TASK or META_LEARNING for better federated compatibility"
+            )
 
         # Initialize communication components
-        if federated_setup['ready_for_federation']:
-            federated_setup['local_model_ready'] = True
-            federated_setup['communication_overhead_mb'] = self._estimate_communication_overhead()
+        if federated_setup["ready_for_federation"]:
+            federated_setup["local_model_ready"] = True
+            federated_setup["communication_overhead_mb"] = (
+                self._estimate_communication_overhead()
+            )
 
         logger.info(f"Federated learning enabled for client {client_id}")
         return federated_setup
@@ -1079,17 +1110,21 @@ class TransferLearningController:
         model_size = self._get_model_size()
 
         # Base communication includes model parameters
-        base_overhead = model_size['memory_mb']
+        base_overhead = model_size["memory_mb"]
 
         # Add overhead for metadata and compression
         metadata_overhead = 0.1  # 100KB for metadata
-        federation_config = getattr(self, 'federation_config', {})
-        compression_factor = 0.3 if federation_config.get('model_compression', True) else 1.0
+        federation_config = getattr(self, "federation_config", {})
+        compression_factor = (
+            0.3 if federation_config.get("model_compression", True) else 1.0
+        )
 
         total_overhead = (base_overhead * compression_factor) + metadata_overhead
         return total_overhead
 
-    def distributed_knowledge_sync(self, peer_knowledge: dict[str, Any]) -> dict[str, Any]:
+    def distributed_knowledge_sync(
+        self, peer_knowledge: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Synchronize knowledge with peer edge nodes.
 
@@ -1100,73 +1135,80 @@ class TransferLearningController:
             Synchronization results and updated knowledge
         """
         sync_results = {
-            'peers_processed': 0,
-            'knowledge_updated': False,
-            'conflicts_resolved': 0,
-            'new_knowledge_gained': 0,
-            'sync_timestamp': datetime.now().isoformat()
+            "peers_processed": 0,
+            "knowledge_updated": False,
+            "conflicts_resolved": 0,
+            "new_knowledge_gained": 0,
+            "sync_timestamp": datetime.now().isoformat(),
         }
 
         if not peer_knowledge:
-            sync_results['status'] = 'No peer knowledge received'
+            sync_results["status"] = "No peer knowledge received"
             return sync_results
 
         # Process peer knowledge
         for peer_id, knowledge_data in peer_knowledge.items():
-            sync_results['peers_processed'] += 1
+            sync_results["peers_processed"] += 1
 
             # Extract relevant knowledge
-            if 'domain_knowledge' in knowledge_data:
-                peer_domains = knowledge_data['domain_knowledge']
+            if "domain_knowledge" in knowledge_data:
+                peer_domains = knowledge_data["domain_knowledge"]
 
                 # Merge domain knowledge
                 for species, knowledge in peer_domains.items():
                     if species not in self.domain_knowledge:
                         self.domain_knowledge[species] = knowledge
-                        sync_results['new_knowledge_gained'] += 1
-                        sync_results['knowledge_updated'] = True
+                        sync_results["new_knowledge_gained"] += 1
+                        sync_results["knowledge_updated"] = True
                     else:
                         # Resolve conflicts based on performance metrics
                         if self._should_update_knowledge(species, knowledge):
                             self.domain_knowledge[species] = knowledge
-                            sync_results['conflicts_resolved'] += 1
-                            sync_results['knowledge_updated'] = True
+                            sync_results["conflicts_resolved"] += 1
+                            sync_results["knowledge_updated"] = True
 
             # Process adaptation history
-            if 'adaptation_history' in knowledge_data:
-                peer_adaptations = knowledge_data['adaptation_history']
+            if "adaptation_history" in knowledge_data:
+                peer_adaptations = knowledge_data["adaptation_history"]
 
                 # Learn from peer adaptations
                 for adaptation in peer_adaptations:
                     if self._is_relevant_adaptation(adaptation):
-                        self.adaptation_history.append({
-                            **adaptation,
-                            'source': f'peer_{peer_id}',
-                            'integrated_at': datetime.now().isoformat()
-                        })
-                        sync_results['new_knowledge_gained'] += 1
+                        self.adaptation_history.append(
+                            {
+                                **adaptation,
+                                "source": f"peer_{peer_id}",
+                                "integrated_at": datetime.now().isoformat(),
+                            }
+                        )
+                        sync_results["new_knowledge_gained"] += 1
 
         logger.info(f"Knowledge sync completed: {sync_results}")
         return sync_results
 
-    def _should_update_knowledge(self, species: BacterialSpecies, new_knowledge: dict[str, Any]) -> bool:
+    def _should_update_knowledge(
+        self, species: BacterialSpecies, new_knowledge: dict[str, Any]
+    ) -> bool:
         """Determine if knowledge should be updated based on performance metrics."""
         # Simple heuristic: update if new knowledge has better performance indicators
         current_knowledge = self.domain_knowledge.get(species, {})
 
-        current_performance = current_knowledge.get('performance_score', 0.0)
-        new_performance = new_knowledge.get('performance_score', 0.0)
+        current_performance = current_knowledge.get("performance_score", 0.0)
+        new_performance = new_knowledge.get("performance_score", 0.0)
 
         return new_performance > current_performance
 
     def _is_relevant_adaptation(self, adaptation: dict[str, Any]) -> bool:
         """Check if peer adaptation is relevant to current system."""
         # Check if adaptation is for similar species or conditions
-        peer_species = adaptation.get('species', '')
+        peer_species = adaptation.get("species", "")
         current_species = self.config.target_species.value
 
         # Consider adaptation relevant if for same species or mixed culture
-        return peer_species in [current_species, 'mixed_culture'] or current_species == 'mixed_culture'
+        return (
+            peer_species in [current_species, "mixed_culture"]
+            or current_species == "mixed_culture"
+        )
 
     def edge_model_update(self, update_data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -1179,43 +1221,49 @@ class TransferLearningController:
             Update application results
         """
         update_results = {
-            'update_applied': False,
-            'model_version_updated': False,
-            'performance_change': 0.0,
-            'compatibility_check': True,
-            'update_timestamp': datetime.now().isoformat()
+            "update_applied": False,
+            "model_version_updated": False,
+            "performance_change": 0.0,
+            "compatibility_check": True,
+            "update_timestamp": datetime.now().isoformat(),
         }
 
         # Validate update compatibility
         if not self._validate_update_compatibility(update_data):
-            update_results['compatibility_check'] = False
-            update_results['error'] = 'Update not compatible with current model architecture'
+            update_results["compatibility_check"] = False
+            update_results["error"] = (
+                "Update not compatible with current model architecture"
+            )
             return update_results
 
         # Apply model parameter updates
-        if 'model_parameters' in update_data:
+        if "model_parameters" in update_data:
             try:
-                self._apply_parameter_updates(update_data['model_parameters'])
-                update_results['update_applied'] = True
-                update_results['parameters_updated'] = len(update_data['model_parameters'])
+                self._apply_parameter_updates(update_data["model_parameters"])
+                update_results["update_applied"] = True
+                update_results["parameters_updated"] = len(
+                    update_data["model_parameters"]
+                )
             except Exception as e:
-                update_results['error'] = f'Parameter update failed: {str(e)}'
+                update_results["error"] = f"Parameter update failed: {str(e)}"
                 return update_results
 
         # Update configuration if provided
-        if 'config_updates' in update_data:
-            self._apply_config_updates(update_data['config_updates'])
-            update_results['config_updated'] = True
+        if "config_updates" in update_data:
+            self._apply_config_updates(update_data["config_updates"])
+            update_results["config_updated"] = True
 
         # Update model version
-        if 'model_version' in update_data:
-            self.model_version = update_data['model_version']
-            update_results['model_version_updated'] = True
-            update_results['new_version'] = update_data['model_version']
+        if "model_version" in update_data:
+            self.model_version = update_data["model_version"]
+            update_results["model_version_updated"] = True
+            update_results["new_version"] = update_data["model_version"]
 
         # Estimate performance change
-        if update_results['update_applied']:
-            update_results['performance_change'] = self._estimate_performance_change(update_data)
+        if update_results["update_applied"]:
+            update_results["performance_change"] = self._estimate_performance_change(
+                update_data
+            )
 
         logger.info(f"Edge model update completed: {update_results}")
         return update_results
@@ -1223,18 +1271,20 @@ class TransferLearningController:
     def _validate_update_compatibility(self, update_data: dict[str, Any]) -> bool:
         """Validate that update is compatible with current model."""
         # Check architecture compatibility
-        if 'architecture' in update_data:
+        if "architecture" in update_data:
             current_arch = {
-                'state_dim': self.state_dim,
-                'action_dim': self.action_dim,
-                'transfer_method': self.config.transfer_method.value
+                "state_dim": self.state_dim,
+                "action_dim": self.action_dim,
+                "transfer_method": self.config.transfer_method.value,
             }
 
-            update_arch = update_data['architecture']
+            update_arch = update_data["architecture"]
 
             # Key architecture parameters must match
-            if (update_arch.get('state_dim') != current_arch['state_dim'] or
-                update_arch.get('action_dim') != current_arch['action_dim']):
+            if (
+                update_arch.get("state_dim") != current_arch["state_dim"]
+                or update_arch.get("action_dim") != current_arch["action_dim"]
+            ):
                 return False
 
         return True
@@ -1242,22 +1292,22 @@ class TransferLearningController:
     def _apply_parameter_updates(self, parameter_updates: dict[str, Any]):
         """Apply parameter updates to model."""
         # Update domain adapter if available
-        if hasattr(self, 'domain_adapter') and 'domain_adapter' in parameter_updates:
-            domain_params = parameter_updates['domain_adapter']
+        if hasattr(self, "domain_adapter") and "domain_adapter" in parameter_updates:
+            domain_params = parameter_updates["domain_adapter"]
             for name, param in self.domain_adapter.named_parameters():
                 if name in domain_params:
                     param.data.copy_(torch.tensor(domain_params[name]))
 
         # Update progressive network if available
-        if hasattr(self, 'progressive_net') and 'progressive_net' in parameter_updates:
-            prog_params = parameter_updates['progressive_net']
+        if hasattr(self, "progressive_net") and "progressive_net" in parameter_updates:
+            prog_params = parameter_updates["progressive_net"]
             for name, param in self.progressive_net.named_parameters():
                 if name in prog_params:
                     param.data.copy_(torch.tensor(prog_params[name]))
 
         # Update multi-task network if available
-        if hasattr(self, 'multi_task_net') and 'multi_task_net' in parameter_updates:
-            mt_params = parameter_updates['multi_task_net']
+        if hasattr(self, "multi_task_net") and "multi_task_net" in parameter_updates:
+            mt_params = parameter_updates["multi_task_net"]
             for name, param in self.multi_task_net.named_parameters():
                 if name in mt_params:
                     param.data.copy_(torch.tensor(mt_params[name]))
@@ -1272,41 +1322,117 @@ class TransferLearningController:
     def _estimate_performance_change(self, update_data: dict[str, Any]) -> float:
         """Estimate performance change from update."""
         # Simple heuristic based on update metadata
-        performance_indicators = update_data.get('performance_metrics', {})
+        performance_indicators = update_data.get("performance_metrics", {})
 
-        baseline_performance = performance_indicators.get('baseline_accuracy', 0.8)
-        updated_performance = performance_indicators.get('updated_accuracy', 0.8)
+        baseline_performance = performance_indicators.get("baseline_accuracy", 0.8)
+        updated_performance = performance_indicators.get("updated_accuracy", 0.8)
 
         return updated_performance - baseline_performance
 
     def get_edge_deployment_status(self) -> dict[str, Any]:
         """Get current edge deployment status."""
         status = {
-            'deployment_ready': hasattr(self, 'client_id'),
-            'model_size': self._get_model_size(),
-            'inference_capability': True,
-            'federated_enabled': hasattr(self, 'federation_config'),
-            'communication_ready': False,
-            'edge_optimizations': [],
-            'status_timestamp': datetime.now().isoformat()
+            "deployment_ready": hasattr(self, "client_id"),
+            "model_size": self._get_model_size(),
+            "inference_capability": True,
+            "federated_enabled": hasattr(self, "federation_config"),
+            "communication_ready": False,
+            "edge_optimizations": [],
+            "status_timestamp": datetime.now().isoformat(),
         }
 
-        if hasattr(self, 'client_id'):
-            status['client_id'] = self.client_id
-            status['communication_ready'] = True
+        if hasattr(self, "client_id"):
+            status["client_id"] = self.client_id
+            status["communication_ready"] = True
 
-        if hasattr(self, 'federation_config'):
-            status['federation_config'] = self.federation_config
-            status['communication_overhead_mb'] = self._estimate_communication_overhead()
+        if hasattr(self, "federation_config"):
+            status["federation_config"] = self.federation_config
+            status["communication_overhead_mb"] = (
+                self._estimate_communication_overhead()
+            )
 
         # Check for applied optimizations
-        if hasattr(self, 'quantization_applied'):
-            status['edge_optimizations'].append('quantization')
+        if hasattr(self, "quantization_applied"):
+            status["edge_optimizations"].append("quantization")
 
-        if self.device.type == 'cpu':
-            status['edge_optimizations'].append('cpu_optimized')
+        if self.device.type == "cpu":
+            status["edge_optimizations"].append("cpu_optimized")
 
         return status
+
+    def control_step(self, system_state: SystemState) -> tuple[int, dict[str, Any]]:
+        """Execute one control step using transfer learning.
+
+        Args:
+            system_state: Current system state
+
+        Returns:
+            Action and control information
+
+        """
+        # Use multi-task control if available
+        if self.config.transfer_method == TransferLearningMethod.MULTI_TASK:
+            decisions = self.multi_task_control(system_state)
+            if TaskType.POWER_OPTIMIZATION in decisions:
+                action = decisions[TaskType.POWER_OPTIMIZATION].get("action", 0)
+                return action, {"decisions": decisions, "method": "multi_task"}
+
+        # Otherwise use adapted model if available
+        if hasattr(self, "adapted_model"):
+            features = self.extract_state_features(system_state)
+            state_tensor = self.prepare_state_tensor(features)
+            with torch.no_grad():
+                output = self.adapted_model(state_tensor)
+                action = torch.argmax(output, dim=-1).item()
+            return action, {"method": "adapted_model"}
+
+        # Default to action 0 if no model is ready
+        return 0, {"method": "default", "ready": False}
+
+    def train_step(self) -> dict[str, float]:
+        """Perform one training step.
+
+        Returns:
+            Training metrics
+
+        """
+        # Training is typically done via adapt_to_new_species or transfer_knowledge
+        return {"loss": 0.0, "status": "use_transfer_knowledge_method"}
+
+    def save_model(self, path: str) -> None:
+        """Save transfer learning model."""
+        self.save_transfer_model(path)
+
+    def load_model(self, path: str) -> None:
+        """Load transfer learning model."""
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+
+        # Load base state
+        self._load_base_state(checkpoint)
+
+        # Load method-specific models
+        if hasattr(self, "domain_adapter") and "domain_adapter" in checkpoint:
+            self.domain_adapter.load_state_dict(checkpoint["domain_adapter"])
+        if hasattr(self, "progressive_net") and "progressive_net" in checkpoint:
+            self.progressive_net.load_state_dict(checkpoint["progressive_net"])
+        if hasattr(self, "multi_task_net") and "multi_task_net" in checkpoint:
+            self.multi_task_net.load_state_dict(checkpoint["multi_task_net"])
+        if hasattr(self, "maml_controller") and "maml_controller" in checkpoint:
+            self.maml_controller.load_state_dict(checkpoint["maml_controller"])
+
+        logger.info(f"Transfer learning model loaded from {path}")
+
+    def get_performance_summary(self) -> dict[str, Any]:
+        """Get performance summary."""
+        base_summary = self.get_history_summary()
+        transfer_summary = self.get_transfer_summary()
+        model_size = self._get_model_size()
+
+        return {
+            **base_summary,
+            **transfer_summary,
+            "model_size": model_size,
+        }
 
 
 def create_transfer_controller(

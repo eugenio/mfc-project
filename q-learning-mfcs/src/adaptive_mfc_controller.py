@@ -6,6 +6,13 @@ Phase 2 enhancement implementing adaptive control algorithms that integrate:
 - Real-time parameter adaptation based on system state
 - Intelligent intervention strategies with risk assessment
 
+Note: This module provides the SystemState dataclass used by other controllers.
+The AdaptiveMFCController orchestrates subsystems (sensor fusion, health monitoring,
+Q-learning) rather than being a neural network controller itself.
+
+See base_controller.py for the shared BaseController class used by neural network
+controllers (DeepRLController, TransferLearningController, TransformerControllerManager).
+
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """

@@ -18,6 +18,12 @@ The controller integrates with Phase 2 components:
 - Predictive state representations
 - GPU acceleration for neural network training
 
+This controller extends BaseController for shared functionality including:
+- Device management (GPU/CPU selection)
+- Feature engineering integration
+- Performance tracking
+- Model persistence utilities
+
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
@@ -45,13 +51,11 @@ try:
 except ImportError:
     TENSORBOARD_AVAILABLE = False
 
-# Import Phase 2 components
-from ml_optimization import FeatureEngineer
+# Import base controller for shared functionality
+from base_controller import NeuralNetworkController
 
 if TYPE_CHECKING:
     from adaptive_mfc_controller import SystemState
-
-# Import configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -526,29 +530,31 @@ class ActorCriticNetwork(nn.Module):
             nn.Linear(input_dim, config.hidden_layers[-1]),
             self._get_activation(config.activation),
             nn.Linear(config.hidden_layers[-1], action_dim),
-            nn.Softmax(dim=-1)
+            nn.Softmax(dim=-1),
         )
 
         # Critic head (value network)
         self.critic = nn.Sequential(
             nn.Linear(input_dim, config.hidden_layers[-1]),
             self._get_activation(config.activation),
-            nn.Linear(config.hidden_layers[-1], 1)
+            nn.Linear(config.hidden_layers[-1], 1),
         )
 
         # Initialize weights
         self.apply(self._init_weights)
 
-        logger.info(f"ActorCriticNetwork initialized: {state_dim}→{config.hidden_layers}→{action_dim}")
+        logger.info(
+            f"ActorCriticNetwork initialized: {state_dim}→{config.hidden_layers}→{action_dim}"
+        )
 
     def _get_activation(self, activation: str) -> nn.Module:
         """Get activation function."""
         activations = {
-            'relu': nn.ReLU(),
-            'leaky_relu': nn.LeakyReLU(),
-            'tanh': nn.Tanh(),
-            'elu': nn.ELU(),
-            'swish': nn.SiLU()
+            "relu": nn.ReLU(),
+            "leaky_relu": nn.LeakyReLU(),
+            "tanh": nn.Tanh(),
+            "elu": nn.ELU(),
+            "swish": nn.SiLU(),
         }
         return activations.get(activation, nn.ReLU())
 
@@ -575,7 +581,9 @@ class ActorCriticNetwork(nn.Module):
 
         return action_probs, state_value
 
-    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_action_and_value(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Get action, log probability, and value for PPO.
 
@@ -609,11 +617,15 @@ class PPONetwork(nn.Module):
         """Forward pass."""
         return self.actor_critic.forward(x)
 
-    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_action_and_value(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get action and value for PPO training."""
         return self.actor_critic.get_action_and_value(x)
 
-    def evaluate_actions(self, x: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def evaluate_actions(
+        self, x: torch.Tensor, actions: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Evaluate actions for PPO loss computation.
 
@@ -647,14 +659,17 @@ class A3CNetwork(nn.Module):
         """Forward pass."""
         return self.actor_critic.forward(x)
 
-    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_action_and_value(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get action and value for A3C training."""
         return self.actor_critic.get_action_and_value(x)
 
 
-class DeepRLController:
+class DeepRLController(NeuralNetworkController):
     """Advanced Deep Reinforcement Learning Controller for MFC systems.
 
+    Extends NeuralNetworkController with DRL-specific functionality.
     Integrates with Phase 2 components and provides multiple DRL algorithms
     with state-of-the-art techniques for continuous learning and adaptation.
     """
@@ -677,16 +692,17 @@ class DeepRLController:
             device: Computing device ('cuda', 'cpu', or 'auto')
 
         """
-        self.state_dim = state_dim
-        self.action_dim = action_dim
         self.algorithm = algorithm
         self.config = config or DRLConfig()
 
-        # Device selection
-        if device == "auto" or device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = torch.device(device)
+        # Initialize base class (handles device selection, feature engineering, etc.)
+        super().__init__(
+            state_dim=state_dim,
+            action_dim=action_dim,
+            learning_rate=self.config.learning_rate,
+            device=device,
+            history_maxlen=1000,
+        )
 
         # Initialize networks
         self._build_networks()
@@ -700,14 +716,9 @@ class DeepRLController:
         else:
             self.replay_buffer = deque(maxlen=self.config.memory_size)
 
-        # Training state
-        self.steps = 0
-        self.episodes = 0
+        # DRL-specific training state
         self.epsilon = self.config.epsilon_start
         self.beta = self.config.priority_beta_start
-
-        # Feature engineering
-        self.feature_engineer = FeatureEngineer()
 
         # Logging
         if TENSORBOARD_AVAILABLE:
@@ -716,16 +727,12 @@ class DeepRLController:
             )
         else:
             self.writer = None
-        # Performance tracking
+
+        # DRL-specific performance tracking
         self.episode_rewards = deque(maxlen=100)
         self.episode_lengths = deque(maxlen=100)
         self.q_value_history = deque(maxlen=1000)
-        self.loss_history = deque(maxlen=1000)
 
-        logger.info(
-            f"DeepRLController initialized with {algorithm.value} on {self.device}",
-        )
-        logger.info(f"State dim: {state_dim}, Action dim: {action_dim}")
         logger.info(f"Network architecture: {self.config.hidden_layers}")
 
     def _build_networks(self) -> None:
@@ -789,40 +796,7 @@ class DeepRLController:
             gamma=0.9,
         )
 
-    def extract_state_features(self, system_state: SystemState) -> np.ndarray:
-        """Extract features from system state for neural network input.
-
-        Args:
-            system_state: Complete system state from Phase 2
-
-        Returns:
-            Feature vector for neural network
-
-        """
-        # Use Phase 2 feature engineering
-        performance_metrics = {
-            "power_efficiency": system_state.power_output
-            / max(system_state.current_density, 0.01),
-            "biofilm_health_score": system_state.health_metrics.overall_health_score,
-            "sensor_reliability": system_state.fused_measurement.fusion_confidence,
-            "system_stability": 1.0 - len(system_state.anomalies) / 10.0,  # Normalized
-            "control_confidence": 0.8,  # Default value
-        }
-
-        # Extract comprehensive features
-        features = self.feature_engineer.extract_features(
-            system_state,
-            performance_metrics,
-        )
-
-        # Convert to numpy array and normalize
-        feature_vector = np.array(list(features.values()), dtype=np.float32)
-
-        # Handle NaN and infinite values
-        feature_vector = np.nan_to_num(feature_vector, nan=0.0, posinf=1e6, neginf=-1e6)
-
-        # Normalize features to [-1, 1] range
-        return np.tanh(feature_vector / 100.0)  # Soft normalization
+    # extract_state_features is inherited from BaseController
 
     def select_action(self, state: np.ndarray, training: bool = True) -> int:
         """Select action using epsilon-greedy or noisy networks.
@@ -968,16 +942,19 @@ class DeepRLController:
         # Update exploration parameters
         self._update_exploration()
 
-        # Log metrics
+        # Log metrics using base class method
+        loss_value = loss.item()
         metrics = {
-            "loss": loss.item(),
+            "loss": loss_value,
             "q_value": self.q_value_history[-1] if self.q_value_history else 0.0,
             "epsilon": self.epsilon,
-            "learning_rate": self.scheduler.get_last_lr()[0],
+            "learning_rate": self.get_learning_rate(),
             "beta": self.beta,
         }
 
-        self.loss_history.append(loss.item())
+        # Use base class logging
+        self.log_training_step(loss_value, {"epsilon": self.epsilon, "beta": self.beta})
+
         return metrics
 
     def _compute_dqn_loss(
@@ -1149,7 +1126,7 @@ class DeepRLController:
             Action and control information
 
         """
-        # Extract state features
+        # Extract state features using inherited method
         state_features = self.extract_state_features(system_state)
 
         # Select action
@@ -1157,11 +1134,11 @@ class DeepRLController:
 
         self.steps += 1
 
-        # Get network parameters count
+        # Get model size using base class method
         if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
-            network_params = sum(p.numel() for p in self.policy_network.parameters())
+            model_size = self.get_model_size(self.policy_network)
         else:
-            network_params = sum(p.numel() for p in self.q_network.parameters())
+            model_size = self.get_model_size(self.q_network)
 
         # Control information
         control_info = {
@@ -1170,7 +1147,7 @@ class DeepRLController:
             "steps": self.steps,
             "q_values": self.q_value_history[-1] if self.q_value_history else 0.0,
             "state_features": state_features,
-            "network_parameters": sum(p.numel() for p in self.q_network.parameters()),
+            "network_parameters": model_size["total_parameters"],
         }
 
         return action, control_info
@@ -1225,26 +1202,28 @@ class DeepRLController:
 
     def save_model(self, path: str) -> None:
         """Save model and training state."""
-        save_dict = {
-            "q_network": self.q_network.state_dict(),
-            "target_network": self.target_network.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "scheduler": self.scheduler.state_dict(),
-            "steps": self.steps,
-            "episodes": self.episodes,
-            "epsilon": self.epsilon,
-            "beta": self.beta,
-            "config": self.config,
-            "algorithm": self.algorithm.value,
-        }
+        # Get base state from parent class
+        save_dict = self._save_base_state()
+
+        # Add DRL-specific state
+        save_dict.update(
+            {
+                "optimizer": self.optimizer.state_dict(),
+                "scheduler": self.scheduler.state_dict(),
+                "epsilon": self.epsilon,
+                "beta": self.beta,
+                "config": self.config,
+                "algorithm": self.algorithm.value,
+            }
+        )
 
         # Save appropriate network based on algorithm
         if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
-            save_dict['policy_network'] = self.policy_network.state_dict()
+            save_dict["policy_network"] = self.policy_network.state_dict()
         else:
-            save_dict['q_network'] = self.q_network.state_dict()
+            save_dict["q_network"] = self.q_network.state_dict()
             if self.target_network is not None:
-                save_dict['target_network'] = self.target_network.state_dict()
+                save_dict["target_network"] = self.target_network.state_dict()
 
         torch.save(save_dict, path)
         logger.info(f"Model saved to {path}")
@@ -1253,21 +1232,20 @@ class DeepRLController:
         """Load model and training state."""
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
 
+        # Load base state from parent class
+        self._load_base_state(checkpoint)
+
         # Load appropriate network based on algorithm
         if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
-            self.policy_network.load_state_dict(checkpoint['policy_network'])
+            self.policy_network.load_state_dict(checkpoint["policy_network"])
         else:
-            self.q_network.load_state_dict(checkpoint['q_network'])
-            if self.target_network is not None and 'target_network' in checkpoint:
-                self.target_network.load_state_dict(checkpoint['target_network'])
+            self.q_network.load_state_dict(checkpoint["q_network"])
+            if self.target_network is not None and "target_network" in checkpoint:
+                self.target_network.load_state_dict(checkpoint["target_network"])
 
-        self.q_network.load_state_dict(checkpoint["q_network"])
-        self.target_network.load_state_dict(checkpoint["target_network"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.scheduler.load_state_dict(checkpoint["scheduler"])
 
-        self.steps = checkpoint["steps"]
-        self.episodes = checkpoint["episodes"]
         self.epsilon = checkpoint["epsilon"]
         self.beta = checkpoint["beta"]
 
@@ -1275,11 +1253,14 @@ class DeepRLController:
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
-        # Get network parameters count
+        # Get base history summary from parent class
+        base_summary = self.get_history_summary()
+
+        # Get model size from base class
         if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
-            network_params = sum(p.numel() for p in self.policy_network.parameters())
+            model_size = self.get_model_size(self.policy_network)
         else:
-            network_params = sum(p.numel() for p in self.q_network.parameters())
+            model_size = self.get_model_size(self.q_network)
 
         return {
             "algorithm": self.algorithm.value,
@@ -1294,12 +1275,12 @@ class DeepRLController:
             "avg_q_value": (
                 np.mean(self.q_value_history) if self.q_value_history else 0.0
             ),
-            "avg_loss": np.mean(self.loss_history) if self.loss_history else 0.0,
+            "avg_loss": base_summary["avg_loss"],
             "epsilon": self.epsilon,
             "beta": self.beta,
             "replay_buffer_size": len(self.replay_buffer),
             "device": str(self.device),
-            "network_parameters": sum(p.numel() for p in self.q_network.parameters()),
+            "network_parameters": model_size["total_parameters"],
         }
 
 

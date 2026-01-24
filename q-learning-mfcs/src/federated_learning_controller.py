@@ -22,6 +22,11 @@ Integration with Phase 2 and Phase 3 components:
 - Maintains local sensor fusion while sharing global insights
 - Preserves privacy while enabling collective learning
 
+This module uses BaseController utilities for:
+- Device management (GPU/CPU selection)
+- Feature engineering integration
+- Model size estimation
+
 Applications:
 - Industrial MFC networks
 - Research laboratory collaborations
@@ -49,12 +54,10 @@ import torch.nn.functional as F
 
 # Import Phase 2 and 3 components
 from adaptive_mfc_controller import SystemState
+from base_controller import BaseController
 from biofilm_health_monitor import HealthMetrics
-from ml_optimization import FeatureEngineer
 from sensing_models.sensor_fusion import BacterialSpecies
 from torch import nn, optim
-
-# Import configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -397,6 +400,46 @@ class ModelCompression:
         return quantized_tensor * scale
 
 
+def _select_device(device: str | None = None) -> torch.device:
+    """Select computing device (GPU/CPU).
+
+    Shared utility function for device selection.
+
+    Args:
+        device: Device specification ('cuda', 'cpu', 'auto', or None)
+
+    Returns:
+        torch.device: Selected computing device
+
+    """
+    if device == "auto" or device is None:
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(device)
+
+
+def _get_model_size(model: nn.Module) -> dict[str, Any]:
+    """Get model size metrics.
+
+    Shared utility function for model size calculation.
+
+    Args:
+        model: Neural network model
+
+    Returns:
+        Dictionary with model size metrics
+
+    """
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total_size_mb = total_params * 4 / (1024 * 1024)
+
+    return {
+        "total_parameters": total_params,
+        "trainable_parameters": trainable_params,
+        "memory_mb": total_size_mb,
+    }
+
+
 class FederatedClient:
     """Federated learning client for MFC systems."""
 
@@ -418,8 +461,8 @@ class FederatedClient:
         self.local_model = copy.deepcopy(model)
         self.config = config
 
-        # Device selection
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Device selection using shared utility
+        self.device = _select_device()
         self.local_model.to(self.device)
 
         # Local optimizer
@@ -451,13 +494,26 @@ class FederatedClient:
         self.training_history = deque(maxlen=100)
         self.participation_history = []
 
-        # Feature engineering
-        self.feature_engineer = FeatureEngineer()
+        # Feature engineering (lazy loaded)
+        self._feature_engineer = None
 
         logger.info(f"Federated client initialized: {client_info.client_id}")
         logger.info(
             f"Site: {client_info.site_name}, Species: {client_info.bacterial_species.value}",
         )
+
+    @property
+    def feature_engineer(self):
+        """Lazy-load feature engineer to avoid circular imports."""
+        if self._feature_engineer is None:
+            from ml_optimization import FeatureEngineer
+
+            self._feature_engineer = FeatureEngineer()
+        return self._feature_engineer
+
+    def get_model_size(self) -> dict[str, Any]:
+        """Get local model size metrics."""
+        return _get_model_size(self.local_model)
 
     def add_local_data(
         self,
@@ -669,8 +725,8 @@ class FederatedServer:
         self.global_model = copy.deepcopy(global_model)
         self.config = config
 
-        # Device selection
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Device selection using shared utility
+        self.device = _select_device()
         self.global_model.to(self.device)
 
         # Client management

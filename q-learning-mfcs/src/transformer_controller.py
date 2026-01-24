@@ -21,6 +21,11 @@ Integration with Phase 2 and 3 components:
 - Uses transformer features in deep RL and transfer learning
 - Provides interpretable attention weights for decision explanation
 
+This controller extends BaseController for shared functionality including:
+- Device management (GPU/CPU selection)
+- Feature engineering integration
+- Performance tracking and model persistence
+
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
@@ -37,14 +42,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-# Import Phase 2 and 3 components
-from ml_optimization import FeatureEngineer
+# Import base controller for shared functionality
+from base_controller import NeuralNetworkController
 from torch import nn, optim
 
 if TYPE_CHECKING:
     from adaptive_mfc_controller import SystemState
-
-# Import configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -420,7 +423,9 @@ class SensorFusionAttention(nn.Module):
             if actual_dim < expected_dim:
                 batch_size, seq_len, _ = fused_tensor.shape
                 padding_dim = expected_dim - actual_dim
-                padding = torch.zeros(batch_size, seq_len, padding_dim, device=fused_tensor.device)
+                padding = torch.zeros(
+                    batch_size, seq_len, padding_dim, device=fused_tensor.device
+                )
                 fused_tensor = torch.cat([fused_tensor, padding], dim=-1)
 
             fused_output = self.fusion_layer(fused_tensor)
@@ -698,9 +703,10 @@ class TransformerMFCController(nn.Module):
             return outputs["attention_weights"]
 
 
-class TransformerControllerManager:
+class TransformerControllerManager(NeuralNetworkController):
     """Manager class for transformer-based MFC control with training and inference.
 
+    Extends NeuralNetworkController with transformer-specific functionality.
     Integrates with Phase 2 and Phase 3 components for comprehensive control.
     """
 
@@ -718,12 +724,16 @@ class TransformerControllerManager:
             config: Transformer configuration
 
         """
-        self.state_dim = state_dim
-        self.action_dim = action_dim
         self.config = config or TransformerConfig()
 
-        # Device selection
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Initialize base class (handles device selection, feature engineering, etc.)
+        super().__init__(
+            state_dim=state_dim,
+            action_dim=action_dim,
+            learning_rate=self.config.learning_rate,
+            device=None,  # Auto-select device
+            history_maxlen=1000,
+        )
 
         # Define input dimensions for different data types
         self.input_dims = {
@@ -755,24 +765,16 @@ class TransformerControllerManager:
             ),
         )
 
-        # Feature engineering
-        self.feature_engineer = FeatureEngineer()
-
-        # Performance tracking
-        self.training_history = {
-            "loss": deque(maxlen=1000),
-            "accuracy": deque(maxlen=1000),
-            "attention_entropy": deque(maxlen=1000),
-        }
+        # Transformer-specific performance tracking (loss_history inherited from base)
+        self.accuracy_history = deque(maxlen=1000)
+        self.attention_entropy_history = deque(maxlen=1000)
 
         # Sequence buffer for temporal modeling
         self.sequence_buffer = deque(maxlen=self.config.max_seq_len)
 
-        logger.info("Transformer controller manager initialized")
         logger.info(
-            f"Model parameters: {sum(p.numel() for p in self.model.parameters()):,}",
+            f"Model parameters: {self.get_model_size()['total_parameters']:,}",
         )
-        logger.info(f"Device: {self.device}")
 
     def extract_transformer_features(
         self,
@@ -937,7 +939,9 @@ class TransformerControllerManager:
 
         return visualization_data
 
-    def train_step(self, batch_data: list[dict[str, Any]]) -> dict[str, float]:
+    def train_step(
+        self, batch_data: list[dict[str, Any]] | None = None
+    ) -> dict[str, float]:
         """Train the transformer model on a batch of data.
 
         Args:
@@ -951,44 +955,73 @@ class TransformerControllerManager:
             return {"loss": 0.0, "accuracy": 0.0}
 
         self.model.train()
+        self.steps += 1
 
         # Prepare batch tensors
         # This would be implemented with actual training data
         # For now, return placeholder metrics
 
-        return {
+        metrics = {
             "loss": 0.0,
             "accuracy": 0.0,
             "attention_entropy": 0.0,
-            "learning_rate": (
-                self.scheduler.get_last_lr()[0]
-                if self.scheduler.get_last_lr()
-                else self.config.learning_rate
-            ),
+            "learning_rate": self.get_learning_rate(),
         }
+
+        return metrics
 
     def save_model(self, path: str) -> None:
         """Save transformer model."""
-        save_dict = {
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "scheduler_state_dict": self.scheduler.state_dict(),
-            "config": self.config,
-            "input_dims": self.input_dims,
-            "training_history": dict(self.training_history),
-        }
+        # Get base state from parent class
+        save_dict = self._save_base_state()
+
+        # Add transformer-specific state
+        save_dict.update(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "scheduler_state_dict": self.scheduler.state_dict(),
+                "config": self.config,
+                "input_dims": self.input_dims,
+                "accuracy_history": list(self.accuracy_history),
+                "attention_entropy_history": list(self.attention_entropy_history),
+            }
+        )
 
         torch.save(save_dict, path)
         logger.info(f"Transformer model saved to {path}")
 
+    def load_model(self, path: str) -> None:
+        """Load transformer model from path."""
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+
+        # Load base state from parent class
+        self._load_base_state(checkpoint)
+
+        # Load transformer-specific state
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+
+        if "accuracy_history" in checkpoint:
+            self.accuracy_history = deque(checkpoint["accuracy_history"], maxlen=1000)
+        if "attention_entropy_history" in checkpoint:
+            self.attention_entropy_history = deque(
+                checkpoint["attention_entropy_history"], maxlen=1000
+            )
+
+        logger.info(f"Transformer model loaded from {path}")
+
     def get_model_summary(self) -> dict[str, Any]:
         """Get transformer model summary."""
+        # Use base class method for model size
+        model_size = self.get_model_size()
+
         return {
             "model_type": "transformer_mfc_controller",
-            "parameters": sum(p.numel() for p in self.model.parameters()),
-            "trainable_parameters": sum(
-                p.numel() for p in self.model.parameters() if p.requires_grad
-            ),
+            "parameters": model_size["total_parameters"],
+            "trainable_parameters": model_size["trainable_parameters"],
+            "memory_mb": model_size["memory_mb"],
             "model_dimension": self.config.d_model,
             "attention_heads": self.config.n_heads,
             "encoder_layers": self.config.n_layers,
@@ -997,6 +1030,25 @@ class TransformerControllerManager:
             "output_dimension": self.action_dim,
             "device": str(self.device),
             "sequence_buffer_size": len(self.sequence_buffer),
+        }
+
+    def get_performance_summary(self) -> dict[str, Any]:
+        """Get performance summary."""
+        # Get base history summary
+        base_summary = self.get_history_summary()
+        model_summary = self.get_model_summary()
+
+        return {
+            **base_summary,
+            **model_summary,
+            "avg_accuracy": (
+                np.mean(list(self.accuracy_history)) if self.accuracy_history else 0.0
+            ),
+            "avg_attention_entropy": (
+                np.mean(list(self.attention_entropy_history))
+                if self.attention_entropy_history
+                else 0.0
+            ),
         }
 
 
