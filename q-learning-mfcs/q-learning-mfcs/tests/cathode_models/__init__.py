@@ -1,1 +1,0 @@
-"""Cathode models test package."""

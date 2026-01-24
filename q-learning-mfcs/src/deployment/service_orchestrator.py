@@ -1020,6 +1020,9 @@ class ServiceOrchestrator:
 
 
 # Global instance management
+_service_orchestrator: ServiceOrchestrator | None = None
+
+
 def get_service_orchestrator(deployment_dir: str = "/tmp/mfc-deployment") -> ServiceOrchestrator:
     """
     Get the global service orchestrator instance.
