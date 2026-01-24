@@ -1,5 +1,4 @@
-"""
-GUI test suite for MFC Streamlit application.
+"""GUI test suite for MFC Streamlit application.
 
 This module contains comprehensive tests for the Streamlit GUI including:
 - Browser-based interaction tests (Selenium)
@@ -21,7 +20,7 @@ try:
     from .test_gui_browser import StreamlitGUITester
     from .test_gui_simple import SimpleGUITester
 
-    __all__ = ['SimpleGUITester', 'StreamlitGUITester']
+    __all__ = ["SimpleGUITester", "StreamlitGUITester"]
 except ImportError:
     # Handle missing dependencies gracefully
     __all__ = []

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""
-FastAPI Dashboard API for MFC Monitoring System with HTTPS Support
+"""FastAPI Dashboard API for MFC Monitoring System with HTTPS Support
 Provides REST API endpoints for simulation data, control, and monitoring.
 """
+
+from __future__ import annotations
 
 import gzip
 import json
@@ -42,9 +43,10 @@ logger = logging.getLogger(__name__)
 ssl_config: SSLConfig | None = None
 ssl_context_manager: SSLContextManager | None = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager for SSL initialization"""
+    """Application lifespan manager for SSL initialization."""
     global ssl_config, ssl_context_manager
 
     logger.info("Initializing MFC Dashboard API with SSL support...")
@@ -64,6 +66,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("Shutting down MFC Dashboard API...")
 
+
 # Initialize FastAPI app with SSL context manager
 app = FastAPI(
     title="MFC Monitoring Dashboard API",
@@ -71,15 +74,17 @@ app = FastAPI(
     version="1.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Security
 security = HTTPBearer(auto_error=False)
 
+
 # Pydantic models for API
 class SimulationStatus(BaseModel):
-    """Simulation status response model"""
+    """Simulation status response model."""
+
     is_running: bool
     start_time: datetime | None = None
     duration_hours: float | None = None
@@ -87,19 +92,26 @@ class SimulationStatus(BaseModel):
     progress_percent: float | None = None
     output_directory: str | None = None
 
+
 class SimulationConfig(BaseModel):
-    """Simulation configuration model"""
+    """Simulation configuration model."""
+
     duration_hours: float = Field(gt=0, description="Simulation duration in hours")
     n_cells: int = Field(ge=1, le=20, description="Number of MFC cells")
     electrode_area_m2: float = Field(gt=0, description="Electrode area per cell in m²")
-    target_concentration: float = Field(gt=0, description="Target substrate concentration in mM")
+    target_concentration: float = Field(
+        gt=0,
+        description="Target substrate concentration in mM",
+    )
     use_pretrained: bool = Field(default=True, description="Use pre-trained Q-table")
     learning_rate: float | None = Field(default=0.1, ge=0.01, le=1.0)
     epsilon_initial: float | None = Field(default=0.4, ge=0.1, le=1.0)
     discount_factor: float | None = Field(default=0.95, ge=0.8, le=0.99)
 
+
 class SimulationData(BaseModel):
-    """Simulation data response model"""
+    """Simulation data response model."""
+
     timestamp: datetime
     time_hours: float
     reservoir_concentration: float
@@ -111,8 +123,10 @@ class SimulationData(BaseModel):
     epsilon: float
     reward: float
 
+
 class PerformanceMetrics(BaseModel):
-    """Performance metrics model"""
+    """Performance metrics model."""
+
     final_reservoir_concentration: float
     control_effectiveness_2mM: float
     mean_power: float
@@ -120,27 +134,34 @@ class PerformanceMetrics(BaseModel):
     energy_efficiency: float | None = None
     stability_score: float | None = None
 
+
 class AlertConfig(BaseModel):
-    """Alert configuration model"""
+    """Alert configuration model."""
+
     parameter: str
     threshold_min: float | None = None
     threshold_max: float | None = None
     enabled: bool = True
     email_notify: bool = False
 
+
 # Middleware configuration
 def add_security_headers(request: Request, response: Response) -> Response:
-    """Add security headers to all responses"""
+    """Add security headers to all responses."""
     if ssl_config:
         security_headers = SecurityHeaders.get_security_headers(ssl_config)
         for header, value in security_headers.items():
             response.headers[header] = value
     return response
 
+
 # Add CORS middleware with secure settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://localhost:8444", "https://127.0.0.1:8444"],  # Only HTTPS origins
+    allow_origins=[
+        "https://localhost:8444",
+        "https://127.0.0.1:8444",
+    ],  # Only HTTPS origins
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
@@ -149,8 +170,9 @@ app.add_middleware(
 # Add trusted host middleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.local"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.local"],
 )
+
 
 # Add security headers to all responses
 @app.middleware("http")
@@ -158,9 +180,12 @@ async def add_security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
     return add_security_headers(request, response)
 
+
 # Authentication (basic bearer token for now)
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Simple bearer token authentication"""
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+):
+    """Simple bearer token authentication."""
     if credentials is None:
         return None  # Allow unauthenticated access for now
 
@@ -170,11 +195,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
 
     raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
+
 # API Routes
+
 
 @app.get("/", response_class=JSONResponse)
 async def root():
-    """Root endpoint with API information"""
+    """Root endpoint with API information."""
     return {
         "service": "MFC Monitoring Dashboard API",
         "version": "1.2.0",
@@ -187,26 +214,28 @@ async def root():
             "data": "/data",
             "metrics": "/metrics",
             "alerts": "/alerts",
-            "docs": "/docs"
-        }
+            "docs": "/docs",
+        },
     }
+
 
 @app.get("/health", response_class=JSONResponse)
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint."""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "ssl_config": {
             "enabled": ssl_config is not None,
             "port": ssl_config.https_port_api if ssl_config else None,
-            "domain": ssl_config.domain if ssl_config else None
-        }
+            "domain": ssl_config.domain if ssl_config else None,
+        },
     }
+
 
 @app.get("/simulation/status", response_model=SimulationStatus)
 async def get_simulation_status():
-    """Get current simulation status"""
+    """Get current simulation status."""
     # This would connect to the actual simulation runner
     # For now, return mock data showing the API structure
     return SimulationStatus(
@@ -215,34 +244,41 @@ async def get_simulation_status():
         duration_hours=None,
         current_time_hours=None,
         progress_percent=None,
-        output_directory=None
+        output_directory=None,
     )
+
 
 @app.post("/simulation/start")
 async def start_simulation(config: SimulationConfig, user=Depends(get_current_user)):
-    """Start a new simulation with given configuration"""
+    """Start a new simulation with given configuration."""
     try:
         # Validate configuration
         if config.duration_hours > 8760:  # 1 year max
-            raise HTTPException(status_code=400, detail="Duration exceeds maximum allowed (1 year)")
+            raise HTTPException(
+                status_code=400,
+                detail="Duration exceeds maximum allowed (1 year)",
+            )
 
         # In actual implementation, this would start the simulation process
-        logger.info(f"Starting simulation: {config.duration_hours}h, {config.n_cells} cells")
+        logger.info(
+            f"Starting simulation: {config.duration_hours}h, {config.n_cells} cells",
+        )
 
         return {
             "status": "started",
             "message": "Simulation started successfully",
             "config": config.dict(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"Failed to start simulation: {e}")
+        logger.exception(f"Failed to start simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/simulation/stop")
 async def stop_simulation(user=Depends(get_current_user)):
-    """Stop the current simulation"""
+    """Stop the current simulation."""
     try:
         # In actual implementation, this would stop the simulation process
         logger.info("Stopping simulation")
@@ -250,16 +286,17 @@ async def stop_simulation(user=Depends(get_current_user)):
         return {
             "status": "stopped",
             "message": "Simulation stopped successfully",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"Failed to stop simulation: {e}")
+        logger.exception(f"Failed to stop simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/data/latest", response_model=list[SimulationData])
 async def get_latest_data(limit: int = 100):
-    """Get latest simulation data points"""
+    """Get latest simulation data points."""
     try:
         # Find latest simulation data
         data_dir = Path("../../../data/simulation_data")
@@ -275,7 +312,7 @@ async def get_latest_data(limit: int = 100):
         latest_file = max(data_files, key=lambda f: f.stat().st_mtime)
 
         # Load and return data
-        with gzip.open(latest_file, 'rt') as f:
+        with gzip.open(latest_file, "rt") as f:
             df = pd.read_csv(f)
 
         # Convert to API format
@@ -283,36 +320,42 @@ async def get_latest_data(limit: int = 100):
         for _, row in df.tail(limit).iterrows():
             # Parse biofilm thickness data safely
             try:
-                if isinstance(row['biofilm_thicknesses'], str):
-                    biofilm_thicknesses = json.loads(row['biofilm_thicknesses'].replace("'", '"'))
+                if isinstance(row["biofilm_thicknesses"], str):
+                    biofilm_thicknesses = json.loads(
+                        row["biofilm_thicknesses"].replace("'", '"'),
+                    )
                 else:
-                    biofilm_thicknesses = [float(row['biofilm_thicknesses'])]
+                    biofilm_thicknesses = [float(row["biofilm_thicknesses"])]
             except Exception:
                 biofilm_thicknesses = [10.0]  # Default value
 
             data_point = SimulationData(
                 timestamp=datetime.now(),  # Would use actual timestamp from data
-                time_hours=float(row['time_hours']),
-                reservoir_concentration=float(row['reservoir_concentration']),
-                outlet_concentration=float(row['outlet_concentration']),
-                total_power=float(row['total_power']),
+                time_hours=float(row["time_hours"]),
+                reservoir_concentration=float(row["reservoir_concentration"]),
+                outlet_concentration=float(row["outlet_concentration"]),
+                total_power=float(row["total_power"]),
                 biofilm_thicknesses=biofilm_thicknesses,
-                substrate_addition_rate=float(row['substrate_addition_rate']),
-                q_action=int(row['q_action']),
-                epsilon=float(row['epsilon']),
-                reward=float(row['reward'])
+                substrate_addition_rate=float(row["substrate_addition_rate"]),
+                q_action=int(row["q_action"]),
+                epsilon=float(row["epsilon"]),
+                reward=float(row["reward"]),
             )
             data_points.append(data_point)
 
         return data_points
 
     except Exception as e:
-        logger.error(f"Failed to get latest data: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve simulation data")
+        logger.exception(f"Failed to get latest data: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve simulation data",
+        )
+
 
 @app.get("/data/export/{format}")
 async def export_data(format: str, simulation_id: str | None = None):
-    """Export simulation data in various formats"""
+    """Export simulation data in various formats."""
     if format not in ["csv", "json", "excel", "hdf5"]:
         raise HTTPException(status_code=400, detail="Unsupported export format")
 
@@ -330,7 +373,7 @@ async def export_data(format: str, simulation_id: str | None = None):
 
         latest_file = max(data_files, key=lambda f: f.stat().st_mtime)
 
-        with gzip.open(latest_file, 'rt') as f:
+        with gzip.open(latest_file, "rt") as f:
             df = pd.read_csv(f)
 
         # Export in requested format
@@ -352,47 +395,58 @@ async def export_data(format: str, simulation_id: str | None = None):
         return FileResponse(
             export_path,
             filename=f"mfc_simulation_data_{timestamp}.{format}",
-            media_type="application/octet-stream"
+            media_type="application/octet-stream",
         )
 
     except Exception as e:
-        logger.error(f"Failed to export data: {e}")
+        logger.exception(f"Failed to export data: {e}")
         raise HTTPException(status_code=500, detail="Failed to export data")
+
 
 @app.get("/metrics/performance", response_model=PerformanceMetrics)
 async def get_performance_metrics():
-    """Get current performance metrics"""
+    """Get current performance metrics."""
     try:
         # Load latest results
         data_dir = Path("../../../data/simulation_data")
         results_files = list(data_dir.glob("**/gui_simulation_results_*.json"))
 
         if not results_files:
-            raise HTTPException(status_code=404, detail="No performance metrics available")
+            raise HTTPException(
+                status_code=404,
+                detail="No performance metrics available",
+            )
 
         latest_file = max(results_files, key=lambda f: f.stat().st_mtime)
 
         with open(latest_file) as f:
             results = json.load(f)
 
-        metrics = results.get('performance_metrics', {})
+        metrics = results.get("performance_metrics", {})
 
         return PerformanceMetrics(
-            final_reservoir_concentration=metrics.get('final_reservoir_concentration', 0.0),
-            control_effectiveness_2mM=metrics.get('control_effectiveness_2mM', 0.0),
-            mean_power=metrics.get('mean_power', 0.0),
-            total_substrate_added=metrics.get('total_substrate_added', 0.0),
-            energy_efficiency=metrics.get('energy_efficiency', None),
-            stability_score=metrics.get('stability_score', None)
+            final_reservoir_concentration=metrics.get(
+                "final_reservoir_concentration",
+                0.0,
+            ),
+            control_effectiveness_2mM=metrics.get("control_effectiveness_2mM", 0.0),
+            mean_power=metrics.get("mean_power", 0.0),
+            total_substrate_added=metrics.get("total_substrate_added", 0.0),
+            energy_efficiency=metrics.get("energy_efficiency", None),
+            stability_score=metrics.get("stability_score", None),
         )
 
     except Exception as e:
-        logger.error(f"Failed to get performance metrics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve performance metrics")
+        logger.exception(f"Failed to get performance metrics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve performance metrics",
+        )
+
 
 @app.get("/alerts/config")
 async def get_alert_config():
-    """Get current alert configuration"""
+    """Get current alert configuration."""
     # Return default alert configuration
     default_alerts = [
         AlertConfig(
@@ -400,22 +454,26 @@ async def get_alert_config():
             threshold_min=20.0,
             threshold_max=30.0,
             enabled=True,
-            email_notify=False
+            email_notify=False,
         ),
         AlertConfig(
             parameter="total_power",
             threshold_min=0.001,
             threshold_max=None,
             enabled=True,
-            email_notify=True
-        )
+            email_notify=True,
+        ),
     ]
 
     return {"alerts": default_alerts}
 
+
 @app.post("/alerts/config")
-async def update_alert_config(alerts: list[AlertConfig], user=Depends(get_current_user)):
-    """Update alert configuration"""
+async def update_alert_config(
+    alerts: list[AlertConfig],
+    user=Depends(get_current_user),
+):
+    """Update alert configuration."""
     try:
         # In actual implementation, save to database or file
         logger.info(f"Updated alert configuration: {len(alerts)} alerts configured")
@@ -423,44 +481,52 @@ async def update_alert_config(alerts: list[AlertConfig], user=Depends(get_curren
         return {
             "status": "updated",
             "message": f"Alert configuration updated with {len(alerts)} alerts",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"Failed to update alert config: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update alert configuration")
+        logger.exception(f"Failed to update alert config: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update alert configuration",
+        )
+
 
 @app.get("/system/info")
 async def get_system_info():
-    """Get system information and status"""
+    """Get system information and status."""
     return {
         "system": {
             "python_version": sys.version,
             "platform": sys.platform,
             "api_version": "1.2.0",
-            "ssl_enabled": ssl_config is not None
+            "ssl_enabled": ssl_config is not None,
         },
-        "ssl_config": {
-            "domain": ssl_config.domain if ssl_config else None,
-            "https_port": ssl_config.https_port_api if ssl_config else None,
-            "certificate_file": ssl_config.cert_file if ssl_config else None,
-            "auto_renewal": ssl_config.auto_renew if ssl_config else None
-        } if ssl_config else None,
+        "ssl_config": (
+            {
+                "domain": ssl_config.domain if ssl_config else None,
+                "https_port": ssl_config.https_port_api if ssl_config else None,
+                "certificate_file": ssl_config.cert_file if ssl_config else None,
+                "auto_renewal": ssl_config.auto_renew if ssl_config else None,
+            }
+            if ssl_config
+            else None
+        ),
         "data_directories": {
             "simulation_data": str(Path("../../../data/simulation_data").resolve()),
-            "q_learning_models": str(Path("../../../q_learning_models").resolve())
+            "q_learning_models": str(Path("../../../q_learning_models").resolve()),
         },
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 def run_dashboard_api(
     host: str = "0.0.0.0",
     port: int | None = None,
     ssl_config_override: SSLConfig | None = None,
-    debug: bool = False
-):
-    """Run the FastAPI dashboard with SSL support"""
-
+    debug: bool = False,
+) -> None:
+    """Run the FastAPI dashboard with SSL support."""
     # Load SSL configuration
     config = ssl_config_override or load_ssl_config()
 
@@ -484,7 +550,7 @@ def run_dashboard_api(
             port=port,
             reload=debug,
             access_log=True,
-            **ssl_params
+            **ssl_params,
         )
     else:
         logger.warning("SSL certificates not found, running HTTP server")
@@ -496,17 +562,26 @@ def run_dashboard_api(
             host=host,
             port=8000,  # HTTP port
             reload=debug,
-            access_log=True
+            access_log=True,
         )
+
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="MFC Dashboard API Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-    parser.add_argument("--port", type=int, help="Port to bind to (default from SSL config)")
+    parser.add_argument(
+        "--port",
+        type=int,
+        help="Port to bind to (default from SSL config)",
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    parser.add_argument("--init-ssl", action="store_true", help="Initialize SSL certificates")
+    parser.add_argument(
+        "--init-ssl",
+        action="store_true",
+        help="Initialize SSL certificates",
+    )
 
     args = parser.parse_args()
 
@@ -519,8 +594,4 @@ if __name__ == "__main__":
             logger.error("❌ SSL initialization failed")
             sys.exit(1)
 
-    run_dashboard_api(
-        host=args.host,
-        port=args.port,
-        debug=args.debug
-    )
+    run_dashboard_api(host=args.host, port=args.port, debug=args.debug)

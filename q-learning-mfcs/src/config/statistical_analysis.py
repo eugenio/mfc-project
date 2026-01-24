@@ -1,5 +1,4 @@
-"""
-Statistical Analysis and Hypothesis Testing Tools
+"""Statistical Analysis and Hypothesis Testing Tools.
 
 This module provides comprehensive statistical analysis and hypothesis testing tools
 for MFC systems, including descriptive statistics, inferential statistics, and
@@ -31,24 +30,32 @@ Literature References:
 4. Gelman, A., et al. (2013). "Bayesian Data Analysis"
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Statistical dependencies
 try:
     from scipy import stats
     from scipy.stats import chi2_contingency, fisher_exact
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Statistical analysis will be limited.", stacklevel=2)
+    warnings.warn(
+        "SciPy not available. Statistical analysis will be limited.",
+        stacklevel=2,
+    )
 
 # Advanced statistical analysis
 try:
@@ -57,10 +64,14 @@ try:
     from statsmodels.stats.diagnostic import het_breuschpagan
     from statsmodels.stats.multicomp import MultiComparison, pairwise_tukeyhsd
     from statsmodels.tsa.stattools import adfuller, kpss
+
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
-    warnings.warn("Statsmodels not available. Some advanced statistical tests will be limited.", stacklevel=2)
+    warnings.warn(
+        "Statsmodels not available. Some advanced statistical tests will be limited.",
+        stacklevel=2,
+    )
 
 # Machine learning for statistical analysis
 try:
@@ -68,14 +79,19 @@ try:
     from sklearn.decomposition import PCA
     from sklearn.metrics import silhouette_score
     from sklearn.preprocessing import StandardScaler
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Some multivariate analysis will be limited.", stacklevel=2)
+    warnings.warn(
+        "Scikit-learn not available. Some multivariate analysis will be limited.",
+        stacklevel=2,
+    )
 
 
 class TestType(Enum):
     """Types of statistical tests."""
+
     PARAMETRIC = "parametric"
     NON_PARAMETRIC = "non_parametric"
     BAYESIAN = "bayesian"
@@ -85,6 +101,7 @@ class TestType(Enum):
 
 class HypothesisType(Enum):
     """Types of hypothesis tests."""
+
     ONE_SAMPLE_T = "one_sample_t"
     TWO_SAMPLE_T = "two_sample_t"
     PAIRED_T = "paired_t"
@@ -107,6 +124,7 @@ class HypothesisType(Enum):
 
 class EffectSizeType(Enum):
     """Types of effect size measures."""
+
     COHENS_D = "cohens_d"
     HEDGES_G = "hedges_g"
     GLASS_DELTA = "glass_delta"
@@ -119,6 +137,7 @@ class EffectSizeType(Enum):
 @dataclass
 class StatisticalTest:
     """Configuration for statistical test."""
+
     test_type: HypothesisType
     alpha: float = 0.05
     alternative: str = "two-sided"  # "two-sided", "less", "greater"
@@ -129,16 +148,19 @@ class StatisticalTest:
     def __post_init__(self):
         """Validate test configuration."""
         if self.alpha <= 0 or self.alpha >= 1:
-            raise ValueError("Alpha must be between 0 and 1")
+            msg = "Alpha must be between 0 and 1"
+            raise ValueError(msg)
 
         valid_alternatives = ["two-sided", "less", "greater"]
         if self.alternative not in valid_alternatives:
-            raise ValueError(f"Alternative must be one of {valid_alternatives}")
+            msg = f"Alternative must be one of {valid_alternatives}"
+            raise ValueError(msg)
 
 
 @dataclass
 class TestResult:
     """Results of statistical test."""
+
     test_name: str
     statistic: float
     p_value: float
@@ -161,13 +183,13 @@ class TestResult:
         """Interpret the test result."""
         if self.p_value < alpha:
             return f"Reject null hypothesis (p = {self.p_value:.4f} < α = {alpha})"
-        else:
-            return f"Fail to reject null hypothesis (p = {self.p_value:.4f} ≥ α = {alpha})"
+        return f"Fail to reject null hypothesis (p = {self.p_value:.4f} ≥ α = {alpha})"
 
 
 @dataclass
 class DescriptiveStatistics:
     """Comprehensive descriptive statistics."""
+
     n: int
     mean: float
     median: float
@@ -203,13 +225,13 @@ class DescriptiveStatistics:
 class StatisticalAnalyzer:
     """Main framework for statistical analysis."""
 
-    def __init__(self, alpha: float = 0.05, random_seed: int | None = None):
-        """
-        Initialize statistical analyzer.
+    def __init__(self, alpha: float = 0.05, random_seed: int | None = None) -> None:
+        """Initialize statistical analyzer.
 
         Args:
             alpha: Significance level for tests
             random_seed: Random seed for reproducibility
+
         """
         self.alpha = alpha
         self.random_seed = random_seed
@@ -218,10 +240,12 @@ class StatisticalAnalyzer:
         if random_seed is not None:
             np.random.seed(random_seed)
 
-    def descriptive_statistics(self, data: np.ndarray,
-                             confidence_level: float = 0.95) -> DescriptiveStatistics:
-        """
-        Calculate comprehensive descriptive statistics.
+    def descriptive_statistics(
+        self,
+        data: np.ndarray,
+        confidence_level: float = 0.95,
+    ) -> DescriptiveStatistics:
+        """Calculate comprehensive descriptive statistics.
 
         Args:
             data: Input data array
@@ -229,12 +253,14 @@ class StatisticalAnalyzer:
 
         Returns:
             Descriptive statistics
+
         """
         data = np.asarray(data)
         data_clean = data[~np.isnan(data)]
 
         if len(data_clean) == 0:
-            raise ValueError("No valid data points")
+            msg = "No valid data points"
+            raise ValueError(msg)
 
         n = len(data_clean)
 
@@ -271,8 +297,16 @@ class StatisticalAnalyzer:
 
         # Geometric and harmonic means (for positive data)
         if np.all(data_clean > 0):
-            geometric_mean = stats.gmean(data_clean) if HAS_SCIPY else np.exp(np.mean(np.log(data_clean)))
-            harmonic_mean = stats.hmean(data_clean) if HAS_SCIPY else len(data_clean) / np.sum(1.0/data_clean)
+            geometric_mean = (
+                stats.gmean(data_clean)
+                if HAS_SCIPY
+                else np.exp(np.mean(np.log(data_clean)))
+            )
+            harmonic_mean = (
+                stats.hmean(data_clean)
+                if HAS_SCIPY
+                else len(data_clean) / np.sum(1.0 / data_clean)
+            )
         else:
             geometric_mean = None
             harmonic_mean = None
@@ -326,15 +360,17 @@ class StatisticalAnalyzer:
             mean_ci_95=mean_ci,
             normality_p_value=normality_p,
             outliers_count=len(outliers_indices),
-            outliers_indices=outliers_indices
+            outliers_indices=outliers_indices,
         )
 
-    def hypothesis_test(self, test_config: StatisticalTest,
-                       data1: np.ndarray,
-                       data2: np.ndarray | None = None,
-                       **kwargs) -> TestResult:
-        """
-        Perform hypothesis test.
+    def hypothesis_test(
+        self,
+        test_config: StatisticalTest,
+        data1: np.ndarray,
+        data2: np.ndarray | None = None,
+        **kwargs,
+    ) -> TestResult:
+        """Perform hypothesis test.
 
         Args:
             test_config: Test configuration
@@ -344,9 +380,11 @@ class StatisticalAnalyzer:
 
         Returns:
             Test results
+
         """
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for hypothesis testing")
+            msg = "SciPy required for hypothesis testing"
+            raise ImportError(msg)
 
         # Clean data
         data1_clean = np.asarray(data1)[~np.isnan(data1)]
@@ -355,27 +393,42 @@ class StatisticalAnalyzer:
         # Dispatch to appropriate test
         if test_config.test_type == HypothesisType.ONE_SAMPLE_T:
             return self._one_sample_t_test(data1_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.TWO_SAMPLE_T:
-            return self._two_sample_t_test(data1_clean, data2_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.PAIRED_T:
+        if test_config.test_type == HypothesisType.TWO_SAMPLE_T:
+            return self._two_sample_t_test(
+                data1_clean,
+                data2_clean,
+                test_config,
+                **kwargs,
+            )
+        if test_config.test_type == HypothesisType.PAIRED_T:
             return self._paired_t_test(data1_clean, data2_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.MANN_WHITNEY_U:
-            return self._mann_whitney_test(data1_clean, data2_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.WILCOXON_SIGNED_RANK:
+        if test_config.test_type == HypothesisType.MANN_WHITNEY_U:
+            return self._mann_whitney_test(
+                data1_clean,
+                data2_clean,
+                test_config,
+                **kwargs,
+            )
+        if test_config.test_type == HypothesisType.WILCOXON_SIGNED_RANK:
             return self._wilcoxon_test(data1_clean, data2_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.SHAPIRO_WILK:
+        if test_config.test_type == HypothesisType.SHAPIRO_WILK:
             return self._shapiro_wilk_test(data1_clean, test_config, **kwargs)
-        elif test_config.test_type == HypothesisType.KOLMOGOROV_SMIRNOV:
+        if test_config.test_type == HypothesisType.KOLMOGOROV_SMIRNOV:
             return self._ks_test(data1_clean, test_config, **kwargs)
-        else:
-            raise ValueError(f"Unsupported test type: {test_config.test_type}")
+        msg = f"Unsupported test type: {test_config.test_type}"
+        raise ValueError(msg)
 
-    def _one_sample_t_test(self, data: np.ndarray, config: StatisticalTest,
-                          mu: float = 0.0) -> TestResult:
+    def _one_sample_t_test(
+        self,
+        data: np.ndarray,
+        config: StatisticalTest,
+        mu: float = 0.0,
+    ) -> TestResult:
         """Perform one-sample t-test."""
         n = len(data)
         if n < 2:
-            raise ValueError("Need at least 2 observations for t-test")
+            msg = "Need at least 2 observations for t-test"
+            raise ValueError(msg)
 
         statistic, p_value = stats.ttest_1samp(data, mu, alternative=config.alternative)
 
@@ -401,23 +454,32 @@ class StatisticalAnalyzer:
             confidence_interval=ci,
             effect_size=effect_size,
             sample_size=n,
-            test_description=f"Testing if mean equals {mu}"
+            test_description=f"Testing if mean equals {mu}",
         )
 
-    def _two_sample_t_test(self, data1: np.ndarray, data2: np.ndarray,
-                          config: StatisticalTest,
-                          equal_var: bool = True) -> TestResult:
+    def _two_sample_t_test(
+        self,
+        data1: np.ndarray,
+        data2: np.ndarray,
+        config: StatisticalTest,
+        equal_var: bool = True,
+    ) -> TestResult:
         """Perform two-sample t-test."""
         if data2 is None:
-            raise ValueError("Two samples required for two-sample t-test")
+            msg = "Two samples required for two-sample t-test"
+            raise ValueError(msg)
 
         n1, n2 = len(data1), len(data2)
         if n1 < 2 or n2 < 2:
-            raise ValueError("Need at least 2 observations in each group")
+            msg = "Need at least 2 observations in each group"
+            raise ValueError(msg)
 
-        statistic, p_value = stats.ttest_ind(data1, data2,
-                                           equal_var=equal_var,
-                                           alternative=config.alternative)
+        statistic, p_value = stats.ttest_ind(
+            data1,
+            data2,
+            equal_var=equal_var,
+            alternative=config.alternative,
+        )
 
         # Degrees of freedom
         if equal_var:
@@ -425,16 +487,26 @@ class StatisticalAnalyzer:
         else:
             # Welch's t-test degrees of freedom
             s1, s2 = np.var(data1, ddof=1), np.var(data2, ddof=1)
-            df = (s1/n1 + s2/n2)**2 / ((s1/n1)**2/(n1-1) + (s2/n2)**2/(n2-1))
+            df = (s1 / n1 + s2 / n2) ** 2 / (
+                (s1 / n1) ** 2 / (n1 - 1) + (s2 / n2) ** 2 / (n2 - 1)
+            )
 
         # Effect size (Cohen's d)
         effect_size = None
         if config.effect_size_type == EffectSizeType.COHENS_D:
             mean1, mean2 = np.mean(data1), np.mean(data2)
             if equal_var:
-                pooled_std = np.sqrt(((n1-1)*np.var(data1, ddof=1) + (n2-1)*np.var(data2, ddof=1)) / (n1+n2-2))
+                pooled_std = np.sqrt(
+                    (
+                        (n1 - 1) * np.var(data1, ddof=1)
+                        + (n2 - 1) * np.var(data2, ddof=1)
+                    )
+                    / (n1 + n2 - 2),
+                )
             else:
-                pooled_std = np.sqrt((np.var(data1, ddof=1) + np.var(data2, ddof=1)) / 2)
+                pooled_std = np.sqrt(
+                    (np.var(data1, ddof=1) + np.var(data2, ddof=1)) / 2,
+                )
             effect_size = (mean1 - mean2) / pooled_std
 
         test_name = "Welch's t-test" if not equal_var else "Two-sample t-test"
@@ -446,19 +518,29 @@ class StatisticalAnalyzer:
             degrees_of_freedom=df,
             effect_size=effect_size,
             sample_size=n1 + n2,
-            test_description="Testing if two population means are equal"
+            test_description="Testing if two population means are equal",
         )
 
-    def _paired_t_test(self, data1: np.ndarray, data2: np.ndarray,
-                      config: StatisticalTest) -> TestResult:
+    def _paired_t_test(
+        self,
+        data1: np.ndarray,
+        data2: np.ndarray,
+        config: StatisticalTest,
+    ) -> TestResult:
         """Perform paired t-test."""
         if data2 is None:
-            raise ValueError("Two samples required for paired t-test")
+            msg = "Two samples required for paired t-test"
+            raise ValueError(msg)
 
         if len(data1) != len(data2):
-            raise ValueError("Paired samples must have equal length")
+            msg = "Paired samples must have equal length"
+            raise ValueError(msg)
 
-        statistic, p_value = stats.ttest_rel(data1, data2, alternative=config.alternative)
+        statistic, p_value = stats.ttest_rel(
+            data1,
+            data2,
+            alternative=config.alternative,
+        )
 
         n = len(data1)
         df = n - 1
@@ -476,17 +558,25 @@ class StatisticalAnalyzer:
             degrees_of_freedom=df,
             effect_size=effect_size,
             sample_size=n,
-            test_description="Testing if paired differences have zero mean"
+            test_description="Testing if paired differences have zero mean",
         )
 
-    def _mann_whitney_test(self, data1: np.ndarray, data2: np.ndarray,
-                          config: StatisticalTest) -> TestResult:
+    def _mann_whitney_test(
+        self,
+        data1: np.ndarray,
+        data2: np.ndarray,
+        config: StatisticalTest,
+    ) -> TestResult:
         """Perform Mann-Whitney U test."""
         if data2 is None:
-            raise ValueError("Two samples required for Mann-Whitney test")
+            msg = "Two samples required for Mann-Whitney test"
+            raise ValueError(msg)
 
-        statistic, p_value = stats.mannwhitneyu(data1, data2,
-                                              alternative=config.alternative)
+        statistic, p_value = stats.mannwhitneyu(
+            data1,
+            data2,
+            alternative=config.alternative,
+        )
 
         # Effect size (rank biserial correlation)
         effect_size = None
@@ -501,11 +591,15 @@ class StatisticalAnalyzer:
             p_value=p_value,
             effect_size=effect_size,
             sample_size=len(data1) + len(data2),
-            test_description="Non-parametric test for comparing two independent samples"
+            test_description="Non-parametric test for comparing two independent samples",
         )
 
-    def _wilcoxon_test(self, data1: np.ndarray, data2: np.ndarray,
-                      config: StatisticalTest) -> TestResult:
+    def _wilcoxon_test(
+        self,
+        data1: np.ndarray,
+        data2: np.ndarray,
+        config: StatisticalTest,
+    ) -> TestResult:
         """Perform Wilcoxon signed-rank test."""
         if data2 is None:
             # One-sample Wilcoxon
@@ -513,7 +607,11 @@ class StatisticalAnalyzer:
             description = "One-sample Wilcoxon signed-rank test"
         else:
             # Paired Wilcoxon
-            statistic, p_value = stats.wilcoxon(data1, data2, alternative=config.alternative)
+            statistic, p_value = stats.wilcoxon(
+                data1,
+                data2,
+                alternative=config.alternative,
+            )
             description = "Wilcoxon signed-rank test for paired samples"
 
         return TestResult(
@@ -521,13 +619,18 @@ class StatisticalAnalyzer:
             statistic=statistic,
             p_value=p_value,
             sample_size=len(data1),
-            test_description=description
+            test_description=description,
         )
 
-    def _shapiro_wilk_test(self, data: np.ndarray, config: StatisticalTest) -> TestResult:
+    def _shapiro_wilk_test(
+        self,
+        data: np.ndarray,
+        config: StatisticalTest,
+    ) -> TestResult:
         """Perform Shapiro-Wilk normality test."""
         if len(data) > 5000:
-            raise ValueError("Shapiro-Wilk test limited to 5000 observations")
+            msg = "Shapiro-Wilk test limited to 5000 observations"
+            raise ValueError(msg)
 
         statistic, p_value = stats.shapiro(data)
 
@@ -536,33 +639,43 @@ class StatisticalAnalyzer:
             statistic=statistic,
             p_value=p_value,
             sample_size=len(data),
-            test_description="Testing if data comes from normal distribution"
+            test_description="Testing if data comes from normal distribution",
         )
 
-    def _ks_test(self, data: np.ndarray, config: StatisticalTest,
-                distribution: str = "norm") -> TestResult:
+    def _ks_test(
+        self,
+        data: np.ndarray,
+        config: StatisticalTest,
+        distribution: str = "norm",
+    ) -> TestResult:
         """Perform Kolmogorov-Smirnov goodness-of-fit test."""
         if distribution == "norm":
             # Fit normal distribution
             mean_est, std_est = stats.norm.fit(data)
-            statistic, p_value = stats.kstest(data, lambda x: stats.norm.cdf(x, mean_est, std_est))
+            statistic, p_value = stats.kstest(
+                data,
+                lambda x: stats.norm.cdf(x, mean_est, std_est),
+            )
             desc = "K-S test for normality"
         else:
-            raise ValueError(f"Unsupported distribution: {distribution}")
+            msg = f"Unsupported distribution: {distribution}"
+            raise ValueError(msg)
 
         return TestResult(
             test_name="Kolmogorov-Smirnov test",
             statistic=statistic,
             p_value=p_value,
             sample_size=len(data),
-            test_description=desc
+            test_description=desc,
         )
 
-    def multiple_comparisons(self, data: list[np.ndarray],
-                           group_names: list[str] | None = None,
-                           method: str = "tukey") -> dict[str, Any]:
-        """
-        Perform multiple comparisons between groups.
+    def multiple_comparisons(
+        self,
+        data: list[np.ndarray],
+        group_names: list[str] | None = None,
+        method: str = "tukey",
+    ) -> dict[str, Any]:
+        """Perform multiple comparisons between groups.
 
         Args:
             data: List of data arrays for each group
@@ -571,13 +684,14 @@ class StatisticalAnalyzer:
 
         Returns:
             Multiple comparison results
+
         """
         if not HAS_STATSMODELS and method == "tukey":
             method = "bonferroni"  # Fallback
 
         n_groups = len(data)
         if group_names is None:
-            group_names = [f"Group_{i+1}" for i in range(n_groups)]
+            group_names = [f"Group_{i + 1}" for i in range(n_groups)]
 
         # Prepare data for analysis
         all_data = []
@@ -589,25 +703,22 @@ class StatisticalAnalyzer:
             all_groups.extend([group_names[i]] * len(clean_data))
 
         # Convert to pandas DataFrame for easier handling
-        df = pd.DataFrame({
-            'value': all_data,
-            'group': all_groups
-        })
+        df = pd.DataFrame({"value": all_data, "group": all_groups})
 
         results = {
-            'method': method,
-            'n_groups': n_groups,
-            'group_names': group_names,
-            'pairwise_comparisons': {}
+            "method": method,
+            "n_groups": n_groups,
+            "group_names": group_names,
+            "pairwise_comparisons": {},
         }
 
         if method == "tukey" and HAS_STATSMODELS:
             # Tukey HSD
-            mc = MultiComparison(df['value'], df['group'])
+            mc = MultiComparison(df["value"], df["group"])
             tukey_result = mc.tukeyhsd()
 
-            results['tukey_summary'] = str(tukey_result)
-            results['tukey_table'] = tukey_result.summary().as_text()
+            results["tukey_summary"] = str(tukey_result)
+            results["tukey_table"] = tukey_result.summary().as_text()
 
         else:
             # Pairwise tests with correction
@@ -625,35 +736,52 @@ class StatisticalAnalyzer:
                         all_p_values.append(p_val)
                         comparisons.append((group_names[i], group_names[j]))
 
-                        results['pairwise_comparisons'][f"{group_names[i]}_vs_{group_names[j]}"] = {
-                            'statistic': statistic,
-                            'p_value': p_val
-                        }
+                        results["pairwise_comparisons"][
+                            f"{group_names[i]}_vs_{group_names[j]}"
+                        ] = {"statistic": statistic, "p_value": p_val}
 
             # Apply multiple comparison correction
             if HAS_STATSMODELS:
                 from statsmodels.stats.multitest import multipletests
 
                 if method == "bonferroni":
-                    rejected, p_corrected, _, _ = multipletests(all_p_values, method='bonferroni')
+                    rejected, p_corrected, _, _ = multipletests(
+                        all_p_values,
+                        method="bonferroni",
+                    )
                 elif method == "holm":
-                    rejected, p_corrected, _, _ = multipletests(all_p_values, method='holm')
+                    rejected, p_corrected, _, _ = multipletests(
+                        all_p_values,
+                        method="holm",
+                    )
                 else:
-                    rejected, p_corrected, _, _ = multipletests(all_p_values, method='fdr_bh')
+                    rejected, p_corrected, _, _ = multipletests(
+                        all_p_values,
+                        method="fdr_bh",
+                    )
 
-                for i, (comp, p_corr, is_rejected) in enumerate(zip(comparisons, p_corrected, rejected, strict=False)):
+                for i, (comp, p_corr, is_rejected) in enumerate(
+                    zip(comparisons, p_corrected, rejected, strict=False),
+                ):
                     comp_key = f"{comp[0]}_vs_{comp[1]}"
-                    results['pairwise_comparisons'][comp_key]['p_value_corrected'] = p_corr
-                    results['pairwise_comparisons'][comp_key]['significant'] = is_rejected
+                    results["pairwise_comparisons"][comp_key]["p_value_corrected"] = (
+                        p_corr
+                    )
+                    results["pairwise_comparisons"][comp_key]["significant"] = (
+                        is_rejected
+                    )
 
         return results
 
-    def bootstrap_test(self, data1: np.ndarray, data2: np.ndarray | None = None,
-                      statistic_func: Callable = np.mean,
-                      n_bootstrap: int = 1000,
-                      confidence_level: float = 0.95) -> dict[str, Any]:
-        """
-        Perform bootstrap hypothesis test.
+    def bootstrap_test(
+        self,
+        data1: np.ndarray,
+        data2: np.ndarray | None = None,
+        statistic_func: Callable = np.mean,
+        n_bootstrap: int = 1000,
+        confidence_level: float = 0.95,
+    ) -> dict[str, Any]:
+        """Perform bootstrap hypothesis test.
 
         Args:
             data1: First sample
@@ -664,6 +792,7 @@ class StatisticalAnalyzer:
 
         Returns:
             Bootstrap test results
+
         """
         data1_clean = np.asarray(data1)[~np.isnan(data1)]
 
@@ -673,7 +802,11 @@ class StatisticalAnalyzer:
 
             bootstrap_stats = []
             for _ in range(n_bootstrap):
-                bootstrap_sample = np.random.choice(data1_clean, size=len(data1_clean), replace=True)
+                bootstrap_sample = np.random.choice(
+                    data1_clean,
+                    size=len(data1_clean),
+                    replace=True,
+                )
                 bootstrap_stats.append(statistic_func(bootstrap_sample))
 
             bootstrap_stats = np.array(bootstrap_stats)
@@ -689,16 +822,24 @@ class StatisticalAnalyzer:
 
             bootstrap_stats = []
             for _ in range(n_bootstrap):
-                bootstrap_sample = np.random.choice(pooled_data, size=n1+n2, replace=True)
+                bootstrap_sample = np.random.choice(
+                    pooled_data,
+                    size=n1 + n2,
+                    replace=True,
+                )
                 sample1 = bootstrap_sample[:n1]
                 sample2 = bootstrap_sample[n1:]
-                bootstrap_stats.append(statistic_func(sample1) - statistic_func(sample2))
+                bootstrap_stats.append(
+                    statistic_func(sample1) - statistic_func(sample2),
+                )
 
             bootstrap_stats = np.array(bootstrap_stats)
 
         # Calculate p-value (two-tailed)
-        p_value = 2 * min(np.mean(bootstrap_stats >= observed_stat),
-                         np.mean(bootstrap_stats <= observed_stat))
+        p_value = 2 * min(
+            np.mean(bootstrap_stats >= observed_stat),
+            np.mean(bootstrap_stats <= observed_stat),
+        )
 
         # Confidence interval
         alpha = 1 - confidence_level
@@ -706,34 +847,42 @@ class StatisticalAnalyzer:
         ci_upper = np.percentile(bootstrap_stats, 100 * (1 - alpha / 2))
 
         return {
-            'observed_statistic': observed_stat,
-            'p_value': p_value,
-            'confidence_interval': (ci_lower, ci_upper),
-            'bootstrap_distribution': bootstrap_stats,
-            'n_bootstrap': n_bootstrap
+            "observed_statistic": observed_stat,
+            "p_value": p_value,
+            "confidence_interval": (ci_lower, ci_upper),
+            "bootstrap_distribution": bootstrap_stats,
+            "n_bootstrap": n_bootstrap,
         }
 
 
 class DistributionAnalyzer:
     """Distribution fitting and analysis tools."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize distribution analyzer."""
         self.logger = logging.getLogger(__name__)
 
         # Common distributions to test
         if HAS_SCIPY:
             self.distributions = [
-                stats.norm, stats.lognorm, stats.gamma, stats.beta,
-                stats.exponential, stats.uniform, stats.t, stats.chi2
+                stats.norm,
+                stats.lognorm,
+                stats.gamma,
+                stats.beta,
+                stats.exponential,
+                stats.uniform,
+                stats.t,
+                stats.chi2,
             ]
         else:
             self.distributions = []
 
-    def fit_distributions(self, data: np.ndarray,
-                         distributions: list | None = None) -> dict[str, Any]:
-        """
-        Fit multiple distributions to data and compare goodness of fit.
+    def fit_distributions(
+        self,
+        data: np.ndarray,
+        distributions: list | None = None,
+    ) -> dict[str, Any]:
+        """Fit multiple distributions to data and compare goodness of fit.
 
         Args:
             data: Input data
@@ -741,13 +890,16 @@ class DistributionAnalyzer:
 
         Returns:
             Distribution fitting results
+
         """
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for distribution fitting")
+            msg = "SciPy required for distribution fitting"
+            raise ImportError(msg)
 
         data_clean = np.asarray(data)[~np.isnan(data)]
         if len(data_clean) < 10:
-            raise ValueError("Need at least 10 observations for distribution fitting")
+            msg = "Need at least 10 observations for distribution fitting"
+            raise ValueError(msg)
 
         test_distributions = distributions or self.distributions
         results = {}
@@ -758,16 +910,26 @@ class DistributionAnalyzer:
                 params = dist.fit(data_clean)
 
                 # Kolmogorov-Smirnov test
-                ks_statistic, ks_p_value = stats.kstest(data_clean, dist.cdf, args=params)
+                ks_statistic, ks_p_value = stats.kstest(
+                    data_clean,
+                    dist.cdf,
+                    args=params,
+                )
 
                 # Anderson-Darling test (if available)
                 ad_statistic, ad_p_value = None, None
                 try:
-                    if hasattr(stats, 'anderson') and dist.name in ['norm', 'expon', 'logistic']:
+                    if hasattr(stats, "anderson") and dist.name in [
+                        "norm",
+                        "expon",
+                        "logistic",
+                    ]:
                         ad_result = stats.anderson(data_clean, dist=dist.name[:4])
                         ad_statistic = ad_result.statistic
                         # Approximate p-value (not exact)
-                        ad_p_value = 0.05 if ad_statistic > ad_result.critical_values[2] else 0.1
+                        ad_p_value = (
+                            0.05 if ad_statistic > ad_result.critical_values[2] else 0.1
+                        )
                 except Exception:
                     pass
 
@@ -778,15 +940,15 @@ class DistributionAnalyzer:
                 bic = np.log(len(data_clean)) * n_params - 2 * log_likelihood
 
                 results[dist.name] = {
-                    'parameters': params,
-                    'ks_statistic': ks_statistic,
-                    'ks_p_value': ks_p_value,
-                    'ad_statistic': ad_statistic,
-                    'ad_p_value': ad_p_value,
-                    'log_likelihood': log_likelihood,
-                    'aic': aic,
-                    'bic': bic,
-                    'distribution_object': dist
+                    "parameters": params,
+                    "ks_statistic": ks_statistic,
+                    "ks_p_value": ks_p_value,
+                    "ad_statistic": ad_statistic,
+                    "ad_p_value": ad_p_value,
+                    "log_likelihood": log_likelihood,
+                    "aic": aic,
+                    "bic": bic,
+                    "distribution_object": dist,
                 }
 
             except Exception as e:
@@ -795,38 +957,39 @@ class DistributionAnalyzer:
 
         # Rank distributions by AIC
         if results:
-            sorted_results = sorted(results.items(), key=lambda x: x[1]['aic'])
+            sorted_results = sorted(results.items(), key=lambda x: x[1]["aic"])
             best_distribution = sorted_results[0]
 
             return {
-                'results': results,
-                'best_distribution': best_distribution[0],
-                'best_fit_summary': best_distribution[1],
-                'ranking_by_aic': [name for name, _ in sorted_results]
+                "results": results,
+                "best_distribution": best_distribution[0],
+                "best_fit_summary": best_distribution[1],
+                "ranking_by_aic": [name for name, _ in sorted_results],
             }
-        else:
-            return {'results': {}, 'error': 'No distributions could be fitted'}
+        return {"results": {}, "error": "No distributions could be fitted"}
 
 
 class TimeSeriesAnalyzer:
     """Time series statistical analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize time series analyzer."""
         self.logger = logging.getLogger(__name__)
 
     def stationarity_tests(self, data: np.ndarray) -> dict[str, Any]:
-        """
-        Test stationarity of time series.
+        """Test stationarity of time series.
 
         Args:
             data: Time series data
 
         Returns:
             Stationarity test results
+
         """
         if not HAS_STATSMODELS:
-            self.logger.warning("Statsmodels not available. Using basic stationarity tests.")
+            self.logger.warning(
+                "Statsmodels not available. Using basic stationarity tests.",
+            )
             return self._basic_stationarity_tests(data)
 
         data_clean = np.asarray(data)[~np.isnan(data)]
@@ -835,11 +998,13 @@ class TimeSeriesAnalyzer:
         # Augmented Dickey-Fuller test
         try:
             adf_result = adfuller(data_clean)
-            results['adf'] = {
-                'statistic': adf_result[0],
-                'p_value': adf_result[1],
-                'critical_values': adf_result[4],
-                'interpretation': 'Stationary' if adf_result[1] < 0.05 else 'Non-stationary'
+            results["adf"] = {
+                "statistic": adf_result[0],
+                "p_value": adf_result[1],
+                "critical_values": adf_result[4],
+                "interpretation": (
+                    "Stationary" if adf_result[1] < 0.05 else "Non-stationary"
+                ),
             }
         except Exception as e:
             self.logger.warning(f"ADF test failed: {e}")
@@ -847,11 +1012,13 @@ class TimeSeriesAnalyzer:
         # KPSS test
         try:
             kpss_result = kpss(data_clean)
-            results['kpss'] = {
-                'statistic': kpss_result[0],
-                'p_value': kpss_result[1],
-                'critical_values': kpss_result[3],
-                'interpretation': 'Non-stationary' if kpss_result[1] < 0.05 else 'Stationary'
+            results["kpss"] = {
+                "statistic": kpss_result[0],
+                "p_value": kpss_result[1],
+                "critical_values": kpss_result[3],
+                "interpretation": (
+                    "Non-stationary" if kpss_result[1] < 0.05 else "Stationary"
+                ),
             }
         except Exception as e:
             self.logger.warning(f"KPSS test failed: {e}")
@@ -864,33 +1031,40 @@ class TimeSeriesAnalyzer:
 
         # Split data into halves and compare means/variances
         n = len(data_clean)
-        first_half = data_clean[:n//2]
-        second_half = data_clean[n//2:]
+        first_half = data_clean[: n // 2]
+        second_half = data_clean[n // 2 :]
 
         results = {}
 
         if HAS_SCIPY:
             # Test for equal means
             t_stat, p_val_mean = stats.ttest_ind(first_half, second_half)
-            results['mean_stability'] = {
-                'statistic': t_stat,
-                'p_value': p_val_mean,
-                'interpretation': 'Stable mean' if p_val_mean > 0.05 else 'Unstable mean'
+            results["mean_stability"] = {
+                "statistic": t_stat,
+                "p_value": p_val_mean,
+                "interpretation": (
+                    "Stable mean" if p_val_mean > 0.05 else "Unstable mean"
+                ),
             }
 
             # Test for equal variances
             f_stat, p_val_var = stats.levene(first_half, second_half)
-            results['variance_stability'] = {
-                'statistic': f_stat,
-                'p_value': p_val_var,
-                'interpretation': 'Stable variance' if p_val_var > 0.05 else 'Unstable variance'
+            results["variance_stability"] = {
+                "statistic": f_stat,
+                "p_value": p_val_var,
+                "interpretation": (
+                    "Stable variance" if p_val_var > 0.05 else "Unstable variance"
+                ),
             }
 
         return results
 
-    def trend_analysis(self, data: np.ndarray, time_index: np.ndarray | None = None) -> dict[str, Any]:
-        """
-        Analyze trend in time series.
+    def trend_analysis(
+        self,
+        data: np.ndarray,
+        time_index: np.ndarray | None = None,
+    ) -> dict[str, Any]:
+        """Analyze trend in time series.
 
         Args:
             data: Time series data
@@ -898,6 +1072,7 @@ class TimeSeriesAnalyzer:
 
         Returns:
             Trend analysis results
+
         """
         data_clean = np.asarray(data)[~np.isnan(data)]
 
@@ -908,20 +1083,29 @@ class TimeSeriesAnalyzer:
 
         if HAS_SCIPY:
             # Linear trend
-            slope, intercept, r_value, p_value, std_err = stats.linregress(time_index, data_clean)
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                time_index,
+                data_clean,
+            )
 
-            results['linear_trend'] = {
-                'slope': slope,
-                'intercept': intercept,
-                'r_squared': r_value ** 2,
-                'p_value': p_value,
-                'std_error': std_err,
-                'trend_direction': 'Increasing' if slope > 0 else 'Decreasing' if slope < 0 else 'No trend',
-                'significant': p_value < 0.05
+            results["linear_trend"] = {
+                "slope": slope,
+                "intercept": intercept,
+                "r_squared": r_value**2,
+                "p_value": p_value,
+                "std_error": std_err,
+                "trend_direction": (
+                    "Increasing"
+                    if slope > 0
+                    else "Decreasing"
+                    if slope < 0
+                    else "No trend"
+                ),
+                "significant": p_value < 0.05,
             }
 
             # Mann-Kendall trend test (simplified)
-            results['mann_kendall'] = self._mann_kendall_test(data_clean)
+            results["mann_kendall"] = self._mann_kendall_test(data_clean)
 
         return results
 
@@ -948,25 +1132,24 @@ class TimeSeriesAnalyzer:
             z = 0
 
         # Two-tailed p-value
-        if HAS_SCIPY:
-            p_value = 2 * (1 - stats.norm.cdf(abs(z)))
-        else:
-            p_value = None
+        p_value = 2 * (1 - stats.norm.cdf(abs(z))) if HAS_SCIPY else None
 
         return {
-            'statistic': s,
-            'z_score': z,
-            'p_value': p_value,
-            'trend': 'Increasing' if z > 0 else 'Decreasing' if z < 0 else 'No trend',
-            'significant': p_value < 0.05 if p_value is not None else None
+            "statistic": s,
+            "z_score": z,
+            "p_value": p_value,
+            "trend": "Increasing" if z > 0 else "Decreasing" if z < 0 else "No trend",
+            "significant": p_value < 0.05 if p_value is not None else None,
         }
 
 
 # Utility functions for statistical analysis
-def calculate_effect_size(data1: np.ndarray, data2: np.ndarray,
-                         effect_type: EffectSizeType = EffectSizeType.COHENS_D) -> float:
-    """
-    Calculate effect size between two groups.
+def calculate_effect_size(
+    data1: np.ndarray,
+    data2: np.ndarray,
+    effect_type: EffectSizeType = EffectSizeType.COHENS_D,
+) -> float:
+    """Calculate effect size between two groups.
 
     Args:
         data1: First group data
@@ -975,6 +1158,7 @@ def calculate_effect_size(data1: np.ndarray, data2: np.ndarray,
 
     Returns:
         Effect size value
+
     """
     data1_clean = np.asarray(data1)[~np.isnan(data1)]
     data2_clean = np.asarray(data2)[~np.isnan(data2)]
@@ -984,28 +1168,42 @@ def calculate_effect_size(data1: np.ndarray, data2: np.ndarray,
     if effect_type == EffectSizeType.COHENS_D:
         # Cohen's d
         n1, n2 = len(data1_clean), len(data2_clean)
-        pooled_std = np.sqrt(((n1-1)*np.var(data1_clean, ddof=1) + (n2-1)*np.var(data2_clean, ddof=1)) / (n1+n2-2))
+        pooled_std = np.sqrt(
+            (
+                (n1 - 1) * np.var(data1_clean, ddof=1)
+                + (n2 - 1) * np.var(data2_clean, ddof=1)
+            )
+            / (n1 + n2 - 2),
+        )
         return (mean1 - mean2) / pooled_std
 
-    elif effect_type == EffectSizeType.HEDGES_G:
+    if effect_type == EffectSizeType.HEDGES_G:
         # Hedges' g (bias-corrected Cohen's d)
         n1, n2 = len(data1_clean), len(data2_clean)
-        pooled_std = np.sqrt(((n1-1)*np.var(data1_clean, ddof=1) + (n2-1)*np.var(data2_clean, ddof=1)) / (n1+n2-2))
+        pooled_std = np.sqrt(
+            (
+                (n1 - 1) * np.var(data1_clean, ddof=1)
+                + (n2 - 1) * np.var(data2_clean, ddof=1)
+            )
+            / (n1 + n2 - 2),
+        )
         d = (mean1 - mean2) / pooled_std
         correction_factor = 1 - (3 / (4 * (n1 + n2) - 9))
         return d * correction_factor
 
-    elif effect_type == EffectSizeType.GLASS_DELTA:
+    if effect_type == EffectSizeType.GLASS_DELTA:
         # Glass's delta
         return (mean1 - mean2) / np.std(data2_clean, ddof=1)
 
-    else:
-        raise ValueError(f"Unsupported effect size type: {effect_type}")
+    msg = f"Unsupported effect size type: {effect_type}"
+    raise ValueError(msg)
 
 
-def interpret_effect_size(effect_size: float, effect_type: EffectSizeType = EffectSizeType.COHENS_D) -> str:
-    """
-    Interpret effect size magnitude.
+def interpret_effect_size(
+    effect_size: float,
+    effect_type: EffectSizeType = EffectSizeType.COHENS_D,
+) -> str:
+    """Interpret effect size magnitude.
 
     Args:
         effect_size: Effect size value
@@ -1013,37 +1211,32 @@ def interpret_effect_size(effect_size: float, effect_type: EffectSizeType = Effe
 
     Returns:
         Interpretation string
+
     """
     abs_effect = abs(effect_size)
 
-    if effect_type in [EffectSizeType.COHENS_D, EffectSizeType.HEDGES_G]:
+    if (
+        effect_type in [EffectSizeType.COHENS_D, EffectSizeType.HEDGES_G]
+        or effect_type == EffectSizeType.GLASS_DELTA
+    ):
         if abs_effect < 0.2:
             return "Negligible"
-        elif abs_effect < 0.5:
+        if abs_effect < 0.5:
             return "Small"
-        elif abs_effect < 0.8:
+        if abs_effect < 0.8:
             return "Medium"
-        else:
-            return "Large"
+        return "Large"
 
-    elif effect_type == EffectSizeType.GLASS_DELTA:
-        if abs_effect < 0.2:
-            return "Negligible"
-        elif abs_effect < 0.5:
-            return "Small"
-        elif abs_effect < 0.8:
-            return "Medium"
-        else:
-            return "Large"
-
-    else:
-        return "Unknown interpretation"
+    return "Unknown interpretation"
 
 
-def power_analysis(effect_size: float, sample_size: int, alpha: float = 0.05,
-                  test_type: str = "two_sample_t") -> float:
-    """
-    Calculate statistical power for a given effect size and sample size.
+def power_analysis(
+    effect_size: float,
+    sample_size: int,
+    alpha: float = 0.05,
+    test_type: str = "two_sample_t",
+) -> float:
+    """Calculate statistical power for a given effect size and sample size.
 
     Args:
         effect_size: Expected effect size
@@ -1053,6 +1246,7 @@ def power_analysis(effect_size: float, sample_size: int, alpha: float = 0.05,
 
     Returns:
         Statistical power (1 - β)
+
     """
     if not HAS_SCIPY:
         return np.nan
@@ -1063,18 +1257,15 @@ def power_analysis(effect_size: float, sample_size: int, alpha: float = 0.05,
             n_per_group = sample_size // 2
             ncp = effect_size * np.sqrt(n_per_group / 2)  # Non-centrality parameter
             df = sample_size - 2
-            t_crit = stats.t.ppf(1 - alpha/2, df)
+            t_crit = stats.t.ppf(1 - alpha / 2, df)
 
             # Power = P(|T| > t_crit | H1 is true)
-            power = 1 - stats.nct.cdf(t_crit, df, ncp) + stats.nct.cdf(-t_crit, df, ncp)
-            return power
+            return 1 - stats.nct.cdf(t_crit, df, ncp) + stats.nct.cdf(-t_crit, df, ncp)
 
-        else:
-            # Generic approximation
-            z_alpha = stats.norm.ppf(1 - alpha/2)
-            z_beta = effect_size * np.sqrt(sample_size/4) - z_alpha
-            power = stats.norm.cdf(z_beta)
-            return power
+        # Generic approximation
+        z_alpha = stats.norm.ppf(1 - alpha / 2)
+        z_beta = effect_size * np.sqrt(sample_size / 4) - z_alpha
+        return stats.norm.cdf(z_beta)
 
     except Exception:
         return np.nan

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-ML Optimization Page for Enhanced MFC Platform
+"""ML Optimization Page for Enhanced MFC Platform.
 
 Phase 3: Bayesian optimization, neural network surrogates, and multi-objective optimization
 for MFC parameter optimization with real-time progress tracking.
 
 Created: 2025-08-02
 """
+
+from __future__ import annotations
 
 import time
 from dataclasses import dataclass
@@ -29,6 +30,7 @@ class OptimizationMethod(Enum):
 @dataclass
 class OptimizationResult:
     """Results from optimization run."""
+
     success: bool
     method: OptimizationMethod
     best_parameters: dict[str, float] | None = None
@@ -44,17 +46,19 @@ class OptimizationResult:
 class MLOptimizer:
     """Machine Learning Optimization Engine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.optimization_active = False
         self.current_iteration = 0
         self.history = []
 
-    def run_optimization(self, method: OptimizationMethod,
-                        objectives: list[str],
-                        parameters: dict[str, tuple[float, float]],
-                        max_iterations: int = 50) -> OptimizationResult:
+    def run_optimization(
+        self,
+        method: OptimizationMethod,
+        objectives: list[str],
+        parameters: dict[str, tuple[float, float]],
+        max_iterations: int = 50,
+    ) -> OptimizationResult:
         """Run optimization with specified method."""
-
         try:
             self.optimization_active = True
             start_time = time.time()
@@ -62,15 +66,36 @@ class MLOptimizer:
             progress_bar = st.progress(0.0, f"Starting {method.value}...")
 
             if method == OptimizationMethod.BAYESIAN:
-                result = self._run_bayesian_optimization(objectives, parameters, max_iterations, progress_bar)
+                result = self._run_bayesian_optimization(
+                    objectives,
+                    parameters,
+                    max_iterations,
+                    progress_bar,
+                )
             elif method == OptimizationMethod.NSGA_II:
-                result = self._run_nsga_ii(objectives, parameters, max_iterations, progress_bar)
+                result = self._run_nsga_ii(
+                    objectives,
+                    parameters,
+                    max_iterations,
+                    progress_bar,
+                )
             elif method == OptimizationMethod.NEURAL_SURROGATE:
-                result = self._run_neural_surrogate(objectives, parameters, max_iterations, progress_bar)
+                result = self._run_neural_surrogate(
+                    objectives,
+                    parameters,
+                    max_iterations,
+                    progress_bar,
+                )
             elif method == OptimizationMethod.Q_LEARNING:
-                result = self._run_q_learning(objectives, parameters, max_iterations, progress_bar)
+                result = self._run_q_learning(
+                    objectives,
+                    parameters,
+                    max_iterations,
+                    progress_bar,
+                )
             else:
-                raise ValueError(f"Unknown optimization method: {method}")
+                msg = f"Unknown optimization method: {method}"
+                raise ValueError(msg)
 
             execution_time = time.time() - start_time
             result.execution_time = execution_time
@@ -85,22 +110,26 @@ class MLOptimizer:
             return OptimizationResult(
                 success=False,
                 method=method,
-                error_message=str(e)
+                error_message=str(e),
             )
 
-    def _run_bayesian_optimization(self, objectives: list[str],
-                                 parameters: dict[str, tuple[float, float]],
-                                 max_iterations: int,
-                                 progress_bar) -> OptimizationResult:
+    def _run_bayesian_optimization(
+        self,
+        objectives: list[str],
+        parameters: dict[str, tuple[float, float]],
+        max_iterations: int,
+        progress_bar,
+    ) -> OptimizationResult:
         """Run Bayesian optimization."""
-
         history = []
-        best_objective = float('inf')
+        best_objective = float("inf")
         best_params = None
 
         for i in range(max_iterations):
-            progress_bar.progress((i + 1) / max_iterations,
-                                f"Bayesian Optimization - Iteration {i+1}/{max_iterations}")
+            progress_bar.progress(
+                (i + 1) / max_iterations,
+                f"Bayesian Optimization - Iteration {i + 1}/{max_iterations}",
+            )
 
             # Sample new parameters using acquisition function (simplified)
             params = {}
@@ -111,10 +140,11 @@ class MLOptimizer:
                 else:
                     # Gaussian Process guided sampling (simplified)
                     # In reality, this would use proper acquisition functions
-                    uncertainty = 0.1 * (max_val - min_val) * np.exp(-i/10)
+                    uncertainty = 0.1 * (max_val - min_val) * np.exp(-i / 10)
                     params[param_name] = np.clip(
                         best_params[param_name] + np.random.normal(0, uncertainty),
-                        min_val, max_val
+                        min_val,
+                        max_val,
                     )
 
             # Evaluate objective function
@@ -129,8 +159,8 @@ class MLOptimizer:
             # Store history
             iteration_data = params.copy()
             iteration_data.update(objective_values)
-            iteration_data['iteration'] = i + 1
-            iteration_data['acquisition'] = np.random.uniform(0.1, 1.0)  # Simulated
+            iteration_data["iteration"] = i + 1
+            iteration_data["acquisition"] = np.random.uniform(0.1, 1.0)  # Simulated
             history.append(iteration_data)
 
             time.sleep(0.1)  # Simulate computation time
@@ -143,15 +173,17 @@ class MLOptimizer:
             best_parameters=best_params,
             best_objectives=dict.fromkeys(objectives, best_objective),
             optimization_history=history_df,
-            iterations=max_iterations
+            iterations=max_iterations,
         )
 
-    def _run_nsga_ii(self, objectives: list[str],
-                    parameters: dict[str, tuple[float, float]],
-                    max_iterations: int,
-                    progress_bar) -> OptimizationResult:
+    def _run_nsga_ii(
+        self,
+        objectives: list[str],
+        parameters: dict[str, tuple[float, float]],
+        max_iterations: int,
+        progress_bar,
+    ) -> OptimizationResult:
         """Run NSGA-II multi-objective optimization."""
-
         population_size = 20
         history = []
         pareto_solutions = []
@@ -165,18 +197,22 @@ class MLOptimizer:
             population.append(individual)
 
         for generation in range(max_iterations):
-            progress_bar.progress((generation + 1) / max_iterations,
-                                f"NSGA-II - Generation {generation+1}/{max_iterations}")
+            progress_bar.progress(
+                (generation + 1) / max_iterations,
+                f"NSGA-II - Generation {generation + 1}/{max_iterations}",
+            )
 
             # Evaluate population
             evaluated_pop = []
             for individual in population:
                 objectives_values = self._evaluate_objectives(individual, objectives)
-                evaluated_pop.append({
-                    'parameters': individual,
-                    'objectives': objectives_values,
-                    'generation': generation + 1
-                })
+                evaluated_pop.append(
+                    {
+                        "parameters": individual,
+                        "objectives": objectives_values,
+                        "generation": generation + 1,
+                    },
+                )
 
             # Non-dominated sorting (simplified)
             fronts = self._non_dominated_sort(evaluated_pop, objectives)
@@ -184,20 +220,24 @@ class MLOptimizer:
             # Store Pareto front
             if fronts:
                 for solution in fronts[0]:  # First front is Pareto optimal
-                    pareto_data = solution['parameters'].copy()
-                    pareto_data.update(solution['objectives'])
-                    pareto_data['generation'] = generation + 1
+                    pareto_data = solution["parameters"].copy()
+                    pareto_data.update(solution["objectives"])
+                    pareto_data["generation"] = generation + 1
                     pareto_solutions.append(pareto_data)
 
             # Generate next population (simplified)
-            population = self._generate_next_population(fronts, population_size, parameters)
+            population = self._generate_next_population(
+                fronts,
+                population_size,
+                parameters,
+            )
 
             # Store history
             for solution in evaluated_pop:
-                hist_data = solution['parameters'].copy()
-                hist_data.update(solution['objectives'])
-                hist_data['generation'] = generation + 1
-                hist_data['front'] = 0 if solution in fronts[0] else 1  # Simplified
+                hist_data = solution["parameters"].copy()
+                hist_data.update(solution["objectives"])
+                hist_data["generation"] = generation + 1
+                hist_data["front"] = 0 if solution in fronts[0] else 1  # Simplified
                 history.append(hist_data)
 
             time.sleep(0.1)
@@ -209,7 +249,9 @@ class MLOptimizer:
         if pareto_solutions:
             best_solution = pareto_solutions[-1]
             best_params = {k: v for k, v in best_solution.items() if k in parameters}
-            best_objectives = {k: v for k, v in best_solution.items() if k in objectives}
+            best_objectives = {
+                k: v for k, v in best_solution.items() if k in objectives
+            }
         else:
             best_params = population[0]
             best_objectives = self._evaluate_objectives(best_params, objectives)
@@ -221,18 +263,20 @@ class MLOptimizer:
             best_objectives=best_objectives,
             optimization_history=history_df,
             pareto_front=pareto_df,
-            iterations=max_iterations
+            iterations=max_iterations,
         )
 
-    def _run_neural_surrogate(self, objectives: list[str],
-                            parameters: dict[str, tuple[float, float]],
-                            max_iterations: int,
-                            progress_bar) -> OptimizationResult:
+    def _run_neural_surrogate(
+        self,
+        objectives: list[str],
+        parameters: dict[str, tuple[float, float]],
+        max_iterations: int,
+        progress_bar,
+    ) -> OptimizationResult:
         """Run Neural Network Surrogate optimization."""
-
         history = []
         training_data = []
-        best_objective = float('inf')
+        best_objective = float("inf")
         best_params = None
 
         # Initial data collection phase
@@ -240,11 +284,14 @@ class MLOptimizer:
 
         for i in range(max_iterations):
             if i < n_initial:
-                phase = f"Data Collection - {i+1}/{n_initial}"
+                phase = f"Data Collection - {i + 1}/{n_initial}"
             else:
-                phase = f"Surrogate Optimization - {i-n_initial+1}/{max_iterations-n_initial}"
+                phase = f"Surrogate Optimization - {i - n_initial + 1}/{max_iterations - n_initial}"
 
-            progress_bar.progress((i + 1) / max_iterations, f"Neural Surrogate - {phase}")
+            progress_bar.progress(
+                (i + 1) / max_iterations,
+                f"Neural Surrogate - {phase}",
+            )
 
             if i < n_initial:
                 # Random sampling for initial training data
@@ -258,7 +305,10 @@ class MLOptimizer:
                 for param_name, (min_val, max_val) in parameters.items():
                     # Simulated neural network prediction with uncertainty
                     if best_params:
-                        neural_pred = best_params[param_name] + np.random.normal(0, 0.05 * (max_val - min_val))
+                        neural_pred = best_params[param_name] + np.random.normal(
+                            0,
+                            0.05 * (max_val - min_val),
+                        )
                         params[param_name] = np.clip(neural_pred, min_val, max_val)
                     else:
                         params[param_name] = np.random.uniform(min_val, max_val)
@@ -280,10 +330,16 @@ class MLOptimizer:
             # Store history with neural network metrics
             iteration_data = params.copy()
             iteration_data.update(objective_values)
-            iteration_data['iteration'] = i + 1
-            iteration_data['phase'] = 'collection' if i < n_initial else 'optimization'
-            iteration_data['surrogate_uncertainty'] = np.random.uniform(0.01, 0.5)  # Simulated
-            iteration_data['acquisition_value'] = np.random.uniform(0.1, 1.0)  # Simulated
+            iteration_data["iteration"] = i + 1
+            iteration_data["phase"] = "collection" if i < n_initial else "optimization"
+            iteration_data["surrogate_uncertainty"] = np.random.uniform(
+                0.01,
+                0.5,
+            )  # Simulated
+            iteration_data["acquisition_value"] = np.random.uniform(
+                0.1,
+                1.0,
+            )  # Simulated
             history.append(iteration_data)
 
             time.sleep(0.1)
@@ -296,18 +352,20 @@ class MLOptimizer:
             best_parameters=best_params,
             best_objectives=dict.fromkeys(objectives, best_objective),
             optimization_history=history_df,
-            iterations=max_iterations
+            iterations=max_iterations,
         )
 
-    def _run_q_learning(self, objectives: list[str],
-                       parameters: dict[str, tuple[float, float]],
-                       max_iterations: int,
-                       progress_bar) -> OptimizationResult:
+    def _run_q_learning(
+        self,
+        objectives: list[str],
+        parameters: dict[str, tuple[float, float]],
+        max_iterations: int,
+        progress_bar,
+    ) -> OptimizationResult:
         """Run Q-Learning reinforcement optimization."""
-
         history = []
         q_table = {}
-        best_objective = float('inf')
+        best_objective = float("inf")
         best_params = None
 
         # Q-learning parameters
@@ -317,8 +375,10 @@ class MLOptimizer:
         discount_factor = 0.95
 
         for episode in range(max_iterations):
-            progress_bar.progress((episode + 1) / max_iterations,
-                                f"Q-Learning - Episode {episode+1}/{max_iterations}")
+            progress_bar.progress(
+                (episode + 1) / max_iterations,
+                f"Q-Learning - Episode {episode + 1}/{max_iterations}",
+            )
 
             # Discretize parameter space for Q-learning (simplified)
             state = self._discretize_parameters(parameters)
@@ -329,18 +389,21 @@ class MLOptimizer:
                 params = {}
                 for param_name, (min_val, max_val) in parameters.items():
                     params[param_name] = np.random.uniform(min_val, max_val)
+            # Exploit: use Q-table guidance
+            elif best_params:
+                params = best_params.copy()
+                # Add small perturbation
+                for param_name, (min_val, max_val) in parameters.items():
+                    noise = np.random.normal(0, 0.02 * (max_val - min_val))
+                    params[param_name] = np.clip(
+                        params[param_name] + noise,
+                        min_val,
+                        max_val,
+                    )
             else:
-                # Exploit: use Q-table guidance
-                if best_params:
-                    params = best_params.copy()
-                    # Add small perturbation
-                    for param_name, (min_val, max_val) in parameters.items():
-                        noise = np.random.normal(0, 0.02 * (max_val - min_val))
-                        params[param_name] = np.clip(params[param_name] + noise, min_val, max_val)
-                else:
-                    params = {}
-                    for param_name, (min_val, max_val) in parameters.items():
-                        params[param_name] = np.random.uniform(min_val, max_val)
+                params = {}
+                for param_name, (min_val, max_val) in parameters.items():
+                    params[param_name] = np.random.uniform(min_val, max_val)
 
             # Evaluate objectives (get reward)
             objective_values = self._evaluate_objectives(params, objectives)
@@ -348,7 +411,14 @@ class MLOptimizer:
 
             # Update Q-table (simplified)
             next_state = self._discretize_parameters(parameters, params)
-            self._update_q_table(q_table, state, next_state, reward, learning_rate, discount_factor)
+            self._update_q_table(
+                q_table,
+                state,
+                next_state,
+                reward,
+                learning_rate,
+                discount_factor,
+            )
 
             # Update best solution
             current_objective = sum(objective_values.values())
@@ -359,10 +429,10 @@ class MLOptimizer:
             # Store history
             iteration_data = params.copy()
             iteration_data.update(objective_values)
-            iteration_data['episode'] = episode + 1
-            iteration_data['reward'] = reward
-            iteration_data['epsilon'] = epsilon
-            iteration_data['q_value'] = np.random.uniform(-10, 10)  # Simulated Q-value
+            iteration_data["episode"] = episode + 1
+            iteration_data["reward"] = reward
+            iteration_data["epsilon"] = epsilon
+            iteration_data["q_value"] = np.random.uniform(-10, 10)  # Simulated Q-value
             history.append(iteration_data)
 
             # Decay exploration
@@ -379,12 +449,15 @@ class MLOptimizer:
             best_parameters=best_params,
             best_objectives=dict.fromkeys(objectives, best_objective),
             optimization_history=history_df,
-            iterations=max_iterations
+            iterations=max_iterations,
         )
 
-    def _evaluate_objectives(self, parameters: dict[str, float], objectives: list[str]) -> dict[str, float]:
+    def _evaluate_objectives(
+        self,
+        parameters: dict[str, float],
+        objectives: list[str],
+    ) -> dict[str, float]:
         """Evaluate objective functions for given parameters."""
-
         # Simplified objective function evaluation
         # In practice, this would call the actual MFC simulation
 
@@ -394,100 +467,110 @@ class MLOptimizer:
             if objective == "power_density":
                 # Power density objective (maximize, so we minimize negative)
                 power = (
-                    parameters.get('conductivity', 1000) *
-                    parameters.get('surface_area', 10) *
-                    (1 + 0.1 * np.random.normal())  # Add noise
+                    parameters.get("conductivity", 1000)
+                    * parameters.get("surface_area", 10)
+                    * (1 + 0.1 * np.random.normal())  # Add noise
                 )
                 results[objective] = -power / 1000  # Negative for minimization
 
             elif objective == "treatment_efficiency":
                 # Treatment efficiency (maximize)
                 efficiency = (
-                    0.8 * np.tanh(parameters.get('flow_rate', 1e-4) * 10000) +
-                    0.2 * parameters.get('biofilm_thickness', 100) / 200 +
-                    0.1 * np.random.normal()
+                    0.8 * np.tanh(parameters.get("flow_rate", 1e-4) * 10000)
+                    + 0.2 * parameters.get("biofilm_thickness", 100) / 200
+                    + 0.1 * np.random.normal()
                 )
                 results[objective] = -min(efficiency, 1.0)  # Negative for minimization
 
             elif objective == "cost":
                 # Cost objective (minimize)
                 cost = (
-                    parameters.get('electrode_area', 10) * 100 +  # Material cost
-                    parameters.get('flow_rate', 1e-4) * 1e6 * 10 +  # Pumping cost
-                    np.abs(np.random.normal(0, 50))  # Random cost variation
+                    parameters.get("electrode_area", 10) * 100  # Material cost
+                    + parameters.get("flow_rate", 1e-4) * 1e6 * 10  # Pumping cost
+                    + np.abs(np.random.normal(0, 50))  # Random cost variation
                 )
                 results[objective] = cost / 1000
 
             elif objective == "stability":
                 # System stability (maximize)
                 stability = (
-                    1.0 - 0.1 * abs(parameters.get('ph', 7.0) - 7.0) -
-                    0.05 * abs(parameters.get('temperature', 25) - 25) / 25 +
-                    0.1 * np.random.normal()
+                    1.0
+                    - 0.1 * abs(parameters.get("ph", 7.0) - 7.0)
+                    - 0.05 * abs(parameters.get("temperature", 25) - 25) / 25
+                    + 0.1 * np.random.normal()
                 )
                 results[objective] = -max(stability, 0.0)  # Negative for minimization
 
         return results
 
-    def _non_dominated_sort(self, population: list[dict], objectives: list[str]) -> list[list[dict]]:
+    def _non_dominated_sort(
+        self,
+        population: list[dict],
+        objectives: list[str],
+    ) -> list[list[dict]]:
         """Non-dominated sorting for NSGA-II (simplified)."""
-
         fronts = [[]]
 
         for p in population:
-            p['domination_count'] = 0
-            p['dominated_solutions'] = []
+            p["domination_count"] = 0
+            p["dominated_solutions"] = []
 
             for q in population:
                 if self._dominates(p, q, objectives):
-                    p['dominated_solutions'].append(q)
+                    p["dominated_solutions"].append(q)
                 elif self._dominates(q, p, objectives):
-                    p['domination_count'] += 1
+                    p["domination_count"] += 1
 
-            if p['domination_count'] == 0:
+            if p["domination_count"] == 0:
                 fronts[0].append(p)
 
         i = 0
         while fronts[i]:
             next_front = []
             for p in fronts[i]:
-                for q in p['dominated_solutions']:
-                    q['domination_count'] -= 1
-                    if q['domination_count'] == 0:
+                for q in p["dominated_solutions"]:
+                    q["domination_count"] -= 1
+                    if q["domination_count"] == 0:
                         next_front.append(q)
             i += 1
             fronts.append(next_front)
 
         return fronts[:-1]  # Remove empty last front
 
-    def _dominates(self, solution1: dict, solution2: dict, objectives: list[str]) -> bool:
+    def _dominates(
+        self,
+        solution1: dict,
+        solution2: dict,
+        objectives: list[str],
+    ) -> bool:
         """Check if solution1 dominates solution2."""
-
         better_in_at_least_one = False
         for obj in objectives:
-            if solution1['objectives'][obj] > solution2['objectives'][obj]:
+            if solution1["objectives"][obj] > solution2["objectives"][obj]:
                 return False
-            elif solution1['objectives'][obj] < solution2['objectives'][obj]:
+            if solution1["objectives"][obj] < solution2["objectives"][obj]:
                 better_in_at_least_one = True
 
         return better_in_at_least_one
 
-    def _generate_next_population(self, fronts: list[list[dict]],
-                                population_size: int,
-                                parameters: dict[str, tuple[float, float]]) -> list[dict]:
+    def _generate_next_population(
+        self,
+        fronts: list[list[dict]],
+        population_size: int,
+        parameters: dict[str, tuple[float, float]],
+    ) -> list[dict]:
         """Generate next population for NSGA-II (simplified)."""
-
         next_pop = []
 
         # Fill from best fronts
         for front in fronts:
             if len(next_pop) + len(front) <= population_size:
-                next_pop.extend([sol['parameters'] for sol in front])
+                next_pop.extend([sol["parameters"] for sol in front])
             else:
                 # Fill remaining spots randomly from this front
                 remaining = population_size - len(next_pop)
                 selected = np.random.choice(len(front), remaining, replace=False)
-                next_pop.extend([front[i]['parameters'] for i in selected])
+                next_pop.extend([front[i]["parameters"] for i in selected])
                 break
 
         # Fill remaining with random individuals if needed
@@ -499,10 +582,12 @@ class MLOptimizer:
 
         return next_pop
 
-    def _discretize_parameters(self, parameters: dict[str, tuple[float, float]],
-                              values: dict[str, float] | None = None) -> str:
+    def _discretize_parameters(
+        self,
+        parameters: dict[str, tuple[float, float]],
+        values: dict[str, float] | None = None,
+    ) -> str:
         """Discretize parameters for Q-learning state representation."""
-
         if values is None:
             return "initial_state"
 
@@ -518,29 +603,38 @@ class MLOptimizer:
 
         return "_".join(state_components)
 
-    def _update_q_table(self, q_table: dict, state: str, next_state: str,
-                       reward: float, learning_rate: float, discount_factor: float):
+    def _update_q_table(
+        self,
+        q_table: dict,
+        state: str,
+        next_state: str,
+        reward: float,
+        learning_rate: float,
+        discount_factor: float,
+    ) -> None:
         """Update Q-table using Q-learning update rule."""
-
         if state not in q_table:
             q_table[state] = 0.0
         if next_state not in q_table:
             q_table[next_state] = 0.0
 
         # Q-learning update: Q(s,a) = Q(s,a) + α[r + γ*max(Q(s',a')) - Q(s,a)]
-        q_table[state] += learning_rate * (reward + discount_factor * q_table[next_state] - q_table[state])
+        q_table[state] += learning_rate * (
+            reward + discount_factor * q_table[next_state] - q_table[state]
+        )
 
 
-def create_optimization_visualizations(result: OptimizationResult):
+def create_optimization_visualizations(result: OptimizationResult) -> None:
     """Create optimization result visualizations."""
-
     if not result.success:
         st.error(f"Optimization failed: {result.error_message}")
         return
 
     # Optimization progress visualization
-    if result.optimization_history is not None and not result.optimization_history.empty:
-
+    if (
+        result.optimization_history is not None
+        and not result.optimization_history.empty
+    ):
         st.subheader("📈 Optimization Progress")
 
         # Objective values over time
@@ -548,23 +642,29 @@ def create_optimization_visualizations(result: OptimizationResult):
 
         # Get objective columns
         param_cols = list(result.best_parameters.keys())
-        obj_cols = [col for col in result.optimization_history.columns
-                   if col not in param_cols and col not in ['iteration', 'generation', 'episode', 'phase']]
+        obj_cols = [
+            col
+            for col in result.optimization_history.columns
+            if col not in param_cols
+            and col not in ["iteration", "generation", "episode", "phase"]
+        ]
 
         for obj in obj_cols:
             if obj in result.optimization_history.columns:
-                fig_progress.add_trace(go.Scatter(
-                    x=result.optimization_history.index,
-                    y=result.optimization_history[obj],
-                    name=obj.replace('_', ' ').title(),
-                    mode='lines+markers'
-                ))
+                fig_progress.add_trace(
+                    go.Scatter(
+                        x=result.optimization_history.index,
+                        y=result.optimization_history[obj],
+                        name=obj.replace("_", " ").title(),
+                        mode="lines+markers",
+                    ),
+                )
 
         fig_progress.update_layout(
             title="Objective Function Evolution",
             xaxis_title="Iteration",
             yaxis_title="Objective Value",
-            height=400
+            height=400,
         )
         st.plotly_chart(fig_progress, use_container_width=True)
 
@@ -578,18 +678,20 @@ def create_optimization_visualizations(result: OptimizationResult):
 
                 for param in param_cols[:4]:  # Show first 4 parameters
                     if param in result.optimization_history.columns:
-                        fig_params.add_trace(go.Scatter(
-                            x=result.optimization_history.index,
-                            y=result.optimization_history[param],
-                            name=param.replace('_', ' ').title(),
-                            mode='lines'
-                        ))
+                        fig_params.add_trace(
+                            go.Scatter(
+                                x=result.optimization_history.index,
+                                y=result.optimization_history[param],
+                                name=param.replace("_", " ").title(),
+                                mode="lines",
+                            ),
+                        )
 
                 fig_params.update_layout(
                     title="Parameter Values Over Time",
                     xaxis_title="Iteration",
                     yaxis_title="Parameter Value",
-                    height=350
+                    height=350,
                 )
                 st.plotly_chart(fig_params, use_container_width=True)
 
@@ -600,19 +702,21 @@ def create_optimization_visualizations(result: OptimizationResult):
                 if obj_cols:
                     best_obj = result.optimization_history[obj_cols[0]].cummin()
                     fig_conv = go.Figure()
-                    fig_conv.add_trace(go.Scatter(
-                        x=result.optimization_history.index,
-                        y=best_obj,
-                        name="Best Objective",
-                        mode='lines',
-                        line={"color": 'green', "width": 3}
-                    ))
+                    fig_conv.add_trace(
+                        go.Scatter(
+                            x=result.optimization_history.index,
+                            y=best_obj,
+                            name="Best Objective",
+                            mode="lines",
+                            line={"color": "green", "width": 3},
+                        ),
+                    )
 
                     fig_conv.update_layout(
                         title="Convergence Progress",
                         xaxis_title="Iteration",
                         yaxis_title="Best Objective Value",
-                        height=350
+                        height=350,
                     )
                     st.plotly_chart(fig_conv, use_container_width=True)
 
@@ -620,31 +724,39 @@ def create_optimization_visualizations(result: OptimizationResult):
     if result.pareto_front is not None and not result.pareto_front.empty:
         st.subheader("🎯 Pareto Front Analysis")
 
-        pareto_obj_cols = [col for col in result.pareto_front.columns
-                          if col not in param_cols and col not in ['generation']]
+        pareto_obj_cols = [
+            col
+            for col in result.pareto_front.columns
+            if col not in param_cols and col not in ["generation"]
+        ]
 
         if len(pareto_obj_cols) >= 2:
             fig_pareto = px.scatter(
                 result.pareto_front,
                 x=pareto_obj_cols[0],
                 y=pareto_obj_cols[1],
-                color='generation' if 'generation' in result.pareto_front.columns else None,
+                color=(
+                    "generation"
+                    if "generation" in result.pareto_front.columns
+                    else None
+                ),
                 title="Pareto Front Evolution",
                 labels={
-                    pareto_obj_cols[0]: pareto_obj_cols[0].replace('_', ' ').title(),
-                    pareto_obj_cols[1]: pareto_obj_cols[1].replace('_', ' ').title()
-                }
+                    pareto_obj_cols[0]: pareto_obj_cols[0].replace("_", " ").title(),
+                    pareto_obj_cols[1]: pareto_obj_cols[1].replace("_", " ").title(),
+                },
             )
             fig_pareto.update_layout(height=500)
             st.plotly_chart(fig_pareto, use_container_width=True)
 
 
-def render_ml_optimization_page():
+def render_ml_optimization_page() -> None:
     """Render the ML Optimization page."""
-
     # Page header
     st.title("🧠 ML Optimization Framework")
-    st.caption("Phase 3: Bayesian optimization, neural network surrogates, and multi-objective optimization")
+    st.caption(
+        "Phase 3: Bayesian optimization, neural network surrogates, and multi-objective optimization",
+    )
 
     # Status indicator
     st.info("🔄 Phase 3 Framework Ready - 95% Complete")
@@ -653,7 +765,7 @@ def render_ml_optimization_page():
     method = st.radio(
         "Select Optimization Method",
         [method.value for method in OptimizationMethod],
-        horizontal=True
+        horizontal=True,
     )
 
     selected_method = OptimizationMethod(method)
@@ -664,26 +776,26 @@ def render_ml_optimization_page():
             "description": "Uses Gaussian processes to model objective functions and acquisition functions to guide search",
             "best_for": "Expensive function evaluations, continuous parameters",
             "pros": "Sample efficient, principled uncertainty quantification",
-            "cons": "Scales poorly with dimensions, assumes smoothness"
+            "cons": "Scales poorly with dimensions, assumes smoothness",
         },
         OptimizationMethod.NSGA_II: {
             "description": "Multi-objective evolutionary algorithm using non-dominated sorting and crowding distance",
             "best_for": "Multiple conflicting objectives, discrete/mixed parameters",
             "pros": "Finds Pareto front, handles constraints well",
-            "cons": "Requires many function evaluations, parameter tuning"
+            "cons": "Requires many function evaluations, parameter tuning",
         },
         OptimizationMethod.NEURAL_SURROGATE: {
             "description": "Train neural networks as surrogate models for expensive objective functions",
             "best_for": "High-dimensional problems, complex response surfaces",
             "pros": "Flexible function approximation, fast predictions",
-            "cons": "Requires training data, black-box uncertainty"
+            "cons": "Requires training data, black-box uncertainty",
         },
         OptimizationMethod.Q_LEARNING: {
             "description": "Reinforcement learning approach treating optimization as sequential decision making",
             "best_for": "Dynamic environments, learning from experience",
             "pros": "Adaptive, learns from failures, handles non-stationarity",
-            "cons": "Requires discretization, convergence not guaranteed"
-        }
+            "cons": "Requires discretization, convergence not guaranteed",
+        },
     }
 
     with st.expander(f"ℹ️ About {method}", expanded=True):
@@ -708,7 +820,7 @@ def render_ml_optimization_page():
             "Select objectives to optimize",
             ["power_density", "treatment_efficiency", "cost", "stability"],
             default=["power_density", "cost"],
-            help="Choose one or more objectives for optimization"
+            help="Choose one or more objectives for optimization",
         )
 
     with col2:
@@ -718,7 +830,7 @@ def render_ml_optimization_page():
             max_value=200,
             value=50,
             step=10,
-            help="Number of optimization iterations to run"
+            help="Number of optimization iterations to run",
         )
 
     # Parameter bounds configuration
@@ -732,7 +844,7 @@ def render_ml_optimization_page():
         "biofilm_thickness": (10.0, 500.0, "μm", "Target biofilm thickness"),
         "ph": (6.0, 8.5, "-", "Solution pH"),
         "temperature": (15.0, 40.0, "°C", "Operating temperature"),
-        "electrode_spacing": (0.5, 5.0, "cm", "Distance between electrodes")
+        "electrode_spacing": (0.5, 5.0, "cm", "Distance between electrodes"),
     }
 
     # Parameter selection and bounds
@@ -740,7 +852,7 @@ def render_ml_optimization_page():
         "Select parameters to optimize",
         list(available_params.keys()),
         default=["conductivity", "surface_area", "flow_rate"],
-        help="Choose parameters that the optimizer can adjust"
+        help="Choose parameters that the optimizer can adjust",
     )
 
     parameter_bounds = {}
@@ -760,14 +872,14 @@ def render_ml_optimization_page():
                         f"Min {param}",
                         value=min_val,
                         key=f"min_{param}",
-                        format="%.3e" if min_val < 0.01 else "%.2f"
+                        format="%.3e" if min_val < 0.01 else "%.2f",
                     )
                 with col_max:
                     param_max = st.number_input(
                         f"Max {param}",
                         value=max_val,
                         key=f"max_{param}",
-                        format="%.3e" if max_val < 0.01 else "%.2f"
+                        format="%.3e" if max_val < 0.01 else "%.2f",
                     )
 
                 parameter_bounds[param] = (param_min, param_max)
@@ -781,7 +893,11 @@ def render_ml_optimization_page():
             if selected_method == OptimizationMethod.BAYESIAN:
                 st.selectbox(
                     "Acquisition Function",
-                    ["Expected Improvement", "Upper Confidence Bound", "Probability of Improvement"]
+                    [
+                        "Expected Improvement",
+                        "Upper Confidence Bound",
+                        "Probability of Improvement",
+                    ],
                 )
                 st.selectbox("GP Kernel", ["RBF", "Matern", "Linear"])
 
@@ -820,7 +936,7 @@ def render_ml_optimization_page():
             run_optimization = st.button(
                 f"Run {selected_method.value}",
                 type="primary",
-                use_container_width=True
+                use_container_width=True,
             )
 
         with col2:
@@ -832,7 +948,10 @@ def render_ml_optimization_page():
         if run_optimization:
             optimizer = MLOptimizer()
 
-            with st.status(f"Running {selected_method.value}...", expanded=True) as status:
+            with st.status(
+                f"Running {selected_method.value}...",
+                expanded=True,
+            ) as status:
                 st.write(f"🎯 Optimizing {len(objectives)} objective(s)")
                 st.write(f"🎛️ Adjusting {len(selected_params)} parameter(s)")
                 st.write(f"🔄 Maximum {max_iterations} iterations")
@@ -841,25 +960,30 @@ def render_ml_optimization_page():
                     st.empty()
 
                 result = optimizer.run_optimization(
-                    selected_method, objectives, parameter_bounds, max_iterations
+                    selected_method,
+                    objectives,
+                    parameter_bounds,
+                    max_iterations,
                 )
 
                 if result.success:
                     status.update(
                         label=f"✅ {selected_method.value} completed successfully!",
                         state="complete",
-                        expanded=False
+                        expanded=False,
                     )
                 else:
                     status.update(
                         label=f"❌ {selected_method.value} failed!",
                         state="error",
-                        expanded=False
+                        expanded=False,
                     )
 
             # Display results
             if result.success:
-                st.success(f"✅ Optimization completed in {result.execution_time:.2f} seconds")
+                st.success(
+                    f"✅ Optimization completed in {result.execution_time:.2f} seconds",
+                )
 
                 # Key results
                 col1, col2, col3, col4 = st.columns(4)
@@ -886,10 +1010,18 @@ def render_ml_optimization_page():
                     param_cols = st.columns(min(3, len(result.best_parameters)))
                     for i, (param, value) in enumerate(result.best_parameters.items()):
                         with param_cols[i % 3]:
-                            unit = available_params[param][2] if param in available_params else ""
+                            unit = (
+                                available_params[param][2]
+                                if param in available_params
+                                else ""
+                            )
                             st.metric(
-                                param.replace('_', ' ').title(),
-                                f"{value:.3f} {unit}" if value > 0.01 else f"{value:.2e} {unit}"
+                                param.replace("_", " ").title(),
+                                (
+                                    f"{value:.3f} {unit}"
+                                    if value > 0.01
+                                    else f"{value:.2e} {unit}"
+                                ),
                             )
 
                 # Visualizations
@@ -909,7 +1041,9 @@ def render_ml_optimization_page():
 
                     with col3:
                         if st.button("Generate Report"):
-                            st.info("Comprehensive optimization report would be generated")
+                            st.info(
+                                "Comprehensive optimization report would be generated",
+                            )
 
             else:
                 st.error(f"❌ Optimization failed: {result.error_message}")

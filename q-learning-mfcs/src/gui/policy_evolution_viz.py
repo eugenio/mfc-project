@@ -1,5 +1,4 @@
-"""
-Policy Evolution Visualization Component
+"""Policy Evolution Visualization Component.
 
 This module provides interactive visualizations for tracking Q-learning
 policy development over training episodes, including policy stability,
@@ -9,6 +8,8 @@ User Story 1.2.2: Policy Evolution Tracking
 Created: 2025-07-31
 Last Modified: 2025-07-31
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
@@ -30,24 +31,24 @@ from plotly.subplots import make_subplots
 class PolicyEvolutionVisualization:
     """Interactive policy evolution visualization component."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize policy evolution visualization component."""
         self.tracker = POLICY_EVOLUTION_TRACKER
 
         # Initialize session state
-        if 'policy_snapshots_loaded' not in st.session_state:
+        if "policy_snapshots_loaded" not in st.session_state:
             st.session_state.policy_snapshots_loaded = False
-        if 'policy_evolution_metrics' not in st.session_state:
+        if "policy_evolution_metrics" not in st.session_state:
             st.session_state.policy_evolution_metrics = None
-        if 'selected_episodes' not in st.session_state:
+        if "selected_episodes" not in st.session_state:
             st.session_state.selected_episodes = []
 
     def render_policy_evolution_interface(self) -> dict[str, Any]:
-        """
-        Render the main policy evolution tracking interface.
+        """Render the main policy evolution tracking interface.
 
         Returns:
             Analysis results and metadata
+
         """
         st.header("📈 Policy Evolution Tracking")
         st.markdown("""
@@ -65,12 +66,12 @@ class PolicyEvolutionVisualization:
             self._render_export_section(metrics)
 
         return {
-            'snapshots_loaded': len(self.tracker.policy_snapshots),
-            'evolution_metrics': st.session_state.policy_evolution_metrics,
-            'selected_episodes': st.session_state.selected_episodes
+            "snapshots_loaded": len(self.tracker.policy_snapshots),
+            "evolution_metrics": st.session_state.policy_evolution_metrics,
+            "selected_episodes": st.session_state.selected_episodes,
         }
 
-    def _render_data_loading_section(self):
+    def _render_data_loading_section(self) -> None:
         """Render data loading and configuration interface."""
         st.subheader("📁 Policy Data Loading")
 
@@ -81,7 +82,7 @@ class PolicyEvolutionVisualization:
             file_pattern = st.text_input(
                 "Q-table File Pattern",
                 value="*qtable*.pkl",
-                help="Pattern to match Q-table files for policy analysis"
+                help="Pattern to match Q-table files for policy analysis",
             )
 
             max_snapshots = st.number_input(
@@ -89,7 +90,7 @@ class PolicyEvolutionVisualization:
                 min_value=5,
                 max_value=1000,
                 value=50,
-                help="Maximum number of policy snapshots to analyze"
+                help="Maximum number of policy snapshots to analyze",
             )
 
         with col2:
@@ -97,7 +98,7 @@ class PolicyEvolutionVisualization:
                 with st.spinner("Loading policy snapshots..."):
                     count = self.tracker.load_policy_snapshots_from_files(
                         file_pattern=file_pattern,
-                        max_snapshots=max_snapshots
+                        max_snapshots=max_snapshots,
                     )
 
                     if count > 0:
@@ -123,7 +124,9 @@ class PolicyEvolutionVisualization:
 
         # Show current status
         if self.tracker.policy_snapshots:
-            st.info(f"📈 Currently loaded: {len(self.tracker.policy_snapshots)} policy snapshots")
+            st.info(
+                f"📈 Currently loaded: {len(self.tracker.policy_snapshots)} policy snapshots",
+            )
 
     def _render_analysis_overview(self) -> PolicyEvolutionMetrics | None:
         """Render policy evolution analysis overview."""
@@ -147,30 +150,43 @@ class PolicyEvolutionVisualization:
             st.metric(
                 "Training Episodes",
                 metrics.total_episodes,
-                delta=f"{metrics.snapshots_count} snapshots"
+                delta=f"{metrics.snapshots_count} snapshots",
             )
 
         with col2:
-            stability_delta = "🟢 Stable" if metrics.stability_status == PolicyStability.STABLE else "🟡 Learning"
+            stability_delta = (
+                "🟢 Stable"
+                if metrics.stability_status == PolicyStability.STABLE
+                else "🟡 Learning"
+            )
             st.metric(
                 "Policy Stability",
                 f"{metrics.stability_score:.1%}",
-                delta=stability_delta
+                delta=stability_delta,
             )
 
         with col3:
-            convergence_text = f"Episode {metrics.convergence_episode}" if metrics.convergence_episode else "Not detected"
+            convergence_text = (
+                f"Episode {metrics.convergence_episode}"
+                if metrics.convergence_episode
+                else "Not detected"
+            )
             st.metric(
                 "Convergence Point",
                 convergence_text,
-                delta="Early convergence" if metrics.convergence_episode and metrics.convergence_episode < metrics.total_episodes * 0.5 else None
+                delta=(
+                    "Early convergence"
+                    if metrics.convergence_episode
+                    and metrics.convergence_episode < metrics.total_episodes * 0.5
+                    else None
+                ),
             )
 
         with col4:
             st.metric(
                 "Action Changes",
                 metrics.action_preference_changes,
-                delta=f"{len(metrics.dominant_actions)} unique actions"
+                delta=f"{len(metrics.dominant_actions)} unique actions",
             )
 
         # Policy evolution status
@@ -179,7 +195,7 @@ class PolicyEvolutionVisualization:
             PolicyStability.CONVERGING: "info",
             PolicyStability.UNSTABLE: "warning",
             PolicyStability.OSCILLATING: "error",
-            PolicyStability.UNKNOWN: "secondary"
+            PolicyStability.UNKNOWN: "secondary",
         }
 
         status_message = {
@@ -187,24 +203,29 @@ class PolicyEvolutionVisualization:
             PolicyStability.CONVERGING: "🔄 Policy is converging towards stability",
             PolicyStability.UNSTABLE: "⚠️ Policy shows unstable behavior",
             PolicyStability.OSCILLATING: "🔄 Policy is oscillating between strategies",
-            PolicyStability.UNKNOWN: "❓ Policy stability status is unclear"
+            PolicyStability.UNKNOWN: "❓ Policy stability status is unclear",
         }
 
         getattr(st, status_color[metrics.stability_status])(
-            status_message[metrics.stability_status]
+            status_message[metrics.stability_status],
         )
 
         return metrics
 
-    def _render_policy_visualization_tabs(self, metrics: PolicyEvolutionMetrics):
+    def _render_policy_visualization_tabs(
+        self,
+        metrics: PolicyEvolutionMetrics,
+    ) -> None:
         """Render policy visualization tabs."""
-        viz_tabs = st.tabs([
-            "📈 Policy Evolution Timeline",
-            "🎯 Action Frequency Analysis",
-            "📊 Learning Curves",
-            "🔄 Policy Stability Analysis",
-            "⚖️ Episode Comparison"
-        ])
+        viz_tabs = st.tabs(
+            [
+                "📈 Policy Evolution Timeline",
+                "🎯 Action Frequency Analysis",
+                "📊 Learning Curves",
+                "🔄 Policy Stability Analysis",
+                "⚖️ Episode Comparison",
+            ],
+        )
 
         with viz_tabs[0]:
             self._render_policy_evolution_timeline(metrics)
@@ -221,7 +242,10 @@ class PolicyEvolutionVisualization:
         with viz_tabs[4]:
             self._render_episode_comparison()
 
-    def _render_policy_evolution_timeline(self, metrics: PolicyEvolutionMetrics):
+    def _render_policy_evolution_timeline(
+        self,
+        metrics: PolicyEvolutionMetrics,
+    ) -> None:
         """Render policy evolution timeline visualization."""
         st.markdown("#### 📈 Policy Evolution Over Time")
 
@@ -236,9 +260,14 @@ class PolicyEvolutionVisualization:
 
         # Create subplot with secondary y-axis
         fig = make_subplots(
-            rows=3, cols=1,
-            subplot_titles=('Policy Entropy Evolution', 'State Coverage Evolution', 'Policy Changes Between Episodes'),
-            vertical_spacing=0.12
+            rows=3,
+            cols=1,
+            subplot_titles=(
+                "Policy Entropy Evolution",
+                "State Coverage Evolution",
+                "Policy Changes Between Episodes",
+            ),
+            vertical_spacing=0.12,
         )
 
         # Policy entropy timeline
@@ -246,12 +275,13 @@ class PolicyEvolutionVisualization:
             go.Scatter(
                 x=episodes,
                 y=policy_entropies,
-                mode='lines+markers',
-                name='Policy Entropy',
-                line={'color': 'blue', 'width': 2},
-                hovertemplate='Episode: %{x}<br>Entropy: %{y:.3f}<extra></extra>'
+                mode="lines+markers",
+                name="Policy Entropy",
+                line={"color": "blue", "width": 2},
+                hovertemplate="Episode: %{x}<br>Entropy: %{y:.3f}<extra></extra>",
             ),
-            row=1, col=1
+            row=1,
+            col=1,
         )
 
         # State coverage timeline
@@ -259,12 +289,13 @@ class PolicyEvolutionVisualization:
             go.Scatter(
                 x=episodes,
                 y=state_coverages,
-                mode='lines+markers',
-                name='State Coverage',
-                line={'color': 'green', 'width': 2},
-                hovertemplate='Episode: %{x}<br>Coverage: %{y:.1%}<extra></extra>'
+                mode="lines+markers",
+                name="State Coverage",
+                line={"color": "green", "width": 2},
+                hovertemplate="Episode: %{x}<br>Coverage: %{y:.1%}<extra></extra>",
             ),
-            row=2, col=1
+            row=2,
+            col=1,
         )
 
         # Policy changes timeline
@@ -274,12 +305,13 @@ class PolicyEvolutionVisualization:
                 go.Scatter(
                     x=change_episodes,
                     y=metrics.policy_changes,
-                    mode='lines+markers',
-                    name='Policy Changes',
-                    line={'color': 'red', 'width': 2},
-                    hovertemplate='Episode: %{x}<br>Changes: %{y}<extra></extra>'
+                    mode="lines+markers",
+                    name="Policy Changes",
+                    line={"color": "red", "width": 2},
+                    hovertemplate="Episode: %{x}<br>Changes: %{y}<extra></extra>",
                 ),
-                row=3, col=1
+                row=3,
+                col=1,
             )
 
         # Add convergence point marker if detected
@@ -290,13 +322,14 @@ class PolicyEvolutionVisualization:
                     line_dash="dash",
                     line_color="orange",
                     annotation_text="Convergence",
-                    row=row, col=1
+                    row=row,
+                    col=1,
                 )
 
         fig.update_layout(
             title="Policy Evolution Timeline Analysis",
             height=800,
-            showlegend=True
+            showlegend=True,
         )
 
         fig.update_xaxes(title_text="Training Episode", row=3, col=1)
@@ -309,7 +342,10 @@ class PolicyEvolutionVisualization:
         # Timeline insights
         self._render_timeline_insights(metrics)
 
-    def _render_action_frequency_analysis(self, metrics: PolicyEvolutionMetrics):
+    def _render_action_frequency_analysis(
+        self,
+        metrics: PolicyEvolutionMetrics,
+    ) -> None:
         """Render action frequency analysis visualization."""
         st.markdown("#### 🎯 Action Usage Analysis")
 
@@ -323,26 +359,30 @@ class PolicyEvolutionVisualization:
 
         with col1:
             # Action frequency heatmap over episodes
-            action_cols = [col for col in freq_matrix.columns if col.startswith('Action_')]
+            action_cols = [
+                col for col in freq_matrix.columns if col.startswith("Action_")
+            ]
 
             if action_cols:
                 heatmap_data = freq_matrix[action_cols].values
-                episodes = freq_matrix['Episode'].values
+                episodes = freq_matrix["Episode"].values
 
-                fig = go.Figure(data=go.Heatmap(
-                    z=heatmap_data.T,
-                    x=episodes,
-                    y=action_cols,
-                    colorscale='Viridis',
-                    hoverongaps=False,
-                    hovertemplate='Episode: %{x}<br>Action: %{y}<br>Frequency: %{z}<extra></extra>'
-                ))
+                fig = go.Figure(
+                    data=go.Heatmap(
+                        z=heatmap_data.T,
+                        x=episodes,
+                        y=action_cols,
+                        colorscale="Viridis",
+                        hoverongaps=False,
+                        hovertemplate="Episode: %{x}<br>Action: %{y}<br>Frequency: %{z}<extra></extra>",
+                    ),
+                )
 
                 fig.update_layout(
                     title="Action Frequency Heatmap Over Episodes",
                     xaxis_title="Training Episode",
                     yaxis_title="Actions",
-                    height=400
+                    height=400,
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
@@ -354,17 +394,18 @@ class PolicyEvolutionVisualization:
             actions = list(metrics.dominant_actions.keys())
             percentages = list(metrics.dominant_actions.values())
 
-            fig_pie = go.Figure(data=[go.Pie(
-                labels=[f'Action {a}' for a in actions],
-                values=percentages,
-                hole=0.3,
-                hovertemplate='%{label}<br>Usage: %{value:.1%}<extra></extra>'
-            )])
-
-            fig_pie.update_layout(
-                title="Action Usage Distribution",
-                height=400
+            fig_pie = go.Figure(
+                data=[
+                    go.Pie(
+                        labels=[f"Action {a}" for a in actions],
+                        values=percentages,
+                        hole=0.3,
+                        hovertemplate="%{label}<br>Usage: %{value:.1%}<extra></extra>",
+                    ),
+                ],
             )
+
+            fig_pie.update_layout(title="Action Usage Distribution", height=400)
 
             st.plotly_chart(fig_pie, use_container_width=True)
 
@@ -376,7 +417,10 @@ class PolicyEvolutionVisualization:
             dominant_actions_timeline = []
             for snapshot in self.tracker.policy_snapshots:
                 if snapshot.action_frequencies:
-                    dominant_action = max(snapshot.action_frequencies.items(), key=lambda x: x[1])[0]
+                    dominant_action = max(
+                        snapshot.action_frequencies.items(),
+                        key=lambda x: x[1],
+                    )[0]
                     dominant_actions_timeline.append(dominant_action)
                 else:
                     dominant_actions_timeline.append(0)
@@ -384,63 +428,72 @@ class PolicyEvolutionVisualization:
             episodes = [s.episode for s in self.tracker.policy_snapshots]
 
             fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=episodes,
-                y=dominant_actions_timeline,
-                mode='lines+markers',
-                name='Dominant Action',
-                line={'width': 3},
-                hovertemplate='Episode: %{x}<br>Dominant Action: %{y}<extra></extra>'
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=episodes,
+                    y=dominant_actions_timeline,
+                    mode="lines+markers",
+                    name="Dominant Action",
+                    line={"width": 3},
+                    hovertemplate="Episode: %{x}<br>Dominant Action: %{y}<extra></extra>",
+                ),
+            )
 
             fig.update_layout(
                 title="Dominant Action Changes Over Time",
                 xaxis_title="Training Episode",
                 yaxis_title="Dominant Action ID",
-                height=300
+                height=300,
             )
 
             st.plotly_chart(fig, use_container_width=True)
 
-    def _render_learning_curves(self, metrics: PolicyEvolutionMetrics):
+    def _render_learning_curves(self, metrics: PolicyEvolutionMetrics) -> None:
         """Render learning curve visualization."""
         st.markdown("#### 📊 Learning Progress Analysis")
 
         if not metrics.performance_trend:
-            st.info("No performance data available for learning curves. Performance data can be extracted from Q-table files with reward metadata.")
+            st.info(
+                "No performance data available for learning curves. Performance data can be extracted from Q-table files with reward metadata.",
+            )
 
             # Show learning velocity instead
             if metrics.learning_velocity:
                 episodes = list(range(1, len(metrics.learning_velocity) + 1))
 
                 fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=episodes,
-                    y=metrics.learning_velocity,
-                    mode='lines+markers',
-                    name='Learning Velocity',
-                    line={'color': 'purple', 'width': 2},
-                    hovertemplate='Episode: %{x}<br>Velocity: %{y:.3f}<extra></extra>'
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=episodes,
+                        y=metrics.learning_velocity,
+                        mode="lines+markers",
+                        name="Learning Velocity",
+                        line={"color": "purple", "width": 2},
+                        hovertemplate="Episode: %{x}<br>Velocity: %{y:.3f}<extra></extra>",
+                    ),
+                )
 
                 fig.update_layout(
                     title="Learning Velocity (Rate of Policy Change)",
                     xaxis_title="Training Episode",
                     yaxis_title="Policy Change Rate",
-                    height=400
+                    height=400,
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.info("💡 **Learning Velocity**: Positive values indicate increasing policy changes, negative values indicate stabilization.")
+                st.info(
+                    "💡 **Learning Velocity**: Positive values indicate increasing policy changes, negative values indicate stabilization.",
+                )
         else:
             # Show performance trend
             performance_episodes = list(range(len(metrics.performance_trend)))
 
             fig = make_subplots(
-                rows=2, cols=1,
-                subplot_titles=('Episode Performance/Reward', 'Learning Velocity'),
-                vertical_spacing=0.15
+                rows=2,
+                cols=1,
+                subplot_titles=("Episode Performance/Reward", "Learning Velocity"),
+                vertical_spacing=0.15,
             )
 
             # Performance curve
@@ -448,11 +501,12 @@ class PolicyEvolutionVisualization:
                 go.Scatter(
                     x=performance_episodes,
                     y=metrics.performance_trend,
-                    mode='lines+markers',
-                    name='Episode Reward',
-                    line={'color': 'green', 'width': 2}
+                    mode="lines+markers",
+                    name="Episode Reward",
+                    line={"color": "green", "width": 2},
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
             # Learning velocity
@@ -462,17 +516,18 @@ class PolicyEvolutionVisualization:
                     go.Scatter(
                         x=velocity_episodes,
                         y=metrics.learning_velocity,
-                        mode='lines+markers',
-                        name='Learning Velocity',
-                        line={'color': 'purple', 'width': 2}
+                        mode="lines+markers",
+                        name="Learning Velocity",
+                        line={"color": "purple", "width": 2},
                     ),
-                    row=2, col=1
+                    row=2,
+                    col=1,
                 )
 
             fig.update_layout(
                 title="Learning Curves Analysis",
                 height=600,
-                showlegend=True
+                showlegend=True,
             )
 
             fig.update_xaxes(title_text="Training Episode", row=2, col=1)
@@ -488,25 +543,30 @@ class PolicyEvolutionVisualization:
             decay_episodes = list(range(1, len(metrics.exploration_decay) + 1))
 
             fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=decay_episodes,
-                y=metrics.exploration_decay,
-                mode='lines+markers',
-                name='Exploration Decay Rate',
-                line={'color': 'orange', 'width': 2},
-                hovertemplate='Episode: %{x}<br>Decay Rate: %{y:.3f}<extra></extra>'
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=decay_episodes,
+                    y=metrics.exploration_decay,
+                    mode="lines+markers",
+                    name="Exploration Decay Rate",
+                    line={"color": "orange", "width": 2},
+                    hovertemplate="Episode: %{x}<br>Decay Rate: %{y:.3f}<extra></extra>",
+                ),
+            )
 
             fig.update_layout(
                 title="Exploration Decay Over Time",
                 xaxis_title="Training Episode",
                 yaxis_title="Decay Rate",
-                height=350
+                height=350,
             )
 
             st.plotly_chart(fig, use_container_width=True)
 
-    def _render_policy_stability_analysis(self, metrics: PolicyEvolutionMetrics):
+    def _render_policy_stability_analysis(
+        self,
+        metrics: PolicyEvolutionMetrics,
+    ) -> None:
         """Render policy stability analysis."""
         st.markdown("#### 🔄 Policy Stability Analysis")
 
@@ -514,28 +574,30 @@ class PolicyEvolutionVisualization:
 
         with col1:
             # Stability score gauge
-            fig = go.Figure(go.Indicator(
-                mode = "gauge+number+delta",
-                value = metrics.stability_score * 100,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Policy Stability Score (%)"},
-                delta = {'reference': 95, 'increasing': {'color': "green"}},
-                gauge = {
-                    'axis': {'range': [None, 100]},
-                    'bar': {'color': "darkblue"},
-                    'steps': [
-                        {'range': [0, 50], 'color': "lightgray"},
-                        {'range': [50, 80], 'color': "yellow"},
-                        {'range': [80, 95], 'color': "orange"},
-                        {'range': [95, 100], 'color': "green"}
-                    ],
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': 95
-                    }
-                }
-            ))
+            fig = go.Figure(
+                go.Indicator(
+                    mode="gauge+number+delta",
+                    value=metrics.stability_score * 100,
+                    domain={"x": [0, 1], "y": [0, 1]},
+                    title={"text": "Policy Stability Score (%)"},
+                    delta={"reference": 95, "increasing": {"color": "green"}},
+                    gauge={
+                        "axis": {"range": [None, 100]},
+                        "bar": {"color": "darkblue"},
+                        "steps": [
+                            {"range": [0, 50], "color": "lightgray"},
+                            {"range": [50, 80], "color": "yellow"},
+                            {"range": [80, 95], "color": "orange"},
+                            {"range": [95, 100], "color": "green"},
+                        ],
+                        "threshold": {
+                            "line": {"color": "red", "width": 4},
+                            "thickness": 0.75,
+                            "value": 95,
+                        },
+                    },
+                ),
+            )
 
             fig.update_layout(height=300)
             st.plotly_chart(fig, use_container_width=True)
@@ -543,18 +605,22 @@ class PolicyEvolutionVisualization:
         with col2:
             # Policy changes distribution
             if metrics.policy_changes:
-                fig = go.Figure(data=[go.Histogram(
-                    x=metrics.policy_changes,
-                    nbinsx=20,
-                    name='Policy Changes',
-                    hovertemplate='Changes: %{x}<br>Frequency: %{y}<extra></extra>'
-                )])
+                fig = go.Figure(
+                    data=[
+                        go.Histogram(
+                            x=metrics.policy_changes,
+                            nbinsx=20,
+                            name="Policy Changes",
+                            hovertemplate="Changes: %{x}<br>Frequency: %{y}<extra></extra>",
+                        ),
+                    ],
+                )
 
                 fig.update_layout(
                     title="Distribution of Policy Changes",
                     xaxis_title="Number of State Changes",
                     yaxis_title="Frequency",
-                    height=300
+                    height=300,
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
@@ -562,7 +628,7 @@ class PolicyEvolutionVisualization:
         # Stability insights
         self._render_stability_insights(metrics)
 
-    def _render_episode_comparison(self):
+    def _render_episode_comparison(self) -> None:
         """Render episode-to-episode policy comparison."""
         st.markdown("#### ⚖️ Episode Comparison Analysis")
 
@@ -579,7 +645,7 @@ class PolicyEvolutionVisualization:
                 "Reference Episode",
                 options=episodes,
                 index=0,
-                help="Episode to compare others against"
+                help="Episode to compare others against",
             )
 
         with col2:
@@ -587,17 +653,24 @@ class PolicyEvolutionVisualization:
                 "Episodes to Compare",
                 options=episodes,
                 default=episodes[-3:] if len(episodes) >= 3 else episodes[1:],
-                help="Select episodes to compare with reference"
+                help="Select episodes to compare with reference",
             )
 
         with col3:
             if st.button("📊 Generate Comparison"):
                 if compare_episodes:
-                    self._generate_episode_comparison(reference_episode, compare_episodes)
+                    self._generate_episode_comparison(
+                        reference_episode,
+                        compare_episodes,
+                    )
                 else:
                     st.warning("Select episodes to compare")
 
-    def _generate_episode_comparison(self, reference_episode: int, compare_episodes: list[int]):
+    def _generate_episode_comparison(
+        self,
+        reference_episode: int,
+        compare_episodes: list[int],
+    ) -> None:
         """Generate detailed episode comparison."""
         # Get policy comparison matrix
         similarity_matrix = self.tracker.get_policy_comparison_matrix(reference_episode)
@@ -623,7 +696,11 @@ class PolicyEvolutionVisualization:
         # Calculate similarity scores
         similarities = []
         for snapshot in compare_snapshots:
-            episode_idx = next(i for i, s in enumerate(self.tracker.policy_snapshots) if s.episode == snapshot.episode)
+            episode_idx = next(
+                i
+                for i, s in enumerate(self.tracker.policy_snapshots)
+                if s.episode == snapshot.episode
+            )
             similarity = np.mean(similarity_matrix[episode_idx])
             similarities.append((snapshot.episode, similarity))
 
@@ -632,12 +709,14 @@ class PolicyEvolutionVisualization:
 
         comparison_data = []
         for episode, similarity in similarities:
-            comparison_data.append({
-                'Episode': episode,
-                'Policy Similarity': f"{similarity:.1%}",
-                'Policy Entropy': f"{next(s.policy_entropy for s in compare_snapshots if s.episode == episode):.3f}",
-                'State Coverage': f"{next(s.state_coverage for s in compare_snapshots if s.episode == episode):.1%}"
-            })
+            comparison_data.append(
+                {
+                    "Episode": episode,
+                    "Policy Similarity": f"{similarity:.1%}",
+                    "Policy Entropy": f"{next(s.policy_entropy for s in compare_snapshots if s.episode == episode):.3f}",
+                    "State Coverage": f"{next(s.state_coverage for s in compare_snapshots if s.episode == episode):.1%}",
+                },
+            )
 
         df = pd.DataFrame(comparison_data)
         st.dataframe(df, use_container_width=True)
@@ -647,23 +726,25 @@ class PolicyEvolutionVisualization:
         similarity_scores = [sim for _, sim in similarities]
 
         fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=[f"Episode {ep}" for ep in episodes_list],
-            y=similarity_scores,
-            name='Policy Similarity',
-            hovertemplate='Episode: %{x}<br>Similarity: %{y:.1%}<extra></extra>'
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=[f"Episode {ep}" for ep in episodes_list],
+                y=similarity_scores,
+                name="Policy Similarity",
+                hovertemplate="Episode: %{x}<br>Similarity: %{y:.1%}<extra></extra>",
+            ),
+        )
 
         fig.update_layout(
             title=f"Policy Similarity to Reference Episode {reference_episode}",
             xaxis_title="Comparison Episodes",
             yaxis_title="Similarity Score",
-            height=400
+            height=400,
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
-    def _render_timeline_insights(self, metrics: PolicyEvolutionMetrics):
+    def _render_timeline_insights(self, metrics: PolicyEvolutionMetrics) -> None:
         """Render insights from timeline analysis."""
         st.markdown("**🔍 Timeline Insights**")
 
@@ -671,15 +752,25 @@ class PolicyEvolutionVisualization:
 
         # Convergence insight
         if metrics.convergence_episode:
-            convergence_pct = (metrics.convergence_episode / metrics.total_episodes) * 100
+            convergence_pct = (
+                metrics.convergence_episode / metrics.total_episodes
+            ) * 100
             if convergence_pct < 25:
-                insights.append(f"🚀 **Early Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)")
+                insights.append(
+                    f"🚀 **Early Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)",
+                )
             elif convergence_pct < 50:
-                insights.append(f"✅ **Good Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)")
+                insights.append(
+                    f"✅ **Good Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)",
+                )
             else:
-                insights.append(f"🐌 **Late Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)")
+                insights.append(
+                    f"🐌 **Late Convergence**: Policy converged at episode {metrics.convergence_episode} ({convergence_pct:.1f}% of training)",
+                )
         else:
-            insights.append("⚠️ **No Convergence Detected**: Policy may need more training episodes")
+            insights.append(
+                "⚠️ **No Convergence Detected**: Policy may need more training episodes",
+            )
 
         # Stability insight
         if metrics.stability_score >= 0.95:
@@ -687,21 +778,29 @@ class PolicyEvolutionVisualization:
         elif metrics.stability_score >= 0.8:
             insights.append("✅ **Stable**: Policy demonstrates good stability")
         else:
-            insights.append("⚠️ **Unstable**: Policy shows instability, consider adjusting learning parameters")
+            insights.append(
+                "⚠️ **Unstable**: Policy shows instability, consider adjusting learning parameters",
+            )
 
         # Action diversity insight
         num_actions = len(metrics.dominant_actions)
         if num_actions == 1:
-            insights.append("🎯 **Single Strategy**: Policy converged to one dominant action")
+            insights.append(
+                "🎯 **Single Strategy**: Policy converged to one dominant action",
+            )
         elif num_actions <= 3:
-            insights.append(f"🎯 **Focused Strategy**: Policy uses {num_actions} main actions")
+            insights.append(
+                f"🎯 **Focused Strategy**: Policy uses {num_actions} main actions",
+            )
         else:
-            insights.append(f"🌟 **Diverse Strategy**: Policy utilizes {num_actions} different actions")
+            insights.append(
+                f"🌟 **Diverse Strategy**: Policy utilizes {num_actions} different actions",
+            )
 
         for insight in insights:
             st.markdown(insight)
 
-    def _render_stability_insights(self, metrics: PolicyEvolutionMetrics):
+    def _render_stability_insights(self, metrics: PolicyEvolutionMetrics) -> None:
         """Render insights from stability analysis."""
         st.markdown("**🔍 Stability Insights**")
 
@@ -713,7 +812,7 @@ class PolicyEvolutionVisualization:
             PolicyStability.CONVERGING: "📈 **Progressing**: Policy is moving towards stability",
             PolicyStability.UNSTABLE: "⚠️ **Needs Attention**: Consider reducing learning rate or increasing episodes",
             PolicyStability.OSCILLATING: "🔄 **Oscillating**: Policy may be stuck between strategies",
-            PolicyStability.UNKNOWN: "❓ **Unclear**: More data needed for stability assessment"
+            PolicyStability.UNKNOWN: "❓ **Unclear**: More data needed for stability assessment",
         }
 
         insights.append(status_insights[metrics.stability_status])
@@ -723,24 +822,34 @@ class PolicyEvolutionVisualization:
             avg_changes = np.mean(metrics.policy_changes)
 
             if avg_changes < 5:
-                insights.append(f"✅ **Low Volatility**: Average {avg_changes:.1f} changes per episode")
+                insights.append(
+                    f"✅ **Low Volatility**: Average {avg_changes:.1f} changes per episode",
+                )
             elif avg_changes < 15:
-                insights.append(f"📊 **Moderate Changes**: Average {avg_changes:.1f} changes per episode")
+                insights.append(
+                    f"📊 **Moderate Changes**: Average {avg_changes:.1f} changes per episode",
+                )
             else:
-                insights.append(f"⚠️ **High Volatility**: Average {avg_changes:.1f} changes per episode")
+                insights.append(
+                    f"⚠️ **High Volatility**: Average {avg_changes:.1f} changes per episode",
+                )
 
         # Action preference changes insight
         if metrics.action_preference_changes == 0:
             insights.append("🎯 **Consistent Strategy**: No dominant action changes")
         elif metrics.action_preference_changes <= 3:
-            insights.append(f"📊 **Stable Preferences**: {metrics.action_preference_changes} strategy shifts")
+            insights.append(
+                f"📊 **Stable Preferences**: {metrics.action_preference_changes} strategy shifts",
+            )
         else:
-            insights.append(f"🔄 **Dynamic Strategy**: {metrics.action_preference_changes} major strategy changes")
+            insights.append(
+                f"🔄 **Dynamic Strategy**: {metrics.action_preference_changes} major strategy changes",
+            )
 
         for insight in insights:
             st.markdown(insight)
 
-    def _render_export_section(self, metrics: PolicyEvolutionMetrics):
+    def _render_export_section(self, metrics: PolicyEvolutionMetrics) -> None:
         """Render export functionality for policy analysis."""
         st.subheader("📤 Export Policy Analysis")
 
@@ -766,18 +875,21 @@ class PolicyEvolutionVisualization:
             if st.button("📋 Generate Report"):
                 self._generate_policy_evolution_report(metrics)
 
-    def _generate_policy_evolution_report(self, metrics: PolicyEvolutionMetrics):
+    def _generate_policy_evolution_report(
+        self,
+        metrics: PolicyEvolutionMetrics,
+    ) -> None:
         """Generate comprehensive policy evolution report."""
         report = f"""
 # Policy Evolution Analysis Report
 
-**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Generated**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Executive Summary
 
 - **Training Episodes**: {metrics.total_episodes}
 - **Policy Stability**: {metrics.stability_score:.1%} ({metrics.stability_status.value})
-- **Convergence**: {'Episode ' + str(metrics.convergence_episode) if metrics.convergence_episode else 'Not detected'}
+- **Convergence**: {"Episode " + str(metrics.convergence_episode) if metrics.convergence_episode else "Not detected"}
 - **Action Diversity**: {len(metrics.dominant_actions)} unique actions used
 
 ## Key Findings
@@ -786,10 +898,10 @@ class PolicyEvolutionVisualization:
 The policy achieved a stability score of {metrics.stability_score:.1%}, indicating {metrics.stability_status.value} behavior.
 
 ### Action Usage
-{'The policy shows focused behavior with ' + str(len(metrics.dominant_actions)) + ' main actions used.' if len(metrics.dominant_actions) <= 3 else 'The policy demonstrates diverse action selection across ' + str(len(metrics.dominant_actions)) + ' different actions.'}
+{"The policy shows focused behavior with " + str(len(metrics.dominant_actions)) + " main actions used." if len(metrics.dominant_actions) <= 3 else "The policy demonstrates diverse action selection across " + str(len(metrics.dominant_actions)) + " different actions."}
 
 ### Learning Progress
-{'Convergence was detected at episode ' + str(metrics.convergence_episode) + ', suggesting efficient learning.' if metrics.convergence_episode else 'No clear convergence point was detected, which may indicate the need for extended training.'}
+{"Convergence was detected at episode " + str(metrics.convergence_episode) + ", suggesting efficient learning." if metrics.convergence_episode else "No clear convergence point was detected, which may indicate the need for extended training."}
 
 ## Recommendations
 
@@ -807,7 +919,7 @@ The policy achieved a stability score of {metrics.stability_score:.1%}, indicati
             label="📥 Download Report",
             data=report,
             file_name=f"policy_evolution_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-            mime="text/markdown"
+            mime="text/markdown",
         )
 
 

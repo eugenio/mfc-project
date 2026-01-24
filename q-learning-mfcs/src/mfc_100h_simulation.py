@@ -1,5 +1,4 @@
-"""
-100-Hour MFC Stack Simulation with Q-Learning Control
+"""100-Hour MFC Stack Simulation with Q-Learning Control.
 
 This extended simulation demonstrates:
 - Long-term system stability over 100 hours
@@ -21,9 +20,9 @@ from path_config import get_figure_path, get_simulation_data_path
 
 
 class LongTermMFCStack(MFCStack):
-    """Extended MFC stack with long-term effects"""
+    """Extended MFC stack with long-term effects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Long-term parameters
@@ -34,7 +33,7 @@ class LongTermMFCStack(MFCStack):
 
         # Aging parameters
         self.cell_aging_factors = [1.0] * 5  # Performance degradation over time
-        self.biofilm_thickness = [1.0] * 5   # Affects mass transfer
+        self.biofilm_thickness = [1.0] * 5  # Affects mass transfer
 
         # Environmental conditions
         self.ambient_temperature = 30.0  # °C
@@ -42,31 +41,36 @@ class LongTermMFCStack(MFCStack):
 
         # Extended logging for 100h simulation
         self.hourly_data = {
-            'hour': [],
-            'stack_power': [],
-            'stack_voltage': [],
-            'substrate_level': [],
-            'ph_buffer_level': [],
-            'total_energy': [],
-            'cell_aging': [],
-            'maintenance_events': [],
-            'system_efficiency': []
+            "hour": [],
+            "stack_power": [],
+            "stack_voltage": [],
+            "substrate_level": [],
+            "ph_buffer_level": [],
+            "total_energy": [],
+            "cell_aging": [],
+            "maintenance_events": [],
+            "system_efficiency": [],
         }
 
-    def apply_long_term_effects(self, dt_hours):
-        """Apply long-term degradation and aging effects"""
-
+    def apply_long_term_effects(self, dt_hours) -> None:
+        """Apply long-term degradation and aging effects."""
         # Cell aging (0.1% per hour typical)
         aging_rate = 0.001 * dt_hours
         for i in range(5):
-            self.cell_aging_factors[i] *= (1 - aging_rate)
-            self.cell_aging_factors[i] = max(0.5, self.cell_aging_factors[i])  # Minimum 50% performance
+            self.cell_aging_factors[i] *= 1 - aging_rate
+            self.cell_aging_factors[i] = max(
+                0.5,
+                self.cell_aging_factors[i],
+            )  # Minimum 50% performance
 
         # Biofilm growth (affects mass transfer)
         biofilm_growth_rate = 0.0005 * dt_hours
         for i in range(5):
             self.biofilm_thickness[i] += biofilm_growth_rate
-            self.biofilm_thickness[i] = min(2.0, self.biofilm_thickness[i])  # Maximum 2x thickness
+            self.biofilm_thickness[i] = min(
+                2.0,
+                self.biofilm_thickness[i],
+            )  # Maximum 2x thickness
 
         # Substrate consumption
         substrate_consumption = self.stack_power * dt_hours * 0.1  # 0.1% per Wh
@@ -74,7 +78,11 @@ class LongTermMFCStack(MFCStack):
         self.substrate_tank_level = max(0, self.substrate_tank_level)
 
         # pH buffer consumption
-        ph_buffer_usage = sum(cell.actuators['ph_buffer'].get_value() for cell in self.cells) * dt_hours * 0.05
+        ph_buffer_usage = (
+            sum(cell.actuators["ph_buffer"].get_value() for cell in self.cells)
+            * dt_hours
+            * 0.05
+        )
         self.ph_buffer_tank_level -= ph_buffer_usage
         self.ph_buffer_tank_level = max(0, self.ph_buffer_tank_level)
 
@@ -97,19 +105,17 @@ class LongTermMFCStack(MFCStack):
         self.total_energy_produced += self.stack_power * dt_hours
 
     def check_maintenance_needs(self):
-        """Check if maintenance is needed and perform if required"""
+        """Check if maintenance is needed and perform if required."""
         maintenance_needed = False
 
         # Check for maintenance triggers
         if self.substrate_tank_level < 20:
             maintenance_needed = True
             self.substrate_tank_level = 100.0
-            print(f"  Maintenance: Substrate tank refilled at {self.time/3600:.1f}h")
 
         if self.ph_buffer_tank_level < 20:
             maintenance_needed = True
             self.ph_buffer_tank_level = 100.0
-            print(f"  Maintenance: pH buffer tank refilled at {self.time/3600:.1f}h")
 
         # Cell cleaning (every 24 hours)
         if self.time % (24 * 3600) < 10:  # Once per day
@@ -118,78 +124,92 @@ class LongTermMFCStack(MFCStack):
                     self.biofilm_thickness[i] = 1.0
                     maintenance_needed = True
             if maintenance_needed:
-                print(f"  Maintenance: Cell cleaning performed at {self.time/3600:.1f}h")
+                pass
 
         if maintenance_needed:
             self.maintenance_cycles += 1
 
         return maintenance_needed
 
-    def log_hourly_data(self):
-        """Log data every hour"""
+    def log_hourly_data(self) -> None:
+        """Log data every hour."""
         if self.time % 3600 < 10:  # Every hour
             current_hour = self.time / 3600
 
-            self.hourly_data['hour'].append(current_hour)
-            self.hourly_data['stack_power'].append(self.stack_power)
-            self.hourly_data['stack_voltage'].append(self.stack_voltage)
-            self.hourly_data['substrate_level'].append(self.substrate_tank_level)
-            self.hourly_data['ph_buffer_level'].append(self.ph_buffer_tank_level)
-            self.hourly_data['total_energy'].append(self.total_energy_produced)
-            self.hourly_data['cell_aging'].append(np.mean(self.cell_aging_factors))
-            self.hourly_data['maintenance_events'].append(self.maintenance_cycles)
+            self.hourly_data["hour"].append(current_hour)
+            self.hourly_data["stack_power"].append(self.stack_power)
+            self.hourly_data["stack_voltage"].append(self.stack_voltage)
+            self.hourly_data["substrate_level"].append(self.substrate_tank_level)
+            self.hourly_data["ph_buffer_level"].append(self.ph_buffer_tank_level)
+            self.hourly_data["total_energy"].append(self.total_energy_produced)
+            self.hourly_data["cell_aging"].append(np.mean(self.cell_aging_factors))
+            self.hourly_data["maintenance_events"].append(self.maintenance_cycles)
 
             # Calculate system efficiency
             theoretical_max_power = 5 * 1.0  # 5 cells × 1W each
-            efficiency = self.stack_power / theoretical_max_power if theoretical_max_power > 0 else 0
-            self.hourly_data['system_efficiency'].append(efficiency)
+            efficiency = (
+                self.stack_power / theoretical_max_power
+                if theoretical_max_power > 0
+                else 0
+            )
+            self.hourly_data["system_efficiency"].append(efficiency)
+
 
 class LongTermController(MFCStackQLearningController):
-    """Extended controller with long-term learning capabilities"""
+    """Extended controller with long-term learning capabilities."""
 
-    def __init__(self, stack):
+    def __init__(self, stack) -> None:
         super().__init__(stack)
 
         # Long-term learning parameters
         self.learning_phases = {
-            'exploration': {'duration': 24*3600, 'epsilon': 0.5},      # First 24h: high exploration
-            'optimization': {'duration': 48*3600, 'epsilon': 0.1},     # Next 48h: optimization
-            'maintenance': {'duration': 28*3600, 'epsilon': 0.05}      # Last 28h: maintenance mode
+            "exploration": {
+                "duration": 24 * 3600,
+                "epsilon": 0.5,
+            },  # First 24h: high exploration
+            "optimization": {
+                "duration": 48 * 3600,
+                "epsilon": 0.1,
+            },  # Next 48h: optimization
+            "maintenance": {
+                "duration": 28 * 3600,
+                "epsilon": 0.05,
+            },  # Last 28h: maintenance mode
         }
 
-        self.current_phase = 'exploration'
+        self.current_phase = "exploration"
         self.phase_start_time = 0
 
         # Performance tracking
-        self.performance_windows = {
-            'hourly': [],
-            'daily': [],
-            'weekly': []
-        }
+        self.performance_windows = {"hourly": [], "daily": [], "weekly": []}
 
         # Adaptive parameters
         self.substrate_management_learned = False
         self.ph_optimization_learned = False
         self.load_balancing_learned = False
 
-    def update_learning_phase(self):
-        """Update learning phase based on elapsed time"""
+    def update_learning_phase(self) -> None:
+        """Update learning phase based on elapsed time."""
         elapsed_time = self.stack.time - self.phase_start_time
 
-        if self.current_phase == 'exploration' and elapsed_time > self.learning_phases['exploration']['duration']:
-            self.current_phase = 'optimization'
+        if (
+            self.current_phase == "exploration"
+            and elapsed_time > self.learning_phases["exploration"]["duration"]
+        ):
+            self.current_phase = "optimization"
             self.phase_start_time = self.stack.time
-            self.epsilon = self.learning_phases['optimization']['epsilon']
-            print(f"  Learning phase: Switched to optimization at {self.stack.time/3600:.1f}h")
+            self.epsilon = self.learning_phases["optimization"]["epsilon"]
 
-        elif self.current_phase == 'optimization' and elapsed_time > self.learning_phases['optimization']['duration']:
-            self.current_phase = 'maintenance'
+        elif (
+            self.current_phase == "optimization"
+            and elapsed_time > self.learning_phases["optimization"]["duration"]
+        ):
+            self.current_phase = "maintenance"
             self.phase_start_time = self.stack.time
-            self.epsilon = self.learning_phases['maintenance']['epsilon']
-            print(f"  Learning phase: Switched to maintenance at {self.stack.time/3600:.1f}h")
+            self.epsilon = self.learning_phases["maintenance"]["epsilon"]
 
     def calculate_long_term_reward(self, state, actions):
-        """Enhanced reward function for long-term optimization"""
+        """Enhanced reward function for long-term optimization."""
         base_reward = super().calculate_reward(state, actions)
 
         # Long-term bonuses
@@ -215,8 +235,7 @@ class LongTermController(MFCStackQLearningController):
         return base_reward + sustainability_bonus
 
     def train_step(self):
-        """Enhanced training step with long-term considerations"""
-
+        """Enhanced training step with long-term considerations."""
         # Update learning phase
         self.update_learning_phase()
 
@@ -227,7 +246,7 @@ class LongTermController(MFCStackQLearningController):
         actions = self.get_action(current_state)
 
         # Apply long-term action modifications
-        if self.current_phase == 'maintenance':
+        if self.current_phase == "maintenance":
             # Conservative actions in maintenance phase
             for i in range(5):
                 actions[i * 3] = min(actions[i * 3], 0.7)  # Limit duty cycle
@@ -257,21 +276,15 @@ class LongTermController(MFCStackQLearningController):
         self.stack.log_hourly_data()
 
         # Update performance tracking
-        self.performance_windows['hourly'].append(self.stack.stack_power)
-        if len(self.performance_windows['hourly']) > 3600:  # Keep last hour
-            self.performance_windows['hourly'].pop(0)
+        self.performance_windows["hourly"].append(self.stack.stack_power)
+        if len(self.performance_windows["hourly"]) > 3600:  # Keep last hour
+            self.performance_windows["hourly"].pop(0)
 
         return reward, self.stack.stack_power, maintenance_performed
 
+
 def run_100h_simulation():
-    """Run 100-hour MFC stack simulation"""
-
-    print("=== 100-Hour MFC Stack Simulation ===")
-    print("Duration: 100 hours (360,000 seconds)")
-    print("Features: Long-term learning, aging effects, maintenance cycles")
-    print("Logging: Hourly data points, maintenance events, performance metrics")
-    print()
-
+    """Run 100-hour MFC stack simulation."""
     # Initialize system
     stack = LongTermMFCStack()
     controller = LongTermController(stack)
@@ -285,21 +298,16 @@ def run_100h_simulation():
     progress_intervals = [10, 25, 50, 75, 90, 95, 99]  # Hours to report progress
     next_progress_idx = 0
 
-    print("Starting 100-hour simulation...")
-    print(f"Total steps: {total_steps:,}")
-    print(f"Expected completion time: ~{total_steps/10000:.0f} seconds")
-    print()
-
     # Performance metrics
     metrics = {
-        'start_time': time.time(),
-        'steps_completed': 0,
-        'maintenance_events': 0,
-        'total_energy': 0.0,
-        'avg_power': 0.0,
-        'max_power': 0.0,
-        'min_power': float('inf'),
-        'power_history': []
+        "start_time": time.time(),
+        "steps_completed": 0,
+        "maintenance_events": 0,
+        "total_energy": 0.0,
+        "avg_power": 0.0,
+        "max_power": 0.0,
+        "min_power": float("inf"),
+        "power_history": [],
     }
 
     # Main simulation loop
@@ -309,237 +317,180 @@ def run_100h_simulation():
             reward, power, maintenance = controller.train_step()
 
             # Update metrics
-            metrics['steps_completed'] = step + 1
-            metrics['total_energy'] = stack.total_energy_produced
-            metrics['power_history'].append(power)
-            metrics['max_power'] = max(metrics['max_power'], power)
-            metrics['min_power'] = min(metrics['min_power'], power)
+            metrics["steps_completed"] = step + 1
+            metrics["total_energy"] = stack.total_energy_produced
+            metrics["power_history"].append(power)
+            metrics["max_power"] = max(metrics["max_power"], power)
+            metrics["min_power"] = min(metrics["min_power"], power)
 
             if maintenance:
-                metrics['maintenance_events'] += 1
+                metrics["maintenance_events"] += 1
 
             # Progress reporting
             current_hour = stack.time / 3600
-            if (next_progress_idx < len(progress_intervals) and
-                current_hour >= progress_intervals[next_progress_idx]):
-
-                elapsed_time = time.time() - metrics['start_time']
-                avg_power = np.mean(metrics['power_history'][-3600:]) if len(metrics['power_history']) >= 3600 else np.mean(metrics['power_history'])
-
-                print(f"Progress: {progress_intervals[next_progress_idx]}h ({current_hour:.1f}h)")
-                print(f"  Elapsed real time: {elapsed_time:.1f}s")
-                print(f"  Current power: {power:.3f}W")
-                print(f"  Average power (last hour): {avg_power:.3f}W")
-                print(f"  Total energy: {stack.total_energy_produced:.2f}Wh")
-                print(f"  Maintenance events: {metrics['maintenance_events']}")
-                print(f"  Learning phase: {controller.current_phase}")
-                print(f"  Substrate level: {stack.substrate_tank_level:.1f}%")
-                print(f"  pH buffer level: {stack.ph_buffer_tank_level:.1f}%")
-                print(f"  Q-table size: {len(controller.q_table)}")
-                print()
+            if (
+                next_progress_idx < len(progress_intervals)
+                and current_hour >= progress_intervals[next_progress_idx]
+            ):
+                time.time() - metrics["start_time"]
+                (
+                    np.mean(metrics["power_history"][-3600:])
+                    if len(metrics["power_history"]) >= 3600
+                    else np.mean(metrics["power_history"])
+                )
 
                 next_progress_idx += 1
 
             # Memory management - keep only recent data
-            if len(metrics['power_history']) > 10000:
-                metrics['power_history'] = metrics['power_history'][-5000:]
+            if len(metrics["power_history"]) > 10000:
+                metrics["power_history"] = metrics["power_history"][-5000:]
 
     except KeyboardInterrupt:
-        print(f"\nSimulation interrupted at {stack.time/3600:.1f} hours")
+        pass
 
     # Final analysis
-    simulation_time_actual = time.time() - metrics['start_time']
-    metrics['avg_power'] = np.mean(metrics['power_history'])
+    time.time() - metrics["start_time"]
+    metrics["avg_power"] = np.mean(metrics["power_history"])
 
-    print("=== 100-Hour Simulation Complete ===")
-    print(f"Real time elapsed: {simulation_time_actual:.1f} seconds")
-    print(f"Steps completed: {metrics['steps_completed']:,}")
-    print(f"Final simulation time: {stack.time/3600:.1f} hours")
-    print()
-
-    print("=== Performance Summary ===")
-    print(f"Total energy produced: {stack.total_energy_produced:.2f} Wh")
-    print(f"Average power: {metrics['avg_power']:.3f} W")
-    print(f"Maximum power: {metrics['max_power']:.3f} W")
-    print(f"Minimum power: {metrics['min_power']:.3f} W")
-    print(f"Power stability: {1 - np.std(metrics['power_history'])/max(0.001, metrics['avg_power']):.3f}")
-    print()
-
-    print("=== System Health ===")
-    final_health = stack.check_system_health()
-    print(f"Active cells: {5 - final_health['reversed_cells']}/5")
-    print(f"Average cell aging: {np.mean(stack.cell_aging_factors):.3f}")
-    print(f"Substrate remaining: {stack.substrate_tank_level:.1f}%")
-    print(f"pH buffer remaining: {stack.ph_buffer_tank_level:.1f}%")
-    print(f"Maintenance cycles: {stack.maintenance_cycles}")
-    print()
-
-    print("=== Learning Performance ===")
-    print(f"Final Q-table size: {len(controller.q_table)} states")
-    print(f"Final exploration rate: {controller.epsilon:.4f}")
-    print(f"Learning phase: {controller.current_phase}")
-    print(f"Average reward (last 1000 steps): {np.mean(list(controller.reward_history)[-1000:]):.3f}")
-    print()
+    stack.check_system_health()
 
     # Individual cell analysis
-    print("=== Individual Cell Analysis ===")
     for i, cell in enumerate(stack.cells):
-        readings = cell.get_sensor_readings()
+        cell.get_sensor_readings()
         power = cell.get_power()
-        aging = stack.cell_aging_factors[i]
-        biofilm = stack.biofilm_thickness[i]
-
-        print(f"Cell {i}:")
-        print(f"  Power: {power:.3f}W")
-        print(f"  Voltage: {readings['voltage']:.3f}V")
-        print(f"  pH: {readings['pH']:.1f}")
-        print(f"  Acetate: {readings['acetate']:.3f} mol/m³")
-        print(f"  Aging factor: {aging:.3f}")
-        print(f"  Biofilm thickness: {biofilm:.2f}x")
-        print(f"  Status: {'REVERSED' if cell.is_reversed else 'NORMAL'}")
-        print()
+        stack.cell_aging_factors[i]
+        stack.biofilm_thickness[i]
 
     # Save results
     save_simulation_results(stack, controller, metrics)
 
     return stack, controller, metrics
 
-def save_simulation_results(stack, controller, metrics):
-    """Save simulation results to files"""
 
-    print("=== Saving Results ===")
-
+def save_simulation_results(stack, controller, metrics) -> None:
+    """Save simulation results to files."""
     # Save hourly data
     results = {
-        'simulation_info': {
-            'duration_hours': 100,
-            'total_steps': metrics['steps_completed'],
-            'real_time_seconds': time.time() - metrics['start_time'],
-            'timestamp': datetime.now().isoformat()
+        "simulation_info": {
+            "duration_hours": 100,
+            "total_steps": metrics["steps_completed"],
+            "real_time_seconds": time.time() - metrics["start_time"],
+            "timestamp": datetime.now().isoformat(),
         },
-        'performance_metrics': {
-            'total_energy_wh': stack.total_energy_produced,
-            'average_power_w': metrics['avg_power'],
-            'max_power_w': metrics['max_power'],
-            'min_power_w': metrics['min_power'],
-            'maintenance_events': stack.maintenance_cycles,
-            'final_q_table_size': len(controller.q_table)
+        "performance_metrics": {
+            "total_energy_wh": stack.total_energy_produced,
+            "average_power_w": metrics["avg_power"],
+            "max_power_w": metrics["max_power"],
+            "min_power_w": metrics["min_power"],
+            "maintenance_events": stack.maintenance_cycles,
+            "final_q_table_size": len(controller.q_table),
         },
-        'hourly_data': stack.hourly_data,
-        'final_cell_states': []
+        "hourly_data": stack.hourly_data,
+        "final_cell_states": [],
     }
 
     # Add final cell states
     for i, cell in enumerate(stack.cells):
         readings = cell.get_sensor_readings()
-        results['final_cell_states'].append({
-            'cell_id': i,
-            'power': cell.get_power(),
-            'voltage': readings['voltage'],
-            'pH': readings['pH'],
-            'acetate': readings['acetate'],
-            'aging_factor': stack.cell_aging_factors[i],
-            'biofilm_thickness': stack.biofilm_thickness[i],
-            'reversed': cell.is_reversed
-        })
+        results["final_cell_states"].append(
+            {
+                "cell_id": i,
+                "power": cell.get_power(),
+                "voltage": readings["voltage"],
+                "pH": readings["pH"],
+                "acetate": readings["acetate"],
+                "aging_factor": stack.cell_aging_factors[i],
+                "biofilm_thickness": stack.biofilm_thickness[i],
+                "reversed": cell.is_reversed,
+            },
+        )
 
     # Save to JSON
-    with open(get_simulation_data_path('mfc_100h_results.json'), 'w') as f:
+    with open(get_simulation_data_path("mfc_100h_results.json"), "w") as f:
         json.dump(results, f, indent=2)
-
-    print(f"Results saved to '{get_simulation_data_path('mfc_100h_results.json')}'")
 
     # Generate plots
     generate_100h_plots(stack, controller, metrics)
 
-def generate_100h_plots(stack, controller, metrics):
-    """Generate plots for 100-hour simulation"""
 
-    print("Generating plots...")
+def generate_100h_plots(stack, controller, metrics) -> None:
+    """Generate plots for 100-hour simulation."""
+    import matplotlib as mpl
 
-    import matplotlib
-    matplotlib.use('Agg')
+    mpl.use("Agg")
 
     fig, axes = plt.subplots(3, 2, figsize=(16, 12))
 
     # 1. Power evolution over 100 hours
     ax1 = axes[0, 0]
-    hours = stack.hourly_data['hour']
-    power = stack.hourly_data['stack_power']
-    ax1.plot(hours, power, 'b-', linewidth=1)
-    ax1.set_xlabel('Time (hours)')
-    ax1.set_ylabel('Stack Power (W)')
-    ax1.set_title('Power Evolution Over 100 Hours')
+    hours = stack.hourly_data["hour"]
+    power = stack.hourly_data["stack_power"]
+    ax1.plot(hours, power, "b-", linewidth=1)
+    ax1.set_xlabel("Time (hours)")
+    ax1.set_ylabel("Stack Power (W)")
+    ax1.set_title("Power Evolution Over 100 Hours")
     ax1.grid(True)
 
     # 2. Cumulative energy production
     ax2 = axes[0, 1]
-    energy = stack.hourly_data['total_energy']
-    ax2.plot(hours, energy, 'g-', linewidth=2)
-    ax2.set_xlabel('Time (hours)')
-    ax2.set_ylabel('Cumulative Energy (Wh)')
-    ax2.set_title('Total Energy Production')
+    energy = stack.hourly_data["total_energy"]
+    ax2.plot(hours, energy, "g-", linewidth=2)
+    ax2.set_xlabel("Time (hours)")
+    ax2.set_ylabel("Cumulative Energy (Wh)")
+    ax2.set_title("Total Energy Production")
     ax2.grid(True)
 
     # 3. System degradation
     ax3 = axes[1, 0]
-    aging = stack.hourly_data['cell_aging']
-    ax3.plot(hours, aging, 'r-', linewidth=2)
-    ax3.set_xlabel('Time (hours)')
-    ax3.set_ylabel('Average Cell Performance')
-    ax3.set_title('System Aging Over Time')
+    aging = stack.hourly_data["cell_aging"]
+    ax3.plot(hours, aging, "r-", linewidth=2)
+    ax3.set_xlabel("Time (hours)")
+    ax3.set_ylabel("Average Cell Performance")
+    ax3.set_title("System Aging Over Time")
     ax3.grid(True)
 
     # 4. Resource levels
     ax4 = axes[1, 1]
-    substrate = stack.hourly_data['substrate_level']
-    ph_buffer = stack.hourly_data['ph_buffer_level']
-    ax4.plot(hours, substrate, 'b-', label='Substrate', linewidth=2)
-    ax4.plot(hours, ph_buffer, 'r-', label='pH Buffer', linewidth=2)
-    ax4.set_xlabel('Time (hours)')
-    ax4.set_ylabel('Tank Level (%)')
-    ax4.set_title('Resource Consumption')
+    substrate = stack.hourly_data["substrate_level"]
+    ph_buffer = stack.hourly_data["ph_buffer_level"]
+    ax4.plot(hours, substrate, "b-", label="Substrate", linewidth=2)
+    ax4.plot(hours, ph_buffer, "r-", label="pH Buffer", linewidth=2)
+    ax4.set_xlabel("Time (hours)")
+    ax4.set_ylabel("Tank Level (%)")
+    ax4.set_title("Resource Consumption")
     ax4.legend()
     ax4.grid(True)
 
     # 5. System efficiency
     ax5 = axes[2, 0]
-    efficiency = stack.hourly_data['system_efficiency']
-    ax5.plot(hours, efficiency, 'purple', linewidth=2)
-    ax5.set_xlabel('Time (hours)')
-    ax5.set_ylabel('System Efficiency')
-    ax5.set_title('Efficiency Over Time')
+    efficiency = stack.hourly_data["system_efficiency"]
+    ax5.plot(hours, efficiency, "purple", linewidth=2)
+    ax5.set_xlabel("Time (hours)")
+    ax5.set_ylabel("System Efficiency")
+    ax5.set_title("Efficiency Over Time")
     ax5.grid(True)
 
     # 6. Maintenance events
     ax6 = axes[2, 1]
-    maintenance = stack.hourly_data['maintenance_events']
-    ax6.step(hours, maintenance, 'orange', linewidth=2, where='post')
-    ax6.set_xlabel('Time (hours)')
-    ax6.set_ylabel('Cumulative Maintenance Events')
-    ax6.set_title('Maintenance Schedule')
+    maintenance = stack.hourly_data["maintenance_events"]
+    ax6.step(hours, maintenance, "orange", linewidth=2, where="post")
+    ax6.set_xlabel("Time (hours)")
+    ax6.set_ylabel("Cumulative Maintenance Events")
+    ax6.set_title("Maintenance Schedule")
     ax6.grid(True)
 
     plt.tight_layout()
-    plt.savefig(get_figure_path('mfc_100h_analysis.png'), dpi=300, bbox_inches='tight')
-    print("Plots saved to 'mfc_100h_analysis.png'")
+    plt.savefig(get_figure_path("mfc_100h_analysis.png"), dpi=300, bbox_inches="tight")
+
 
 if __name__ == "__main__":
-    print("Starting 100-hour MFC stack simulation...")
-    print("This will take several minutes to complete.")
-    print("Progress will be reported at regular intervals.")
-    print()
-
     try:
         stack, controller, metrics = run_100h_simulation()
-        print("\n=== 100-Hour Simulation Successfully Completed ===")
 
     except KeyboardInterrupt:
-        print("\n=== Simulation Interrupted ===")
-        print("Partial results may be available in saved files.")
+        pass
 
-    except Exception as e:
-        print("\n=== Simulation Error ===")
-        print(f"Error: {e}")
+    except Exception:
         import traceback
+
         traceback.print_exc()

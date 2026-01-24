@@ -1,5 +1,4 @@
-"""
-Real-Time Controller with Timing Constraints
+"""Real-Time Controller with Timing Constraints.
 
 This module implements a real-time control system for MFC Q-learning execution
 with strict timing constraints, interrupt handling, and deterministic behavior.
@@ -21,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerMode(Enum):
-    """Controller operating modes"""
+    """Controller operating modes."""
+
     MANUAL = "manual"
     AUTOMATIC = "automatic"
     LEARNING = "learning"
@@ -30,37 +30,40 @@ class ControllerMode(Enum):
 
 
 class TaskPriority(Enum):
-    """Task priority levels"""
+    """Task priority levels."""
+
     CRITICAL = 0  # Safety-critical tasks
-    HIGH = 1      # Control loops
-    MEDIUM = 2    # Data logging
-    LOW = 3       # Diagnostics
+    HIGH = 1  # Control loops
+    MEDIUM = 2  # Data logging
+    LOW = 3  # Diagnostics
 
 
 @dataclass
 class TimingConstraints:
-    """Timing constraints for real-time control"""
+    """Timing constraints for real-time control."""
+
     control_loop_period_ms: float  # Main control loop period
-    max_jitter_ms: float          # Maximum allowed timing jitter
+    max_jitter_ms: float  # Maximum allowed timing jitter
     deadline_violation_limit: int  # Max allowed deadline violations per hour
     interrupt_response_time_us: float  # Maximum interrupt response time
     context_switch_time_us: float  # Time for task context switching
     worst_case_execution_time_ms: float  # WCET for critical path
 
     # Safety timeouts
-    watchdog_timeout_ms: float     # Hardware watchdog timeout
+    watchdog_timeout_ms: float  # Hardware watchdog timeout
     safety_stop_timeout_ms: float  # Emergency stop response time
-    sensor_timeout_ms: float       # Sensor data timeout
+    sensor_timeout_ms: float  # Sensor data timeout
 
 
 @dataclass
 class ControlTask:
-    """Real-time control task definition"""
+    """Real-time control task definition."""
+
     task_id: str
     priority: TaskPriority
     period_ms: float
     deadline_ms: float
-    wcet_ms: float              # Worst Case Execution Time
+    wcet_ms: float  # Worst Case Execution Time
     callback: Callable[[], Any]
     last_execution: float = 0.0
     next_execution: float = 0.0
@@ -71,13 +74,14 @@ class ControlTask:
 
 @dataclass
 class ControlLoop:
-    """Control loop configuration"""
+    """Control loop configuration."""
+
     loop_id: str
-    input_channels: list[int]   # ADC channels for inputs
+    input_channels: list[int]  # ADC channels for inputs
     output_channels: list[int]  # DAC channels for outputs
-    control_algorithm: str      # PID, Q-learning, etc.
+    control_algorithm: str  # PID, Q-learning, etc.
     setpoint: float
-    gains: dict[str, float]     # Control gains (Kp, Ki, Kd, etc.)
+    gains: dict[str, float]  # Control gains (Kp, Ki, Kd, etc.)
     limits: dict[str, tuple[float, float]]  # Output limits
     enabled: bool = True
 
@@ -89,7 +93,8 @@ class ControlLoop:
 
 @dataclass
 class ControllerMeasurement:
-    """Real-time controller measurement"""
+    """Real-time controller measurement."""
+
     timestamp: float
     mode: ControllerMode
     cpu_utilization_pct: float
@@ -105,14 +110,13 @@ class ControllerMeasurement:
 
 
 class RealTimeController:
-    """
-    Real-time controller for MFC Q-learning execution
+    """Real-time controller for MFC Q-learning execution.
 
     Provides deterministic control loops, interrupt handling, and timing constraints
     for executing trained Q-learning models in real-time MFC control applications.
     """
 
-    def __init__(self, timing_constraints: TimingConstraints):
+    def __init__(self, timing_constraints: TimingConstraints) -> None:
         self.timing_constraints = timing_constraints
         self.mode = ControllerMode.MANUAL
 
@@ -152,32 +156,34 @@ class RealTimeController:
         # Initialize timing analysis
         self.timing_analyzer = TimingAnalyzer()
 
-    def add_task(self, task: ControlTask):
-        """Add a real-time task to the scheduler"""
+    def add_task(self, task: ControlTask) -> None:
+        """Add a real-time task to the scheduler."""
         with self.control_lock:
             self.tasks[task.task_id] = task
             task.next_execution = time.time() + (task.period_ms / 1000.0)
             logger.info(f"Added task {task.task_id} with period {task.period_ms}ms")
 
-    def remove_task(self, task_id: str):
-        """Remove a task from the scheduler"""
+    def remove_task(self, task_id: str) -> None:
+        """Remove a task from the scheduler."""
         with self.control_lock:
             if task_id in self.tasks:
                 del self.tasks[task_id]
                 logger.info(f"Removed task {task_id}")
 
-    def add_control_loop(self, loop: ControlLoop):
-        """Add a control loop"""
+    def add_control_loop(self, loop: ControlLoop) -> None:
+        """Add a control loop."""
         with self.control_lock:
             self.control_loops[loop.loop_id] = loop
             logger.info(f"Added control loop {loop.loop_id}")
 
-    def set_mode(self, mode: ControllerMode):
-        """Set controller operating mode"""
+    def set_mode(self, mode: ControllerMode) -> None:
+        """Set controller operating mode."""
         with self.control_lock:
             old_mode = self.mode
             self.mode = mode
-            logger.info(f"Controller mode changed from {old_mode.value} to {mode.value}")
+            logger.info(
+                f"Controller mode changed from {old_mode.value} to {mode.value}",
+            )
 
             # Mode-specific initialization
             if mode == ControllerMode.SAFETY:
@@ -185,14 +191,17 @@ class RealTimeController:
             elif mode == ControllerMode.LEARNING:
                 self._enter_learning_mode()
 
-    def start(self):
-        """Start the real-time controller"""
+    def start(self) -> None:
+        """Start the real-time controller."""
         if self.running:
             logger.warning("Controller already running")
             return
 
         self.running = True
-        self.scheduler_thread = threading.Thread(target=self._scheduler_loop, daemon=True)
+        self.scheduler_thread = threading.Thread(
+            target=self._scheduler_loop,
+            daemon=True,
+        )
         self.scheduler_thread.start()
 
         # Start watchdog
@@ -201,8 +210,8 @@ class RealTimeController:
 
         logger.info("Real-time controller started")
 
-    def stop(self):
-        """Stop the real-time controller"""
+    def stop(self) -> None:
+        """Stop the real-time controller."""
         self.running = False
         if self.scheduler_thread:
             self.scheduler_thread.join(timeout=1.0)
@@ -211,8 +220,8 @@ class RealTimeController:
 
         logger.info("Real-time controller stopped")
 
-    def _scheduler_loop(self):
-        """Main scheduler loop with real-time constraints"""
+    def _scheduler_loop(self) -> None:
+        """Main scheduler loop with real-time constraints."""
         last_loop_time = time.time()
         target_period = self.timing_constraints.control_loop_period_ms / 1000.0
 
@@ -251,8 +260,11 @@ class RealTimeController:
                 self.loop_execution_times.append(execution_time * 1000)  # Convert to ms
 
                 # Check worst-case execution time
-                if execution_time * 1000 > self.timing_constraints.worst_case_execution_time_ms:
-                    logger.warning(f"WCET violation: {execution_time*1000:.2f}ms")
+                if (
+                    execution_time * 1000
+                    > self.timing_constraints.worst_case_execution_time_ms
+                ):
+                    logger.warning(f"WCET violation: {execution_time * 1000:.2f}ms")
 
                 last_loop_time = loop_start
 
@@ -261,14 +273,14 @@ class RealTimeController:
                 if sleep_time > 0:
                     time.sleep(sleep_time)
                 else:
-                    logger.warning(f"Control loop overrun: {-sleep_time*1000:.2f}ms")
+                    logger.warning(f"Control loop overrun: {-sleep_time * 1000:.2f}ms")
 
             except Exception as e:
-                logger.error(f"Scheduler loop error: {e}")
+                logger.exception(f"Scheduler loop error: {e}")
                 self._handle_controller_fault("SCHEDULER_ERROR")
 
-    def _execute_scheduled_tasks(self, current_time: float):
-        """Execute tasks based on their scheduling requirements"""
+    def _execute_scheduled_tasks(self, current_time: float) -> None:
+        """Execute tasks based on their scheduling requirements."""
         tasks_to_execute = []
 
         # Find tasks ready for execution
@@ -287,10 +299,14 @@ class RealTimeController:
             try:
                 # Check if we have time to execute this task
                 time_since_loop_start = task_start - current_time
-                remaining_time = (self.timing_constraints.control_loop_period_ms / 1000.0) - time_since_loop_start
+                remaining_time = (
+                    self.timing_constraints.control_loop_period_ms / 1000.0
+                ) - time_since_loop_start
 
                 if remaining_time < task.wcet_ms / 1000.0:
-                    logger.warning(f"Skipping task {task.task_id} due to insufficient time")
+                    logger.warning(
+                        f"Skipping task {task.task_id} due to insufficient time",
+                    )
                     continue
 
                 # Execute task
@@ -305,7 +321,9 @@ class RealTimeController:
                 # Check deadline
                 if execution_time > task.deadline_ms:
                     task.deadline_violations += 1
-                    logger.warning(f"Task {task.task_id} deadline violation: {execution_time:.2f}ms > {task.deadline_ms}ms")
+                    logger.warning(
+                        f"Task {task.task_id} deadline violation: {execution_time:.2f}ms > {task.deadline_ms}ms",
+                    )
 
                 # Schedule next execution
                 task.last_execution = task_start
@@ -315,11 +333,11 @@ class RealTimeController:
                 self.timing_analyzer.record_task_execution(task.task_id, execution_time)
 
             except Exception as e:
-                logger.error(f"Task {task.task_id} execution error: {e}")
+                logger.exception(f"Task {task.task_id} execution error: {e}")
                 task.deadline_violations += 1
 
-    def _execute_control_loops(self):
-        """Execute active control loops"""
+    def _execute_control_loops(self) -> None:
+        """Execute active control loops."""
         with self.control_lock:
             for loop_id, loop in self.control_loops.items():
                 if not loop.enabled:
@@ -341,12 +359,14 @@ class RealTimeController:
                     elif loop.control_algorithm == "Q-learning":
                         output = self._execute_qlearning_control(loop, inputs)
                     else:
-                        logger.error(f"Unknown control algorithm: {loop.control_algorithm}")
+                        logger.error(
+                            f"Unknown control algorithm: {loop.control_algorithm}",
+                        )
                         continue
 
                     # Apply output limits
-                    if 'output' in loop.limits:
-                        min_out, max_out = loop.limits['output']
+                    if "output" in loop.limits:
+                        min_out, max_out = loop.limits["output"]
                         output = np.clip(output, min_out, max_out)
 
                     loop.output_value = output
@@ -356,22 +376,26 @@ class RealTimeController:
                         self.actuator_outputs[channel] = output
 
                 except Exception as e:
-                    logger.error(f"Control loop {loop_id} execution error: {e}")
+                    logger.exception(f"Control loop {loop_id} execution error: {e}")
                     self._handle_controller_fault(f"CONTROL_LOOP_ERROR_{loop_id}")
 
-    def _execute_pid_control(self, loop: ControlLoop, inputs: dict[int, float]) -> float:
-        """Execute PID control algorithm"""
+    def _execute_pid_control(
+        self,
+        loop: ControlLoop,
+        inputs: dict[int, float],
+    ) -> float:
+        """Execute PID control algorithm."""
         # Get process variable (assume first input channel)
         if not inputs:
             return 0.0
 
-        pv = list(inputs.values())[0]
+        pv = next(iter(inputs.values()))
         error = loop.setpoint - pv
 
         # PID calculation
-        kp = loop.gains.get('kp', 1.0)
-        ki = loop.gains.get('ki', 0.0)
-        kd = loop.gains.get('kd', 0.0)
+        kp = loop.gains.get("kp", 1.0)
+        ki = loop.gains.get("ki", 0.0)
+        kd = loop.gains.get("kd", 0.0)
 
         # Proportional term
         p_term = kp * error
@@ -381,8 +405,8 @@ class RealTimeController:
         loop.error_integral += error * dt
 
         # Integral windup protection
-        if 'integral' in loop.limits:
-            min_int, max_int = loop.limits['integral']
+        if "integral" in loop.limits:
+            min_int, max_int = loop.limits["integral"]
             loop.error_integral = np.clip(loop.error_integral, min_int, max_int)
 
         i_term = ki * loop.error_integral
@@ -392,16 +416,22 @@ class RealTimeController:
         loop.previous_error = error
 
         # Derivative filtering (optional)
-        alpha = loop.gains.get('derivative_filter', 1.0)
-        d_term = alpha * d_term + (1 - alpha) * getattr(loop, '_filtered_derivative', 0.0)
+        alpha = loop.gains.get("derivative_filter", 1.0)
+        d_term = alpha * d_term + (1 - alpha) * getattr(
+            loop,
+            "_filtered_derivative",
+            0.0,
+        )
         loop._filtered_derivative = d_term
 
-        output = p_term + i_term + d_term
+        return p_term + i_term + d_term
 
-        return output
-
-    def _execute_qlearning_control(self, loop: ControlLoop, inputs: dict[int, float]) -> float:
-        """Execute Q-learning control algorithm"""
+    def _execute_qlearning_control(
+        self,
+        loop: ControlLoop,
+        inputs: dict[int, float],
+    ) -> float:
+        """Execute Q-learning control algorithm."""
         # This would interface with the ModelInferenceEngine
         # For now, implement a simple placeholder
 
@@ -412,25 +442,24 @@ class RealTimeController:
         if not inputs:
             return 0.0
 
-        pv = list(inputs.values())[0]
+        pv = next(iter(inputs.values()))
         error = loop.setpoint - pv
 
         # Simple decision logic (would be replaced by Q-learning inference)
         if abs(error) < 0.1:
             return 0.0  # No action needed
-        elif error > 0:
+        if error > 0:
             return 1.0  # Increase output
-        else:
-            return -1.0  # Decrease output
+        return -1.0  # Decrease output
 
-    def _handle_timing_violation(self):
-        """Handle timing constraint violations"""
+    def _handle_timing_violation(self) -> None:
+        """Handle timing constraint violations."""
         if self.deadline_violations > self.timing_constraints.deadline_violation_limit:
             logger.critical("Too many deadline violations - entering safety mode")
             self.set_mode(ControllerMode.SAFETY)
 
-    def _handle_controller_fault(self, fault_code: str):
-        """Handle controller faults"""
+    def _handle_controller_fault(self, fault_code: str) -> None:
+        """Handle controller faults."""
         self.fault_flags.append(fault_code)
         logger.error(f"Controller fault: {fault_code}")
 
@@ -439,8 +468,8 @@ class RealTimeController:
         if any(cf in fault_code for cf in critical_faults):
             self.set_mode(ControllerMode.SAFETY)
 
-    def _enter_safety_mode(self):
-        """Enter safety mode - disable all outputs"""
+    def _enter_safety_mode(self) -> None:
+        """Enter safety mode - disable all outputs."""
         self.safety_state = "EMERGENCY_STOP"
 
         # Clear all actuator outputs
@@ -454,13 +483,13 @@ class RealTimeController:
 
         logger.critical("Entered safety mode - all outputs disabled")
 
-    def _enter_learning_mode(self):
-        """Enter learning mode for Q-learning"""
+    def _enter_learning_mode(self) -> None:
+        """Enter learning mode for Q-learning."""
         self.safety_state = "LEARNING"
         logger.info("Entered learning mode")
 
-    def _watchdog_loop(self):
-        """Hardware watchdog monitoring"""
+    def _watchdog_loop(self) -> None:
+        """Hardware watchdog monitoring."""
         while self.running:
             current_time = time.time()
             time_since_pet = (current_time - self.watchdog_last_pet) * 1000  # ms
@@ -472,53 +501,63 @@ class RealTimeController:
 
             time.sleep(0.1)  # Check every 100ms
 
-    def _update_performance_metrics(self):
-        """Update CPU and memory usage metrics"""
+    def _update_performance_metrics(self) -> None:
+        """Update CPU and memory usage metrics."""
         try:
             import psutil
+
             self.cpu_utilization = psutil.cpu_percent()
             process = psutil.Process()
             self.memory_usage = process.memory_info().rss / 1024 / 1024  # MB
         except ImportError:
             # Fallback if psutil not available
-            self.cpu_utilization = len(self.loop_execution_times) * 2.0  # Rough estimate
+            self.cpu_utilization = (
+                len(self.loop_execution_times) * 2.0
+            )  # Rough estimate
             self.memory_usage = 50.0  # Fixed estimate
 
-    def update_sensor_data(self, channel: int, value: float):
-        """Update sensor data (thread-safe)"""
+    def update_sensor_data(self, channel: int, value: float) -> None:
+        """Update sensor data (thread-safe)."""
         with self.data_lock:
             self.sensor_data[channel] = value
 
     def get_actuator_output(self, channel: int) -> float:
-        """Get actuator output value (thread-safe)"""
+        """Get actuator output value (thread-safe)."""
         with self.data_lock:
             return self.actuator_outputs.get(channel, 0.0)
 
-    def set_control_loop_setpoint(self, loop_id: str, setpoint: float):
-        """Set control loop setpoint"""
+    def set_control_loop_setpoint(self, loop_id: str, setpoint: float) -> None:
+        """Set control loop setpoint."""
         with self.control_lock:
             if loop_id in self.control_loops:
                 self.control_loops[loop_id].setpoint = setpoint
 
-    def enable_control_loop(self, loop_id: str, enabled: bool = True):
-        """Enable/disable control loop"""
+    def enable_control_loop(self, loop_id: str, enabled: bool = True) -> None:
+        """Enable/disable control loop."""
         with self.control_lock:
             if loop_id in self.control_loops:
                 self.control_loops[loop_id].enabled = enabled
 
     def get_measurement(self) -> ControllerMeasurement:
-        """Get comprehensive controller measurement"""
+        """Get comprehensive controller measurement."""
         with self.control_lock:
             # Calculate timing metrics
-            recent_jitter = list(self.jitter_history)[-100:] if self.jitter_history else [0]
+            recent_jitter = (
+                list(self.jitter_history)[-100:] if self.jitter_history else [0]
+            )
             avg_jitter = np.mean(recent_jitter)
 
-            recent_periods = list(self.loop_execution_times)[-100:] if self.loop_execution_times else [0]
+            recent_periods = (
+                list(self.loop_execution_times)[-100:]
+                if self.loop_execution_times
+                else [0]
+            )
             avg_period = np.mean(recent_periods)
 
             # Count recent deadline violations
-            recent_violations = sum(1 for task in self.tasks.values()
-                                  if task.deadline_violations > 0)
+            recent_violations = sum(
+                1 for task in self.tasks.values() if task.deadline_violations > 0
+            )
 
             # Get task execution times
             task_times = {}
@@ -529,8 +568,9 @@ class RealTimeController:
                     task_times[task_id] = 0.0
 
             # Get active control loops
-            active_loops = [loop_id for loop_id, loop in self.control_loops.items()
-                          if loop.enabled]
+            active_loops = [
+                loop_id for loop_id, loop in self.control_loops.items() if loop.enabled
+            ]
 
             return ControllerMeasurement(
                 timestamp=time.time(),
@@ -544,103 +584,103 @@ class RealTimeController:
                 task_execution_times=task_times,
                 active_control_loops=active_loops,
                 safety_state=self.safety_state,
-                fault_flags=self.fault_flags.copy()
+                fault_flags=self.fault_flags.copy(),
             )
 
     def get_timing_analysis(self) -> dict[str, Any]:
-        """Get detailed timing analysis"""
+        """Get detailed timing analysis."""
         return self.timing_analyzer.get_analysis()
 
 
 class TimingAnalyzer:
-    """Analyze timing performance and detect anomalies"""
+    """Analyze timing performance and detect anomalies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.task_executions = {}
         self.timing_violations = []
         self.performance_history = deque(maxlen=10000)
 
-    def record_task_execution(self, task_id: str, execution_time_ms: float):
-        """Record task execution time"""
+    def record_task_execution(self, task_id: str, execution_time_ms: float) -> None:
+        """Record task execution time."""
         if task_id not in self.task_executions:
             self.task_executions[task_id] = deque(maxlen=1000)
 
         self.task_executions[task_id].append(execution_time_ms)
-        self.performance_history.append({
-            'timestamp': time.time(),
-            'task_id': task_id,
-            'execution_time_ms': execution_time_ms
-        })
+        self.performance_history.append(
+            {
+                "timestamp": time.time(),
+                "task_id": task_id,
+                "execution_time_ms": execution_time_ms,
+            },
+        )
 
     def get_analysis(self) -> dict[str, Any]:
-        """Get comprehensive timing analysis"""
-        analysis = {
-            'tasks': {},
-            'overall': {}
-        }
+        """Get comprehensive timing analysis."""
+        analysis = {"tasks": {}, "overall": {}}
 
         # Per-task analysis
         for task_id, executions in self.task_executions.items():
             if executions:
                 exec_times = list(executions)
-                analysis['tasks'][task_id] = {
-                    'count': len(exec_times),
-                    'mean_ms': np.mean(exec_times),
-                    'std_ms': np.std(exec_times),
-                    'min_ms': np.min(exec_times),
-                    'max_ms': np.max(exec_times),
-                    'p95_ms': np.percentile(exec_times, 95),
-                    'p99_ms': np.percentile(exec_times, 99)
+                analysis["tasks"][task_id] = {
+                    "count": len(exec_times),
+                    "mean_ms": np.mean(exec_times),
+                    "std_ms": np.std(exec_times),
+                    "min_ms": np.min(exec_times),
+                    "max_ms": np.max(exec_times),
+                    "p95_ms": np.percentile(exec_times, 95),
+                    "p99_ms": np.percentile(exec_times, 99),
                 }
 
         # Overall system analysis
         if self.performance_history:
-            all_times = [entry['execution_time_ms'] for entry in self.performance_history]
-            analysis['overall'] = {
-                'total_executions': len(all_times),
-                'mean_execution_time_ms': np.mean(all_times),
-                'system_utilization_pct': min(100.0, np.sum(all_times) /
-                                             (len(all_times) * 10.0))  # Assume 10ms period
+            all_times = [
+                entry["execution_time_ms"] for entry in self.performance_history
+            ]
+            analysis["overall"] = {
+                "total_executions": len(all_times),
+                "mean_execution_time_ms": np.mean(all_times),
+                "system_utilization_pct": min(
+                    100.0,
+                    np.sum(all_times) / (len(all_times) * 10.0),
+                ),  # Assume 10ms period
             }
 
         return analysis
 
 
 def create_standard_real_time_controllers() -> dict[str, RealTimeController]:
-    """Create standard real-time controller configurations"""
-
+    """Create standard real-time controller configurations."""
     # High-performance real-time controller
     hp_timing = TimingConstraints(
-        control_loop_period_ms=1.0,       # 1ms control loop
-        max_jitter_ms=0.1,                # 100μs jitter tolerance
-        deadline_violation_limit=10,       # Max 10 violations per hour
-        interrupt_response_time_us=10.0,   # 10μs interrupt response
-        context_switch_time_us=5.0,        # 5μs context switch
+        control_loop_period_ms=1.0,  # 1ms control loop
+        max_jitter_ms=0.1,  # 100μs jitter tolerance
+        deadline_violation_limit=10,  # Max 10 violations per hour
+        interrupt_response_time_us=10.0,  # 10μs interrupt response
+        context_switch_time_us=5.0,  # 5μs context switch
         worst_case_execution_time_ms=0.5,  # 500μs WCET
-        watchdog_timeout_ms=100.0,         # 100ms watchdog
-        safety_stop_timeout_ms=10.0,       # 10ms emergency stop
-        sensor_timeout_ms=50.0             # 50ms sensor timeout
+        watchdog_timeout_ms=100.0,  # 100ms watchdog
+        safety_stop_timeout_ms=10.0,  # 10ms emergency stop
+        sensor_timeout_ms=50.0,  # 50ms sensor timeout
     )
 
     # Low-power embedded controller
     lp_timing = TimingConstraints(
-        control_loop_period_ms=10.0,       # 10ms control loop
-        max_jitter_ms=2.0,                 # 2ms jitter tolerance
-        deadline_violation_limit=50,       # Max 50 violations per hour
+        control_loop_period_ms=10.0,  # 10ms control loop
+        max_jitter_ms=2.0,  # 2ms jitter tolerance
+        deadline_violation_limit=50,  # Max 50 violations per hour
         interrupt_response_time_us=100.0,  # 100μs interrupt response
-        context_switch_time_us=50.0,       # 50μs context switch
+        context_switch_time_us=50.0,  # 50μs context switch
         worst_case_execution_time_ms=5.0,  # 5ms WCET
-        watchdog_timeout_ms=1000.0,        # 1s watchdog
-        safety_stop_timeout_ms=100.0,      # 100ms emergency stop
-        sensor_timeout_ms=500.0            # 500ms sensor timeout
+        watchdog_timeout_ms=1000.0,  # 1s watchdog
+        safety_stop_timeout_ms=100.0,  # 100ms emergency stop
+        sensor_timeout_ms=500.0,  # 500ms sensor timeout
     )
 
-    controllers = {
-        'high_performance': RealTimeController(hp_timing),
-        'low_power': RealTimeController(lp_timing)
+    return {
+        "high_performance": RealTimeController(hp_timing),
+        "low_power": RealTimeController(lp_timing),
     }
-
-    return controllers
 
 
 if __name__ == "__main__":
@@ -651,20 +691,16 @@ if __name__ == "__main__":
     controllers = create_standard_real_time_controllers()
 
     # Test high-performance controller
-    hp_controller = controllers['high_performance']
-
-    print("Testing real-time controller")
-    print(f"Control period: {hp_controller.timing_constraints.control_loop_period_ms}ms")
-    print(f"Max jitter: {hp_controller.timing_constraints.max_jitter_ms}ms")
+    hp_controller = controllers["high_performance"]
 
     # Add some test tasks
-    def sensor_task():
-        """Simulate sensor reading"""
+    def sensor_task() -> str:
+        """Simulate sensor reading."""
         time.sleep(0.001)  # 1ms simulated work
         return "sensor_data"
 
-    def control_task():
-        """Simulate control calculation"""
+    def control_task() -> str:
+        """Simulate control calculation."""
         time.sleep(0.0005)  # 0.5ms simulated work
         return "control_output"
 
@@ -674,7 +710,7 @@ if __name__ == "__main__":
         period_ms=2.0,
         deadline_ms=1.5,
         wcet_ms=1.2,
-        callback=sensor_task
+        callback=sensor_task,
     )
 
     control_task_def = ControlTask(
@@ -683,7 +719,7 @@ if __name__ == "__main__":
         period_ms=1.0,
         deadline_ms=0.8,
         wcet_ms=0.6,
-        callback=control_task
+        callback=control_task,
     )
 
     hp_controller.add_task(sensor_task_def)
@@ -696,8 +732,8 @@ if __name__ == "__main__":
         output_channels=[0],
         control_algorithm="PID",
         setpoint=25.0,
-        gains={'kp': 1.0, 'ki': 0.1, 'kd': 0.05},
-        limits={'output': (-10.0, 10.0), 'integral': (-5.0, 5.0)}
+        gains={"kp": 1.0, "ki": 0.1, "kd": 0.05},
+        limits={"output": (-10.0, 10.0), "integral": (-5.0, 5.0)},
     )
 
     hp_controller.add_control_loop(pid_loop)
@@ -707,7 +743,6 @@ if __name__ == "__main__":
     hp_controller.start()
 
     # Simulate operation
-    print("\nSimulating real-time operation...")
     start_time = time.time()
 
     try:
@@ -718,9 +753,6 @@ if __name__ == "__main__":
             # Get measurement
             if i % 10 == 0:  # Every 10 cycles
                 measurement = hp_controller.get_measurement()
-                print(f"Cycle {i}: Mode={measurement.mode.value}, "
-                      f"Jitter={measurement.jitter_ms:.3f}ms, "
-                      f"CPU={measurement.cpu_utilization_pct:.1f}%")
 
             time.sleep(0.01)  # 10ms between updates
 
@@ -729,10 +761,5 @@ if __name__ == "__main__":
 
     # Get timing analysis
     timing_analysis = hp_controller.get_timing_analysis()
-    print("\nTiming Analysis:")
-    for task_id, stats in timing_analysis.get('tasks', {}).items():
-        print(f"  {task_id}: mean={stats['mean_ms']:.3f}ms, "
-              f"max={stats['max_ms']:.3f}ms, "
-              f"p99={stats['p99_ms']:.3f}ms")
-
-    print(f"\nTotal runtime: {time.time() - start_time:.2f}s")
+    for _task_id, _stats in timing_analysis.get("tasks", {}).items():
+        pass

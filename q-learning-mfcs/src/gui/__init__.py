@@ -1,5 +1,4 @@
-"""
-Enhanced GUI Package for MFC Research Platform
+"""Enhanced GUI Package for MFC Research Platform.
 
 This package provides advanced user interface components designed specifically
 for scientific researchers and practitioners working with MFC systems.
@@ -42,19 +41,18 @@ __description__ = "Enhanced GUI components for scientific MFC research"
 
 # Package metadata
 __all__ = [
-    # Enhanced components
-    "ScientificParameterInput",
-    "InteractiveVisualization",
-    "ExportManager",
-    "initialize_enhanced_ui",
-    "render_enhanced_sidebar",
     "ComponentTheme",
-    "UIThemeConfig",
-
-    # Q-learning visualization
-    "QLearningVisualizer",
+    "ExportManager",
+    "InteractiveVisualization",
     "QLearningVisualizationConfig",
     "QLearningVisualizationType",
+    # Q-learning visualization
+    "QLearningVisualizer",
+    # Enhanced components
+    "ScientificParameterInput",
+    "UIThemeConfig",
     "create_demo_qlearning_data",
-    "load_qtable_from_file"
+    "initialize_enhanced_ui",
+    "load_qtable_from_file",
+    "render_enhanced_sidebar",
 ]

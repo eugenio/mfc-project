@@ -1,5 +1,4 @@
-"""
-Real-time Data Streaming and Processing Framework
+"""Real-time Data Streaming and Processing Framework.
 
 This module provides comprehensive real-time data streaming and processing capabilities
 for MFC systems, including data acquisition, stream processing, and real-time analytics.
@@ -29,59 +28,80 @@ Literature References:
 4. Gama, J. (2010). "Knowledge Discovery from Data Streams"
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time
 import warnings
 from abc import ABC, abstractmethod
 from collections import deque
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from queue import Empty, Queue
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Async and threading support
 try:
     import asyncio  # noqa: F401
+
     HAS_ASYNCIO = True
 except ImportError:
     HAS_ASYNCIO = False
-    warnings.warn("Asyncio not available. Some async features will be limited.", stacklevel=2)
+    warnings.warn(
+        "Asyncio not available. Some async features will be limited.",
+        stacklevel=2,
+    )
 
 # Statistical processing
 try:
     from scipy import stats
     from scipy.signal import savgol_filter
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some signal processing features will be limited.", stacklevel=2)
+    warnings.warn(
+        "SciPy not available. Some signal processing features will be limited.",
+        stacklevel=2,
+    )
 
 # Time series analysis
 try:
     from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: F401
     from statsmodels.tsa.seasonal import seasonal_decompose  # noqa: F401
+
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
-    warnings.warn("Statsmodels not available. Some time series features will be limited.", stacklevel=2)
+    warnings.warn(
+        "Statsmodels not available. Some time series features will be limited.",
+        stacklevel=2,
+    )
 
 # Anomaly detection
 try:
     from sklearn.ensemble import IsolationForest
     from sklearn.preprocessing import StandardScaler  # noqa: F401
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Anomaly detection will be limited.", stacklevel=2)
+    warnings.warn(
+        "Scikit-learn not available. Anomaly detection will be limited.",
+        stacklevel=2,
+    )
 
 
 class StreamingMode(Enum):
     """Data streaming modes."""
+
     REAL_TIME = "real_time"
     BATCH = "batch"
     MICRO_BATCH = "micro_batch"
@@ -90,6 +110,7 @@ class StreamingMode(Enum):
 
 class DataQuality(Enum):
     """Data quality levels."""
+
     EXCELLENT = "excellent"
     GOOD = "good"
     ACCEPTABLE = "acceptable"
@@ -99,6 +120,7 @@ class DataQuality(Enum):
 
 class AlertLevel(Enum):
     """Alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -108,6 +130,7 @@ class AlertLevel(Enum):
 @dataclass
 class DataPoint:
     """Individual data point in a stream."""
+
     timestamp: datetime
     sensor_id: str
     value: float
@@ -117,28 +140,29 @@ class DataPoint:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'timestamp': self.timestamp.isoformat(),
-            'sensor_id': self.sensor_id,
-            'value': self.value,
-            'quality': self.quality.value,
-            'metadata': self.metadata
+            "timestamp": self.timestamp.isoformat(),
+            "sensor_id": self.sensor_id,
+            "value": self.value,
+            "quality": self.quality.value,
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'DataPoint':
+    def from_dict(cls, data: dict[str, Any]) -> DataPoint:
         """Create from dictionary."""
         return cls(
-            timestamp=datetime.fromisoformat(data['timestamp']),
-            sensor_id=data['sensor_id'],
-            value=data['value'],
-            quality=DataQuality(data.get('quality', 'good')),
-            metadata=data.get('metadata', {})
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            sensor_id=data["sensor_id"],
+            value=data["value"],
+            quality=DataQuality(data.get("quality", "good")),
+            metadata=data.get("metadata", {}),
         )
 
 
 @dataclass
 class StreamingStats:
     """Streaming statistics for a data stream."""
+
     sensor_id: str
     window_size: int
 
@@ -146,8 +170,8 @@ class StreamingStats:
     count: int = 0
     mean: float = 0.0
     variance: float = 0.0
-    min_value: float = float('inf')
-    max_value: float = float('-inf')
+    min_value: float = float("inf")
+    max_value: float = float("-inf")
 
     # Trend analysis
     trend_slope: float = 0.0
@@ -162,7 +186,7 @@ class StreamingStats:
     last_update: datetime = field(default_factory=datetime.now)
     update_frequency: float = 0.0
 
-    def update(self, value: float, quality: DataQuality = DataQuality.GOOD):
+    def update(self, value: float, quality: DataQuality = DataQuality.GOOD) -> None:
         """Update statistics with new value."""
         self.count += 1
 
@@ -188,7 +212,7 @@ class StreamingStats:
 
         # Update timing
         now = datetime.now()
-        if hasattr(self, 'last_update') and self.last_update:
+        if hasattr(self, "last_update") and self.last_update:
             time_diff = (now - self.last_update).total_seconds()
             if time_diff > 0:
                 # Exponential moving average of update frequency
@@ -207,6 +231,7 @@ class StreamingStats:
 @dataclass
 class Alert:
     """Real-time alert."""
+
     timestamp: datetime
     level: AlertLevel
     sensor_id: str
@@ -218,32 +243,32 @@ class Alert:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'timestamp': self.timestamp.isoformat(),
-            'level': self.level.value,
-            'sensor_id': self.sensor_id,
-            'message': self.message,
-            'value': self.value,
-            'threshold': self.threshold,
-            'metadata': self.metadata
+            "timestamp": self.timestamp.isoformat(),
+            "level": self.level.value,
+            "sensor_id": self.sensor_id,
+            "message": self.message,
+            "value": self.value,
+            "threshold": self.threshold,
+            "metadata": self.metadata,
         }
 
 
 class StreamBuffer:
     """Circular buffer for efficient streaming data storage."""
 
-    def __init__(self, max_size: int = 10000):
-        """
-        Initialize stream buffer.
+    def __init__(self, max_size: int = 10000) -> None:
+        """Initialize stream buffer.
 
         Args:
             max_size: Maximum number of data points to store
+
         """
         self.max_size = max_size
         self.buffer: deque[DataPoint] = deque(maxlen=max_size)
         self.lock = threading.Lock()
         self.total_points = 0
 
-    def add(self, data_point: DataPoint):
+    def add(self, data_point: DataPoint) -> None:
         """Add data point to buffer."""
         with self.lock:
             self.buffer.append(data_point)
@@ -254,15 +279,17 @@ class StreamBuffer:
         with self.lock:
             return list(self.buffer)[-n:]
 
-    def get_time_window(self, start_time: datetime,
-                       end_time: datetime | None = None) -> list[DataPoint]:
+    def get_time_window(
+        self,
+        start_time: datetime,
+        end_time: datetime | None = None,
+    ) -> list[DataPoint]:
         """Get data points within time window."""
         if end_time is None:
             end_time = datetime.now()
 
         with self.lock:
-            return [dp for dp in self.buffer
-                   if start_time <= dp.timestamp <= end_time]
+            return [dp for dp in self.buffer if start_time <= dp.timestamp <= end_time]
 
     def get_sensor_data(self, sensor_id: str, n: int = 100) -> list[DataPoint]:
         """Get recent data for specific sensor."""
@@ -270,7 +297,7 @@ class StreamBuffer:
             sensor_data = [dp for dp in self.buffer if dp.sensor_id == sensor_id]
             return sensor_data[-n:]
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear buffer."""
         with self.lock:
             self.buffer.clear()
@@ -284,13 +311,13 @@ class StreamBuffer:
 class DataStream(ABC):
     """Abstract base class for data streams."""
 
-    def __init__(self, stream_id: str, buffer_size: int = 10000):
-        """
-        Initialize data stream.
+    def __init__(self, stream_id: str, buffer_size: int = 10000) -> None:
+        """Initialize data stream.
 
         Args:
             stream_id: Unique identifier for the stream
             buffer_size: Size of data buffer
+
         """
         self.stream_id = stream_id
         self.buffer = StreamBuffer(buffer_size)
@@ -302,23 +329,21 @@ class DataStream(ABC):
     @abstractmethod
     def start(self):
         """Start the data stream."""
-        pass
 
     @abstractmethod
     def stop(self):
         """Stop the data stream."""
-        pass
 
-    def add_callback(self, callback: Callable[[DataPoint], None]):
+    def add_callback(self, callback: Callable[[DataPoint], None]) -> None:
         """Add callback function for new data points."""
         self.callbacks.append(callback)
 
-    def remove_callback(self, callback: Callable[[DataPoint], None]):
+    def remove_callback(self, callback: Callable[[DataPoint], None]) -> None:
         """Remove callback function."""
         if callback in self.callbacks:
             self.callbacks.remove(callback)
 
-    def _notify_callbacks(self, data_point: DataPoint):
+    def _notify_callbacks(self, data_point: DataPoint) -> None:
         """Notify all callbacks of new data point."""
         for callback in self.callbacks:
             try:
@@ -330,14 +355,14 @@ class DataStream(ABC):
         """Get streaming statistics for sensor."""
         return self.stats.get(sensor_id)
 
-    def update_stats(self, data_point: DataPoint):
+    def update_stats(self, data_point: DataPoint) -> None:
         """Update streaming statistics."""
         sensor_id = data_point.sensor_id
 
         if sensor_id not in self.stats:
             self.stats[sensor_id] = StreamingStats(
                 sensor_id=sensor_id,
-                window_size=1000  # Default window size
+                window_size=1000,  # Default window size
             )
 
         self.stats[sensor_id].update(data_point.value, data_point.quality)
@@ -346,16 +371,21 @@ class DataStream(ABC):
 class MFCDataStream(DataStream):
     """Specialized data stream for MFC sensor data."""
 
-    def __init__(self, stream_id: str, sensor_config: dict[str, Any],
-                 sampling_rate: float = 1.0, buffer_size: int = 10000):
-        """
-        Initialize MFC data stream.
+    def __init__(
+        self,
+        stream_id: str,
+        sensor_config: dict[str, Any],
+        sampling_rate: float = 1.0,
+        buffer_size: int = 10000,
+    ) -> None:
+        """Initialize MFC data stream.
 
         Args:
             stream_id: Unique identifier for the stream
             sensor_config: Configuration for sensors
             sampling_rate: Data sampling rate in Hz
             buffer_size: Size of data buffer
+
         """
         super().__init__(stream_id, buffer_size)
         self.sensor_config = sensor_config
@@ -364,7 +394,7 @@ class MFCDataStream(DataStream):
         self.thread = None
         self.stop_event = threading.Event()
 
-    def start(self):
+    def start(self) -> None:
         """Start the MFC data stream."""
         if not self.is_active:
             self.is_active = True
@@ -374,7 +404,7 @@ class MFCDataStream(DataStream):
             self.thread.start()
             self.logger.info(f"Started MFC data stream: {self.stream_id}")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the MFC data stream."""
         if self.is_active:
             self.is_active = False
@@ -383,7 +413,7 @@ class MFCDataStream(DataStream):
                 self.thread.join(timeout=5.0)
             self.logger.info(f"Stopped MFC data stream: {self.stream_id}")
 
-    def _data_acquisition_loop(self):
+    def _data_acquisition_loop(self) -> None:
         """Main data acquisition loop."""
         while not self.stop_event.is_set():
             try:
@@ -402,19 +432,18 @@ class MFCDataStream(DataStream):
                 time.sleep(self.sampling_interval)
 
             except Exception as e:
-                self.logger.error(f"Error in data acquisition: {e}")
+                self.logger.exception(f"Error in data acquisition: {e}")
                 time.sleep(0.1)  # Brief pause before retrying
 
     def _read_sensor(self, sensor_id: str, config: dict[str, Any]) -> DataPoint:
-        """
-        Simulate reading from a sensor.
+        """Simulate reading from a sensor.
 
         In a real implementation, this would interface with actual hardware.
         """
         # Simulate sensor reading with some noise
-        base_value = config.get('base_value', 0.0)
-        noise_level = config.get('noise_level', 0.1)
-        drift = config.get('drift', 0.0)
+        base_value = config.get("base_value", 0.0)
+        noise_level = config.get("noise_level", 0.1)
+        drift = config.get("drift", 0.0)
 
         # Add time-based drift
         time_factor = time.time() % 3600  # Hourly cycle
@@ -425,7 +454,7 @@ class MFCDataStream(DataStream):
 
         # Simulate occasional quality issues
         quality = DataQuality.GOOD
-        if np.random.random() < config.get('error_rate', 0.01):
+        if np.random.random() < config.get("error_rate", 0.01):
             quality = DataQuality.POOR
             value = np.nan
 
@@ -434,19 +463,19 @@ class MFCDataStream(DataStream):
             sensor_id=sensor_id,
             value=value,
             quality=quality,
-            metadata={'config': config}
+            metadata={"config": config},
         )
 
 
 class StreamProcessor:
     """Real-time data processing engine."""
 
-    def __init__(self, processing_config: dict[str, Any]):
-        """
-        Initialize stream processor.
+    def __init__(self, processing_config: dict[str, Any]) -> None:
+        """Initialize stream processor.
 
         Args:
             processing_config: Configuration for processing pipeline
+
         """
         self.config = processing_config
         self.processors: list[Any] = []
@@ -455,31 +484,31 @@ class StreamProcessor:
         # Initialize processing pipeline
         self._setup_processors()
 
-    def _setup_processors(self):
+    def _setup_processors(self) -> None:
         """Setup processing pipeline based on configuration."""
-        pipeline_config = self.config.get('pipeline', [])
+        pipeline_config = self.config.get("pipeline", [])
 
         for stage_config in pipeline_config:
-            processor_type = stage_config.get('type')
+            processor_type = stage_config.get("type")
 
-            if processor_type == 'smoothing':
+            if processor_type == "smoothing":
                 self.processors.append(self._create_smoothing_processor(stage_config))
-            elif processor_type == 'outlier_detection':
+            elif processor_type == "outlier_detection":
                 self.processors.append(self._create_outlier_processor(stage_config))
-            elif processor_type == 'trend_analysis':
+            elif processor_type == "trend_analysis":
                 self.processors.append(self._create_trend_processor(stage_config))
-            elif processor_type == 'anomaly_detection':
+            elif processor_type == "anomaly_detection":
                 self.processors.append(self._create_anomaly_processor(stage_config))
 
     def process(self, data_points: list[DataPoint]) -> list[DataPoint]:
-        """
-        Process a batch of data points through the pipeline.
+        """Process a batch of data points through the pipeline.
 
         Args:
             data_points: List of data points to process
 
         Returns:
             Processed data points
+
         """
         processed_data = data_points.copy()
 
@@ -487,14 +516,14 @@ class StreamProcessor:
             try:
                 processed_data = processor(processed_data)
             except Exception as e:
-                self.logger.error(f"Processing error: {e}")
+                self.logger.exception(f"Processing error: {e}")
 
         return processed_data
 
     def _create_smoothing_processor(self, config: dict[str, Any]) -> Callable:
         """Create smoothing processor."""
-        method = config.get('method', 'moving_average')
-        window_size = config.get('window_size', 5)
+        method = config.get("method", "moving_average")
+        window_size = config.get("window_size", 5)
 
         def smooth_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             if len(data_points) < window_size:
@@ -509,12 +538,12 @@ class StreamProcessor:
 
             processed_points = []
 
-            for _sensor_id, points in sensor_data.items():
+            for points in sensor_data.values():
                 values = np.array([dp.value for dp in points])
 
-                if method == 'moving_average':
+                if method == "moving_average":
                     smoothed = self._moving_average(values, window_size)
-                elif method == 'savgol' and HAS_SCIPY:
+                elif method == "savgol" and HAS_SCIPY:
                     smoothed = savgol_filter(values, window_size, 3)
                 else:
                     smoothed = values
@@ -526,7 +555,7 @@ class StreamProcessor:
                         sensor_id=point.sensor_id,
                         value=smoothed[i] if not np.isnan(smoothed[i]) else point.value,
                         quality=point.quality,
-                        metadata={**point.metadata, 'smoothed': True}
+                        metadata={**point.metadata, "smoothed": True},
                     )
                     processed_points.append(new_point)
 
@@ -536,8 +565,8 @@ class StreamProcessor:
 
     def _create_outlier_processor(self, config: dict[str, Any]) -> Callable:
         """Create outlier detection processor."""
-        method = config.get('method', 'iqr')
-        threshold = config.get('threshold', 3.0)
+        method = config.get("method", "iqr")
+        threshold = config.get("threshold", 3.0)
 
         def outlier_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             # Group by sensor
@@ -549,7 +578,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for _sensor_id, points in sensor_data.items():
+            for points in sensor_data.values():
                 values = np.array([dp.value for dp in points if not np.isnan(dp.value)])
 
                 if len(values) < 5:  # Need minimum data for outlier detection
@@ -557,15 +586,19 @@ class StreamProcessor:
                     continue
 
                 # Detect outliers
-                if method == 'iqr':
+                if method == "iqr":
                     q25, q75 = np.percentile(values, [25, 75])
                     iqr = q75 - q25
                     lower_bound = q25 - threshold * iqr
                     upper_bound = q75 + threshold * iqr
                     outlier_mask = (values < lower_bound) | (values > upper_bound)
 
-                elif method == 'zscore':
-                    z_scores = np.abs(stats.zscore(values)) if HAS_SCIPY else np.abs((values - np.mean(values)) / np.std(values))
+                elif method == "zscore":
+                    z_scores = (
+                        np.abs(stats.zscore(values))
+                        if HAS_SCIPY
+                        else np.abs((values - np.mean(values)) / np.std(values))
+                    )
                     outlier_mask = z_scores > threshold
 
                 else:
@@ -582,7 +615,7 @@ class StreamProcessor:
                                 sensor_id=point.sensor_id,
                                 value=point.value,
                                 quality=DataQuality.POOR,
-                                metadata={**point.metadata, 'outlier': True}
+                                metadata={**point.metadata, "outlier": True},
                             )
                         else:
                             new_point = point
@@ -598,7 +631,7 @@ class StreamProcessor:
 
     def _create_trend_processor(self, config: dict[str, Any]) -> Callable:
         """Create trend analysis processor."""
-        window_size = config.get('window_size', 20)
+        window_size = config.get("window_size", 20)
 
         def trend_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             # Group by sensor
@@ -610,14 +643,16 @@ class StreamProcessor:
 
             processed_points = []
 
-            for _sensor_id, points in sensor_data.items():
+            for points in sensor_data.values():
                 if len(points) < window_size:
                     processed_points.extend(points)
                     continue
 
                 # Calculate trend for recent window
                 recent_points = points[-window_size:]
-                values = np.array([dp.value for dp in recent_points if not np.isnan(dp.value)])
+                values = np.array(
+                    [dp.value for dp in recent_points if not np.isnan(dp.value)],
+                )
 
                 if len(values) < 3:
                     processed_points.extend(points)
@@ -625,7 +660,9 @@ class StreamProcessor:
 
                 # Linear regression for trend
                 x = np.arange(len(values))
-                slope, intercept, r_value, p_value, std_err = stats.linregress(x, values) if HAS_SCIPY else (0, 0, 0, 1, 0)
+                slope, intercept, r_value, p_value, std_err = (
+                    stats.linregress(x, values) if HAS_SCIPY else (0, 0, 0, 1, 0)
+                )
 
                 # Add trend information to metadata
                 for point in points:
@@ -636,10 +673,10 @@ class StreamProcessor:
                         quality=point.quality,
                         metadata={
                             **point.metadata,
-                            'trend_slope': slope,
-                            'trend_r_squared': r_value**2,
-                            'trend_p_value': p_value
-                        }
+                            "trend_slope": slope,
+                            "trend_r_squared": r_value**2,
+                            "trend_p_value": p_value,
+                        },
                     )
                     processed_points.append(new_point)
 
@@ -649,8 +686,8 @@ class StreamProcessor:
 
     def _create_anomaly_processor(self, config: dict[str, Any]) -> Callable:
         """Create anomaly detection processor."""
-        method = config.get('method', 'isolation_forest')
-        contamination = config.get('contamination', 0.1)
+        method = config.get("method", "isolation_forest")
+        contamination = config.get("contamination", 0.1)
 
         def anomaly_processor(data_points: list[DataPoint]) -> list[DataPoint]:
             if not HAS_SKLEARN:
@@ -665,7 +702,7 @@ class StreamProcessor:
 
             processed_points = []
 
-            for _sensor_id, points in sensor_data.items():
+            for points in sensor_data.values():
                 values = np.array([dp.value for dp in points if not np.isnan(dp.value)])
 
                 if len(values) < 10:  # Need minimum data for anomaly detection
@@ -676,8 +713,11 @@ class StreamProcessor:
                 X = values.reshape(-1, 1)
 
                 # Detect anomalies
-                if method == 'isolation_forest':
-                    detector = IsolationForest(contamination=contamination, random_state=42)
+                if method == "isolation_forest":
+                    detector = IsolationForest(
+                        contamination=contamination,
+                        random_state=42,
+                    )
                     anomaly_labels = detector.fit_predict(X)
                 else:
                     anomaly_labels = np.ones(len(values))  # No anomalies
@@ -692,7 +732,7 @@ class StreamProcessor:
                             sensor_id=point.sensor_id,
                             value=point.value,
                             quality=DataQuality.POOR if is_anomaly else point.quality,
-                            metadata={**point.metadata, 'anomaly': is_anomaly}
+                            metadata={**point.metadata, "anomaly": is_anomaly},
                         )
                         valid_idx += 1
                     else:
@@ -710,35 +750,41 @@ class StreamProcessor:
             return values
 
         # Pad the beginning with the first value
-        padded = np.concatenate([np.full(window_size//2, values[0]), values, np.full(window_size//2, values[-1])])
-        smoothed = np.convolve(padded, np.ones(window_size)/window_size, mode='valid')
-
-        return smoothed
+        padded = np.concatenate(
+            [
+                np.full(window_size // 2, values[0]),
+                values,
+                np.full(window_size // 2, values[-1]),
+            ],
+        )
+        return np.convolve(padded, np.ones(window_size) / window_size, mode="valid")
 
 
 class RealTimeAnalyzer:
     """Real-time analytics and monitoring."""
 
-    def __init__(self, analysis_config: dict[str, Any]):
-        """
-        Initialize real-time analyzer.
+    def __init__(self, analysis_config: dict[str, Any]) -> None:
+        """Initialize real-time analyzer.
 
         Args:
             analysis_config: Configuration for analysis
+
         """
         self.config = analysis_config
-        self.alert_thresholds = analysis_config.get('alert_thresholds', {})
+        self.alert_thresholds = analysis_config.get("alert_thresholds", {})
         self.alert_callbacks: list[Callable[[Alert], None]] = []
         self.logger = logging.getLogger(__name__)
 
-    def add_alert_callback(self, callback: Callable[[Alert], None]):
+    def add_alert_callback(self, callback: Callable[[Alert], None]) -> None:
         """Add callback for alerts."""
         self.alert_callbacks.append(callback)
 
-    def analyze_stream(self, data_stream: DataStream,
-                      analysis_window: timedelta = timedelta(minutes=5)) -> dict[str, Any]:
-        """
-        Perform real-time analysis on data stream.
+    def analyze_stream(
+        self,
+        data_stream: DataStream,
+        analysis_window: timedelta = timedelta(minutes=5),
+    ) -> dict[str, Any]:
+        """Perform real-time analysis on data stream.
 
         Args:
             data_stream: Data stream to analyze
@@ -746,6 +792,7 @@ class RealTimeAnalyzer:
 
         Returns:
             Analysis results
+
         """
         # Get recent data
         end_time = datetime.now()
@@ -753,7 +800,7 @@ class RealTimeAnalyzer:
         recent_data = data_stream.buffer.get_time_window(start_time, end_time)
 
         if not recent_data:
-            return {'status': 'no_data', 'timestamp': end_time.isoformat()}
+            return {"status": "no_data", "timestamp": end_time.isoformat()}
 
         # Group by sensor
         sensor_data: dict[str, list[DataPoint]] = {}
@@ -763,77 +810,104 @@ class RealTimeAnalyzer:
             sensor_data[dp.sensor_id].append(dp)
 
         analysis_results = {
-            'timestamp': end_time.isoformat(),
-            'window_size': len(recent_data),
-            'sensors': {}
+            "timestamp": end_time.isoformat(),
+            "window_size": len(recent_data),
+            "sensors": {},
         }
 
         # Analyze each sensor
         for sensor_id, points in sensor_data.items():
             sensor_analysis = self._analyze_sensor_data(sensor_id, points)
-            analysis_results['sensors'][sensor_id] = sensor_analysis
+            analysis_results["sensors"][sensor_id] = sensor_analysis
 
             # Check for alerts
             self._check_alerts(sensor_id, sensor_analysis, points)
 
         return analysis_results
 
-    def _analyze_sensor_data(self, sensor_id: str, data_points: list[DataPoint]) -> dict[str, Any]:
+    def _analyze_sensor_data(
+        self,
+        sensor_id: str,
+        data_points: list[DataPoint],
+    ) -> dict[str, Any]:
         """Analyze data for a single sensor."""
         values = [dp.value for dp in data_points if not np.isnan(dp.value)]
 
         if not values:
-            return {'status': 'no_valid_data'}
+            return {"status": "no_valid_data"}
 
         values = np.array(values)
 
         analysis = {
-            'count': len(values),
-            'mean': np.mean(values),
-            'std': np.std(values),
-            'min': np.min(values),
-            'max': np.max(values),
-            'median': np.median(values),
-            'quality_score': np.mean([1.0 if dp.quality == DataQuality.GOOD else 0.0 for dp in data_points])
+            "count": len(values),
+            "mean": np.mean(values),
+            "std": np.std(values),
+            "min": np.min(values),
+            "max": np.max(values),
+            "median": np.median(values),
+            "quality_score": np.mean(
+                [1.0 if dp.quality == DataQuality.GOOD else 0.0 for dp in data_points],
+            ),
         }
 
         # Trend analysis
         if len(values) >= 3:
             x = np.arange(len(values))
             if HAS_SCIPY:
-                slope, intercept, r_value, p_value, std_err = stats.linregress(x, values)
-                analysis['trend'] = {
-                    'slope': slope,
-                    'r_squared': r_value**2,
-                    'p_value': p_value,
-                    'direction': 'increasing' if slope > 0 else 'decreasing' if slope < 0 else 'stable'
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    x,
+                    values,
+                )
+                analysis["trend"] = {
+                    "slope": slope,
+                    "r_squared": r_value**2,
+                    "p_value": p_value,
+                    "direction": (
+                        "increasing"
+                        if slope > 0
+                        else "decreasing"
+                        if slope < 0
+                        else "stable"
+                    ),
                 }
             else:
                 # Simple trend estimation
                 trend_slope = (values[-1] - values[0]) / len(values)
-                analysis['trend'] = {
-                    'slope': trend_slope,
-                    'direction': 'increasing' if trend_slope > 0 else 'decreasing' if trend_slope < 0 else 'stable'
+                analysis["trend"] = {
+                    "slope": trend_slope,
+                    "direction": (
+                        "increasing"
+                        if trend_slope > 0
+                        else "decreasing"
+                        if trend_slope < 0
+                        else "stable"
+                    ),
                 }
 
         # Variability analysis
         if len(values) > 1:
-            analysis['coefficient_of_variation'] = analysis['std'] / analysis['mean'] if analysis['mean'] != 0 else np.inf
+            analysis["coefficient_of_variation"] = (
+                analysis["std"] / analysis["mean"] if analysis["mean"] != 0 else np.inf
+            )
 
         # Rate of change
         if len(values) >= 2:
             rate_of_change = np.diff(values)
-            analysis['rate_of_change'] = {
-                'mean': np.mean(rate_of_change),
-                'std': np.std(rate_of_change),
-                'max_increase': np.max(rate_of_change),
-                'max_decrease': np.min(rate_of_change)
+            analysis["rate_of_change"] = {
+                "mean": np.mean(rate_of_change),
+                "std": np.std(rate_of_change),
+                "max_increase": np.max(rate_of_change),
+                "max_decrease": np.min(rate_of_change),
             }
 
         return analysis
 
-    def _check_alerts(self, sensor_id: str, analysis: dict[str, Any],
-                     data_points: list[DataPoint]):
+    def _check_alerts(
+        self,
+        sensor_id: str,
+        analysis: dict[str, Any],
+        data_points: list[DataPoint],
+    ) -> None:
         """Check for alert conditions."""
         if sensor_id not in self.alert_thresholds:
             return
@@ -841,55 +915,58 @@ class RealTimeAnalyzer:
         thresholds = self.alert_thresholds[sensor_id]
 
         # Value-based alerts
-        if 'min_value' in thresholds and analysis.get('min') < thresholds['min_value']:
+        if "min_value" in thresholds and analysis.get("min") < thresholds["min_value"]:
             alert = Alert(
                 timestamp=datetime.now(),
                 level=AlertLevel.WARNING,
                 sensor_id=sensor_id,
                 message=f"Value below minimum threshold: {analysis['min']:.3f} < {thresholds['min_value']}",
-                value=analysis['min'],
-                threshold=thresholds['min_value']
+                value=analysis["min"],
+                threshold=thresholds["min_value"],
             )
             self._send_alert(alert)
 
-        if 'max_value' in thresholds and analysis.get('max') > thresholds['max_value']:
+        if "max_value" in thresholds and analysis.get("max") > thresholds["max_value"]:
             alert = Alert(
                 timestamp=datetime.now(),
                 level=AlertLevel.WARNING,
                 sensor_id=sensor_id,
                 message=f"Value above maximum threshold: {analysis['max']:.3f} > {thresholds['max_value']}",
-                value=analysis['max'],
-                threshold=thresholds['max_value']
+                value=analysis["max"],
+                threshold=thresholds["max_value"],
             )
             self._send_alert(alert)
 
         # Quality-based alerts
-        if 'min_quality' in thresholds and analysis.get('quality_score', 1.0) < thresholds['min_quality']:
+        if (
+            "min_quality" in thresholds
+            and analysis.get("quality_score", 1.0) < thresholds["min_quality"]
+        ):
             alert = Alert(
                 timestamp=datetime.now(),
                 level=AlertLevel.ERROR,
                 sensor_id=sensor_id,
                 message=f"Data quality below threshold: {analysis['quality_score']:.3f} < {thresholds['min_quality']}",
-                value=analysis['quality_score'],
-                threshold=thresholds['min_quality']
+                value=analysis["quality_score"],
+                threshold=thresholds["min_quality"],
             )
             self._send_alert(alert)
 
         # Trend-based alerts
-        if 'max_trend_slope' in thresholds and 'trend' in analysis:
-            slope = analysis['trend'].get('slope', 0)
-            if abs(slope) > thresholds['max_trend_slope']:
+        if "max_trend_slope" in thresholds and "trend" in analysis:
+            slope = analysis["trend"].get("slope", 0)
+            if abs(slope) > thresholds["max_trend_slope"]:
                 alert = Alert(
                     timestamp=datetime.now(),
                     level=AlertLevel.WARNING,
                     sensor_id=sensor_id,
                     message=f"Rapid trend change detected: slope = {slope:.6f}",
                     value=slope,
-                    threshold=thresholds['max_trend_slope']
+                    threshold=thresholds["max_trend_slope"],
                 )
                 self._send_alert(alert)
 
-    def _send_alert(self, alert: Alert):
+    def _send_alert(self, alert: Alert) -> None:
         """Send alert to all registered callbacks."""
         self.logger.warning(f"ALERT: {alert.message}")
 
@@ -897,27 +974,27 @@ class RealTimeAnalyzer:
             try:
                 callback(alert)
             except Exception as e:
-                self.logger.error(f"Alert callback error: {e}")
+                self.logger.exception(f"Alert callback error: {e}")
 
 
 class AlertSystem:
     """Real-time alerting and notification system."""
 
-    def __init__(self, config: dict[str, Any]):
-        """
-        Initialize alert system.
+    def __init__(self, config: dict[str, Any]) -> None:
+        """Initialize alert system.
 
         Args:
             config: Alert system configuration
+
         """
         self.config = config
         self.alert_queue: Queue[Alert] = Queue()
-        self.alert_history: deque[Alert] = deque(maxlen=config.get('max_history', 1000))
+        self.alert_history: deque[Alert] = deque(maxlen=config.get("max_history", 1000))
         self.is_active = False
         self.thread = None
         self.logger = logging.getLogger(__name__)
 
-    def start(self):
+    def start(self) -> None:
         """Start the alert system."""
         if not self.is_active:
             self.is_active = True
@@ -926,7 +1003,7 @@ class AlertSystem:
             self.thread.start()
             self.logger.info("Alert system started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the alert system."""
         if self.is_active:
             self.is_active = False
@@ -934,7 +1011,7 @@ class AlertSystem:
                 self.thread.join(timeout=5.0)
             self.logger.info("Alert system stopped")
 
-    def send_alert(self, alert: Alert):
+    def send_alert(self, alert: Alert) -> None:
         """Send alert through the system."""
         self.alert_queue.put(alert)
 
@@ -942,7 +1019,7 @@ class AlertSystem:
         """Get recent alerts."""
         return list(self.alert_history)[-n:]
 
-    def _alert_processing_loop(self):
+    def _alert_processing_loop(self) -> None:
         """Main alert processing loop."""
         while self.is_active:
             try:
@@ -961,16 +1038,16 @@ class AlertSystem:
             except Empty:
                 continue
             except Exception as e:
-                self.logger.error(f"Alert processing error: {e}")
+                self.logger.exception(f"Alert processing error: {e}")
 
-    def _process_alert(self, alert: Alert):
+    def _process_alert(self, alert: Alert) -> None:
         """Process individual alert."""
         # Log alert
         level_map = {
             AlertLevel.INFO: self.logger.info,
             AlertLevel.WARNING: self.logger.warning,
             AlertLevel.ERROR: self.logger.error,
-            AlertLevel.CRITICAL: self.logger.critical
+            AlertLevel.CRITICAL: self.logger.critical,
         }
 
         log_func = level_map.get(alert.level, self.logger.info)
@@ -982,13 +1059,13 @@ class AlertSystem:
         elif alert.level == AlertLevel.ERROR:
             self._handle_error_alert(alert)
 
-    def _handle_critical_alert(self, alert: Alert):
+    def _handle_critical_alert(self, alert: Alert) -> None:
         """Handle critical alerts."""
         # In a real system, this might trigger emergency shutdowns,
         # send notifications to operators, etc.
         self.logger.critical(f"CRITICAL ALERT HANDLING: {alert.message}")
 
-    def _handle_error_alert(self, alert: Alert):
+    def _handle_error_alert(self, alert: Alert) -> None:
         """Handle error alerts."""
         # In a real system, this might trigger automated responses,
         # send notifications, etc.
@@ -997,109 +1074,98 @@ class AlertSystem:
 
 # Utility functions for real-time processing
 def create_sample_mfc_config() -> dict[str, Any]:
-    """
-    Create sample MFC sensor configuration.
+    """Create sample MFC sensor configuration.
 
     Returns:
         Sample sensor configuration
+
     """
     return {
-        'power_sensor': {
-            'base_value': 25.0,
-            'noise_level': 0.5,
-            'drift': 2.0,
-            'error_rate': 0.005,
-            'units': 'W'
+        "power_sensor": {
+            "base_value": 25.0,
+            "noise_level": 0.5,
+            "drift": 2.0,
+            "error_rate": 0.005,
+            "units": "W",
         },
-        'flow_rate_sensor': {
-            'base_value': 15.0,
-            'noise_level': 0.2,
-            'drift': 1.0,
-            'error_rate': 0.002,
-            'units': 'mL/h'
+        "flow_rate_sensor": {
+            "base_value": 15.0,
+            "noise_level": 0.2,
+            "drift": 1.0,
+            "error_rate": 0.002,
+            "units": "mL/h",
         },
-        'substrate_concentration': {
-            'base_value': 12.5,
-            'noise_level': 0.3,
-            'drift': 0.5,
-            'error_rate': 0.001,
-            'units': 'mmol/L'
+        "substrate_concentration": {
+            "base_value": 12.5,
+            "noise_level": 0.3,
+            "drift": 0.5,
+            "error_rate": 0.001,
+            "units": "mmol/L",
         },
-        'biofilm_thickness': {
-            'base_value': 30.0,
-            'noise_level': 1.0,
-            'drift': 3.0,
-            'error_rate': 0.01,
-            'units': 'μm'
-        }
+        "biofilm_thickness": {
+            "base_value": 30.0,
+            "noise_level": 1.0,
+            "drift": 3.0,
+            "error_rate": 0.01,
+            "units": "μm",
+        },
     }
 
 
 def create_sample_processing_config() -> dict[str, Any]:
-    """
-    Create sample processing configuration.
+    """Create sample processing configuration.
 
     Returns:
         Sample processing configuration
+
     """
     return {
-        'pipeline': [
+        "pipeline": [
+            {"type": "outlier_detection", "method": "iqr", "threshold": 2.5},
+            {"type": "smoothing", "method": "moving_average", "window_size": 5},
+            {"type": "trend_analysis", "window_size": 20},
             {
-                'type': 'outlier_detection',
-                'method': 'iqr',
-                'threshold': 2.5
+                "type": "anomaly_detection",
+                "method": "isolation_forest",
+                "contamination": 0.05,
             },
-            {
-                'type': 'smoothing',
-                'method': 'moving_average',
-                'window_size': 5
-            },
-            {
-                'type': 'trend_analysis',
-                'window_size': 20
-            },
-            {
-                'type': 'anomaly_detection',
-                'method': 'isolation_forest',
-                'contamination': 0.05
-            }
-        ]
+        ],
     }
 
 
 def create_sample_alert_config() -> dict[str, Any]:
-    """
-    Create sample alert configuration.
+    """Create sample alert configuration.
 
     Returns:
         Sample alert configuration
+
     """
     return {
-        'alert_thresholds': {
-            'power_sensor': {
-                'min_value': 10.0,
-                'max_value': 50.0,
-                'min_quality': 0.8,
-                'max_trend_slope': 0.1
+        "alert_thresholds": {
+            "power_sensor": {
+                "min_value": 10.0,
+                "max_value": 50.0,
+                "min_quality": 0.8,
+                "max_trend_slope": 0.1,
             },
-            'flow_rate_sensor': {
-                'min_value': 5.0,
-                'max_value': 30.0,
-                'min_quality': 0.9,
-                'max_trend_slope': 0.05
+            "flow_rate_sensor": {
+                "min_value": 5.0,
+                "max_value": 30.0,
+                "min_quality": 0.9,
+                "max_trend_slope": 0.05,
             },
-            'substrate_concentration': {
-                'min_value': 5.0,
-                'max_value': 25.0,
-                'min_quality': 0.85,
-                'max_trend_slope': 0.02
+            "substrate_concentration": {
+                "min_value": 5.0,
+                "max_value": 25.0,
+                "min_quality": 0.85,
+                "max_trend_slope": 0.02,
             },
-            'biofilm_thickness': {
-                'min_value': 10.0,
-                'max_value': 60.0,
-                'min_quality': 0.7,
-                'max_trend_slope': 0.2
-            }
+            "biofilm_thickness": {
+                "min_value": 10.0,
+                "max_value": 60.0,
+                "min_quality": 0.7,
+                "max_trend_slope": 0.2,
+            },
         },
-        'max_history': 1000
+        "max_history": 1000,
     }

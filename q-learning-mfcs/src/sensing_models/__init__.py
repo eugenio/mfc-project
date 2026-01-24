@@ -1,5 +1,4 @@
-"""
-Sensing Models Module for MFC Real-Time Monitoring
+"""Sensing Models Module for MFC Real-Time Monitoring.
 
 This module provides electrochemical and physical sensing models for:
 1. Electrochemical Impedance Spectroscopy (EIS) biofilm characterization
@@ -16,9 +15,15 @@ from .qcm_model import QCMMeasurement, QCMModel, SauerbreyModel, ViscoelasticMod
 from .sensor_fusion import SensorCalibration, SensorFusion
 
 __all__ = [
-    'EISModel', 'EISMeasurement', 'EISCircuitModel',
-    'QCMModel', 'QCMMeasurement', 'SauerbreyModel', 'ViscoelasticModel',
-    'SensorFusion', 'SensorCalibration'
+    "EISCircuitModel",
+    "EISMeasurement",
+    "EISModel",
+    "QCMMeasurement",
+    "QCMModel",
+    "SauerbreyModel",
+    "SensorCalibration",
+    "SensorFusion",
+    "ViscoelasticModel",
 ]
 
 __version__ = "1.0.0"

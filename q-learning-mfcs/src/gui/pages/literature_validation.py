@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-Literature Validation Page for Enhanced MFC Platform
+"""Literature Validation Page for Enhanced MFC Platform.
 
 Phase 5: Literature-backed parameter validation, citation management,
 and scientific rigor verification for MFC research.
 
 Created: 2025-08-02
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
@@ -21,6 +22,7 @@ import streamlit as st
 @dataclass
 class Citation:
     """Literature citation information."""
+
     title: str
     authors: list[str]
     journal: str
@@ -36,6 +38,7 @@ class Citation:
 @dataclass
 class ParameterValidation:
     """Parameter validation against literature."""
+
     parameter_name: str
     value: float
     unit: str
@@ -50,14 +53,13 @@ class ParameterValidation:
 class LiteratureValidator:
     """Literature validation engine for MFC parameters."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.citation_database = self._initialize_citation_database()
         self.parameter_ranges = self._initialize_parameter_ranges()
 
     def _initialize_citation_database(self) -> list[Citation]:
         """Initialize mock citation database."""
-
-        citations = [
+        return [
             Citation(
                 title="Microbial fuel cells: methodology and technology",
                 authors=["Logan, B.E."],
@@ -68,7 +70,7 @@ class LiteratureValidator:
                 url="https://doi.org/10.1021/es0605016",
                 abstract="Comprehensive review of MFC technology and methodology...",
                 relevance_score=0.95,
-                quality_score=4.8
+                quality_score=4.8,
             ),
             Citation(
                 title="Electricity production from acetate in microbial fuel cells",
@@ -80,7 +82,7 @@ class LiteratureValidator:
                 url="https://doi.org/10.1016/j.watres.2004.09.036",
                 abstract="Investigation of electricity production from acetate in MFCs...",
                 relevance_score=0.88,
-                quality_score=4.5
+                quality_score=4.5,
             ),
             Citation(
                 title="Biofilm development affects current generation in MFCs",
@@ -92,7 +94,7 @@ class LiteratureValidator:
                 url="https://doi.org/10.1002/bit.21270",
                 abstract="Mathematical modeling of biofilm development in MFCs...",
                 relevance_score=0.82,
-                quality_score=4.3
+                quality_score=4.3,
             ),
             Citation(
                 title="Substrate concentration effects on power generation",
@@ -104,7 +106,7 @@ class LiteratureValidator:
                 url="https://doi.org/10.1021/es702739u",
                 abstract="Study of substrate concentration effects on MFC performance...",
                 relevance_score=0.79,
-                quality_score=4.2
+                quality_score=4.2,
             ),
             Citation(
                 title="Electrode materials for microbial fuel cells",
@@ -116,63 +118,63 @@ class LiteratureValidator:
                 url="https://doi.org/10.1016/j.jpowsour.2011.01.012",
                 abstract="Comprehensive review of electrode materials for MFCs...",
                 relevance_score=0.91,
-                quality_score=4.1
-            )
+                quality_score=4.1,
+            ),
         ]
-
-        return citations
 
     def _initialize_parameter_ranges(self) -> dict[str, dict]:
         """Initialize literature-based parameter ranges."""
-
         return {
             "conductivity": {
                 "unit": "S/m",
                 "literature_range": (0.1, 1000000.0),
                 "typical_range": (100.0, 100000.0),
                 "citations": ["Logan (2006)", "Zhou et al. (2011)"],
-                "description": "Electrical conductivity of electrode material"
+                "description": "Electrical conductivity of electrode material",
             },
             "flow_rate": {
                 "unit": "m/s",
                 "literature_range": (1e-6, 1e-2),
                 "typical_range": (1e-5, 1e-3),
                 "citations": ["Torres et al. (2008)", "Liu & Logan (2004)"],
-                "description": "Electrolyte flow velocity through electrode"
+                "description": "Electrolyte flow velocity through electrode",
             },
             "substrate_concentration": {
                 "unit": "kg/m³",
                 "literature_range": (0.05, 20.0),
                 "typical_range": (0.5, 5.0),
                 "citations": ["Liu & Logan (2004)", "Torres et al. (2008)"],
-                "description": "Substrate concentration in bulk solution"
+                "description": "Substrate concentration in bulk solution",
             },
             "biofilm_thickness": {
                 "unit": "μm",
                 "literature_range": (1.0, 1000.0),
                 "typical_range": (20.0, 200.0),
                 "citations": ["Picioreanu et al. (2007)", "Logan (2006)"],
-                "description": "Biofilm thickness on electrode surface"
+                "description": "Biofilm thickness on electrode surface",
             },
             "ph": {
                 "unit": "-",
                 "literature_range": (5.0, 9.0),
                 "typical_range": (6.5, 8.0),
                 "citations": ["Logan (2006)", "Torres et al. (2008)"],
-                "description": "Solution pH"
+                "description": "Solution pH",
             },
             "temperature": {
                 "unit": "°C",
                 "literature_range": (4.0, 60.0),
                 "typical_range": (20.0, 35.0),
                 "citations": ["Logan (2006)", "Liu & Logan (2004)"],
-                "description": "Operating temperature"
-            }
+                "description": "Operating temperature",
+            },
         }
 
-    def validate_parameter(self, parameter_name: str, value: float) -> ParameterValidation:
+    def validate_parameter(
+        self,
+        parameter_name: str,
+        value: float,
+    ) -> ParameterValidation:
         """Validate parameter against literature."""
-
         if parameter_name not in self.parameter_ranges:
             return ParameterValidation(
                 parameter_name=parameter_name,
@@ -183,7 +185,7 @@ class LiteratureValidator:
                 confidence_level=0.0,
                 validation_status="unknown",
                 citations=[],
-                recommendation="Parameter not found in database"
+                recommendation="Parameter not found in database",
             )
 
         param_info = self.parameter_ranges[parameter_name]
@@ -198,16 +200,24 @@ class LiteratureValidator:
         elif lit_min <= value <= lit_max:
             status = "questionable"
             confidence = 0.65
-            recommendation = "Parameter within literature range but outside typical values"
+            recommendation = (
+                "Parameter within literature range but outside typical values"
+            )
         else:
             status = "outlier"
             confidence = 0.25
             recommendation = "Parameter outside known literature range - verify or provide justification"
 
         # Get relevant citations
-        relevant_citations = [c for c in self.citation_database
-                            if any(ref in c.title.lower() or ref in c.abstract.lower()
-                                  for ref in param_info["citations"] if c.abstract)][:3]
+        relevant_citations = [
+            c
+            for c in self.citation_database
+            if any(
+                ref in c.title.lower() or ref in c.abstract.lower()
+                for ref in param_info["citations"]
+                if c.abstract
+            )
+        ][:3]
 
         return ParameterValidation(
             parameter_name=parameter_name,
@@ -218,12 +228,11 @@ class LiteratureValidator:
             confidence_level=confidence,
             validation_status=status,
             citations=relevant_citations,
-            recommendation=recommendation
+            recommendation=recommendation,
         )
 
     def search_literature(self, query: str, max_results: int = 10) -> list[Citation]:
         """Search literature database."""
-
         query_lower = query.lower()
         results = []
 
@@ -242,7 +251,10 @@ class LiteratureValidator:
 
             if score > 0:
                 # Update relevance score based on search match
-                citation.relevance_score = min(1.0, citation.relevance_score + score * 0.1)
+                citation.relevance_score = min(
+                    1.0,
+                    citation.relevance_score + score * 0.1,
+                )
                 results.append(citation)
 
         # Sort by relevance score
@@ -250,15 +262,23 @@ class LiteratureValidator:
 
         return results[:max_results]
 
-    def generate_validation_report(self, validations: list[ParameterValidation]) -> dict[str, Any]:
+    def generate_validation_report(
+        self,
+        validations: list[ParameterValidation],
+    ) -> dict[str, Any]:
         """Generate comprehensive validation report."""
-
         total_params = len(validations)
-        validated_count = sum(1 for v in validations if v.validation_status == "validated")
-        questionable_count = sum(1 for v in validations if v.validation_status == "questionable")
+        validated_count = sum(
+            1 for v in validations if v.validation_status == "validated"
+        )
+        questionable_count = sum(
+            1 for v in validations if v.validation_status == "questionable"
+        )
         outlier_count = sum(1 for v in validations if v.validation_status == "outlier")
 
-        avg_confidence = np.mean([v.confidence_level for v in validations]) if validations else 0
+        avg_confidence = (
+            np.mean([v.confidence_level for v in validations]) if validations else 0
+        )
 
         all_citations = []
         for v in validations:
@@ -273,16 +293,21 @@ class LiteratureValidator:
                 "questionable": questionable_count,
                 "outliers": outlier_count,
                 "average_confidence": avg_confidence,
-                "validation_score": validated_count / total_params if total_params > 0 else 0
+                "validation_score": (
+                    validated_count / total_params if total_params > 0 else 0
+                ),
             },
             "citations": unique_citations,
-            "recommendations": [v.recommendation for v in validations if v.validation_status != "validated"]
+            "recommendations": [
+                v.recommendation
+                for v in validations
+                if v.validation_status != "validated"
+            ],
         }
 
 
-def create_validation_visualizations(validations: list[ParameterValidation]):
+def create_validation_visualizations(validations: list[ParameterValidation]) -> None:
     """Create validation result visualizations."""
-
     if not validations:
         st.info("No validation data available")
         return
@@ -293,47 +318,59 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
     with col1:
         status_counts = {}
         for v in validations:
-            status_counts[v.validation_status] = status_counts.get(v.validation_status, 0) + 1
-
-        colors = {"validated": "#10b981", "questionable": "#f59e0b", "outlier": "#ef4444"}
-
-        fig_status = go.Figure(data=[
-            go.Pie(
-                labels=list(status_counts.keys()),
-                values=list(status_counts.values()),
-                marker_colors=[colors.get(label, "#6b7280") for label in status_counts.keys()],
-                textinfo='label+percent'
+            status_counts[v.validation_status] = (
+                status_counts.get(v.validation_status, 0) + 1
             )
-        ])
 
-        fig_status.update_layout(
-            title="Parameter Validation Status",
-            height=400
+        colors = {
+            "validated": "#10b981",
+            "questionable": "#f59e0b",
+            "outlier": "#ef4444",
+        }
+
+        fig_status = go.Figure(
+            data=[
+                go.Pie(
+                    labels=list(status_counts.keys()),
+                    values=list(status_counts.values()),
+                    marker_colors=[
+                        colors.get(label, "#6b7280") for label in status_counts
+                    ],
+                    textinfo="label+percent",
+                ),
+            ],
         )
+
+        fig_status.update_layout(title="Parameter Validation Status", height=400)
         st.plotly_chart(fig_status, use_container_width=True)
 
     with col2:
         # Confidence levels
         param_names = [v.parameter_name for v in validations]
         confidence_levels = [v.confidence_level for v in validations]
-        colors_conf = ["#10b981" if c > 0.8 else "#f59e0b" if c > 0.5 else "#ef4444" for c in confidence_levels]
+        colors_conf = [
+            "#10b981" if c > 0.8 else "#f59e0b" if c > 0.5 else "#ef4444"
+            for c in confidence_levels
+        ]
 
-        fig_conf = go.Figure(data=[
-            go.Bar(
-                x=param_names,
-                y=confidence_levels,
-                marker_color=colors_conf,
-                text=[f"{c:.1%}" for c in confidence_levels],
-                textposition='auto'
-            )
-        ])
+        fig_conf = go.Figure(
+            data=[
+                go.Bar(
+                    x=param_names,
+                    y=confidence_levels,
+                    marker_color=colors_conf,
+                    text=[f"{c:.1%}" for c in confidence_levels],
+                    textposition="auto",
+                ),
+            ],
+        )
 
         fig_conf.update_layout(
             title="Validation Confidence Levels",
             xaxis_title="Parameters",
             yaxis_title="Confidence Level",
             height=400,
-            yaxis={"range": [0, 1]}
+            yaxis={"range": [0, 1]},
         )
         st.plotly_chart(fig_conf, use_container_width=True)
 
@@ -341,8 +378,9 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
     st.subheader("📊 Parameter Range Analysis")
 
     for validation in validations:
-        with st.expander(f"📈 {validation.parameter_name.replace('_', ' ').title()} ({validation.unit})"):
-
+        with st.expander(
+            f"📈 {validation.parameter_name.replace('_', ' ').title()} ({validation.unit})",
+        ):
             lit_min, lit_max = validation.literature_range
             typ_min, typ_max = validation.typical_range
             value = validation.value
@@ -351,42 +389,56 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
             fig_range = go.Figure()
 
             # Literature range
-            fig_range.add_trace(go.Scatter(
-                x=[lit_min, lit_max],
-                y=[1, 1],
-                mode='lines',
-                line={"color": 'lightblue', "width": 20},
-                name='Literature Range',
-                hovertemplate=f'Literature Range: {lit_min:.3f} - {lit_max:.3f}'
-            ))
+            fig_range.add_trace(
+                go.Scatter(
+                    x=[lit_min, lit_max],
+                    y=[1, 1],
+                    mode="lines",
+                    line={"color": "lightblue", "width": 20},
+                    name="Literature Range",
+                    hovertemplate=f"Literature Range: {lit_min:.3f} - {lit_max:.3f}",
+                ),
+            )
 
             # Typical range
-            fig_range.add_trace(go.Scatter(
-                x=[typ_min, typ_max],
-                y=[1, 1],
-                mode='lines',
-                line={"color": 'blue', "width": 15},
-                name='Typical Range',
-                hovertemplate=f'Typical Range: {typ_min:.3f} - {typ_max:.3f}'
-            ))
+            fig_range.add_trace(
+                go.Scatter(
+                    x=[typ_min, typ_max],
+                    y=[1, 1],
+                    mode="lines",
+                    line={"color": "blue", "width": 15},
+                    name="Typical Range",
+                    hovertemplate=f"Typical Range: {typ_min:.3f} - {typ_max:.3f}",
+                ),
+            )
 
             # Current value
-            color = "green" if validation.validation_status == "validated" else "orange" if validation.validation_status == "questionable" else "red"
-            fig_range.add_trace(go.Scatter(
-                x=[value],
-                y=[1],
-                mode='markers',
-                marker={"color": color, "size": 15, "symbol": 'diamond'},
-                name='Current Value',
-                hovertemplate=f'Your Value: {value:.3f}'
-            ))
+            color = (
+                "green"
+                if validation.validation_status == "validated"
+                else (
+                    "orange"
+                    if validation.validation_status == "questionable"
+                    else "red"
+                )
+            )
+            fig_range.add_trace(
+                go.Scatter(
+                    x=[value],
+                    y=[1],
+                    mode="markers",
+                    marker={"color": color, "size": 15, "symbol": "diamond"},
+                    name="Current Value",
+                    hovertemplate=f"Your Value: {value:.3f}",
+                ),
+            )
 
             fig_range.update_layout(
                 title=f"{validation.parameter_name.replace('_', ' ').title()} Range Analysis",
                 xaxis_title=f"Value ({validation.unit})",
                 yaxis={"showticklabels": False, "range": [0.5, 1.5]},
                 height=200,
-                showlegend=True
+                showlegend=True,
             )
 
             st.plotly_chart(fig_range, use_container_width=True)
@@ -398,8 +450,14 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
                 st.metric("Confidence", f"{validation.confidence_level:.1%}")
 
             with col2:
-                status_color = {"validated": "🟢", "questionable": "🟡", "outlier": "🔴"}
-                st.write(f"**Status:** {status_color.get(validation.validation_status, '⚪')} {validation.validation_status.title()}")
+                status_color = {
+                    "validated": "🟢",
+                    "questionable": "🟡",
+                    "outlier": "🔴",
+                }
+                st.write(
+                    f"**Status:** {status_color.get(validation.validation_status, '⚪')} {validation.validation_status.title()}",
+                )
 
             with col3:
                 st.write(f"**Citations:** {len(validation.citations)}")
@@ -407,25 +465,33 @@ def create_validation_visualizations(validations: list[ParameterValidation]):
             st.info(validation.recommendation)
 
 
-def render_literature_validation_page():
+def render_literature_validation_page() -> None:
     """Render the Literature Validation page."""
-
     # Page header
     st.title("📚 Literature Validation System")
-    st.caption("Phase 5: Scientific rigor verification with literature-backed parameter validation")
+    st.caption(
+        "Phase 5: Scientific rigor verification with literature-backed parameter validation",
+    )
 
     # Status indicator
     st.success("✅ Phase 5 Complete - Literature Database Active")
 
     # Initialize validator
-    if 'literature_validator' not in st.session_state:
+    if "literature_validator" not in st.session_state:
         st.session_state.literature_validator = LiteratureValidator()
         st.session_state.validation_results = []
 
     validator = st.session_state.literature_validator
 
     # Main interface tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🔍 Parameter Validation", "📖 Literature Search", "📊 Validation Report", "🎯 Citation Manager"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "🔍 Parameter Validation",
+            "📖 Literature Search",
+            "📊 Validation Report",
+            "🎯 Citation Manager",
+        ],
+    )
 
     with tab1:
         st.subheader("🔍 Parameter Validation")
@@ -442,18 +508,18 @@ def render_literature_validation_page():
             selected_param = st.selectbox(
                 "Select Parameter",
                 available_params,
-                format_func=lambda x: x.replace('_', ' ').title()
+                format_func=lambda x: x.replace("_", " ").title(),
             )
 
             param_info = validator.parameter_ranges[selected_param]
 
             param_value = st.number_input(
                 f"Enter {selected_param.replace('_', ' ').title()} ({param_info['unit']})",
-                min_value=param_info['literature_range'][0] * 0.1,
-                max_value=param_info['literature_range'][1] * 2.0,
-                value=np.mean(param_info['typical_range']),
-                format="%.3e" if param_info['literature_range'][1] < 0.01 else "%.3f",
-                help=param_info['description']
+                min_value=param_info["literature_range"][0] * 0.1,
+                max_value=param_info["literature_range"][1] * 2.0,
+                value=np.mean(param_info["typical_range"]),
+                format="%.3e" if param_info["literature_range"][1] < 0.01 else "%.3f",
+                help=param_info["description"],
             )
 
             if st.button("🔍 Validate Parameter", type="primary"):
@@ -462,11 +528,17 @@ def render_literature_validation_page():
 
                 # Display immediate results
                 if validation.validation_status == "validated":
-                    st.success(f"✅ **{selected_param.replace('_', ' ').title()}** is validated!")
+                    st.success(
+                        f"✅ **{selected_param.replace('_', ' ').title()}** is validated!",
+                    )
                 elif validation.validation_status == "questionable":
-                    st.warning(f"⚠️ **{selected_param.replace('_', ' ').title()}** is questionable")
+                    st.warning(
+                        f"⚠️ **{selected_param.replace('_', ' ').title()}** is questionable",
+                    )
                 else:
-                    st.error(f"❌ **{selected_param.replace('_', ' ').title()}** is an outlier")
+                    st.error(
+                        f"❌ **{selected_param.replace('_', ' ').title()}** is an outlier",
+                    )
 
                 st.info(validation.recommendation)
 
@@ -486,37 +558,44 @@ def render_literature_validation_page():
             # Upload CSV for batch validation
             uploaded_file = st.file_uploader(
                 "Upload Parameter CSV",
-                type=['csv'],
-                help="CSV with columns: parameter_name, value"
+                type=["csv"],
+                help="CSV with columns: parameter_name, value",
             )
 
             if uploaded_file is not None:
                 try:
                     df = pd.read_csv(uploaded_file)
 
-                    if 'parameter_name' in df.columns and 'value' in df.columns:
+                    if "parameter_name" in df.columns and "value" in df.columns:
                         if st.button("🔍 Validate All Parameters"):
                             batch_validations = []
 
                             progress_bar = st.progress(0.0)
 
                             for i, row in df.iterrows():
-                                param_name = row['parameter_name']
-                                value = row['value']
+                                param_name = row["parameter_name"]
+                                value = row["value"]
 
-                                validation = validator.validate_parameter(param_name, value)
+                                validation = validator.validate_parameter(
+                                    param_name,
+                                    value,
+                                )
                                 batch_validations.append(validation)
 
                                 progress_bar.progress((i + 1) / len(df))
 
                             st.session_state.validation_results = batch_validations
-                            st.success(f"✅ Validated {len(batch_validations)} parameters")
+                            st.success(
+                                f"✅ Validated {len(batch_validations)} parameters",
+                            )
                             progress_bar.empty()
                     else:
-                        st.error("CSV must contain 'parameter_name' and 'value' columns")
+                        st.error(
+                            "CSV must contain 'parameter_name' and 'value' columns",
+                        )
 
                 except Exception as e:
-                    st.error(f"Error reading CSV: {str(e)}")
+                    st.error(f"Error reading CSV: {e!s}")
 
             # Quick validation templates
             st.write("**Quick Templates:**")
@@ -527,22 +606,22 @@ def render_literature_validation_page():
                     "flow_rate": 1e-4,
                     "substrate_concentration": 1.0,
                     "ph": 7.0,
-                    "temperature": 25.0
+                    "temperature": 25.0,
                 },
                 "High Performance": {
                     "conductivity": 100000.0,
                     "flow_rate": 5e-4,
                     "substrate_concentration": 2.0,
                     "ph": 7.5,
-                    "temperature": 30.0
+                    "temperature": 30.0,
                 },
                 "Low Cost": {
                     "conductivity": 1000.0,
                     "flow_rate": 5e-5,
                     "substrate_concentration": 0.5,
                     "ph": 6.8,
-                    "temperature": 20.0
-                }
+                    "temperature": 20.0,
+                },
             }
 
             selected_template = st.selectbox("Select Template", list(templates.keys()))
@@ -573,7 +652,7 @@ def render_literature_validation_page():
             search_query = st.text_input(
                 "Search Literature",
                 placeholder="e.g. 'biofilm conductivity', 'electrode materials', 'power density'",
-                help="Search titles, abstracts, and authors"
+                help="Search titles, abstracts, and authors",
             )
 
         with col2:
@@ -588,7 +667,6 @@ def render_literature_validation_page():
                 # Display search results
                 for i, citation in enumerate(search_results):
                     with st.expander(f"📄 {citation.title} ({citation.year})"):
-
                         col1, col2 = st.columns([2, 1])
 
                         with col1:
@@ -602,7 +680,10 @@ def render_literature_validation_page():
 
                         with col2:
                             st.metric("Relevance", f"{citation.relevance_score:.2f}")
-                            st.metric("Quality Score", f"{citation.quality_score:.1f}/5.0")
+                            st.metric(
+                                "Quality Score",
+                                f"{citation.quality_score:.1f}/5.0",
+                            )
 
                             if citation.doi:
                                 st.write(f"**DOI:** {citation.doi}")
@@ -623,7 +704,9 @@ def render_literature_validation_page():
         total_citations = len(validator.citation_database)
         avg_quality = np.mean([c.quality_score for c in validator.citation_database])
         recent_citations = sum(1 for c in validator.citation_database if c.year >= 2010)
-        high_quality = sum(1 for c in validator.citation_database if c.quality_score >= 4.0)
+        high_quality = sum(
+            1 for c in validator.citation_database if c.quality_score >= 4.0
+        )
 
         with col1:
             st.metric("Total Citations", total_citations)
@@ -641,7 +724,9 @@ def render_literature_validation_page():
         st.subheader("📊 Comprehensive Validation Report")
 
         if st.session_state.validation_results:
-            report = validator.generate_validation_report(st.session_state.validation_results)
+            report = validator.generate_validation_report(
+                st.session_state.validation_results,
+            )
 
             # Summary statistics
             st.subheader("📈 Validation Summary")
@@ -654,15 +739,26 @@ def render_literature_validation_page():
             with col2:
                 validated = report["summary"]["validated"]
                 total = report["summary"]["total_parameters"]
-                st.metric("Validated", f"{validated}/{total}", f"{validated/total:.1%}" if total > 0 else "0%")
+                st.metric(
+                    "Validated",
+                    f"{validated}/{total}",
+                    f"{validated / total:.1%}" if total > 0 else "0%",
+                )
 
             with col3:
-                st.metric("Average Confidence", f"{report['summary']['average_confidence']:.1%}")
+                st.metric(
+                    "Average Confidence",
+                    f"{report['summary']['average_confidence']:.1%}",
+                )
 
             with col4:
                 validation_score = report["summary"]["validation_score"]
                 color = "normal" if validation_score > 0.8 else "inverse"
-                st.metric("Validation Score", f"{validation_score:.1%}", delta_color=color)
+                st.metric(
+                    "Validation Score",
+                    f"{validation_score:.1%}",
+                    delta_color=color,
+                )
 
             # Detailed breakdown
             col1, col2 = st.columns(2)
@@ -671,17 +767,29 @@ def render_literature_validation_page():
                 st.subheader("🎯 Parameter Status Breakdown")
 
                 status_data = {
-                    'Status': ['Validated ✅', 'Questionable ⚠️', 'Outliers ❌'],
-                    'Count': [
+                    "Status": ["Validated ✅", "Questionable ⚠️", "Outliers ❌"],
+                    "Count": [
                         report["summary"]["validated"],
                         report["summary"]["questionable"],
-                        report["summary"]["outliers"]
+                        report["summary"]["outliers"],
                     ],
-                    'Percentage': [
-                        f"{report['summary']['validated']/total:.1%}" if total > 0 else "0%",
-                        f"{report['summary']['questionable']/total:.1%}" if total > 0 else "0%",
-                        f"{report['summary']['outliers']/total:.1%}" if total > 0 else "0%"
-                    ]
+                    "Percentage": [
+                        (
+                            f"{report['summary']['validated'] / total:.1%}"
+                            if total > 0
+                            else "0%"
+                        ),
+                        (
+                            f"{report['summary']['questionable'] / total:.1%}"
+                            if total > 0
+                            else "0%"
+                        ),
+                        (
+                            f"{report['summary']['outliers'] / total:.1%}"
+                            if total > 0
+                            else "0%"
+                        ),
+                    ],
                 }
 
                 st.dataframe(pd.DataFrame(status_data), use_container_width=True)
@@ -727,7 +835,9 @@ def render_literature_validation_page():
                     st.info("Bibliography in BibTeX format would be exported")
 
         else:
-            st.info("No validation results available. Please validate some parameters first.")
+            st.info(
+                "No validation results available. Please validate some parameters first.",
+            )
 
     with tab4:
         st.subheader("🎯 Citation Manager")
@@ -742,14 +852,24 @@ def render_literature_validation_page():
             # Display all citations in a table
             citation_data = []
             for citation in validator.citation_database:
-                citation_data.append({
-                    'Title': citation.title[:50] + "..." if len(citation.title) > 50 else citation.title,
-                    'Authors': citation.authors[0] + " et al." if len(citation.authors) > 1 else citation.authors[0],
-                    'Journal': citation.journal,
-                    'Year': citation.year,
-                    'Quality': f"{citation.quality_score:.1f}/5.0",
-                    'DOI': citation.doi or "N/A"
-                })
+                citation_data.append(
+                    {
+                        "Title": (
+                            citation.title[:50] + "..."
+                            if len(citation.title) > 50
+                            else citation.title
+                        ),
+                        "Authors": (
+                            citation.authors[0] + " et al."
+                            if len(citation.authors) > 1
+                            else citation.authors[0]
+                        ),
+                        "Journal": citation.journal,
+                        "Year": citation.year,
+                        "Quality": f"{citation.quality_score:.1f}/5.0",
+                        "DOI": citation.doi or "N/A",
+                    },
+                )
 
             df_citations = pd.DataFrame(citation_data)
             st.dataframe(df_citations, use_container_width=True)
@@ -767,7 +887,11 @@ def render_literature_validation_page():
 
                 if st.form_submit_button("Add Citation"):
                     if new_title and new_authors and new_journal:
-                        authors_list = [author.strip() for author in new_authors.split('\n') if author.strip()]
+                        authors_list = [
+                            author.strip()
+                            for author in new_authors.split("\n")
+                            if author.strip()
+                        ]
 
                         new_citation = Citation(
                             title=new_title,
@@ -779,7 +903,7 @@ def render_literature_validation_page():
                             url=None,
                             abstract=None,
                             relevance_score=0.8,
-                            quality_score=new_quality
+                            quality_score=new_quality,
                         )
 
                         validator.citation_database.append(new_citation)
@@ -799,7 +923,7 @@ def render_literature_validation_page():
             x=year_counts.index,
             y=year_counts.values,
             title="Citations by Publication Year",
-            labels={'x': 'Year', 'y': 'Number of Citations'}
+            labels={"x": "Year", "y": "Number of Citations"},
         )
         st.plotly_chart(fig_years, use_container_width=True)
 
@@ -810,7 +934,7 @@ def render_literature_validation_page():
             x=qualities,
             nbins=10,
             title="Citation Quality Score Distribution",
-            labels={'x': 'Quality Score', 'y': 'Number of Citations'}
+            labels={"x": "Quality Score", "y": "Number of Citations"},
         )
         st.plotly_chart(fig_quality, use_container_width=True)
 

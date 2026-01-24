@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-Performance Monitor Dashboard for Enhanced MFC Platform
+"""Performance Monitor Dashboard for Enhanced MFC Platform.
 
 Real-time system performance monitoring with GPU metrics, simulation status,
 and comprehensive system health indicators.
 
 Created: 2025-08-02
 """
+
+from __future__ import annotations
 
 import time
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ from plotly.subplots import make_subplots
 @dataclass
 class SystemMetrics:
     """System performance metrics."""
+
     cpu_usage: float
     memory_usage: float
     gpu_utilization: float
@@ -37,6 +39,7 @@ class SystemMetrics:
 @dataclass
 class SimulationStatus:
     """Current simulation status."""
+
     active: bool
     phase: str
     progress: float
@@ -49,31 +52,34 @@ class SimulationStatus:
 class PerformanceMonitor:
     """Real-time performance monitoring system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics_history = []
         self.alerts = []
         self.monitoring_active = True
 
     def get_current_metrics(self) -> SystemMetrics:
         """Get current system performance metrics."""
-
         # CPU and Memory
         cpu_percent = psutil.cpu_percent(interval=0.1)
         memory = psutil.virtual_memory()
 
         # Disk usage
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
         disk_percent = (disk.used / disk.total) * 100
 
         # Network I/O
         network = psutil.net_io_counters()
         network_io = {
-            'bytes_sent': network.bytes_sent,
-            'bytes_recv': network.bytes_recv
+            "bytes_sent": network.bytes_sent,
+            "bytes_recv": network.bytes_recv,
         }
 
         # Simulated GPU metrics (in real implementation, use pynvml or ROCm tools)
-        gpu_util = np.random.uniform(20, 95) if np.random.random() > 0.3 else np.random.uniform(0, 15)
+        gpu_util = (
+            np.random.uniform(20, 95)
+            if np.random.random() > 0.3
+            else np.random.uniform(0, 15)
+        )
         gpu_memory = np.random.uniform(2.0, 15.8)  # GB
         gpu_temp = np.random.uniform(45, 85)  # °C
 
@@ -85,17 +91,22 @@ class PerformanceMonitor:
             gpu_temperature=gpu_temp,
             disk_usage=disk_percent,
             network_io=network_io,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     def get_simulation_status(self) -> SimulationStatus:
         """Get current simulation status."""
-
         # Simulated simulation status
         is_active = np.random.random() > 0.7  # 30% chance simulation is running
 
         if is_active:
-            phases = ["Initialization", "Flow Calculation", "Mass Transport", "Biofilm Growth", "Optimization"]
+            phases = [
+                "Initialization",
+                "Flow Calculation",
+                "Mass Transport",
+                "Biofilm Growth",
+                "Optimization",
+            ]
             current_phase = np.random.choice(phases)
             progress = np.random.uniform(0.1, 0.95)
             current_step = int(progress * 1000)
@@ -108,10 +119,10 @@ class PerformanceMonitor:
             eta = str(timedelta(seconds=int(eta_seconds)))
 
             perf_metrics = {
-                'steps_per_second': steps_per_second,
-                'memory_efficiency': np.random.uniform(0.8, 0.98),
-                'convergence_rate': np.random.uniform(0.001, 0.01),
-                'acceleration_factor': np.random.uniform(500, 8400)
+                "steps_per_second": steps_per_second,
+                "memory_efficiency": np.random.uniform(0.8, 0.98),
+                "convergence_rate": np.random.uniform(0.001, 0.01),
+                "acceleration_factor": np.random.uniform(500, 8400),
             }
         else:
             current_phase = "Idle"
@@ -128,24 +139,22 @@ class PerformanceMonitor:
             eta=eta,
             current_step=current_step,
             total_steps=total_steps,
-            performance_metrics=perf_metrics
+            performance_metrics=perf_metrics,
         )
 
     def get_gpu_acceleration_metrics(self) -> dict[str, float]:
         """Get GPU acceleration performance metrics."""
-
         return {
-            'current_speedup': np.random.uniform(1000, 8400),
-            'target_speedup': 8400,
-            'efficiency': np.random.uniform(0.75, 0.95),
-            'memory_bandwidth': np.random.uniform(400, 900),  # GB/s
-            'compute_utilization': np.random.uniform(0.6, 0.95),
-            'memory_utilization': np.random.uniform(0.4, 0.85)
+            "current_speedup": np.random.uniform(1000, 8400),
+            "target_speedup": 8400,
+            "efficiency": np.random.uniform(0.75, 0.95),
+            "memory_bandwidth": np.random.uniform(400, 900),  # GB/s
+            "compute_utilization": np.random.uniform(0.6, 0.95),
+            "memory_utilization": np.random.uniform(0.4, 0.85),
         }
 
     def get_system_health_score(self) -> float:
         """Calculate overall system health score."""
-
         metrics = self.get_current_metrics()
 
         # Health scoring based on various metrics
@@ -163,52 +172,58 @@ class PerformanceMonitor:
 
     def check_alerts(self, metrics: SystemMetrics) -> list[dict[str, Any]]:
         """Check for performance alerts."""
-
         alerts = []
 
         # CPU usage alert
         if metrics.cpu_usage > 90:
-            alerts.append({
-                'type': 'warning',
-                'title': 'High CPU Usage',
-                'message': f'CPU usage at {metrics.cpu_usage:.1f}%',
-                'timestamp': metrics.timestamp
-            })
+            alerts.append(
+                {
+                    "type": "warning",
+                    "title": "High CPU Usage",
+                    "message": f"CPU usage at {metrics.cpu_usage:.1f}%",
+                    "timestamp": metrics.timestamp,
+                },
+            )
 
         # Memory usage alert
         if metrics.memory_usage > 85:
-            alerts.append({
-                'type': 'warning',
-                'title': 'High Memory Usage',
-                'message': f'Memory usage at {metrics.memory_usage:.1f}%',
-                'timestamp': metrics.timestamp
-            })
+            alerts.append(
+                {
+                    "type": "warning",
+                    "title": "High Memory Usage",
+                    "message": f"Memory usage at {metrics.memory_usage:.1f}%",
+                    "timestamp": metrics.timestamp,
+                },
+            )
 
         # GPU temperature alert
         if metrics.gpu_temperature > 80:
-            alerts.append({
-                'type': 'error',
-                'title': 'GPU Overheating',
-                'message': f'GPU temperature at {metrics.gpu_temperature:.1f}°C',
-                'timestamp': metrics.timestamp
-            })
+            alerts.append(
+                {
+                    "type": "error",
+                    "title": "GPU Overheating",
+                    "message": f"GPU temperature at {metrics.gpu_temperature:.1f}°C",
+                    "timestamp": metrics.timestamp,
+                },
+            )
 
         # GPU utilization alert (too low during simulation)
         sim_status = self.get_simulation_status()
         if sim_status.active and metrics.gpu_utilization < 30:
-            alerts.append({
-                'type': 'info',
-                'title': 'Low GPU Utilization',
-                'message': f'GPU utilization only {metrics.gpu_utilization:.1f}% during simulation',
-                'timestamp': metrics.timestamp
-            })
+            alerts.append(
+                {
+                    "type": "info",
+                    "title": "Low GPU Utilization",
+                    "message": f"GPU utilization only {metrics.gpu_utilization:.1f}% during simulation",
+                    "timestamp": metrics.timestamp,
+                },
+            )
 
         return alerts
 
 
-def create_real_time_charts(metrics_history: list[SystemMetrics]):
+def create_real_time_charts(metrics_history: list[SystemMetrics]) -> None:
     """Create real-time performance charts."""
-
     if not metrics_history:
         st.info("No metrics data available yet...")
         return
@@ -216,14 +231,16 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
     # Convert to DataFrame
     data = []
     for m in metrics_history[-50:]:  # Last 50 data points
-        data.append({
-            'timestamp': m.timestamp,
-            'cpu_usage': m.cpu_usage,
-            'memory_usage': m.memory_usage,
-            'gpu_utilization': m.gpu_utilization,
-            'gpu_memory': m.gpu_memory,
-            'gpu_temperature': m.gpu_temperature
-        })
+        data.append(
+            {
+                "timestamp": m.timestamp,
+                "cpu_usage": m.cpu_usage,
+                "memory_usage": m.memory_usage,
+                "gpu_utilization": m.gpu_utilization,
+                "gpu_memory": m.gpu_memory,
+                "gpu_temperature": m.gpu_temperature,
+            },
+        )
 
     df = pd.DataFrame(data)
 
@@ -232,21 +249,32 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
 
     with col1:
         fig_cpu_mem = make_subplots(
-            rows=2, cols=1,
-            subplot_titles=('CPU Usage (%)', 'Memory Usage (%)'),
-            vertical_spacing=0.1
+            rows=2,
+            cols=1,
+            subplot_titles=("CPU Usage (%)", "Memory Usage (%)"),
+            vertical_spacing=0.1,
         )
 
         fig_cpu_mem.add_trace(
-            go.Scatter(x=df['timestamp'], y=df['cpu_usage'],
-                      name='CPU', line={'color': 'blue'}),
-            row=1, col=1
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["cpu_usage"],
+                name="CPU",
+                line={"color": "blue"},
+            ),
+            row=1,
+            col=1,
         )
 
         fig_cpu_mem.add_trace(
-            go.Scatter(x=df['timestamp'], y=df['memory_usage'],
-                      name='Memory', line={'color': 'green'}),
-            row=2, col=1
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["memory_usage"],
+                name="Memory",
+                line={"color": "green"},
+            ),
+            row=2,
+            col=1,
         )
 
         fig_cpu_mem.update_layout(height=400, title_text="System Resources")
@@ -257,27 +285,47 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
 
     with col2:
         fig_gpu = make_subplots(
-            rows=3, cols=1,
-            subplot_titles=('GPU Utilization (%)', 'GPU Memory (GB)', 'GPU Temperature (°C)'),
-            vertical_spacing=0.08
+            rows=3,
+            cols=1,
+            subplot_titles=(
+                "GPU Utilization (%)",
+                "GPU Memory (GB)",
+                "GPU Temperature (°C)",
+            ),
+            vertical_spacing=0.08,
         )
 
         fig_gpu.add_trace(
-            go.Scatter(x=df['timestamp'], y=df['gpu_utilization'],
-                      name='GPU Util', line={'color': 'red'}),
-            row=1, col=1
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["gpu_utilization"],
+                name="GPU Util",
+                line={"color": "red"},
+            ),
+            row=1,
+            col=1,
         )
 
         fig_gpu.add_trace(
-            go.Scatter(x=df['timestamp'], y=df['gpu_memory'],
-                      name='GPU Memory', line={'color': 'orange'}),
-            row=2, col=1
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["gpu_memory"],
+                name="GPU Memory",
+                line={"color": "orange"},
+            ),
+            row=2,
+            col=1,
         )
 
         fig_gpu.add_trace(
-            go.Scatter(x=df['timestamp'], y=df['gpu_temperature'],
-                      name='GPU Temp', line={'color': 'purple'}),
-            row=3, col=1
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["gpu_temperature"],
+                name="GPU Temp",
+                line={"color": "purple"},
+            ),
+            row=3,
+            col=1,
         )
 
         fig_gpu.update_layout(height=400, title_text="GPU Metrics")
@@ -289,9 +337,8 @@ def create_real_time_charts(metrics_history: list[SystemMetrics]):
         st.plotly_chart(fig_gpu, use_container_width=True)
 
 
-def create_acceleration_dashboard():
+def create_acceleration_dashboard() -> None:
     """Create GPU acceleration performance dashboard."""
-
     st.subheader("🚀 GPU Acceleration Performance")
 
     monitor = PerformanceMonitor()
@@ -301,8 +348,8 @@ def create_acceleration_dashboard():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        current_speedup = gpu_metrics['current_speedup']
-        target_speedup = gpu_metrics['target_speedup']
+        current_speedup = gpu_metrics["current_speedup"]
+        target_speedup = gpu_metrics["target_speedup"]
         delta = f"Target: {target_speedup:.0f}×"
         color = "normal" if current_speedup > target_speedup * 0.8 else "inverse"
 
@@ -310,38 +357,37 @@ def create_acceleration_dashboard():
             "Current Speedup",
             f"{current_speedup:.0f}×",
             delta=delta,
-            delta_color=color
+            delta_color=color,
         )
 
     with col2:
-        efficiency = gpu_metrics['efficiency']
+        efficiency = gpu_metrics["efficiency"]
         st.metric(
             "GPU Efficiency",
             f"{efficiency:.1%}",
             delta="Target: >85%",
-            delta_color="normal" if efficiency > 0.85 else "inverse"
+            delta_color="normal" if efficiency > 0.85 else "inverse",
         )
 
     with col3:
-        bandwidth = gpu_metrics['memory_bandwidth']
-        st.metric(
-            "Memory Bandwidth",
-            f"{bandwidth:.0f} GB/s",
-            delta="Peak: 900 GB/s"
-        )
+        bandwidth = gpu_metrics["memory_bandwidth"]
+        st.metric("Memory Bandwidth", f"{bandwidth:.0f} GB/s", delta="Peak: 900 GB/s")
 
     with col4:
-        compute_util = gpu_metrics['compute_utilization']
+        compute_util = gpu_metrics["compute_utilization"]
         st.metric(
             "Compute Utilization",
             f"{compute_util:.1%}",
             delta="Target: >90%",
-            delta_color="normal" if compute_util > 0.9 else "inverse"
+            delta_color="normal" if compute_util > 0.9 else "inverse",
         )
 
     # Acceleration progress bar
     progress_value = current_speedup / target_speedup
-    st.progress(progress_value, f"Acceleration Progress: {progress_value:.1%} of target")
+    st.progress(
+        progress_value,
+        f"Acceleration Progress: {progress_value:.1%} of target",
+    )
 
     if progress_value < 0.5:
         st.warning("⚠️ GPU acceleration significantly below target performance")
@@ -351,9 +397,8 @@ def create_acceleration_dashboard():
         st.success("✅ GPU acceleration performing at target levels")
 
 
-def render_performance_monitor_page():
+def render_performance_monitor_page() -> None:
     """Render the Performance Monitor dashboard page."""
-
     # Page header
     st.title("📊 Performance Monitor Dashboard")
     st.caption("Real-time system performance monitoring and GPU acceleration tracking")
@@ -372,7 +417,7 @@ def render_performance_monitor_page():
             st.rerun()
 
     # Initialize performance monitor
-    if 'performance_monitor' not in st.session_state:
+    if "performance_monitor" not in st.session_state:
         st.session_state.performance_monitor = PerformanceMonitor()
         st.session_state.metrics_history = []
 
@@ -396,13 +441,23 @@ def render_performance_monitor_page():
 
     with col1:
         health_color = "normal" if health_score > 0.8 else "inverse"
-        health_status = "Excellent" if health_score > 0.9 else "Good" if health_score > 0.7 else "Fair" if health_score > 0.5 else "Poor"
+        health_status = (
+            "Excellent"
+            if health_score > 0.9
+            else (
+                "Good"
+                if health_score > 0.7
+                else "Fair"
+                if health_score > 0.5
+                else "Poor"
+            )
+        )
 
         st.metric(
             "System Health",
             f"{health_score:.1%}",
             delta=health_status,
-            delta_color=health_color
+            delta_color=health_color,
         )
 
     with col2:
@@ -411,7 +466,7 @@ def render_performance_monitor_page():
             "CPU Usage",
             f"{current_metrics.cpu_usage:.1f}%",
             delta="Target: <80%",
-            delta_color=cpu_color
+            delta_color=cpu_color,
         )
 
     with col3:
@@ -420,7 +475,7 @@ def render_performance_monitor_page():
             "Memory Usage",
             f"{current_metrics.memory_usage:.1f}%",
             delta="Target: <85%",
-            delta_color=memory_color
+            delta_color=memory_color,
         )
 
     with col4:
@@ -429,7 +484,7 @@ def render_performance_monitor_page():
             "GPU Temperature",
             f"{current_metrics.gpu_temperature:.1f}°C",
             delta="Target: <75°C",
-            delta_color=gpu_temp_color
+            delta_color=gpu_temp_color,
         )
 
     # Simulation Status
@@ -444,12 +499,15 @@ def render_performance_monitor_page():
 
         with col2:
             st.metric("Current Step", f"{sim_status.current_step:,}")
-            st.metric("Steps/sec", f"{sim_status.performance_metrics.get('steps_per_second', 0):.1f}")
+            st.metric(
+                "Steps/sec",
+                f"{sim_status.performance_metrics.get('steps_per_second', 0):.1f}",
+            )
 
         with col3:
             if sim_status.eta:
                 st.metric("ETA", sim_status.eta)
-            acceleration = sim_status.performance_metrics.get('acceleration_factor', 1)
+            acceleration = sim_status.performance_metrics.get("acceleration_factor", 1)
             st.metric("Acceleration", f"{acceleration:.0f}×")
 
         # Performance metrics for active simulation
@@ -457,15 +515,18 @@ def render_performance_monitor_page():
             perf_col1, perf_col2, perf_col3 = st.columns(3)
 
             with perf_col1:
-                memory_eff = sim_status.performance_metrics.get('memory_efficiency', 0)
+                memory_eff = sim_status.performance_metrics.get("memory_efficiency", 0)
                 st.metric("Memory Efficiency", f"{memory_eff:.1%}")
 
             with perf_col2:
-                convergence = sim_status.performance_metrics.get('convergence_rate', 0)
+                convergence = sim_status.performance_metrics.get("convergence_rate", 0)
                 st.metric("Convergence Rate", f"{convergence:.4f}")
 
             with perf_col3:
-                acceleration = sim_status.performance_metrics.get('acceleration_factor', 1)
+                acceleration = sim_status.performance_metrics.get(
+                    "acceleration_factor",
+                    1,
+                )
                 target_accel = 8400
                 accel_progress = min(1.0, acceleration / target_accel)
                 st.metric("Acceleration Progress", f"{accel_progress:.1%}")
@@ -494,9 +555,9 @@ def render_performance_monitor_page():
         st.subheader("🚨 System Alerts")
 
         for alert in alerts:
-            if alert['type'] == 'error':
+            if alert["type"] == "error":
                 st.error(f"**{alert['title']}**: {alert['message']}")
-            elif alert['type'] == 'warning':
+            elif alert["type"] == "warning":
                 st.warning(f"**{alert['title']}**: {alert['message']}")
             else:
                 st.info(f"**{alert['title']}**: {alert['message']}")
@@ -510,21 +571,53 @@ def render_performance_monitor_page():
 
             # Resource usage table
             resource_data = {
-                'Component': ['CPU', 'Memory', 'GPU', 'Disk', 'Network'],
-                'Usage': [
+                "Component": ["CPU", "Memory", "GPU", "Disk", "Network"],
+                "Usage": [
                     f"{current_metrics.cpu_usage:.1f}%",
                     f"{current_metrics.memory_usage:.1f}%",
                     f"{current_metrics.gpu_utilization:.1f}%",
                     f"{current_metrics.disk_usage:.1f}%",
-                    "Active"
+                    "Active",
                 ],
-                'Status': [
-                    '🟢 Normal' if current_metrics.cpu_usage < 80 else '🟡 High' if current_metrics.cpu_usage < 95 else '🔴 Critical',
-                    '🟢 Normal' if current_metrics.memory_usage < 85 else '🟡 High' if current_metrics.memory_usage < 95 else '🔴 Critical',
-                    '🟢 Active' if current_metrics.gpu_utilization > 50 else '🟡 Low' if current_metrics.gpu_utilization > 10 else '🔴 Idle',
-                    '🟢 Normal' if current_metrics.disk_usage < 80 else '🟡 High' if current_metrics.disk_usage < 95 else '🔴 Critical',
-                    '🟢 Connected'
-                ]
+                "Status": [
+                    (
+                        "🟢 Normal"
+                        if current_metrics.cpu_usage < 80
+                        else (
+                            "🟡 High"
+                            if current_metrics.cpu_usage < 95
+                            else "🔴 Critical"
+                        )
+                    ),
+                    (
+                        "🟢 Normal"
+                        if current_metrics.memory_usage < 85
+                        else (
+                            "🟡 High"
+                            if current_metrics.memory_usage < 95
+                            else "🔴 Critical"
+                        )
+                    ),
+                    (
+                        "🟢 Active"
+                        if current_metrics.gpu_utilization > 50
+                        else (
+                            "🟡 Low"
+                            if current_metrics.gpu_utilization > 10
+                            else "🔴 Idle"
+                        )
+                    ),
+                    (
+                        "🟢 Normal"
+                        if current_metrics.disk_usage < 80
+                        else (
+                            "🟡 High"
+                            if current_metrics.disk_usage < 95
+                            else "🔴 Critical"
+                        )
+                    ),
+                    "🟢 Connected",
+                ],
             }
 
             st.dataframe(pd.DataFrame(resource_data), use_container_width=True)
@@ -542,8 +635,18 @@ def render_performance_monitor_page():
                 avg_temp = np.mean([m.gpu_temperature for m in recent_metrics])
 
                 stats_data = {
-                    'Metric': ['Avg CPU (10min)', 'Avg Memory (10min)', 'Avg GPU (10min)', 'Avg GPU Temp (10min)'],
-                    'Value': [f"{avg_cpu:.1f}%", f"{avg_memory:.1f}%", f"{avg_gpu:.1f}%", f"{avg_temp:.1f}°C"]
+                    "Metric": [
+                        "Avg CPU (10min)",
+                        "Avg Memory (10min)",
+                        "Avg GPU (10min)",
+                        "Avg GPU Temp (10min)",
+                    ],
+                    "Value": [
+                        f"{avg_cpu:.1f}%",
+                        f"{avg_memory:.1f}%",
+                        f"{avg_gpu:.1f}%",
+                        f"{avg_temp:.1f}°C",
+                    ],
                 }
 
                 st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
@@ -580,6 +683,8 @@ def render_performance_monitor_page():
 
     # Footer with system info
     st.markdown("---")
-    st.caption(f"Last updated: {current_metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')} | "
-              f"Monitoring active: {monitor.monitoring_active} | "
-              f"Data points: {len(st.session_state.metrics_history)}")
+    st.caption(
+        f"Last updated: {current_metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')} | "
+        f"Monitoring active: {monitor.monitoring_active} | "
+        f"Data points: {len(st.session_state.metrics_history)}",
+    )

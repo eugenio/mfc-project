@@ -1,11 +1,13 @@
-"""
-System Configuration Page for Enhanced MFC Platform
+"""System Configuration Page for Enhanced MFC Platform.
 
 Global system settings, export management, theme configuration,
 and platform administration for the MFC research platform.
 
 Created: 2025-08-02
 """
+
+from __future__ import annotations
+
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -19,6 +21,7 @@ import streamlit as st
 @dataclass
 class SystemSettings:
     """System configuration settings."""
+
     theme: str = "scientific"
     default_units: str = "si"
     precision: int = 3
@@ -30,9 +33,11 @@ class SystemSettings:
     max_iterations: int = 1000
     notification_email: str | None = None
 
+
 @dataclass
 class ExportConfig:
     """Export configuration settings."""
+
     default_format: str = "csv"
     include_metadata: bool = True
     include_citations: bool = True
@@ -45,6 +50,7 @@ class ExportConfig:
 @dataclass
 class SecuritySettings:
     """Security and privacy settings."""
+
     require_confirmation: bool = True
     audit_logging: bool = True
     data_encryption: bool = False
@@ -52,10 +58,11 @@ class SecuritySettings:
     backup_frequency: str = "daily"
     max_file_size: int = 100  # MB
 
+
 class SystemConfigurator:
     """System configuration management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.settings = self._load_settings()
         self.export_config = self._load_export_config()
         self.security_settings = self._load_security_settings()
@@ -105,7 +112,7 @@ class SystemConfigurator:
             "export_config": asdict(self.export_config),
             "security_settings": asdict(self.security_settings),
             "export_timestamp": datetime.now().isoformat(),
-            "platform_version": "2.0.0"
+            "platform_version": "2.0.0",
         }
 
     def import_configuration(self, config: dict[str, Any]) -> bool:
@@ -135,12 +142,12 @@ class SystemConfigurator:
             "disk_space": "45.2 GB free",  # Would get actual disk space
             "last_backup": "2025-08-02 10:30:00",
             "uptime": "2 days, 14 hours",
-            "active_sessions": 1
+            "active_sessions": 1,
         }
 
-def render_theme_configuration():
-    """Render theme configuration section."""
 
+def render_theme_configuration() -> None:
+    """Render theme configuration section."""
     st.subheader("🎨 Theme Configuration")
 
     col1, col2 = st.columns(2)
@@ -150,14 +157,14 @@ def render_theme_configuration():
             "scientific": "Scientific Research (Blue/White)",
             "dark": "Dark Mode (Black/Gray)",
             "light": "Light Mode (White/Gray)",
-            "custom": "Custom Theme"
+            "custom": "Custom Theme",
         }
 
         selected_theme = st.selectbox(
             "Interface Theme",
             list(theme_options.keys()),
             format_func=lambda x: theme_options[x],
-            help="Choose the visual theme for the interface"
+            help="Choose the visual theme for the interface",
         )
 
         if selected_theme == "custom":
@@ -169,7 +176,7 @@ def render_theme_configuration():
 
         font_family = st.selectbox(
             "Font Family",
-            ["Inter", "Roboto", "Arial", "Times New Roman", "Courier New"]
+            ["Inter", "Roboto", "Arial", "Times New Roman", "Courier New"],
         )
 
         font_size = st.slider("Base Font Size", 12, 18, 14)
@@ -180,7 +187,7 @@ def render_theme_configuration():
         # Theme preview
         preview_html = f"""
         <div style="
-            background: {'#f0f2f6' if selected_theme == 'scientific' else '#1e1e1e' if selected_theme == 'dark' else '#ffffff'};
+            background: {"#f0f2f6" if selected_theme == "scientific" else "#1e1e1e" if selected_theme == "dark" else "#ffffff"};
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 20px;
@@ -188,14 +195,14 @@ def render_theme_configuration():
             font-family: {font_family};
             font-size: {font_size}px;
         ">
-            <h3 style="color: {'#1f77b4' if selected_theme == 'scientific' else '#ffffff' if selected_theme == 'dark' else '#262730'};">
+            <h3 style="color: {"#1f77b4" if selected_theme == "scientific" else "#ffffff" if selected_theme == "dark" else "#262730"};">
                 MFC Platform Preview
             </h3>
-            <p style="color: {'#262730' if selected_theme != 'dark' else '#ffffff'};">
+            <p style="color: {"#262730" if selected_theme != "dark" else "#ffffff"};">
                 This is how your interface will look with the selected theme.
             </p>
             <button style="
-                background: {'#1f77b4' if selected_theme == 'scientific' else '#ff7f0e'};
+                background: {"#1f77b4" if selected_theme == "scientific" else "#ff7f0e"};
                 color: white;
                 border: none;
                 padding: 8px 16px;
@@ -213,9 +220,9 @@ def render_theme_configuration():
             st.success("✅ Theme applied successfully!")
             st.info("Changes will take effect on next page refresh")
 
-def render_export_management():
-    """Render export and data management section."""
 
+def render_export_management() -> None:
+    """Render export and data management section."""
     st.subheader("💾 Export & Data Management")
 
     tab1, tab2, tab3 = st.tabs(["Export Settings", "Data Export", "Import/Backup"])
@@ -229,7 +236,7 @@ def render_export_management():
             st.selectbox(
                 "Default Format",
                 ["CSV", "JSON", "XLSX", "HDF5", "Parquet"],
-                help="Default format for data exports"
+                help="Default format for data exports",
             )
 
             st.checkbox("Include Metadata", value=True)
@@ -241,7 +248,7 @@ def render_export_management():
             if auto_export:
                 st.selectbox(
                     "Export Frequency",
-                    ["After each simulation", "Daily", "Weekly", "Monthly"]
+                    ["After each simulation", "Daily", "Weekly", "Monthly"],
                 )
 
         with col2:
@@ -250,7 +257,7 @@ def render_export_management():
             export_path = st.text_input(
                 "Export Directory",
                 value="./exports",
-                help="Directory where exported files will be saved"
+                help="Directory where exported files will be saved",
             )
 
             if st.button("📁 Browse Directory"):
@@ -262,7 +269,7 @@ def render_export_management():
             storage_data = {
                 "Category": ["Simulation Data", "Export Files", "Cache", "Logs"],
                 "Size (MB)": [1250, 340, 180, 45],
-                "Files": [234, 67, 89, 156]
+                "Files": [234, 67, 89, 156],
             }
 
             st.dataframe(pd.DataFrame(storage_data), use_container_width=True)
@@ -281,9 +288,9 @@ def render_export_management():
                 "Optimization History",
                 "Performance Metrics",
                 "Literature Database",
-                "System Settings"
+                "System Settings",
             ],
-            default=["Simulation Results", "Parameter Configurations"]
+            default=["Simulation Results", "Parameter Configurations"],
         )
 
         col1, col2, col3 = st.columns(3)
@@ -309,13 +316,19 @@ def render_export_management():
         # Recent exports
         st.write("**Recent Exports:**")
 
-        recent_exports = pd.DataFrame({
-            "Timestamp": ["2025-08-02 14:30", "2025-08-02 10:15", "2025-08-01 16:45"],
-            "Type": ["Simulation Results", "Full Export", "Performance Data"],
-            "Format": ["CSV", "JSON", "XLSX"],
-            "Size": ["12.3 MB", "156.7 MB", "4.2 MB"],
-            "Status": ["✅ Complete", "✅ Complete", "✅ Complete"]
-        })
+        recent_exports = pd.DataFrame(
+            {
+                "Timestamp": [
+                    "2025-08-02 14:30",
+                    "2025-08-02 10:15",
+                    "2025-08-01 16:45",
+                ],
+                "Type": ["Simulation Results", "Full Export", "Performance Data"],
+                "Format": ["CSV", "JSON", "XLSX"],
+                "Size": ["12.3 MB", "156.7 MB", "4.2 MB"],
+                "Status": ["✅ Complete", "✅ Complete", "✅ Complete"],
+            },
+        )
 
         st.dataframe(recent_exports, use_container_width=True)
 
@@ -327,39 +340,34 @@ def render_export_management():
 
             uploaded_config = st.file_uploader(
                 "Upload Configuration File",
-                type=['json', 'yaml', 'yml'],
-                help="Import system configuration from file"
+                type=["json", "yaml", "yml"],
+                help="Import system configuration from file",
             )
 
-            if uploaded_config:
-                if st.button("📥 Import Configuration"):
-                    st.success("✅ Configuration imported successfully")
-                    st.warning("⚠️ Please restart the platform to apply changes")
+            if uploaded_config and st.button("📥 Import Configuration"):
+                st.success("✅ Configuration imported successfully")
+                st.warning("⚠️ Please restart the platform to apply changes")
 
             st.write("**Import Data:**")
 
             uploaded_data = st.file_uploader(
                 "Upload Data File",
-                type=['csv', 'json', 'xlsx', 'h5'],
-                help="Import simulation data or results"
+                type=["csv", "json", "xlsx", "h5"],
+                help="Import simulation data or results",
             )
 
-            if uploaded_data:
-                if st.button("📥 Import Data"):
-                    st.success("✅ Data imported successfully")
+            if uploaded_data and st.button("📥 Import Data"):
+                st.success("✅ Data imported successfully")
 
         with col2:
             st.write("**Backup Management:**")
 
-            st.selectbox(
-                "Backup Frequency",
-                ["Manual", "Daily", "Weekly", "Monthly"]
-            )
+            st.selectbox("Backup Frequency", ["Manual", "Daily", "Weekly", "Monthly"])
 
             backup_location = st.text_input(
                 "Backup Location",
                 value="./backups",
-                help="Directory for automatic backups"
+                help="Directory for automatic backups",
             )
 
             if st.button("💾 Create Backup Now"):
@@ -368,17 +376,19 @@ def render_export_management():
 
             st.write("**Recent Backups:**")
 
-            backups = pd.DataFrame({
-                "Date": ["2025-08-02", "2025-08-01", "2025-07-31"],
-                "Size": ["245 MB", "238 MB", "232 MB"],
-                "Type": ["Auto", "Manual", "Auto"]
-            })
+            backups = pd.DataFrame(
+                {
+                    "Date": ["2025-08-02", "2025-08-01", "2025-07-31"],
+                    "Size": ["245 MB", "238 MB", "232 MB"],
+                    "Type": ["Auto", "Manual", "Auto"],
+                },
+            )
 
             st.dataframe(backups, use_container_width=True)
 
-def render_system_monitoring():
-    """Render system monitoring and diagnostics."""
 
+def render_system_monitoring() -> None:
+    """Render system monitoring and diagnostics."""
     st.subheader("🔧 System Monitoring & Diagnostics")
 
     # System information
@@ -400,7 +410,9 @@ def render_system_monitoring():
         st.metric("Uptime", system_info["uptime"])
 
     with col4:
-        gpu_status = "✅ Available" if system_info["gpu_available"] else "❌ Not Available"
+        gpu_status = (
+            "✅ Available" if system_info["gpu_available"] else "❌ Not Available"
+        )
         st.metric("GPU Status", gpu_status)
         st.metric("Active Sessions", system_info["active_sessions"])
 
@@ -413,12 +425,12 @@ def render_system_monitoring():
         "Literature Database": "✅ Online",
         "Export Directory": "✅ Writable",
         "Backup System": "✅ Configured",
-        "Security Settings": "⚠️ Review Required"
+        "Security Settings": "⚠️ Review Required",
     }
 
-    health_df = pd.DataFrame([
-        {"Component": k, "Status": v} for k, v in health_checks.items()
-    ])
+    health_df = pd.DataFrame(
+        [{"Component": k, "Status": v} for k, v in health_checks.items()],
+    )
 
     st.dataframe(health_df, use_container_width=True)
 
@@ -430,14 +442,20 @@ def render_system_monitoring():
 
         # Generate sample performance data
         hours = list(range(24))
-        cpu_usage = [20 + 15 * np.sin(h * np.pi / 12) + 5 * np.random.random() for h in hours]
-        memory_usage = [30 + 10 * np.sin(h * np.pi / 8) + 3 * np.random.random() for h in hours]
+        cpu_usage = [
+            20 + 15 * np.sin(h * np.pi / 12) + 5 * np.random.random() for h in hours
+        ]
+        memory_usage = [
+            30 + 10 * np.sin(h * np.pi / 8) + 3 * np.random.random() for h in hours
+        ]
 
-        perf_df = pd.DataFrame({
-            "Hour": hours,
-            "CPU Usage (%)": cpu_usage,
-            "Memory Usage (%)": memory_usage
-        })
+        perf_df = pd.DataFrame(
+            {
+                "Hour": hours,
+                "CPU Usage (%)": cpu_usage,
+                "Memory Usage (%)": memory_usage,
+            },
+        )
 
         st.line_chart(perf_df.set_index("Hour"))
 
@@ -450,7 +468,7 @@ def render_system_monitoring():
             "Data Exported": "234 MB",
             "API Calls": 1247,
             "Error Rate": "0.03%",
-            "User Sessions": 3
+            "User Sessions": 3,
         }
 
         for stat, value in stats.items():
@@ -460,6 +478,7 @@ def render_system_monitoring():
     if st.button("🔍 Run System Diagnostics"):
         with st.spinner("Running diagnostics..."):
             import time
+
             time.sleep(2)
 
         st.success("✅ System diagnostics completed")
@@ -470,7 +489,7 @@ def render_system_monitoring():
             "✅ Database connectivity verified": True,
             "⚠️ Disk space usage at 78%": False,
             "✅ Security settings configured": True,
-            "✅ Backup system operational": True
+            "✅ Backup system operational": True,
         }
 
         for result, status in diagnostics_results.items():
@@ -479,27 +498,29 @@ def render_system_monitoring():
             else:
                 st.warning(result)
 
-def render_system_configuration_page():
-    """Render the System Configuration page."""
 
+def render_system_configuration_page() -> None:
+    """Render the System Configuration page."""
     # Page header
     st.title("⚙️ System Configuration")
     st.caption("Global settings, theme configuration, and platform administration")
 
     # Initialize configurator
-    if 'system_configurator' not in st.session_state:
+    if "system_configurator" not in st.session_state:
         st.session_state.system_configurator = SystemConfigurator()
 
     configurator = st.session_state.system_configurator
 
     # Main configuration tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🎛️ General Settings",
-        "🎨 Theme & UI",
-        "💾 Export & Data",
-        "🔧 System Monitor",
-        "🔒 Security & Privacy"
-    ])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        [
+            "🎛️ General Settings",
+            "🎨 Theme & UI",
+            "💾 Export & Data",
+            "🔧 System Monitor",
+            "🔒 Security & Privacy",
+        ],
+    )
 
     with tab1:
         st.subheader("🎛️ General System Settings")
@@ -512,29 +533,35 @@ def render_system_configuration_page():
             unit_system = st.selectbox(
                 "Unit System",
                 ["SI (International System)", "Imperial", "Mixed"],
-                help="Default unit system for all calculations"
+                help="Default unit system for all calculations",
             )
 
             precision = st.slider(
                 "Decimal Precision",
-                1, 8, configurator.settings.precision,
-                help="Number of decimal places for numerical displays"
+                1,
+                8,
+                configurator.settings.precision,
+                help="Number of decimal places for numerical displays",
             )
 
             st.write("**Simulation Settings:**")
 
             max_iterations = st.number_input(
                 "Maximum Iterations",
-                100, 10000, configurator.settings.max_iterations,
+                100,
+                10000,
+                configurator.settings.max_iterations,
                 step=100,
-                help="Default maximum iterations for optimization algorithms"
+                help="Default maximum iterations for optimization algorithms",
             )
 
             simulation_timeout = st.number_input(
                 "Simulation Timeout (seconds)",
-                60, 7200, configurator.settings.simulation_timeout,
+                60,
+                7200,
+                configurator.settings.simulation_timeout,
                 step=60,
-                help="Maximum time allowed for simulations"
+                help="Maximum time allowed for simulations",
             )
 
         with col2:
@@ -543,25 +570,25 @@ def render_system_configuration_page():
             gpu_acceleration = st.checkbox(
                 "Enable GPU Acceleration",
                 value=configurator.settings.gpu_acceleration,
-                help="Use GPU for computational acceleration"
+                help="Use GPU for computational acceleration",
             )
 
             performance_monitoring = st.checkbox(
                 "Performance Monitoring",
                 value=configurator.settings.performance_monitoring,
-                help="Enable real-time performance monitoring"
+                help="Enable real-time performance monitoring",
             )
 
             literature_validation = st.checkbox(
                 "Literature Validation",
                 value=configurator.settings.literature_validation,
-                help="Enable automatic literature validation"
+                help="Enable automatic literature validation",
             )
 
             auto_save = st.checkbox(
                 "Auto-Save Results",
                 value=configurator.settings.auto_save,
-                help="Automatically save simulation results"
+                help="Automatically save simulation results",
             )
 
             st.write("**Notifications:**")
@@ -569,7 +596,7 @@ def render_system_configuration_page():
             notification_email = st.text_input(
                 "Notification Email",
                 value=configurator.settings.notification_email or "",
-                help="Email for system notifications (optional)"
+                help="Email for system notifications (optional)",
             )
 
         # Save settings
@@ -584,7 +611,7 @@ def render_system_configuration_page():
                 gpu_acceleration=gpu_acceleration,
                 simulation_timeout=simulation_timeout,
                 max_iterations=max_iterations,
-                notification_email=notification_email if notification_email else None
+                notification_email=notification_email if notification_email else None,
             )
 
             if configurator.save_settings(new_settings):
@@ -612,26 +639,28 @@ def render_system_configuration_page():
             require_confirmation = st.checkbox(
                 "Require Confirmation for Destructive Actions",
                 value=configurator.security_settings.require_confirmation,
-                help="Require confirmation before deleting data or changing critical settings"
+                help="Require confirmation before deleting data or changing critical settings",
             )
 
             audit_logging = st.checkbox(
                 "Enable Audit Logging",
                 value=configurator.security_settings.audit_logging,
-                help="Log all user actions for security auditing"
+                help="Log all user actions for security auditing",
             )
 
             data_encryption = st.checkbox(
                 "Enable Data Encryption",
                 value=configurator.security_settings.data_encryption,
-                help="Encrypt sensitive data at rest"
+                help="Encrypt sensitive data at rest",
             )
 
             session_timeout = st.number_input(
                 "Session Timeout (seconds)",
-                300, 7200, configurator.security_settings.session_timeout,
+                300,
+                7200,
+                configurator.security_settings.session_timeout,
                 step=300,
-                help="Automatic logout after period of inactivity"
+                help="Automatic logout after period of inactivity",
             )
 
         with col2:
@@ -641,15 +670,17 @@ def render_system_configuration_page():
                 "Backup Frequency",
                 ["Manual", "Daily", "Weekly", "Monthly"],
                 index=["manual", "daily", "weekly", "monthly"].index(
-                    configurator.security_settings.backup_frequency
+                    configurator.security_settings.backup_frequency,
                 ),
-                help="Frequency of automatic backups"
+                help="Frequency of automatic backups",
             )
 
             max_file_size = st.number_input(
                 "Maximum File Upload Size (MB)",
-                1, 1000, configurator.security_settings.max_file_size,
-                help="Maximum size for uploaded files"
+                1,
+                1000,
+                configurator.security_settings.max_file_size,
+                help="Maximum size for uploaded files",
             )
 
             st.write("**Data Retention:**")
@@ -657,7 +688,7 @@ def render_system_configuration_page():
             st.selectbox(
                 "Data Retention Policy",
                 ["Keep Forever", "1 Year", "6 Months", "3 Months"],
-                help="How long to keep old simulation data"
+                help="How long to keep old simulation data",
             )
 
             st.write("**Security Status:**")
@@ -667,7 +698,7 @@ def render_system_configuration_page():
                 "SSL/TLS": "✅ Enabled",
                 "Firewall": "✅ Active",
                 "Antivirus": "✅ Updated",
-                "Backups": "✅ Current"
+                "Backups": "✅ Current",
             }
 
             for item, status in security_status.items():
@@ -681,7 +712,7 @@ def render_system_configuration_page():
                 data_encryption=data_encryption,
                 session_timeout=session_timeout,
                 backup_frequency=backup_frequency.lower(),
-                max_file_size=max_file_size
+                max_file_size=max_file_size,
             )
 
             if configurator.save_security_settings(new_security):
@@ -706,12 +737,12 @@ def render_system_configuration_page():
                 "💾 Download Configuration",
                 config_json,
                 file_name=f"mfc_config_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json"
+                mime="application/json",
             )
 
     with col2:
         if st.button("🔄 Reset to Defaults"):
-            if st.session_state.get('confirm_reset', False):
+            if st.session_state.get("confirm_reset", False):
                 # Reset all settings to defaults
                 configurator.settings = SystemSettings()
                 configurator.export_config = ExportConfig()

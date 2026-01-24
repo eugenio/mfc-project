@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Stability Analysis Framework for MFC Systems
+"""Stability Analysis Framework for MFC Systems.
 
 This module provides a comprehensive framework for analyzing the stability
 of Microbial Fuel Cell (MFC) systems, including power output stability,
@@ -15,15 +14,17 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, Union
 
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -35,12 +36,13 @@ MetricValue = Union[float, int, np.floating, np.integer]
 ParameterDict = dict[str, Any]
 
 # Generic types
-T = TypeVar('T')
-StabilityMetricType = TypeVar('StabilityMetricType', bound='StabilityMetrics')
+T = TypeVar("T")
+StabilityMetricType = TypeVar("StabilityMetricType", bound="StabilityMetrics")
 
 
 class StabilityLevel(Enum):
     """Enumeration of stability levels for MFC systems."""
+
     CRITICAL = auto()
     POOR = auto()
     FAIR = auto()
@@ -58,12 +60,13 @@ class StabilityLevel(Enum):
             StabilityLevel.POOR: 0.25,
             StabilityLevel.FAIR: 0.5,
             StabilityLevel.GOOD: 0.75,
-            StabilityLevel.EXCELLENT: 1.0
+            StabilityLevel.EXCELLENT: 1.0,
         }[self]
 
 
 class AnalysisMethod(Enum):
     """Enumeration of stability analysis methods."""
+
     STATISTICAL = auto()
     SPECTRAL = auto()
     TREND_ANALYSIS = auto()
@@ -74,6 +77,7 @@ class AnalysisMethod(Enum):
 @dataclass(frozen=True)
 class StabilityThresholds:
     """Thresholds for stability assessment."""
+
     power_variation_threshold: float = 0.05  # 5% variation threshold
     efficiency_degradation_threshold: float = 0.10  # 10% degradation threshold
     biofilm_health_threshold: float = 0.70  # 70% health threshold
@@ -84,9 +88,11 @@ class StabilityThresholds:
     def __post_init__(self) -> None:
         """Validate threshold values."""
         if not (0.0 <= self.power_variation_threshold <= 1.0):
-            raise ValueError("Power variation threshold must be between 0 and 1")
+            msg = "Power variation threshold must be between 0 and 1"
+            raise ValueError(msg)
         if not (0.0 <= self.efficiency_degradation_threshold <= 1.0):
-            raise ValueError("Efficiency degradation threshold must be between 0 and 1")
+            msg = "Efficiency degradation threshold must be between 0 and 1"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -131,10 +137,10 @@ class StabilityMetrics:
     def _validate_metrics(self) -> None:
         """Validate metric values are within expected ranges."""
         metrics_to_validate = [
-            ('power_stability_coefficient', 0.0, 1.0),
-            ('efficiency_stability', 0.0, 1.0),
-            ('biofilm_health_index', 0.0, 1.0),
-            ('data_quality_score', 0.0, 1.0),
+            ("power_stability_coefficient", 0.0, 1.0),
+            ("efficiency_stability", 0.0, 1.0),
+            ("biofilm_health_index", 0.0, 1.0),
+            ("data_quality_score", 0.0, 1.0),
         ]
 
         for metric_name, min_val, max_val in metrics_to_validate:
@@ -142,22 +148,21 @@ class StabilityMetrics:
             if not (min_val <= value <= max_val):
                 logger.warning(
                     f"Metric {metric_name} value {value} outside expected range "
-                    f"[{min_val}, {max_val}]"
+                    f"[{min_val}, {max_val}]",
                 )
 
     def _compute_overall_stability(self) -> None:
         """Compute overall stability score from individual metrics."""
         weights = {
-            'power_stability_coefficient': 0.30,
-            'efficiency_stability': 0.25,
-            'biofilm_health_index': 0.20,
-            'power_autocorrelation': 0.15,
-            'biofilm_thickness_stability': 0.10
+            "power_stability_coefficient": 0.30,
+            "efficiency_stability": 0.25,
+            "biofilm_health_index": 0.20,
+            "power_autocorrelation": 0.15,
+            "biofilm_thickness_stability": 0.10,
         }
 
         score = sum(
-            getattr(self, metric) * weight
-            for metric, weight in weights.items()
+            getattr(self, metric) * weight for metric, weight in weights.items()
         )
 
         self.overall_stability_score = max(0.0, min(1.0, score))
@@ -167,36 +172,35 @@ class StabilityMetrics:
         """Determine stability level based on overall score."""
         if score >= 0.9:
             return StabilityLevel.EXCELLENT
-        elif score >= 0.75:
+        if score >= 0.75:
             return StabilityLevel.GOOD
-        elif score >= 0.5:
+        if score >= 0.5:
             return StabilityLevel.FAIR
-        elif score >= 0.25:
+        if score >= 0.25:
             return StabilityLevel.POOR
-        else:
-            return StabilityLevel.CRITICAL
+        return StabilityLevel.CRITICAL
 
     def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary format."""
         return {
-            'power_stability_coefficient': self.power_stability_coefficient,
-            'power_variation': self.power_variation,
-            'power_trend_slope': self.power_trend_slope,
-            'power_autocorrelation': self.power_autocorrelation,
-            'efficiency_stability': self.efficiency_stability,
-            'efficiency_degradation_rate': self.efficiency_degradation_rate,
-            'efficiency_recovery_factor': self.efficiency_recovery_factor,
-            'biofilm_health_index': self.biofilm_health_index,
-            'biofilm_thickness_stability': self.biofilm_thickness_stability,
-            'biofilm_conductivity_stability': self.biofilm_conductivity_stability,
-            'overall_stability_score': self.overall_stability_score,
-            'stability_level': self.stability_level.name,
-            'confidence_interval': self.confidence_interval,
-            'analysis_timestamp': self.analysis_timestamp.isoformat(),
-            'analysis_duration': self.analysis_duration.total_seconds(),
-            'data_quality_score': self.data_quality_score,
-            'analysis_method': self.analysis_method.name,
-            'sample_size': self.sample_size
+            "power_stability_coefficient": self.power_stability_coefficient,
+            "power_variation": self.power_variation,
+            "power_trend_slope": self.power_trend_slope,
+            "power_autocorrelation": self.power_autocorrelation,
+            "efficiency_stability": self.efficiency_stability,
+            "efficiency_degradation_rate": self.efficiency_degradation_rate,
+            "efficiency_recovery_factor": self.efficiency_recovery_factor,
+            "biofilm_health_index": self.biofilm_health_index,
+            "biofilm_thickness_stability": self.biofilm_thickness_stability,
+            "biofilm_conductivity_stability": self.biofilm_conductivity_stability,
+            "overall_stability_score": self.overall_stability_score,
+            "stability_level": self.stability_level.name,
+            "confidence_interval": self.confidence_interval,
+            "analysis_timestamp": self.analysis_timestamp.isoformat(),
+            "analysis_duration": self.analysis_duration.total_seconds(),
+            "data_quality_score": self.data_quality_score,
+            "analysis_method": self.analysis_method.name,
+            "sample_size": self.sample_size,
         }
 
 
@@ -207,7 +211,7 @@ class StabilityAnalyzer(Protocol):
         self,
         data: TimeSeriesData,
         timestamps: Sequence[Timestamp] | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> StabilityMetrics:
         """Analyze stability of time series data."""
         ...
@@ -224,7 +228,7 @@ class BaseStabilityAnalyzer(ABC):
         self,
         thresholds: StabilityThresholds | None = None,
         min_data_points: int = 10,
-        confidence_level: float = 0.95
+        confidence_level: float = 0.95,
     ) -> None:
         """Initialize the stability analyzer.
 
@@ -232,6 +236,7 @@ class BaseStabilityAnalyzer(ABC):
             thresholds: Custom stability thresholds
             min_data_points: Minimum number of data points required
             confidence_level: Confidence level for statistical analysis
+
         """
         self.thresholds = thresholds or StabilityThresholds()
         self.min_data_points = min_data_points
@@ -247,10 +252,9 @@ class BaseStabilityAnalyzer(ABC):
         self,
         data: TimeSeriesData,
         timestamps: Sequence[Timestamp] | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> StabilityMetrics:
         """Analyze stability of time series data."""
-        pass
 
     def validate_data(self, data: TimeSeriesData) -> bool:
         """Validate input data quality.
@@ -260,6 +264,7 @@ class BaseStabilityAnalyzer(ABC):
 
         Returns:
             True if data is valid, False otherwise
+
         """
         try:
             # Convert data to numpy array for validation
@@ -268,7 +273,7 @@ class BaseStabilityAnalyzer(ABC):
             # Check for minimum data points
             if len(data_array) < self.min_data_points:
                 self.logger.warning(
-                    f"Insufficient data points: {len(data_array)} < {self.min_data_points}"
+                    f"Insufficient data points: {len(data_array)} < {self.min_data_points}",
                 )
                 return False
 
@@ -285,13 +290,13 @@ class BaseStabilityAnalyzer(ABC):
             return True
 
         except Exception as e:
-            self.logger.error(f"Data validation error: {str(e)}")
+            self.logger.exception(f"Data validation error: {e!s}")
             return False
 
     def _calculate_confidence_interval(
         self,
         values: np.ndarray,
-        confidence_level: float | None = None
+        confidence_level: float | None = None,
     ) -> tuple[float, float]:
         """Calculate confidence interval for values.
 
@@ -301,6 +306,7 @@ class BaseStabilityAnalyzer(ABC):
 
         Returns:
             Tuple of (lower_bound, upper_bound)
+
         """
         if confidence_level is None:
             confidence_level = self.confidence_level
@@ -310,6 +316,7 @@ class BaseStabilityAnalyzer(ABC):
 
         # Use t-distribution for small samples
         from scipy import stats
+
         df = len(values) - 1
         t_critical = stats.t.ppf((1 + confidence_level) / 2, df)
 
@@ -325,7 +332,7 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
         thresholds: StabilityThresholds | None = None,
         min_data_points: int = 30,
         confidence_level: float = 0.95,
-        window_size: int | None = None
+        window_size: int | None = None,
     ) -> None:
         """Initialize statistical analyzer.
 
@@ -334,6 +341,7 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
             min_data_points: Minimum number of data points
             confidence_level: Confidence level for analysis
             window_size: Rolling window size for analysis
+
         """
         super().__init__(thresholds, min_data_points, confidence_level)
         self.window_size = window_size or max(10, min_data_points // 3)
@@ -342,7 +350,7 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
         self,
         data: TimeSeriesData,
         timestamps: Sequence[Timestamp] | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> StabilityMetrics:
         """Perform statistical stability analysis.
 
@@ -353,9 +361,11 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
 
         Returns:
             StabilityMetrics with computed stability measures
+
         """
         if not self.validate_data(data):
-            raise ValueError("Invalid input data for stability analysis")
+            msg = "Invalid input data for stability analysis"
+            raise ValueError(msg)
 
         data_array = np.asarray(data, dtype=np.float64)
         n_samples = len(data_array)
@@ -373,8 +383,12 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
 
         # Calculate biofilm metrics (synthetic for now)
         biofilm_health = self._estimate_biofilm_health(data_array)
-        biofilm_thickness_stability = self._calculate_biofilm_thickness_stability(data_array)
-        biofilm_conductivity_stability = self._calculate_biofilm_conductivity_stability(data_array)
+        biofilm_thickness_stability = self._calculate_biofilm_thickness_stability(
+            data_array,
+        )
+        biofilm_conductivity_stability = self._calculate_biofilm_conductivity_stability(
+            data_array,
+        )
 
         # Calculate confidence interval
         confidence_interval = self._calculate_confidence_interval(data_array)
@@ -398,7 +412,7 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
             analysis_duration=timedelta(seconds=1),  # Placeholder
             data_quality_score=data_quality,
             analysis_method=AnalysisMethod.STATISTICAL,
-            sample_size=n_samples
+            sample_size=n_samples,
         )
 
     def _calculate_power_stability(self, data: np.ndarray) -> float:
@@ -420,8 +434,7 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
     def _calculate_trend_slope(self, data: np.ndarray) -> float:
         """Calculate trend slope using linear regression."""
         x = np.arange(len(data))
-        slope = float(np.polyfit(x, data, 1)[0])
-        return slope
+        return float(np.polyfit(x, data, 1)[0])
 
     def _calculate_autocorrelation(self, data: np.ndarray, lag: int = 1) -> float:
         """Calculate autocorrelation at specified lag."""
@@ -474,10 +487,12 @@ class StatisticalStabilityAnalyzer(BaseStabilityAnalyzer):
         for min_idx in minima_indices:
             if min_idx + 5 < len(data):  # Ensure enough data for recovery analysis
                 min_value = data[min_idx]
-                recovery_window = data[min_idx:min_idx + 5]
+                recovery_window = data[min_idx : min_idx + 5]
                 max_recovery = np.max(recovery_window)
 
-                recovery_factor = (max_recovery - min_value) / min_value if min_value != 0 else 1.0
+                recovery_factor = (
+                    (max_recovery - min_value) / min_value if min_value != 0 else 1.0
+                )
                 recovery_factors.append(recovery_factor)
 
         return float(np.mean(recovery_factors)) if recovery_factors else 1.0
@@ -543,13 +558,14 @@ class StabilityFramework:
     def __init__(
         self,
         analyzer: BaseStabilityAnalyzer | None = None,
-        thresholds: StabilityThresholds | None = None
+        thresholds: StabilityThresholds | None = None,
     ) -> None:
         """Initialize the stability framework.
 
         Args:
             analyzer: Custom stability analyzer
             thresholds: Custom stability thresholds
+
         """
         self.thresholds = thresholds or StabilityThresholds()
         self.analyzer = analyzer or StatisticalStabilityAnalyzer(self.thresholds)
@@ -564,7 +580,7 @@ class StabilityFramework:
         self,
         data: TimeSeriesData,
         timestamps: Sequence[Timestamp] | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> StabilityMetrics:
         """Perform comprehensive stability analysis.
 
@@ -575,6 +591,7 @@ class StabilityFramework:
 
         Returns:
             StabilityMetrics with computed stability measures
+
         """
         try:
             self.logger.info("Starting stability analysis...")
@@ -588,18 +605,18 @@ class StabilityFramework:
             # Log results
             self.logger.info(
                 f"Stability analysis complete. Overall score: {metrics.overall_stability_score:.3f}, "
-                f"Level: {metrics.stability_level}"
+                f"Level: {metrics.stability_level}",
             )
 
             return metrics
 
         except Exception as e:
-            self.logger.error(f"Stability analysis failed: {str(e)}")
+            self.logger.exception(f"Stability analysis failed: {e!s}")
             raise
 
     def get_stability_trends(
         self,
-        window_size: int = 10
+        window_size: int = 10,
     ) -> dict[str, list[float]] | None:
         """Get stability trends from analysis history.
 
@@ -608,49 +625,60 @@ class StabilityFramework:
 
         Returns:
             Dictionary with trend data or None if insufficient history
+
         """
         if len(self.analysis_history) < 2:
             return None
 
-        trends = {
-            'timestamps': [m.analysis_timestamp.timestamp() for m in self.analysis_history],
-            'overall_stability': [m.overall_stability_score for m in self.analysis_history],
-            'power_stability': [m.power_stability_coefficient for m in self.analysis_history],
-            'efficiency_stability': [m.efficiency_stability for m in self.analysis_history],
-            'biofilm_health': [m.biofilm_health_index for m in self.analysis_history]
+        return {
+            "timestamps": [
+                m.analysis_timestamp.timestamp() for m in self.analysis_history
+            ],
+            "overall_stability": [
+                m.overall_stability_score for m in self.analysis_history
+            ],
+            "power_stability": [
+                m.power_stability_coefficient for m in self.analysis_history
+            ],
+            "efficiency_stability": [
+                m.efficiency_stability for m in self.analysis_history
+            ],
+            "biofilm_health": [m.biofilm_health_index for m in self.analysis_history],
         }
-
-        return trends
 
     def export_analysis_results(
         self,
         filepath: str | Path,
-        format_type: str = 'json'
+        format_type: str = "json",
     ) -> None:
         """Export analysis results to file.
 
         Args:
             filepath: Output file path
             format_type: Export format ('json' or 'csv')
+
         """
         if not self.analysis_history:
-            raise ValueError("No analysis results to export")
+            msg = "No analysis results to export"
+            raise ValueError(msg)
 
         filepath = Path(filepath)
 
-        if format_type.lower() == 'json':
+        if format_type.lower() == "json":
             import json
+
             data = [metrics.to_dict() for metrics in self.analysis_history]
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 json.dump(data, f, indent=2, default=str)
 
-        elif format_type.lower() == 'csv':
+        elif format_type.lower() == "csv":
             data = [metrics.to_dict() for metrics in self.analysis_history]
             df = pd.DataFrame(data)
             df.to_csv(filepath, index=False)
 
         else:
-            raise ValueError(f"Unsupported export format: {format_type}")
+            msg = f"Unsupported export format: {format_type}"
+            raise ValueError(msg)
 
         self.logger.info(f"Analysis results exported to {filepath}")
 
@@ -658,23 +686,24 @@ class StabilityFramework:
 # Factory functions for creating analyzers
 def create_statistical_analyzer(
     thresholds: StabilityThresholds | None = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> StatisticalStabilityAnalyzer:
     """Create a statistical stability analyzer."""
     return StatisticalStabilityAnalyzer(thresholds, **kwargs)
 
 
 def create_default_framework(
-    analyzer_type: str = 'statistical',
-    **kwargs: Any
+    analyzer_type: str = "statistical",
+    **kwargs: Any,
 ) -> StabilityFramework:
     """Create a default stability framework."""
     thresholds = StabilityThresholds()
 
-    if analyzer_type == 'statistical':
+    if analyzer_type == "statistical":
         analyzer = create_statistical_analyzer(thresholds, **kwargs)
     else:
-        raise ValueError(f"Unknown analyzer type: {analyzer_type}")
+        msg = f"Unknown analyzer type: {analyzer_type}"
+        raise ValueError(msg)
 
     return StabilityFramework(analyzer, thresholds)
 
@@ -696,14 +725,7 @@ def run_example_analysis() -> None:
 
     # Create framework and analyze
     framework = create_default_framework()
-    metrics = framework.analyze_stability(synthetic_data)
-
-    print("Stability Analysis Results:")
-    print(f"Overall Stability Score: {metrics.overall_stability_score:.3f}")
-    print(f"Stability Level: {metrics.stability_level}")
-    print(f"Power Stability Coefficient: {metrics.power_stability_coefficient:.3f}")
-    print(f"Biofilm Health Index: {metrics.biofilm_health_index:.3f}")
-    print(f"Data Quality Score: {metrics.data_quality_score:.3f}")
+    framework.analyze_stability(synthetic_data)
 
 
 if __name__ == "__main__":

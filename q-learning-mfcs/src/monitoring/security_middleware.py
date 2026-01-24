@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""
-Security Middleware for MFC Monitoring System
+"""Security Middleware for MFC Monitoring System
 Provides comprehensive security features including headers, CSRF protection, and session management.
 """
+
+from __future__ import annotations
 
 import base64
 import hashlib
@@ -12,10 +13,9 @@ import logging
 import os
 import secrets
 import sys
-from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -31,17 +31,24 @@ from monitoring.ssl_config import (  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 from starlette.responses import RedirectResponse  # noqa: E402
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class SecurityConfig:
-    """Security configuration class"""
 
-    def __init__(self):
+class SecurityConfig:
+    """Security configuration class."""
+
+    def __init__(self) -> None:
         # Session configuration
         self.session_timeout_minutes = 60
-        self.session_secret_key = os.getenv("MFC_SESSION_SECRET", self._generate_secret_key())
+        self.session_secret_key = os.getenv(
+            "MFC_SESSION_SECRET",
+            self._generate_secret_key(),
+        )
         self.session_cookie_name = "mfc_session"
 
         # CSRF configuration
@@ -74,16 +81,20 @@ class SecurityConfig:
         self.referrer_policy_strict = True
 
     def _generate_secret_key(self) -> str:
-        """Generate a secure random key"""
+        """Generate a secure random key."""
         return secrets.token_urlsafe(32)
 
     def _load_allowed_ips(self) -> list[str]:
-        """Load allowed IP addresses"""
+        """Load allowed IP addresses."""
         allowed_file = Path("/etc/mfc/allowed-ips.txt")
         if allowed_file.exists():
             try:
                 with open(allowed_file) as f:
-                    return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                    return [
+                        line.strip()
+                        for line in f
+                        if line.strip() and not line.startswith("#")
+                    ]
             except Exception as e:
                 logger.warning(f"Failed to load allowed IPs: {e}")
 
@@ -91,19 +102,23 @@ class SecurityConfig:
         return ["127.0.0.1", "::1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 
     def _load_blocked_ips(self) -> list[str]:
-        """Load blocked IP addresses"""
+        """Load blocked IP addresses."""
         blocked_file = Path("/etc/mfc/blocked-ips.txt")
         if blocked_file.exists():
             try:
                 with open(blocked_file) as f:
-                    return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                    return [
+                        line.strip()
+                        for line in f
+                        if line.strip() and not line.startswith("#")
+                    ]
             except Exception as e:
                 logger.warning(f"Failed to load blocked IPs: {e}")
 
         return []
 
     def _get_default_csp(self) -> str:
-        """Get default Content Security Policy"""
+        """Get default Content Security Policy."""
         return (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; "
@@ -116,31 +131,38 @@ class SecurityConfig:
             "form-action 'self'"
         )
 
-class SessionManager:
-    """Secure session management"""
 
-    def __init__(self, config: SecurityConfig):
+class SessionManager:
+    """Secure session management."""
+
+    def __init__(self, config: SecurityConfig) -> None:
         self.config = config
         self.active_sessions: dict[str, dict] = {}
 
-    def create_session(self, user_id: str, user_data: dict[str, Any] | None = None) -> str:
-        """Create a new session"""
+    def create_session(
+        self,
+        user_id: str,
+        user_data: dict[str, Any] | None = None,
+    ) -> str:
+        """Create a new session."""
         session_id = secrets.token_urlsafe(32)
-        expires_at = datetime.now() + timedelta(minutes=self.config.session_timeout_minutes)
+        expires_at = datetime.now() + timedelta(
+            minutes=self.config.session_timeout_minutes,
+        )
 
         session_data = {
             "user_id": user_id,
             "created_at": datetime.now().isoformat(),
             "expires_at": expires_at.isoformat(),
             "last_activity": datetime.now().isoformat(),
-            "user_data": user_data or {}
+            "user_data": user_data or {},
         }
 
         self.active_sessions[session_id] = session_data
         return session_id
 
     def validate_session(self, session_id: str) -> dict | None:
-        """Validate and return session data"""
+        """Validate and return session data."""
         if not session_id or session_id not in self.active_sessions:
             return None
 
@@ -157,14 +179,14 @@ class SessionManager:
         return session
 
     def destroy_session(self, session_id: str) -> bool:
-        """Destroy a session"""
+        """Destroy a session."""
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
             return True
         return False
 
-    def cleanup_expired_sessions(self):
-        """Remove expired sessions"""
+    def cleanup_expired_sessions(self) -> None:
+        """Remove expired sessions."""
         now = datetime.now()
         expired_sessions = []
 
@@ -179,31 +201,31 @@ class SessionManager:
         if expired_sessions:
             logger.info(f"Cleaned up {len(expired_sessions)} expired sessions")
 
-class CSRFProtection:
-    """CSRF token management"""
 
-    def __init__(self, config: SecurityConfig):
+class CSRFProtection:
+    """CSRF token management."""
+
+    def __init__(self, config: SecurityConfig) -> None:
         self.config = config
 
     def generate_csrf_token(self, session_id: str) -> str:
-        """Generate CSRF token for session"""
+        """Generate CSRF token for session."""
         timestamp = str(int(datetime.now().timestamp()))
         data = f"{session_id}:{timestamp}"
 
         signature = hmac.new(
             self.config.csrf_secret_key.encode(),
             data.encode(),
-            hashlib.sha256
+            hashlib.sha256,
         ).hexdigest()
 
-        token = base64.b64encode(f"{data}:{signature}".encode()).decode()
-        return token
+        return base64.b64encode(f"{data}:{signature}".encode()).decode()
 
     def validate_csrf_token(self, token: str, session_id: str) -> bool:
-        """Validate CSRF token"""
+        """Validate CSRF token."""
         try:
             decoded = base64.b64decode(token.encode()).decode()
-            parts = decoded.split(':')
+            parts = decoded.split(":")
 
             if len(parts) != 3:
                 return False
@@ -224,7 +246,7 @@ class CSRFProtection:
             expected_signature = hmac.new(
                 self.config.csrf_secret_key.encode(),
                 data.encode(),
-                hashlib.sha256
+                hashlib.sha256,
             ).hexdigest()
 
             return hmac.compare_digest(signature, expected_signature)
@@ -233,22 +255,24 @@ class CSRFProtection:
             logger.warning(f"CSRF token validation error: {e}")
             return False
 
-class RateLimiter:
-    """Rate limiting implementation"""
 
-    def __init__(self, config: SecurityConfig):
+class RateLimiter:
+    """Rate limiting implementation."""
+
+    def __init__(self, config: SecurityConfig) -> None:
         self.config = config
         self.request_counts: dict[str, list[datetime]] = {}
 
     def is_rate_limited(self, client_ip: str) -> bool:
-        """Check if client is rate limited"""
+        """Check if client is rate limited."""
         now = datetime.now()
         minute_ago = now - timedelta(minutes=1)
 
         # Clean old requests
         if client_ip in self.request_counts:
             self.request_counts[client_ip] = [
-                req_time for req_time in self.request_counts[client_ip]
+                req_time
+                for req_time in self.request_counts[client_ip]
                 if req_time > minute_ago
             ]
         else:
@@ -265,10 +289,11 @@ class RateLimiter:
         self.request_counts[client_ip].append(now)
         return False
 
-class SecurityMiddleware(BaseHTTPMiddleware):
-    """Comprehensive security middleware"""
 
-    def __init__(self, app, ssl_config: SSLConfig | None = None):
+class SecurityMiddleware(BaseHTTPMiddleware):
+    """Comprehensive security middleware."""
+
+    def __init__(self, app, ssl_config: SSLConfig | None = None) -> None:
         super().__init__(app)
         self.ssl_config = ssl_config or load_ssl_config()
         self.security_config = SecurityConfig()
@@ -277,8 +302,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         self.rate_limiter = RateLimiter(self.security_config)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Main security middleware dispatch"""
-
+        """Main security middleware dispatch."""
         # Get client IP
         client_ip = self._get_client_ip(request)
 
@@ -312,7 +336,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         return response
 
     def _get_client_ip(self, request: Request) -> str:
-        """Get client IP address"""
+        """Get client IP address."""
         # Check for forwarded headers (common in reverse proxy setups)
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
@@ -325,7 +349,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         return request.client.host if request.client else "unknown"
 
     def _is_ip_allowed(self, client_ip: str) -> bool:
-        """Check if IP address is allowed"""
+        """Check if IP address is allowed."""
         # Check blocked IPs first
         if client_ip in self.security_config.blocked_ips:
             return False
@@ -336,34 +360,40 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # Check allowed IPs (support CIDR notation in production)
         for allowed in self.security_config.allowed_ips:
-            if client_ip == allowed or allowed == "0.0.0.0/0":
+            if allowed in (client_ip, "0.0.0.0/0"):
                 return True
             # In production, add proper CIDR checking here
 
         return False
 
     def _is_secure_request(self, request: Request) -> bool:
-        """Check if request is secure (HTTPS)"""
+        """Check if request is secure (HTTPS)."""
         return (
-            request.url.scheme == "https" or
-            request.headers.get("X-Forwarded-Proto") == "https" or
-            request.headers.get("X-Forwarded-SSL") == "on"
+            request.url.scheme == "https"
+            or request.headers.get("X-Forwarded-Proto") == "https"
+            or request.headers.get("X-Forwarded-SSL") == "on"
         )
 
     def _redirect_to_https(self, request: Request) -> RedirectResponse:
-        """Redirect HTTP to HTTPS"""
+        """Redirect HTTP to HTTPS."""
         https_url = request.url.replace(scheme="https")
         if self.ssl_config:
             # Replace port if needed
             if ":8000" in str(https_url):
-                https_url = str(https_url).replace(":8000", f":{self.ssl_config.https_port_api}")
+                https_url = str(https_url).replace(
+                    ":8000",
+                    f":{self.ssl_config.https_port_api}",
+                )
             elif ":8501" in str(https_url):
-                https_url = str(https_url).replace(":8501", f":{self.ssl_config.https_port_frontend}")
+                https_url = str(https_url).replace(
+                    ":8501",
+                    f":{self.ssl_config.https_port_frontend}",
+                )
 
         return RedirectResponse(url=str(https_url), status_code=301)
 
     async def _validate_csrf(self, request: Request) -> bool:
-        """Validate CSRF token"""
+        """Validate CSRF token."""
         # Skip CSRF for API endpoints with proper authentication
         if request.url.path.startswith("/api/") and self._has_valid_api_auth(request):
             return True
@@ -375,8 +405,10 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # Get CSRF token from header or form
         csrf_token = (
-            request.headers.get(self.security_config.csrf_header_name) or
-            (await request.form()).get(self.security_config.csrf_token_name) if request.method == "POST" else None
+            request.headers.get(self.security_config.csrf_header_name)
+            or (await request.form()).get(self.security_config.csrf_token_name)
+            if request.method == "POST"
+            else None
         )
 
         if not csrf_token:
@@ -385,7 +417,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         return self.csrf_protection.validate_csrf_token(csrf_token, session_cookie)
 
     def _has_valid_api_auth(self, request: Request) -> bool:
-        """Check if request has valid API authentication"""
+        """Check if request has valid API authentication."""
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return False
@@ -395,8 +427,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         return hmac.compare_digest(token, expected_token)
 
-    def _add_security_headers(self, response: Response):
-        """Add comprehensive security headers"""
+    def _add_security_headers(self, response: Response) -> None:
+        """Add comprehensive security headers."""
         if self.ssl_config:
             security_headers = SecurityHeaders.get_security_headers(self.ssl_config)
             for header, value in security_headers.items():
@@ -430,8 +462,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
 
-    def _set_secure_cookie_flags(self, response: Response):
-        """Set secure flags on cookies"""
+    def _set_secure_cookie_flags(self, response: Response) -> None:
+        """Set secure flags on cookies."""
         if "Set-Cookie" in response.headers:
             cookies = response.headers.getlist("Set-Cookie")
             secure_cookies = []
@@ -455,23 +487,25 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 response.headers.append("Set-Cookie", cookie)
 
     def _create_error_response(self, message: str, status_code: int) -> Response:
-        """Create error response with security headers"""
+        """Create error response with security headers."""
         response = Response(
             content=json.dumps({"error": message, "status_code": status_code}),
             status_code=status_code,
-            media_type="application/json"
+            media_type="application/json",
         )
         self._add_security_headers(response)
         return response
 
+
 # Authentication dependencies for FastAPI
 security_bearer = HTTPBearer(auto_error=False)
 
+
 async def get_current_session(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security_bearer)
+    credentials: HTTPAuthorizationCredentials = Depends(security_bearer),
 ) -> dict | None:
-    """Get current session from request"""
+    """Get current session from request."""
     # Get session manager from middleware
     session_manager = getattr(request.app.state, "session_manager", None)
     if not session_manager:
@@ -489,14 +523,19 @@ async def get_current_session(
 
     return None
 
+
 async def require_authentication(session: dict = Depends(get_current_session)) -> dict:
-    """Require authentication for endpoint"""
+    """Require authentication for endpoint."""
     if not session:
         raise HTTPException(status_code=401, detail="Authentication required")
     return session
 
-def create_security_middleware(app, ssl_config: SSLConfig | None = None) -> SecurityMiddleware:
-    """Factory function to create security middleware"""
+
+def create_security_middleware(
+    app,
+    ssl_config: SSLConfig | None = None,
+) -> SecurityMiddleware:
+    """Factory function to create security middleware."""
     middleware = SecurityMiddleware(app, ssl_config)
 
     # Store session manager in app state for dependency injection
@@ -505,9 +544,10 @@ def create_security_middleware(app, ssl_config: SSLConfig | None = None) -> Secu
 
     return middleware
 
+
 # Utility functions for templates
 def get_csrf_token(request: Request) -> str:
-    """Get CSRF token for use in templates"""
+    """Get CSRF token for use in templates."""
     csrf_protection = getattr(request.app.state, "csrf_protection", None)
     if not csrf_protection:
         return ""
@@ -518,8 +558,9 @@ def get_csrf_token(request: Request) -> str:
 
     return csrf_protection.generate_csrf_token(session_cookie)
 
+
 def is_authenticated(request: Request) -> bool:
-    """Check if user is authenticated"""
+    """Check if user is authenticated."""
     session_manager = getattr(request.app.state, "session_manager", None)
     if not session_manager:
         return False
@@ -531,12 +572,7 @@ def is_authenticated(request: Request) -> bool:
     session = session_manager.validate_session(session_cookie)
     return session is not None
 
+
 if __name__ == "__main__":
     # Test security configuration
     config = SecurityConfig()
-    print("Security Configuration:")
-    print(f"  Session timeout: {config.session_timeout_minutes} minutes")
-    print(f"  Rate limit: {config.rate_limit_requests_per_minute} requests/minute")
-    print(f"  HTTPS enforcement: {config.enforce_https}")
-    print(f"  Allowed IPs: {len(config.allowed_ips)}")
-    print(f"  CSP policy length: {len(config.csp_policy)} characters")

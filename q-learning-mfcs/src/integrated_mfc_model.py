@@ -1,5 +1,4 @@
-"""
-Integrated MFC Model with Biofilm Kinetics, Metabolic Modeling, and Recirculation Control
+"""Integrated MFC Model with Biofilm Kinetics, Metabolic Modeling, and Recirculation Control.
 
 This module provides real-time GPU-accelerated coupling between:
 1. Biofilm formation kinetics (species/substrate specific)
@@ -72,8 +71,7 @@ class IntegratedMFCState:
 
 
 class IntegratedMFCModel:
-    """
-    Comprehensive MFC model integrating biofilm, metabolic, and control systems.
+    """Comprehensive MFC model integrating biofilm, metabolic, and control systems.
 
     Features:
     - Real-time coupling of biological and electrochemical models
@@ -83,11 +81,16 @@ class IntegratedMFCModel:
     - Multi-scale temporal dynamics
     """
 
-    def __init__(self, n_cells: int = 5, species: str = "mixed",
-                 substrate: str = "lactate", membrane_type: str = "Nafion-117",
-                 use_gpu: bool = True, simulation_hours: int = 100):
-        """
-        Initialize integrated MFC model.
+    def __init__(
+        self,
+        n_cells: int = 5,
+        species: str = "mixed",
+        substrate: str = "lactate",
+        membrane_type: str = "Nafion-117",
+        use_gpu: bool = True,
+        simulation_hours: int = 100,
+    ) -> None:
+        """Initialize integrated MFC model.
 
         Args:
             n_cells: Number of cells in stack
@@ -96,6 +99,7 @@ class IntegratedMFCModel:
             membrane_type: Nafion membrane grade
             use_gpu: Enable GPU acceleration
             simulation_hours: Total simulation duration (h)
+
         """
         self.n_cells = n_cells
         self.species = species
@@ -108,10 +112,6 @@ class IntegratedMFCModel:
         self.gpu_acc = get_gpu_accelerator() if use_gpu else None
         self.gpu_available = self.gpu_acc.is_gpu_available() if self.gpu_acc else False
 
-        print("Initializing Integrated MFC Model")
-        print(f"Configuration: {n_cells} cells, {species} bacteria, {substrate} substrate")
-        print(f"GPU Acceleration: {'Enabled' if self.gpu_available else 'Disabled'}")
-
         # Initialize components
         self._initialize_models()
         self._initialize_recirculation()
@@ -120,7 +120,7 @@ class IntegratedMFCModel:
         # Add compatibility layer for tests expecting mfc_stack
         self._create_mfc_stack_compatibility()
 
-    def _initialize_models(self):
+    def _initialize_models(self) -> None:
         """Initialize biofilm and metabolic models for each cell."""
         # Create models for each cell
         self.biofilm_models = []
@@ -133,7 +133,7 @@ class IntegratedMFCModel:
                 substrate=self.substrate,
                 use_gpu=self.use_gpu,
                 temperature=303.0,  # 30°C
-                ph=7.0
+                ph=7.0,
             )
             self.biofilm_models.append(biofilm_model)
 
@@ -142,21 +142,21 @@ class IntegratedMFCModel:
                 species=self.species,
                 substrate=self.substrate,
                 membrane_type=self.membrane_type,
-                use_gpu=self.use_gpu
+                use_gpu=self.use_gpu,
             )
             self.metabolic_models.append(metabolic_model)
 
-    def _initialize_recirculation(self):
+    def _initialize_recirculation(self) -> None:
         """Initialize recirculation and control systems."""
         # Initialize reservoir
         self.reservoir = AnolytereservoirSystem(
-            initial_substrate_conc=20.0,  # mmol/L
-            volume_liters=1.0
+            initial_substrate_conc=20.0,
+            volume_liters=1.0,  # mmol/L
         )
 
         # Initialize MFC cells
         self.mfc_cells = [
-            MFCCellWithMonitoring(i+1, initial_biofilm=1.0)
+            MFCCellWithMonitoring(i + 1, initial_biofilm=1.0)
             for i in range(self.n_cells)
         ]
 
@@ -166,7 +166,7 @@ class IntegratedMFCModel:
         # Substrate controller
         self.substrate_controller = SubstrateConcentrationController(
             target_outlet_conc=12.0,
-            target_reservoir_conc=20.0
+            target_reservoir_conc=20.0,
         )
 
         # Simulation state
@@ -174,29 +174,29 @@ class IntegratedMFCModel:
         self.total_energy_generated = 0.0
         self.pump_power_consumed = 0.0
 
-    def _initialize_tracking(self):
+    def _initialize_tracking(self) -> None:
         """Initialize tracking variables."""
         self.time = 0.0
         self.history = []
         self.biofilm_history = []
         self.metabolic_history = []
         self.performance_metrics = {
-            'total_energy': 0.0,
-            'average_power': 0.0,
-            'max_power': 0.0,
-            'coulombic_efficiency': 0.0,
-            'substrate_utilization': 0.0
+            "total_energy": 0.0,
+            "average_power": 0.0,
+            "max_power": 0.0,
+            "coulombic_efficiency": 0.0,
+            "substrate_utilization": 0.0,
         }
 
     def step_integrated_dynamics(self, dt: float = 1.0) -> IntegratedMFCState:
-        """
-        Step the integrated model forward by dt hours.
+        """Step the integrated model forward by dt hours.
 
         Args:
             dt: Time step (hours)
 
         Returns:
             IntegratedMFCState with current system state
+
         """
         # 1. Get inlet concentration from reservoir
         inlet_conc = self.reservoir.get_inlet_concentration()
@@ -212,7 +212,7 @@ class IntegratedMFCModel:
             biofilm_state = self.biofilm_models[i].step_biofilm_dynamics(
                 dt=dt,
                 anode_potential=anode_potential,
-                substrate_supply=inlet_conc / 10.0  # Simplified supply rate
+                substrate_supply=inlet_conc / 10.0,  # Simplified supply rate
             )
             biofilm_states.append(biofilm_state)
 
@@ -220,8 +220,8 @@ class IntegratedMFCModel:
         metabolic_states = []
         for i in range(self.n_cells):
             # Use biofilm parameters
-            biomass = biofilm_states[i]['biomass_density']
-            growth_rate = biofilm_states[i]['growth_rate']
+            biomass = biofilm_states[i]["biomass_density"]
+            growth_rate = biofilm_states[i]["growth_rate"]
 
             # Step metabolic model
             metabolic_state = self.metabolic_models[i].step_metabolism(
@@ -231,9 +231,9 @@ class IntegratedMFCModel:
                 anode_potential=anode_potential,
                 substrate_supply=inlet_conc / 20.0,  # Simplified
                 cathode_o2_conc=0.25,  # mol/m³
-                membrane_area=0.01,    # m²
-                volume=0.1,           # L per cell
-                electrode_area=0.01   # m²
+                membrane_area=0.01,  # m²
+                volume=0.1,  # L per cell
+                electrode_area=0.01,  # m²
             )
             metabolic_states.append(metabolic_state)
 
@@ -248,24 +248,33 @@ class IntegratedMFCModel:
             cell.process_with_monitoring(
                 inlet_conc=inlet_conc,
                 flow_rate_ml_h=self.flow_rate_ml_h,
-                dt_hours=dt
+                dt_hours=dt,
             )
 
             # Update cell current based on biofilm activity and substrate
             # Simple current model: I = (V/R) * activity_factor
-            activity_factor = min(1.0, cell.substrate_concentration / 10.0)  # Activity based on substrate
-            biofilm_factor = min(1.0, cell.biofilm_thickness / 1.5)  # Biofilm contribution
+            activity_factor = min(
+                1.0,
+                cell.substrate_concentration / 10.0,
+            )  # Activity based on substrate
+            biofilm_factor = min(
+                1.0,
+                cell.biofilm_thickness / 1.5,
+            )  # Biofilm contribution
             base_current = 0.001 * activity_factor * biofilm_factor  # Base current in A
             cell.current = base_current
 
             # Apply biofilm enhancement
-            biofilm_current = self.biofilm_models[i].calculate_biofilm_current_density(
-                biofilm_states[i]['biofilm_thickness'],
-                biofilm_states[i]['biomass_density']
-            ) * 0.01  # Convert to A
+            biofilm_current = (
+                self.biofilm_models[i].calculate_biofilm_current_density(
+                    biofilm_states[i]["biofilm_thickness"],
+                    biofilm_states[i]["biomass_density"],
+                )
+                * 0.01
+            )  # Convert to A
 
             # Apply metabolic enhancement
-            metabolic_current = metabolic_states[i].fluxes.get('GSU_R004', 0.0) * 0.001
+            metabolic_current = metabolic_states[i].fluxes.get("GSU_R004", 0.0) * 0.001
 
             # Total enhanced current
             total_current = cell.current + biofilm_current + metabolic_current
@@ -279,10 +288,12 @@ class IntegratedMFCModel:
             i0 = 1e-6  # Exchange current density (A/cm²)
             A_cell = 10.0  # Cell area (cm²)
             current_density = total_current / A_cell
-            eta_activation = 0.05 * np.log(max(current_density/i0, 1e-6))
+            eta_activation = 0.05 * np.log(max(current_density / i0, 1e-6))
 
             # Concentration overpotential (substrate depletion effects)
-            substrate_ratio = cell.substrate_concentration / 20.0  # Normalized to initial
+            substrate_ratio = (
+                cell.substrate_concentration / 20.0
+            )  # Normalized to initial
             eta_concentration = 0.03 * (1 - substrate_ratio)
 
             # Ohmic overpotential (resistance losses)
@@ -290,18 +301,27 @@ class IntegratedMFCModel:
             eta_ohmic = total_current * R_internal
 
             # Total cell voltage
-            cell_voltage = max(0, E_emf - eta_activation - eta_concentration - eta_ohmic)
+            cell_voltage = max(
+                0,
+                E_emf - eta_activation - eta_concentration - eta_ohmic,
+            )
             cell.voltage = cell_voltage  # Update the cell's voltage
             cell_voltages.append(cell_voltage)
 
         # 5. Q-learning control
         # Get current system state
-        current_concentrations = [cell.substrate_concentration for cell in self.mfc_cells]
-        outlet_conc = current_concentrations[-1] if current_concentrations else inlet_conc
+        current_concentrations = [
+            cell.substrate_concentration for cell in self.mfc_cells
+        ]
+        outlet_conc = (
+            current_concentrations[-1] if current_concentrations else inlet_conc
+        )
 
         # Simple state encoding for Q-learning
         state_code = self.flow_controller.get_state_hash(
-            inlet_conc, outlet_conc, sum(enhanced_currents)
+            inlet_conc,
+            outlet_conc,
+            sum(enhanced_currents),
         )
 
         # Choose action
@@ -312,26 +332,32 @@ class IntegratedMFCModel:
         self.reservoir.circulate_anolyte(
             flow_rate_ml_h=self.flow_rate_ml_h,
             stack_outlet_conc=outlet_conc,
-            dt_hours=dt
+            dt_hours=dt,
         )
 
         # 7. Substrate addition control
         cell_concentrations = [cell.substrate_concentration for cell in self.mfc_cells]
-        substrate_addition, halt_addition = self.substrate_controller.calculate_substrate_addition(
-            outlet_conc=outlet_conc,
-            reservoir_conc=self.reservoir.substrate_concentration,
-            cell_concentrations=cell_concentrations,
-            reservoir_sensors=self.reservoir.get_sensor_readings(),
-            dt_hours=dt
+        substrate_addition, halt_addition = (
+            self.substrate_controller.calculate_substrate_addition(
+                outlet_conc=outlet_conc,
+                reservoir_conc=self.reservoir.substrate_concentration,
+                cell_concentrations=cell_concentrations,
+                reservoir_sensors=self.reservoir.get_sensor_readings(),
+                dt_hours=dt,
+            )
         )
 
         if not halt_addition:
             self.reservoir.add_substrate(substrate_addition, dt)
 
         # 8. Update energy and power tracking
-        total_power = sum(v * i for v, i in zip(cell_voltages, enhanced_currents, strict=False))
+        total_power = sum(
+            v * i for v, i in zip(cell_voltages, enhanced_currents, strict=False)
+        )
         self.total_energy_generated += total_power * dt
-        self.pump_power_consumed += 0.001 * self.flow_rate_ml_h * dt  # Simplified pump power
+        self.pump_power_consumed += (
+            0.001 * self.flow_rate_ml_h * dt
+        )  # Simplified pump power
 
         # 9. Update time and tracking
         self.time += dt
@@ -341,24 +367,33 @@ class IntegratedMFCModel:
             time=self.time,
             total_energy=self.total_energy_generated,
             average_power=self.total_energy_generated / (self.time + 1e-6),
-            coulombic_efficiency=np.mean([ms.coulombic_efficiency for ms in metabolic_states]),
-            biofilm_thickness=[bs['biofilm_thickness'] for bs in biofilm_states],
-            biomass_density=[bs['biomass_density'] for bs in biofilm_states],
+            coulombic_efficiency=np.mean(
+                [ms.coulombic_efficiency for ms in metabolic_states],
+            ),
+            biofilm_thickness=[bs["biofilm_thickness"] for bs in biofilm_states],
+            biomass_density=[bs["biomass_density"] for bs in biofilm_states],
             attachment_fraction=[0.5] * self.n_cells,  # Simplified
-            substrate_concentration=[ms.metabolites[self.substrate] for ms in metabolic_states],
-            nadh_ratio=[ms.metabolites['nadh']/(ms.metabolites['nadh']+ms.metabolites['nad_plus'])
-                       for ms in metabolic_states],
-            atp_level=[ms.metabolites['atp'] for ms in metabolic_states],
+            substrate_concentration=[
+                ms.metabolites[self.substrate] for ms in metabolic_states
+            ],
+            nadh_ratio=[
+                ms.metabolites["nadh"]
+                / (ms.metabolites["nadh"] + ms.metabolites["nad_plus"])
+                for ms in metabolic_states
+            ],
+            atp_level=[ms.metabolites["atp"] for ms in metabolic_states],
             electron_flux=[ms.electron_production for ms in metabolic_states],
             cell_voltages=cell_voltages,
-            current_densities=[c/0.01 for c in enhanced_currents],  # A/m²
-            anode_potentials=[-0.3 + cell.anode_overpotential for cell in self.mfc_cells],
+            current_densities=[c / 0.01 for c in enhanced_currents],  # A/m²
+            anode_potentials=[
+                -0.3 + cell.anode_overpotential for cell in self.mfc_cells
+            ],
             reservoir_concentration=self.reservoir.substrate_concentration,
             flow_rate=self.flow_rate_ml_h,
             pump_power=self.pump_power_consumed,
             epsilon=self.flow_controller.epsilon,
             q_table_size=len(self.flow_controller.q_table),
-            learning_progress=1.0 - self.flow_controller.epsilon/0.3
+            learning_progress=1.0 - self.flow_controller.epsilon / 0.3,
         )
 
         # Store history
@@ -366,11 +401,14 @@ class IntegratedMFCModel:
 
         return integrated_state
 
-    def _calculate_integrated_reward(self, mfc_state: dict, biofilm_states: list[dict],
-                                   metabolic_states: list[Any],
-                                   enhanced_currents: list[float]) -> float:
-        """
-        Calculate comprehensive reward considering all subsystems.
+    def _calculate_integrated_reward(
+        self,
+        mfc_state: dict,
+        biofilm_states: list[dict],
+        metabolic_states: list[Any],
+        enhanced_currents: list[float],
+    ) -> float:
+        """Calculate comprehensive reward considering all subsystems.
 
         Args:
             mfc_state: MFC electrochemical state
@@ -380,9 +418,13 @@ class IntegratedMFCModel:
 
         Returns:
             Integrated reward value
+
         """
         # Power generation reward
-        total_power = sum(v * i for v, i in zip(mfc_state['cell_voltages'], enhanced_currents, strict=False))
+        total_power = sum(
+            v * i
+            for v, i in zip(mfc_state["cell_voltages"], enhanced_currents, strict=False)
+        )
         power_reward = total_power * 10.0
 
         # Biofilm health reward
@@ -390,7 +432,9 @@ class IntegratedMFCModel:
         for bs in biofilm_states:
             # Reward healthy biofilm thickness (20-50 μm optimal)
             thickness_optimal = 35.0  # μm
-            thickness_penalty = -abs(bs['biofilm_thickness'] - thickness_optimal) / thickness_optimal
+            thickness_penalty = (
+                -abs(bs["biofilm_thickness"] - thickness_optimal) / thickness_optimal
+            )
             biofilm_reward += thickness_penalty
 
         # Metabolic efficiency reward
@@ -399,7 +443,9 @@ class IntegratedMFCModel:
             # Reward high coulombic efficiency
             metabolic_reward += ms.coulombic_efficiency * 5.0
             # Reward balanced NADH/NAD+ ratio
-            nadh_ratio = ms.metabolites['nadh'] / (ms.metabolites['nadh'] + ms.metabolites['nad_plus'])
+            nadh_ratio = ms.metabolites["nadh"] / (
+                ms.metabolites["nadh"] + ms.metabolites["nad_plus"]
+            )
             ratio_penalty = -abs(nadh_ratio - 0.3) * 10.0
             metabolic_reward += ratio_penalty
 
@@ -415,14 +461,21 @@ class IntegratedMFCModel:
         stability_reward = -current_std * 20.0
 
         # Total integrated reward
-        total_reward = (power_reward + biofilm_reward + metabolic_reward +
-                       substrate_reward + pump_penalty + stability_reward)
+        return (
+            power_reward
+            + biofilm_reward
+            + metabolic_reward
+            + substrate_reward
+            + pump_penalty
+            + stability_reward
+        )
 
-        return total_reward
-
-    def run_simulation(self, dt: float = 1.0, save_interval: int = 10) -> dict[str, Any]:
-        """
-        Run complete integrated simulation.
+    def run_simulation(
+        self,
+        dt: float = 1.0,
+        save_interval: int = 10,
+    ) -> dict[str, Any]:
+        """Run complete integrated simulation.
 
         Args:
             dt: Time step (hours)
@@ -430,24 +483,18 @@ class IntegratedMFCModel:
 
         Returns:
             Dictionary with simulation results
-        """
-        print("\nStarting Integrated MFC Simulation")
-        print(f"Duration: {self.simulation_hours} hours")
-        print(f"Time step: {dt} hours")
 
+        """
         start_time = time.time()
 
         # Main simulation loop
         for hour in range(int(self.simulation_hours / dt)):
             # Step integrated dynamics
-            state = self.step_integrated_dynamics(dt)
+            self.step_integrated_dynamics(dt)
 
             # Progress update
             if hour % 10 == 0:
-                print(f"Hour {self.time:.1f}: Power={state.average_power:.3f}W, "
-                      f"CE={state.coulombic_efficiency:.2%}, "
-                      f"Biofilm={np.mean(state.biofilm_thickness):.1f}μm, "
-                      f"Q-size={state.q_table_size}")
+                pass
 
             # Save checkpoint
             if hour % save_interval == 0 and hour > 0:
@@ -457,14 +504,7 @@ class IntegratedMFCModel:
         computation_time = time.time() - start_time
 
         results = self._compile_results()
-        results['computation_time'] = computation_time
-
-        print("\nSimulation Complete!")
-        print(f"Total Energy: {results['total_energy']:.2f} Wh")
-        print(f"Average Power: {results['average_power']:.3f} W")
-        print(f"Peak Power: {results['peak_power']:.3f} W")
-        print(f"Average CE: {results['average_coulombic_efficiency']:.2%}")
-        print(f"Computation Time: {computation_time:.1f} seconds")
+        results["computation_time"] = computation_time
 
         return results
 
@@ -479,71 +519,66 @@ class IntegratedMFCModel:
         efficiencies = [s.coulombic_efficiency for s in self.history]
         biofilm_thickness = [np.mean(s.biofilm_thickness) for s in self.history]
 
-        results = {
-            'total_energy': self.history[-1].total_energy,
-            'average_power': np.mean(powers),
-            'peak_power': np.max(powers),
-            'average_coulombic_efficiency': np.mean(efficiencies),
-            'final_biofilm_thickness': np.mean(self.history[-1].biofilm_thickness),
-            'final_biomass_density': np.mean(self.history[-1].biomass_density),
-            'substrate_utilization': 1.0 - self.history[-1].reservoir_concentration / 20.0,
-            'q_table_size': self.history[-1].q_table_size,
-            'time_series': {
-                'time': times,
-                'power': powers,
-                'coulombic_efficiency': efficiencies,
-                'biofilm_thickness': biofilm_thickness
+        return {
+            "total_energy": self.history[-1].total_energy,
+            "average_power": np.mean(powers),
+            "peak_power": np.max(powers),
+            "average_coulombic_efficiency": np.mean(efficiencies),
+            "final_biofilm_thickness": np.mean(self.history[-1].biofilm_thickness),
+            "final_biomass_density": np.mean(self.history[-1].biomass_density),
+            "substrate_utilization": 1.0
+            - self.history[-1].reservoir_concentration / 20.0,
+            "q_table_size": self.history[-1].q_table_size,
+            "time_series": {
+                "time": times,
+                "power": powers,
+                "coulombic_efficiency": efficiencies,
+                "biofilm_thickness": biofilm_thickness,
             },
-            'configuration': {
-                'n_cells': self.n_cells,
-                'species': self.species,
-                'substrate': self.substrate,
-                'membrane_type': self.membrane_type,
-                'gpu_enabled': self.gpu_available
-            }
+            "configuration": {
+                "n_cells": self.n_cells,
+                "species": self.species,
+                "substrate": self.substrate,
+                "membrane_type": self.membrane_type,
+                "gpu_enabled": self.gpu_available,
+            },
         }
 
-        return results
-
-    def _save_checkpoint(self, hour: int):
+    def _save_checkpoint(self, hour: int) -> None:
         """Save checkpoint data."""
         checkpoint = {
-            'hour': hour,
-            'time': self.time,
-            'history': self.history[-100:],  # Last 100 hours
-            'q_table': dict(self.flow_controller.q_table),
-            'performance_metrics': self.performance_metrics
+            "hour": hour,
+            "time": self.time,
+            "history": self.history[-100:],  # Last 100 hours
+            "q_table": dict(self.flow_controller.q_table),
+            "performance_metrics": self.performance_metrics,
         }
 
-        filename = get_model_path(f'integrated_checkpoint_h{hour}.pkl')
-        with open(filename, 'wb') as f:
+        filename = get_model_path(f"integrated_checkpoint_h{hour}.pkl")
+        with open(filename, "wb") as f:
             pickle.dump(checkpoint, f)
 
-    def save_results(self, results: dict[str, Any], prefix: str = "integrated"):
+    def save_results(self, results: dict[str, Any], prefix: str = "integrated") -> None:
         """Save simulation results."""
         # Save summary
-        summary_file = get_simulation_data_path(f'{prefix}_summary.json')
+        summary_file = get_simulation_data_path(f"{prefix}_summary.json")
         import json
-        with open(summary_file, 'w') as f:
-            json_results = {k: v for k, v in results.items() if k != 'time_series'}
+
+        with open(summary_file, "w") as f:
+            json_results = {k: v for k, v in results.items() if k != "time_series"}
             json.dump(json_results, f, indent=2)
 
         # Save time series data
-        time_series_file = get_simulation_data_path(f'{prefix}_time_series.csv')
-        df = pd.DataFrame(results['time_series'])
+        time_series_file = get_simulation_data_path(f"{prefix}_time_series.csv")
+        df = pd.DataFrame(results["time_series"])
         df.to_csv(time_series_file, index=False)
 
         # Save final Q-table
-        q_table_file = get_model_path(f'{prefix}_final_q_table.pkl')
-        with open(q_table_file, 'wb') as f:
+        q_table_file = get_model_path(f"{prefix}_final_q_table.pkl")
+        with open(q_table_file, "wb") as f:
             pickle.dump(dict(self.flow_controller.q_table), f)
 
-        print("\nResults saved to:")
-        print(f"  Summary: {summary_file}")
-        print(f"  Time series: {time_series_file}")
-        print(f"  Q-table: {q_table_file}")
-
-    def plot_results(self, results: dict[str, Any], save_plots: bool = True):
+    def plot_results(self, results: dict[str, Any], save_plots: bool = True) -> None:
         """Generate visualization plots."""
         import matplotlib.pyplot as plt
 
@@ -551,51 +586,56 @@ class IntegratedMFCModel:
 
         # Power output
         ax = axes[0, 0]
-        ax.plot(results['time_series']['time'], results['time_series']['power'])
-        ax.set_xlabel('Time (hours)')
-        ax.set_ylabel('Power (W)')
-        ax.set_title('Power Output Over Time')
+        ax.plot(results["time_series"]["time"], results["time_series"]["power"])
+        ax.set_xlabel("Time (hours)")
+        ax.set_ylabel("Power (W)")
+        ax.set_title("Power Output Over Time")
         ax.grid(True)
 
         # Coulombic efficiency
         ax = axes[0, 1]
-        ax.plot(results['time_series']['time'],
-               [ce * 100 for ce in results['time_series']['coulombic_efficiency']])
-        ax.set_xlabel('Time (hours)')
-        ax.set_ylabel('Coulombic Efficiency (%)')
-        ax.set_title('Coulombic Efficiency Over Time')
+        ax.plot(
+            results["time_series"]["time"],
+            [ce * 100 for ce in results["time_series"]["coulombic_efficiency"]],
+        )
+        ax.set_xlabel("Time (hours)")
+        ax.set_ylabel("Coulombic Efficiency (%)")
+        ax.set_title("Coulombic Efficiency Over Time")
         ax.grid(True)
 
         # Biofilm thickness
         ax = axes[1, 0]
-        ax.plot(results['time_series']['time'], results['time_series']['biofilm_thickness'])
-        ax.set_xlabel('Time (hours)')
-        ax.set_ylabel('Biofilm Thickness (μm)')
-        ax.set_title('Average Biofilm Thickness Development')
+        ax.plot(
+            results["time_series"]["time"],
+            results["time_series"]["biofilm_thickness"],
+        )
+        ax.set_xlabel("Time (hours)")
+        ax.set_ylabel("Biofilm Thickness (μm)")
+        ax.set_title("Average Biofilm Thickness Development")
         ax.grid(True)
 
         # Learning progress
         ax = axes[1, 1]
         epsilons = [s.epsilon for s in self.history]
-        ax.plot(results['time_series']['time'], epsilons)
-        ax.set_xlabel('Time (hours)')
-        ax.set_ylabel('Exploration Rate (ε)')
-        ax.set_title('Q-Learning Progress')
+        ax.plot(results["time_series"]["time"], epsilons)
+        ax.set_xlabel("Time (hours)")
+        ax.set_ylabel("Exploration Rate (ε)")
+        ax.set_title("Q-Learning Progress")
         ax.grid(True)
 
         plt.tight_layout()
 
         if save_plots:
-            plot_file = get_figure_path('integrated_mfc_results.png')
-            plt.savefig(plot_file, dpi=300, bbox_inches='tight')
-            print(f"\nPlot saved to: {plot_file}")
+            plot_file = get_figure_path("integrated_mfc_results.png")
+            plt.savefig(plot_file, dpi=300, bbox_inches="tight")
 
         plt.show()
 
-    def _create_mfc_stack_compatibility(self):
+    def _create_mfc_stack_compatibility(self) -> None:
         """Create compatibility layer for tests expecting mfc_stack attribute."""
+
         class MFCStackCompatibility:
-            def __init__(self, reservoir, mfc_cells, n_cells):
+            def __init__(self, reservoir, mfc_cells, n_cells) -> None:
                 self.reservoir = reservoir
                 self.mfc_cells = mfc_cells
                 self.n_cells = n_cells
@@ -603,30 +643,40 @@ class IntegratedMFCModel:
         self.mfc_stack = MFCStackCompatibility(
             reservoir=self.reservoir,
             mfc_cells=self.mfc_cells,
-            n_cells=self.n_cells
+            n_cells=self.n_cells,
         )
 
         # Also add agent compatibility (if referenced in tests)
-        if not hasattr(self, 'agent'):
+        if not hasattr(self, "agent"):
+
             class AgentCompatibility:
-                def __init__(self, n_cells):
+                def __init__(self, n_cells) -> None:
                     self.n_cells = n_cells
+
             self.agent = AgentCompatibility(n_cells=self.n_cells)
 
 
-def main():
+def main() -> None:
     """Main function to run integrated simulation."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Integrated MFC Model Simulation')
-    parser.add_argument('--cells', type=int, default=5, help='Number of cells')
-    parser.add_argument('--species', choices=['geobacter', 'shewanella', 'mixed'],
-                       default='mixed', help='Bacterial species')
-    parser.add_argument('--substrate', choices=['acetate', 'lactate'],
-                       default='lactate', help='Substrate type')
-    parser.add_argument('--hours', type=int, default=100, help='Simulation duration')
-    parser.add_argument('--gpu', action='store_true', help='Enable GPU acceleration')
-    parser.add_argument('--plot', action='store_true', help='Generate plots')
+    parser = argparse.ArgumentParser(description="Integrated MFC Model Simulation")
+    parser.add_argument("--cells", type=int, default=5, help="Number of cells")
+    parser.add_argument(
+        "--species",
+        choices=["geobacter", "shewanella", "mixed"],
+        default="mixed",
+        help="Bacterial species",
+    )
+    parser.add_argument(
+        "--substrate",
+        choices=["acetate", "lactate"],
+        default="lactate",
+        help="Substrate type",
+    )
+    parser.add_argument("--hours", type=int, default=100, help="Simulation duration")
+    parser.add_argument("--gpu", action="store_true", help="Enable GPU acceleration")
+    parser.add_argument("--plot", action="store_true", help="Generate plots")
 
     args = parser.parse_args()
 
@@ -636,7 +686,7 @@ def main():
         species=args.species,
         substrate=args.substrate,
         use_gpu=args.gpu,
-        simulation_hours=args.hours
+        simulation_hours=args.hours,
     )
 
     # Run simulation

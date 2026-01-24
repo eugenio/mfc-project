@@ -1,4 +1,1 @@
-"""
-Create GitLab issue for HTTPS/SSL monitoring system enhancement
-"""
-
+"""Create GitLab issue for HTTPS/SSL monitoring system enhancement."""

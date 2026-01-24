@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-Advanced Physics Simulation Page for Enhanced MFC Platform
+"""Advanced Physics Simulation Page for Enhanced MFC Platform.
 
 Phase 2: Fluid dynamics, mass transport, and 3D biofilm growth simulation
 with real-time monitoring and literature-validated parameters.
 
 Created: 2025-08-02
 """
+
+from __future__ import annotations
 
 import time
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from gui.scientific_widgets import ParameterSpec, ScientificParameterWidget
 @dataclass
 class PhysicsSimulationResult:
     """Results from physics simulation."""
+
     success: bool
     flow_field: np.ndarray | None = None
     concentration_profile: np.ndarray | None = None
@@ -33,13 +35,12 @@ class PhysicsSimulationResult:
 class AdvancedPhysicsSimulator:
     """Advanced physics simulation engine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.simulation_active = False
         self.progress = 0.0
 
     def run_simulation(self, params: dict[str, float]) -> PhysicsSimulationResult:
         """Run advanced physics simulation with given parameters."""
-
         try:
             self.simulation_active = True
             start_time = time.time()
@@ -60,7 +61,10 @@ class AdvancedPhysicsSimulator:
             # Phase 3: Biofilm growth
             time.sleep(0.5)
             progress_bar.progress(0.8, "Modeling biofilm growth...")
-            biofilm_thickness = self._calculate_biofilm_growth(params, concentration_profile)
+            biofilm_thickness = self._calculate_biofilm_growth(
+                params,
+                concentration_profile,
+            )
 
             # Final calculations
             time.sleep(0.3)
@@ -82,15 +86,12 @@ class AdvancedPhysicsSimulator:
                 biofilm_thickness=biofilm_thickness,
                 pressure_drop=pressure_drop,
                 mass_transfer_coefficient=mass_transfer_coeff,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
         except Exception as e:
             self.simulation_active = False
-            return PhysicsSimulationResult(
-                success=False,
-                error_message=str(e)
-            )
+            return PhysicsSimulationResult(success=False, error_message=str(e))
 
     def _calculate_flow_field(self, params: dict[str, float]) -> np.ndarray:
         """Calculate 3D flow field using CFD approximation."""
@@ -101,7 +102,7 @@ class AdvancedPhysicsSimulator:
         z = np.linspace(0, 0.02, nz)  # 2 cm height
 
         # Create velocity field based on Reynolds number
-        flow_rate = params.get('flow_rate', 1e-4)
+        flow_rate = params.get("flow_rate", 1e-4)
         self._calculate_reynolds_number(flow_rate, params)
 
         # Parabolic velocity profile
@@ -117,13 +118,17 @@ class AdvancedPhysicsSimulator:
 
         return velocity
 
-    def _calculate_mass_transport(self, params: dict[str, float], flow_field: np.ndarray) -> np.ndarray:
+    def _calculate_mass_transport(
+        self,
+        params: dict[str, float],
+        flow_field: np.ndarray,
+    ) -> np.ndarray:
         """Calculate substrate concentration profile."""
         nx, ny, nz = flow_field.shape[:3]
 
         # Initial concentration
-        c_bulk = params.get('substrate_concentration', 1.0)  # kg/m³
-        params.get('diffusivity', 1e-9)  # m²/s
+        c_bulk = params.get("substrate_concentration", 1.0)  # kg/m³
+        params.get("diffusivity", 1e-9)  # m²/s
 
         # Simplified steady-state concentration profile
         concentration = np.zeros((nx, ny, nz))
@@ -138,12 +143,19 @@ class AdvancedPhysicsSimulator:
 
         return concentration
 
-    def _calculate_biofilm_growth(self, params: dict[str, float], concentration: np.ndarray) -> np.ndarray:
+    def _calculate_biofilm_growth(
+        self,
+        params: dict[str, float],
+        concentration: np.ndarray,
+    ) -> np.ndarray:
         """Calculate biofilm thickness evolution."""
         nx, ny, nz = concentration.shape
 
-        growth_rate = params.get('growth_rate', 1e-5)  # 1/s
-        yield_coefficient = params.get('yield_coefficient', 0.4)  # g-biomass/g-substrate
+        growth_rate = params.get("growth_rate", 1e-5)  # 1/s
+        yield_coefficient = params.get(
+            "yield_coefficient",
+            0.4,
+        )  # g-biomass/g-substrate
 
         # Simplified biofilm thickness calculation
         biofilm_thickness = np.zeros((nx, ny))
@@ -159,21 +171,24 @@ class AdvancedPhysicsSimulator:
 
         return biofilm_thickness * 1e6  # Convert to micrometers
 
-    def _calculate_pressure_drop(self, params: dict[str, float], flow_field: np.ndarray) -> float:
+    def _calculate_pressure_drop(
+        self,
+        params: dict[str, float],
+        flow_field: np.ndarray,
+    ) -> float:
         """Calculate pressure drop across electrode."""
-        flow_rate = params.get('flow_rate', 1e-4)
-        permeability = params.get('permeability', 1e-10)  # m²
+        flow_rate = params.get("flow_rate", 1e-4)
+        permeability = params.get("permeability", 1e-10)  # m²
         viscosity = 1e-3  # Pa·s (water)
         length = 0.1  # m
 
         # Darcy's law for porous media
-        pressure_drop = (viscosity * flow_rate * length) / permeability
-        return pressure_drop
+        return (viscosity * flow_rate * length) / permeability
 
     def _calculate_mass_transfer_coefficient(self, params: dict[str, float]) -> float:
         """Calculate mass transfer coefficient."""
-        flow_rate = params.get('flow_rate', 1e-4)
-        diffusivity = params.get('diffusivity', 1e-9)
+        flow_rate = params.get("flow_rate", 1e-4)
+        diffusivity = params.get("diffusivity", 1e-9)
         characteristic_length = 0.01  # m
 
         # Sherwood number correlation
@@ -181,14 +196,23 @@ class AdvancedPhysicsSimulator:
         sc_number = 1e-3 / (1000 * diffusivity)  # Schmidt number
 
         if re_number < 2300:  # Laminar flow
-            sh_number = 3.66 + (0.0668 * re_number * sc_number * characteristic_length / 0.1) / (1 + 0.04 * (re_number * sc_number * characteristic_length / 0.1)**(2/3))
+            sh_number = 3.66 + (
+                0.0668 * re_number * sc_number * characteristic_length / 0.1
+            ) / (
+                1
+                + 0.04
+                * (re_number * sc_number * characteristic_length / 0.1) ** (2 / 3)
+            )
         else:  # Turbulent flow
             sh_number = 0.023 * re_number**0.8 * sc_number**0.33
 
-        km = sh_number * diffusivity / characteristic_length
-        return km
+        return sh_number * diffusivity / characteristic_length
 
-    def _calculate_reynolds_number(self, flow_rate: float, params: dict[str, float]) -> float:
+    def _calculate_reynolds_number(
+        self,
+        flow_rate: float,
+        params: dict[str, float],
+    ) -> float:
         """Calculate Reynolds number."""
         characteristic_length = 0.01  # m
         kinematic_viscosity = 1e-6  # m²/s (water at 20°C)
@@ -196,9 +220,8 @@ class AdvancedPhysicsSimulator:
         return flow_rate * characteristic_length / kinematic_viscosity
 
 
-def create_physics_visualizations(result: PhysicsSimulationResult):
+def create_physics_visualizations(result: PhysicsSimulationResult) -> None:
     """Create advanced physics visualizations."""
-
     if not result.success:
         st.error(f"Simulation failed: {result.error_message}")
         return
@@ -215,16 +238,18 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
             mid_slice = result.flow_field.shape[1] // 2
             velocity_2d = result.flow_field[:, mid_slice, :, 0]  # x-velocity component
 
-            fig_flow = go.Figure(data=go.Heatmap(
-                z=velocity_2d.T,
-                colorscale='Viridis',
-                colorbar={"title": "Velocity (m/s)"}
-            ))
+            fig_flow = go.Figure(
+                data=go.Heatmap(
+                    z=velocity_2d.T,
+                    colorscale="Viridis",
+                    colorbar={"title": "Velocity (m/s)"},
+                ),
+            )
             fig_flow.update_layout(
                 title="Velocity Field (x-component)",
                 xaxis_title="Length (cells)",
                 yaxis_title="Height (cells)",
-                height=400
+                height=400,
             )
             st.plotly_chart(fig_flow, use_container_width=True)
 
@@ -236,16 +261,18 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
             mid_slice = result.concentration_profile.shape[1] // 2
             concentration_2d = result.concentration_profile[:, mid_slice, :]
 
-            fig_conc = go.Figure(data=go.Heatmap(
-                z=concentration_2d.T,
-                colorscale='Plasma',
-                colorbar={"title": "Concentration (kg/m³)"}
-            ))
+            fig_conc = go.Figure(
+                data=go.Heatmap(
+                    z=concentration_2d.T,
+                    colorscale="Plasma",
+                    colorbar={"title": "Concentration (kg/m³)"},
+                ),
+            )
             fig_conc.update_layout(
                 title="Substrate Concentration",
                 xaxis_title="Length (cells)",
                 yaxis_title="Height (cells)",
-                height=400
+                height=400,
             )
             st.plotly_chart(fig_conc, use_container_width=True)
 
@@ -253,23 +280,24 @@ def create_physics_visualizations(result: PhysicsSimulationResult):
     if result.biofilm_thickness is not None:
         st.subheader("🦠 Biofilm Thickness Distribution")
 
-        fig_biofilm = go.Figure(data=go.Heatmap(
-            z=result.biofilm_thickness,
-            colorscale='Greens',
-            colorbar={"title": "Thickness (μm)"}
-        ))
+        fig_biofilm = go.Figure(
+            data=go.Heatmap(
+                z=result.biofilm_thickness,
+                colorscale="Greens",
+                colorbar={"title": "Thickness (μm)"},
+            ),
+        )
         fig_biofilm.update_layout(
             title="Biofilm Thickness After 24 Hours",
             xaxis_title="Length (cells)",
             yaxis_title="Width (cells)",
-            height=500
+            height=500,
         )
         st.plotly_chart(fig_biofilm, use_container_width=True)
 
 
-def render_advanced_physics_page():
+def render_advanced_physics_page() -> None:
     """Render the Advanced Physics Simulation page."""
-
     # Page header
     st.title("⚗️ Advanced Physics Simulation")
     st.caption("Phase 2: Fluid dynamics, mass transport, and 3D biofilm growth")
@@ -286,7 +314,7 @@ def render_advanced_physics_page():
             max_value=1e-2,
             typical_range=(1e-5, 1e-3),
             literature_refs="Torres et al. (2008) - Optimal flow rates for MFC performance",
-            description="Electrolyte flow velocity through electrode"
+            description="Electrolyte flow velocity through electrode",
         ),
         "diffusivity": ParameterSpec(
             name="Substrate Diffusivity",
@@ -295,7 +323,7 @@ def render_advanced_physics_page():
             max_value=1e-8,
             typical_range=(1e-10, 1e-9),
             literature_refs="Logan & Regan (2006) - Mass transport in bioelectrochemical systems",
-            description="Substrate diffusion coefficient in biofilm"
+            description="Substrate diffusion coefficient in biofilm",
         ),
         "growth_rate": ParameterSpec(
             name="Maximum Growth Rate",
@@ -304,7 +332,7 @@ def render_advanced_physics_page():
             max_value=1e-3,
             typical_range=(1e-6, 1e-4),
             literature_refs="Picioreanu et al. (2007) - Biofilm growth modeling",
-            description="Maximum specific growth rate of biofilm"
+            description="Maximum specific growth rate of biofilm",
         ),
         "substrate_concentration": ParameterSpec(
             name="Bulk Substrate Concentration",
@@ -313,7 +341,7 @@ def render_advanced_physics_page():
             max_value=10.0,
             typical_range=(0.5, 2.0),
             literature_refs="Liu & Logan (2004) - Substrate concentration effects",
-            description="Substrate concentration in bulk solution"
+            description="Substrate concentration in bulk solution",
         ),
         "permeability": ParameterSpec(
             name="Electrode Permeability",
@@ -322,7 +350,7 @@ def render_advanced_physics_page():
             max_value=1e-8,
             typical_range=(1e-11, 1e-9),
             literature_refs="Dewan et al. (2008) - Electrode permeability measurements",
-            description="Hydraulic permeability of electrode material"
+            description="Hydraulic permeability of electrode material",
         ),
         "yield_coefficient": ParameterSpec(
             name="Yield Coefficient",
@@ -331,8 +359,8 @@ def render_advanced_physics_page():
             max_value=0.8,
             typical_range=(0.3, 0.5),
             literature_refs="Rabaey & Verstraete (2005) - Microbial ecology principles",
-            description="Biomass yield from substrate consumption"
-        )
+            description="Biomass yield from substrate consumption",
+        ),
     }
 
     # Simulation parameters interface
@@ -344,7 +372,10 @@ def render_advanced_physics_page():
         with col1:
             st.subheader("Flow Dynamics")
 
-            flow_widget = ScientificParameterWidget(physics_params["flow_rate"], "flow_rate")
+            flow_widget = ScientificParameterWidget(
+                physics_params["flow_rate"],
+                "flow_rate",
+            )
             params["flow_rate"] = flow_widget.render("Flow Rate", 1e-4)
 
             # Calculate and display Reynolds number
@@ -359,11 +390,20 @@ def render_advanced_physics_page():
         with col2:
             st.subheader("Mass Transport")
 
-            diff_widget = ScientificParameterWidget(physics_params["diffusivity"], "diffusivity")
+            diff_widget = ScientificParameterWidget(
+                physics_params["diffusivity"],
+                "diffusivity",
+            )
             params["diffusivity"] = diff_widget.render("Diffusivity", 1e-9)
 
-            conc_widget = ScientificParameterWidget(physics_params["substrate_concentration"], "substrate_conc")
-            params["substrate_concentration"] = conc_widget.render("Substrate Concentration", 1.0)
+            conc_widget = ScientificParameterWidget(
+                physics_params["substrate_concentration"],
+                "substrate_conc",
+            )
+            params["substrate_concentration"] = conc_widget.render(
+                "Substrate Concentration",
+                1.0,
+            )
 
             # Calculate Peclet number
             peclet = params["flow_rate"] * 0.01 / params["diffusivity"]
@@ -372,13 +412,22 @@ def render_advanced_physics_page():
         with col3:
             st.subheader("Biofilm Growth")
 
-            growth_widget = ScientificParameterWidget(physics_params["growth_rate"], "growth_rate")
+            growth_widget = ScientificParameterWidget(
+                physics_params["growth_rate"],
+                "growth_rate",
+            )
             params["growth_rate"] = growth_widget.render("Growth Rate", 1e-5)
 
-            yield_widget = ScientificParameterWidget(physics_params["yield_coefficient"], "yield_coeff")
+            yield_widget = ScientificParameterWidget(
+                physics_params["yield_coefficient"],
+                "yield_coeff",
+            )
             params["yield_coefficient"] = yield_widget.render("Yield Coefficient", 0.4)
 
-            perm_widget = ScientificParameterWidget(physics_params["permeability"], "permeability")
+            perm_widget = ScientificParameterWidget(
+                physics_params["permeability"],
+                "permeability",
+            )
             params["permeability"] = perm_widget.render("Permeability", 1e-10)
 
     # Simulation controls
@@ -387,7 +436,11 @@ def render_advanced_physics_page():
     col1, col2, col3 = st.columns([2, 1, 1])
 
     with col1:
-        run_simulation = st.button("Run Advanced Physics Simulation", type="primary", use_container_width=True)
+        run_simulation = st.button(
+            "Run Advanced Physics Simulation",
+            type="primary",
+            use_container_width=True,
+        )
 
     with col2:
         st.selectbox("Simulation Time", ["1 hour", "6 hours", "1 day", "1 week"])
@@ -399,7 +452,10 @@ def render_advanced_physics_page():
     if run_simulation:
         simulator = AdvancedPhysicsSimulator()
 
-        with st.status("Running Advanced Physics Simulation...", expanded=True) as status:
+        with st.status(
+            "Running Advanced Physics Simulation...",
+            expanded=True,
+        ) as status:
             st.write("🔄 Initializing computational mesh...")
             st.write("⚗️ Solving Navier-Stokes equations...")
             st.write("🧪 Computing mass transport...")
@@ -408,13 +464,23 @@ def render_advanced_physics_page():
             result = simulator.run_simulation(params)
 
             if result.success:
-                status.update(label="✅ Simulation completed successfully!", state="complete", expanded=False)
+                status.update(
+                    label="✅ Simulation completed successfully!",
+                    state="complete",
+                    expanded=False,
+                )
             else:
-                status.update(label="❌ Simulation failed!", state="error", expanded=False)
+                status.update(
+                    label="❌ Simulation failed!",
+                    state="error",
+                    expanded=False,
+                )
 
         # Display results
         if result.success:
-            st.success(f"✅ Simulation completed in {result.execution_time:.2f} seconds")
+            st.success(
+                f"✅ Simulation completed in {result.execution_time:.2f} seconds",
+            )
 
             # Key results metrics
             col1, col2, col3, col4 = st.columns(4)
@@ -423,14 +489,23 @@ def render_advanced_physics_page():
                 st.metric("Pressure Drop", f"{result.pressure_drop:.1f} Pa")
 
             with col2:
-                st.metric("Mass Transfer Coeff.", f"{result.mass_transfer_coefficient:.2e} m/s")
+                st.metric(
+                    "Mass Transfer Coeff.",
+                    f"{result.mass_transfer_coefficient:.2e} m/s",
+                )
 
             with col3:
-                avg_biofilm = np.mean(result.biofilm_thickness) if result.biofilm_thickness is not None else 0
+                avg_biofilm = (
+                    np.mean(result.biofilm_thickness)
+                    if result.biofilm_thickness is not None
+                    else 0
+                )
                 st.metric("Avg. Biofilm Thickness", f"{avg_biofilm:.1f} μm")
 
             with col4:
-                max_velocity = np.max(result.flow_field) if result.flow_field is not None else 0
+                max_velocity = (
+                    np.max(result.flow_field) if result.flow_field is not None else 0
+                )
                 st.metric("Max Velocity", f"{max_velocity:.4f} m/s")
 
             # Advanced visualizations

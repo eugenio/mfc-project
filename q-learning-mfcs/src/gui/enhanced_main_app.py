@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Enhanced MFC Platform - Main Application with Multi-Page Navigation
+"""Enhanced MFC Platform - Main Application with Multi-Page Navigation.
 
 This is the new main application that implements the Enhanced Streamlit architecture
 with phase-based navigation, real-time monitoring, and professional scientific interface.
@@ -24,8 +23,8 @@ import sys
 import streamlit as st
 
 # Configure logging
-logging.getLogger('jax._src.xla_bridge').setLevel(logging.WARNING)
-logging.getLogger('jax').setLevel(logging.WARNING)
+logging.getLogger("jax._src.xla_bridge").setLevel(logging.WARNING)
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 # Add src to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,7 +33,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gui.navigation_controller import NavigationController
 
 
-def main():
+def main() -> None:
     """Main application entry point for Enhanced MFC Platform."""
     try:
         # Initialize and run the navigation controller
@@ -42,8 +41,9 @@ def main():
         nav_controller.run()
 
     except Exception as e:
-        st.error(f"Application Error: {str(e)}")
+        st.error(f"Application Error: {e!s}")
         st.exception(e)
+
 
 if __name__ == "__main__":
     main()

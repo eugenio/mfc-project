@@ -1,5 +1,4 @@
-"""
-Simulation Helper Functions
+"""Simulation Helper Functions.
 
 Provides utility functions for simulation execution with integrated chronology
 tracking and browser-friendly data export capabilities.
@@ -7,17 +6,22 @@ tracking and browser-friendly data export capabilities.
 Created: 2025-07-31
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
-from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from config.qlearning_config import QLearningConfig
-from config.sensor_config import SensorConfig
 from config.simulation_chronology import get_chronology_manager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from config.qlearning_config import QLearningConfig
+    from config.sensor_config import SensorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -25,29 +29,30 @@ logger = logging.getLogger(__name__)
 class SimulationRunner:
     """Enhanced simulation runner with chronology tracking."""
 
-    def __init__(self, output_dir: str | Path = "simulation_outputs"):
-        """
-        Initialize simulation runner.
+    def __init__(self, output_dir: str | Path = "simulation_outputs") -> None:
+        """Initialize simulation runner.
 
         Args:
             output_dir: Directory for simulation outputs
+
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.chronology_manager = get_chronology_manager()
 
-    def run_simulation_with_tracking(self,
-                                   simulation_name: str,
-                                   simulation_func: Callable[[], dict[str, Any]],
-                                   description: str = "",
-                                   duration_hours: float = 0.0,
-                                   qlearning_config: QLearningConfig | None = None,
-                                   sensor_config: SensorConfig | None = None,
-                                   parameters: dict[str, Any] | None = None,
-                                   tags: list | None = None,
-                                   enable_browser_download: bool = True) -> dict[str, Any]:
-        """
-        Run simulation with full chronology tracking and browser download support.
+    def run_simulation_with_tracking(
+        self,
+        simulation_name: str,
+        simulation_func: Callable[[], dict[str, Any]],
+        description: str = "",
+        duration_hours: float = 0.0,
+        qlearning_config: QLearningConfig | None = None,
+        sensor_config: SensorConfig | None = None,
+        parameters: dict[str, Any] | None = None,
+        tags: list | None = None,
+        enable_browser_download: bool = True,
+    ) -> dict[str, Any]:
+        """Run simulation with full chronology tracking and browser download support.
 
         Args:
             simulation_name: Name of the simulation
@@ -62,6 +67,7 @@ class SimulationRunner:
 
         Returns:
             Enhanced results dictionary with chronology info
+
         """
         # Create chronology entry
         entry = self.chronology_manager.create_entry(
@@ -71,7 +77,7 @@ class SimulationRunner:
             qlearning_config=qlearning_config,
             sensor_config=sensor_config,
             parameters=parameters,
-            tags=tags or []
+            tags=tags or [],
         )
 
         # Add entry to chronology
@@ -92,7 +98,7 @@ class SimulationRunner:
         except Exception as e:
             success = False
             error_message = str(e)
-            logger.error(f"Simulation failed: {entry.id} - {error_message}")
+            logger.exception(f"Simulation failed: {entry.id} - {error_message}")
             results = {"error": error_message}
 
         execution_time = time.time() - start_time
@@ -100,8 +106,12 @@ class SimulationRunner:
         # Prepare result files for browser download
         result_files = {}
         if enable_browser_download and results:
-            result_files = self._prepare_browser_download_files(entry.id, results,
-                                                              qlearning_config, sensor_config)
+            result_files = self._prepare_browser_download_files(
+                entry.id,
+                results,
+                qlearning_config,
+                sensor_config,
+            )
 
         # Extract results summary
         results_summary = self._extract_results_summary(results)
@@ -113,11 +123,11 @@ class SimulationRunner:
             result_files=result_files,
             execution_time=execution_time,
             success=success,
-            error_message=error_message
+            error_message=error_message,
         )
 
         # Add chronology metadata to results
-        enhanced_results = {
+        return {
             **results,
             "chronology_entry_id": entry.id,
             "simulation_metadata": {
@@ -126,12 +136,10 @@ class SimulationRunner:
                 "execution_time_seconds": execution_time,
                 "success": success,
                 "description": description,
-                "tags": tags or []
+                "tags": tags or [],
             },
-            "download_files": result_files if enable_browser_download else {}
+            "download_files": result_files if enable_browser_download else {},
         }
-
-        return enhanced_results
 
     def _extract_results_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Extract key metrics for chronology summary."""
@@ -139,10 +147,15 @@ class SimulationRunner:
 
         # Common result fields to extract
         key_fields = [
-            'total_energy', 'average_power', 'peak_power',
-            'coulombic_efficiency', 'average_coulombic_efficiency',
-            'final_biofilm_thickness', 'final_current_density',
-            'convergence_achieved', 'iterations_completed'
+            "total_energy",
+            "average_power",
+            "peak_power",
+            "coulombic_efficiency",
+            "average_coulombic_efficiency",
+            "final_biofilm_thickness",
+            "final_current_density",
+            "convergence_achieved",
+            "iterations_completed",
         ]
 
         for field in key_fields:
@@ -150,29 +163,30 @@ class SimulationRunner:
                 summary[field] = results[field]
 
         # Extract time series summaries
-        if 'time_series' in results:
-            time_series = results['time_series']
+        if "time_series" in results:
+            time_series = results["time_series"]
             if isinstance(time_series, dict):
-                summary['time_series_length'] = len(time_series.get('time', []))
+                summary["time_series_length"] = len(time_series.get("time", []))
 
                 # Statistical summaries
-                for key in ['power', 'voltage', 'current']:
+                for key in ["power", "voltage", "current"]:
                     if key in time_series:
                         data = time_series[key]
                         if data:
-                            summary[f'{key}_mean'] = float(sum(data) / len(data))
-                            summary[f'{key}_max'] = float(max(data))
-                            summary[f'{key}_min'] = float(min(data))
+                            summary[f"{key}_mean"] = float(sum(data) / len(data))
+                            summary[f"{key}_max"] = float(max(data))
+                            summary[f"{key}_min"] = float(min(data))
 
         return summary
 
-    def _prepare_browser_download_files(self,
-                                      entry_id: str,
-                                      results: dict[str, Any],
-                                      qlearning_config: QLearningConfig | None = None,
-                                      sensor_config: SensorConfig | None = None) -> dict[str, str]:
-        """
-        Prepare files for browser download instead of fixed locations.
+    def _prepare_browser_download_files(
+        self,
+        entry_id: str,
+        results: dict[str, Any],
+        qlearning_config: QLearningConfig | None = None,
+        sensor_config: SensorConfig | None = None,
+    ) -> dict[str, str]:
+        """Prepare files for browser download instead of fixed locations.
 
         Args:
             entry_id: Simulation entry ID
@@ -182,6 +196,7 @@ class SimulationRunner:
 
         Returns:
             Dictionary mapping file types to relative paths
+
         """
         download_files = {}
 
@@ -193,42 +208,67 @@ class SimulationRunner:
         try:
             # 1. Full results JSON
             results_file = sim_dir / "simulation_results.json"
-            with open(results_file, 'w') as f:
+            with open(results_file, "w") as f:
                 json.dump(results, f, indent=2, default=str)
-            download_files['results_json'] = str(results_file.relative_to(self.output_dir.parent))
+            download_files["results_json"] = str(
+                results_file.relative_to(self.output_dir.parent),
+            )
 
             # 2. Configuration files
             if qlearning_config:
                 from config.config_io import save_config
+
                 config_file = sim_dir / "qlearning_config.yaml"
-                save_config(qlearning_config, config_file, format='yaml')
-                download_files['qlearning_config'] = str(config_file.relative_to(self.output_dir.parent))
+                save_config(qlearning_config, config_file, format="yaml")
+                download_files["qlearning_config"] = str(
+                    config_file.relative_to(self.output_dir.parent),
+                )
 
             if sensor_config:
                 from config.config_io import save_config
+
                 sensor_file = sim_dir / "sensor_config.yaml"
-                save_config(sensor_config, sensor_file, format='yaml')
-                download_files['sensor_config'] = str(sensor_file.relative_to(self.output_dir.parent))
+                save_config(sensor_config, sensor_file, format="yaml")
+                download_files["sensor_config"] = str(
+                    sensor_file.relative_to(self.output_dir.parent),
+                )
 
             # 3. Time series CSV export
-            if 'time_series' in results:
-                csv_file = self._export_time_series_csv(results['time_series'], sim_dir / "time_series.csv")
+            if "time_series" in results:
+                csv_file = self._export_time_series_csv(
+                    results["time_series"],
+                    sim_dir / "time_series.csv",
+                )
                 if csv_file:
-                    download_files['time_series_csv'] = str(csv_file.relative_to(self.output_dir.parent))
+                    download_files["time_series_csv"] = str(
+                        csv_file.relative_to(self.output_dir.parent),
+                    )
 
             # 4. Summary report
-            summary_file = self._create_summary_report(entry_id, results, sim_dir / "summary_report.txt")
+            summary_file = self._create_summary_report(
+                entry_id,
+                results,
+                sim_dir / "summary_report.txt",
+            )
             if summary_file:
-                download_files['summary_report'] = str(summary_file.relative_to(self.output_dir.parent))
+                download_files["summary_report"] = str(
+                    summary_file.relative_to(self.output_dir.parent),
+                )
 
-            logger.info(f"Prepared {len(download_files)} download files for entry {entry_id}")
+            logger.info(
+                f"Prepared {len(download_files)} download files for entry {entry_id}",
+            )
 
         except Exception as e:
-            logger.error(f"Failed to prepare download files: {e}")
+            logger.exception(f"Failed to prepare download files: {e}")
 
         return download_files
 
-    def _export_time_series_csv(self, time_series: dict[str, Any], output_path: Path) -> Path | None:
+    def _export_time_series_csv(
+        self,
+        time_series: dict[str, Any],
+        output_path: Path,
+    ) -> Path | None:
         """Export time series data to CSV format."""
         try:
             import pandas as pd
@@ -255,9 +295,13 @@ class SimulationRunner:
 
                 # Get all keys and determine max length
                 keys = list(time_series.keys())
-                max_len = max(len(time_series[key]) for key in keys if isinstance(time_series[key], list))
+                max_len = max(
+                    len(time_series[key])
+                    for key in keys
+                    if isinstance(time_series[key], list)
+                )
 
-                with open(output_path, 'w', newline='') as f:
+                with open(output_path, "w", newline="") as f:
                     writer = csv.writer(f)
                     writer.writerow(keys)  # Header
 
@@ -268,44 +312,51 @@ class SimulationRunner:
                             if isinstance(values, list) and i < len(values):
                                 row.append(values[i])
                             else:
-                                row.append('')
+                                row.append("")
                         writer.writerow(row)
 
                 return output_path
 
             except Exception as e:
-                logger.error(f"Failed to create CSV: {e}")
+                logger.exception(f"Failed to create CSV: {e}")
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to export time series CSV: {e}")
+            logger.exception(f"Failed to export time series CSV: {e}")
             return None
 
-    def _create_summary_report(self, entry_id: str, results: dict[str, Any], output_path: Path) -> Path | None:
+    def _create_summary_report(
+        self,
+        entry_id: str,
+        results: dict[str, Any],
+        output_path: Path,
+    ) -> Path | None:
         """Create a human-readable summary report."""
         try:
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write("MFC SIMULATION SUMMARY REPORT\n")
                 f.write("=" * 50 + "\n\n")
 
                 f.write(f"Simulation ID: {entry_id}\n")
-                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                f.write(
+                    f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n",
+                )
 
                 # Key performance metrics
                 f.write("PERFORMANCE METRICS\n")
                 f.write("-" * 20 + "\n")
 
                 metrics = [
-                    ('Total Energy (J)', 'total_energy'),
-                    ('Average Power (W)', 'average_power'),
-                    ('Peak Power (W)', 'peak_power'),
-                    ('Coulombic Efficiency (%)', 'coulombic_efficiency'),
-                    ('Final Biofilm Thickness (μm)', 'final_biofilm_thickness'),
-                    ('Final Current Density (A/m²)', 'final_current_density')
+                    ("Total Energy (J)", "total_energy"),
+                    ("Average Power (W)", "average_power"),
+                    ("Peak Power (W)", "peak_power"),
+                    ("Coulombic Efficiency (%)", "coulombic_efficiency"),
+                    ("Final Biofilm Thickness (μm)", "final_biofilm_thickness"),
+                    ("Final Current Density (A/m²)", "final_current_density"),
                 ]
 
                 for label, key in metrics:
-                    value = results.get(key, 'N/A')
+                    value = results.get(key, "N/A")
                     if isinstance(value, int | float):
                         f.write(f"{label}: {value:.4f}\n")
                     else:
@@ -314,23 +365,25 @@ class SimulationRunner:
                 f.write("\n")
 
                 # Time series summary
-                if 'time_series' in results:
-                    ts = results['time_series']
+                if "time_series" in results:
+                    ts = results["time_series"]
                     f.write("TIME SERIES DATA\n")
                     f.write("-" * 16 + "\n")
                     f.write(f"Data points: {len(ts.get('time', []))}\n")
                     f.write(f"Available series: {', '.join(ts.keys())}\n\n")
 
                 # Configuration summary
-                if 'simulation_metadata' in results:
-                    meta = results['simulation_metadata']
+                if "simulation_metadata" in results:
+                    meta = results["simulation_metadata"]
                     f.write("SIMULATION METADATA\n")
                     f.write("-" * 19 + "\n")
                     f.write(f"Name: {meta.get('name', 'N/A')}\n")
                     f.write(f"Description: {meta.get('description', 'N/A')}\n")
-                    f.write(f"Execution time: {meta.get('execution_time_seconds', 0):.2f} seconds\n")
+                    f.write(
+                        f"Execution time: {meta.get('execution_time_seconds', 0):.2f} seconds\n",
+                    )
                     f.write(f"Success: {meta.get('success', False)}\n")
-                    if meta.get('tags'):
+                    if meta.get("tags"):
                         f.write(f"Tags: {', '.join(meta['tags'])}\n")
 
                 f.write("\n" + "=" * 50 + "\n")
@@ -339,16 +392,17 @@ class SimulationRunner:
             return output_path
 
         except Exception as e:
-            logger.error(f"Failed to create summary report: {e}")
+            logger.exception(f"Failed to create summary report: {e}")
             return None
 
 
-def quick_simulation_with_chronology(simulation_name: str,
-                                   simulation_func: Callable[[], dict[str, Any]],
-                                   description: str = "",
-                                   tags: list | None = None) -> dict[str, Any]:
-    """
-    Quick utility function to run simulation with chronology tracking.
+def quick_simulation_with_chronology(
+    simulation_name: str,
+    simulation_func: Callable[[], dict[str, Any]],
+    description: str = "",
+    tags: list | None = None,
+) -> dict[str, Any]:
+    """Quick utility function to run simulation with chronology tracking.
 
     Args:
         simulation_name: Name of the simulation
@@ -358,11 +412,12 @@ def quick_simulation_with_chronology(simulation_name: str,
 
     Returns:
         Enhanced simulation results
+
     """
     runner = SimulationRunner()
     return runner.run_simulation_with_tracking(
         simulation_name=simulation_name,
         simulation_func=simulation_func,
         description=description,
-        tags=tags
+        tags=tags,
     )

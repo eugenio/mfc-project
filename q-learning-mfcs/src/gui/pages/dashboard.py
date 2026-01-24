@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Dashboard Page - Enhanced MFC Platform"""
+"""Dashboard Page - Enhanced MFC Platform."""
 
 import streamlit as st
 
 
-def render_dashboard_page():
+def render_dashboard_page() -> None:
     """Render the main dashboard page."""
     st.title("🏠 MFC Scientific Platform Dashboard")
     st.caption("Overview and quick access to all system components")
@@ -28,7 +28,7 @@ def render_dashboard_page():
         {"name": "🔋 Electrode System", "status": "Complete", "progress": 100},
         {"name": "⚗️ Physics Simulation", "status": "Complete", "progress": 100},
         {"name": "🧠 ML Optimization", "status": "Ready", "progress": 90},
-        {"name": "🧬 GSM Integration", "status": "Complete", "progress": 100}
+        {"name": "🧬 GSM Integration", "status": "Complete", "progress": 100},
     ]
 
     for phase in phases:

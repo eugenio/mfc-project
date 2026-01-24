@@ -1,5 +1,4 @@
-"""
-Visualization Configuration Classes
+"""Visualization Configuration Classes.
 
 This module provides comprehensive configuration classes for MFC visualization systems,
 including plot styling, data processing, color schemes, and layout configurations.
@@ -17,6 +16,8 @@ Literature References:
 3. Hunter, J. D. (2007). "Matplotlib: A 2D graphics environment"
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -25,6 +26,7 @@ import matplotlib.pyplot as plt
 
 class ColorScheme(Enum):
     """Available color schemes for visualizations."""
+
     DEFAULT = "default"
     SCIENTIFIC = "scientific"
     COLORBLIND_FRIENDLY = "colorblind_friendly"
@@ -35,6 +37,7 @@ class ColorScheme(Enum):
 
 class PlotType(Enum):
     """Types of plots available."""
+
     TIME_SERIES = "time_series"
     SCATTER = "scatter"
     HISTOGRAM = "histogram"
@@ -47,6 +50,7 @@ class PlotType(Enum):
 
 class LegendPosition(Enum):
     """Legend positioning options."""
+
     BEST = "best"
     UPPER_RIGHT = "upper right"
     UPPER_LEFT = "upper left"
@@ -109,62 +113,72 @@ class ColorSchemeConfig:
     """Color scheme configuration for different visualization contexts."""
 
     # Primary colors for main data series
-    primary_colors: list[str] = field(default_factory=lambda: [
-        "#2E86AB",  # Blue
-        "#A23B72",  # Purple
-        "#F18F01",  # Orange
-        "#C73E1D",  # Red
-        "#27AE60",  # Green
-        "#8E44AD",  # Violet
-        "#E67E22",  # Dark orange
-        "#34495E"   # Dark gray
-    ])
+    primary_colors: list[str] = field(
+        default_factory=lambda: [
+            "#2E86AB",  # Blue
+            "#A23B72",  # Purple
+            "#F18F01",  # Orange
+            "#C73E1D",  # Red
+            "#27AE60",  # Green
+            "#8E44AD",  # Violet
+            "#E67E22",  # Dark orange
+            "#34495E",  # Dark gray
+        ],
+    )
 
     # Scientific publication colors (publication ready)
-    scientific_colors: list[str] = field(default_factory=lambda: [
-        "#1f77b4",  # Blue
-        "#ff7f0e",  # Orange
-        "#2ca02c",  # Green
-        "#d62728",  # Red
-        "#9467bd",  # Purple
-        "#8c564b",  # Brown
-        "#e377c2",  # Pink
-        "#7f7f7f"   # Gray
-    ])
+    scientific_colors: list[str] = field(
+        default_factory=lambda: [
+            "#1f77b4",  # Blue
+            "#ff7f0e",  # Orange
+            "#2ca02c",  # Green
+            "#d62728",  # Red
+            "#9467bd",  # Purple
+            "#8c564b",  # Brown
+            "#e377c2",  # Pink
+            "#7f7f7f",  # Gray
+        ],
+    )
 
     # Colorblind-friendly palette (Wong, 2011)
-    colorblind_colors: list[str] = field(default_factory=lambda: [
-        "#0173B2",  # Blue
-        "#DE8F05",  # Orange
-        "#029E73",  # Green
-        "#CC78BC",  # Pink
-        "#CA9161",  # Brown
-        "#FBAFE4",  # Light pink
-        "#949494",  # Gray
-        "#ECE133"   # Yellow
-    ])
+    colorblind_colors: list[str] = field(
+        default_factory=lambda: [
+            "#0173B2",  # Blue
+            "#DE8F05",  # Orange
+            "#029E73",  # Green
+            "#CC78BC",  # Pink
+            "#CA9161",  # Brown
+            "#FBAFE4",  # Light pink
+            "#949494",  # Gray
+            "#ECE133",  # Yellow
+        ],
+    )
 
     # High contrast colors for presentations
-    high_contrast_colors: list[str] = field(default_factory=lambda: [
-        "#000000",  # Black
-        "#E69F00",  # Orange
-        "#56B4E9",  # Sky blue
-        "#009E73",  # Green
-        "#F0E442",  # Yellow
-        "#0072B2",  # Blue
-        "#D55E00",  # Vermillion
-        "#CC79A7"   # Reddish purple
-    ])
+    high_contrast_colors: list[str] = field(
+        default_factory=lambda: [
+            "#000000",  # Black
+            "#E69F00",  # Orange
+            "#56B4E9",  # Sky blue
+            "#009E73",  # Green
+            "#F0E442",  # Yellow
+            "#0072B2",  # Blue
+            "#D55E00",  # Vermillion
+            "#CC79A7",  # Reddish purple
+        ],
+    )
 
     # Grayscale colors
-    grayscale_colors: list[str] = field(default_factory=lambda: [
-        "#000000",  # Black
-        "#404040",  # Dark gray
-        "#808080",  # Medium gray
-        "#B0B0B0",  # Light gray
-        "#D0D0D0",  # Very light gray
-        "#FFFFFF"   # White
-    ])
+    grayscale_colors: list[str] = field(
+        default_factory=lambda: [
+            "#000000",  # Black
+            "#404040",  # Dark gray
+            "#808080",  # Medium gray
+            "#B0B0B0",  # Light gray
+            "#D0D0D0",  # Very light gray
+            "#FFFFFF",  # White
+        ],
+    )
 
     # Background and accent colors
     background_color: str = "#FFFFFF"  # Plot background color
@@ -200,7 +214,9 @@ class DataProcessingConfig:
     # Data aggregation
     enable_data_aggregation: bool = False  # Enable data aggregation
     aggregation_window: float = 60.0  # Aggregation window (seconds)
-    aggregation_method: str = "mean"  # Aggregation method: "mean", "median", "max", "min"
+    aggregation_method: str = (
+        "mean"  # Aggregation method: "mean", "median", "max", "min"
+    )
 
     # Missing data handling
     interpolate_missing: bool = True  # Interpolate missing data
@@ -325,6 +341,7 @@ class VisualizationConfig:
 
 # Pre-defined visualization configurations
 
+
 def get_publication_visualization_config() -> VisualizationConfig:
     """Get publication-ready visualization configuration."""
     config = VisualizationConfig()
@@ -417,9 +434,12 @@ def get_colorblind_friendly_config() -> VisualizationConfig:
 
 # Utility functions for color management
 
-def get_colors_for_scheme(scheme: ColorScheme, color_config: ColorSchemeConfig) -> list[str]:
-    """
-    Get color list for specified color scheme.
+
+def get_colors_for_scheme(
+    scheme: ColorScheme,
+    color_config: ColorSchemeConfig,
+) -> list[str]:
+    """Get color list for specified color scheme.
 
     Args:
         scheme: Color scheme type
@@ -427,52 +447,54 @@ def get_colors_for_scheme(scheme: ColorScheme, color_config: ColorSchemeConfig) 
 
     Returns:
         List of color strings
+
     """
     if scheme == ColorScheme.DEFAULT:
         return color_config.primary_colors
-    elif scheme == ColorScheme.SCIENTIFIC:
+    if scheme == ColorScheme.SCIENTIFIC:
         return color_config.scientific_colors
-    elif scheme == ColorScheme.COLORBLIND_FRIENDLY:
+    if scheme == ColorScheme.COLORBLIND_FRIENDLY:
         return color_config.colorblind_colors
-    elif scheme == ColorScheme.HIGH_CONTRAST:
+    if scheme == ColorScheme.HIGH_CONTRAST:
         return color_config.high_contrast_colors
-    elif scheme == ColorScheme.GRAYSCALE:
+    if scheme == ColorScheme.GRAYSCALE:
         return color_config.grayscale_colors
-    elif scheme == ColorScheme.PUBLICATION:
+    if scheme == ColorScheme.PUBLICATION:
         return color_config.scientific_colors
-    else:
-        return color_config.primary_colors
+    return color_config.primary_colors
 
 
 def apply_style_config(style_config: PlotStyleConfig) -> None:
-    """
-    Apply plot style configuration to matplotlib.
+    """Apply plot style configuration to matplotlib.
 
     Args:
         style_config: Plot style configuration
+
     """
-    plt.rcParams.update({
-        'figure.figsize': (style_config.figure_width, style_config.figure_height),
-        'figure.dpi': style_config.dpi,
-        'lines.linewidth': style_config.line_width,
-        'lines.markersize': style_config.marker_size,
-        'font.size': style_config.tick_label_size,
-        'axes.labelsize': style_config.axis_label_size,
-        'axes.titlesize': style_config.title_size,
-        'legend.fontsize': style_config.legend_font_size,
-        'font.family': style_config.font_family,
-        'font.weight': style_config.font_weight,
-        'grid.alpha': style_config.grid_alpha,
-        'grid.linewidth': style_config.grid_line_width,
-        'grid.linestyle': style_config.grid_style,
-    })
+    plt.rcParams.update(
+        {
+            "figure.figsize": (style_config.figure_width, style_config.figure_height),
+            "figure.dpi": style_config.dpi,
+            "lines.linewidth": style_config.line_width,
+            "lines.markersize": style_config.marker_size,
+            "font.size": style_config.tick_label_size,
+            "axes.labelsize": style_config.axis_label_size,
+            "axes.titlesize": style_config.title_size,
+            "legend.fontsize": style_config.legend_font_size,
+            "font.family": style_config.font_family,
+            "font.weight": style_config.font_weight,
+            "grid.alpha": style_config.grid_alpha,
+            "grid.linewidth": style_config.grid_line_width,
+            "grid.linestyle": style_config.grid_style,
+        },
+    )
 
 
 # Configuration validation functions
 
+
 def validate_visualization_config(config: VisualizationConfig) -> bool:
-    """
-    Validate visualization configuration.
+    """Validate visualization configuration.
 
     Args:
         config: Visualization configuration to validate
@@ -482,42 +504,54 @@ def validate_visualization_config(config: VisualizationConfig) -> bool:
 
     Raises:
         ValueError: If configuration is invalid
+
     """
     # Validate plot style parameters
     if config.plot_style.figure_width <= 0 or config.plot_style.figure_height <= 0:
-        raise ValueError("Figure dimensions must be positive")
+        msg = "Figure dimensions must be positive"
+        raise ValueError(msg)
 
     if config.plot_style.dpi <= 0:
-        raise ValueError("DPI must be positive")
+        msg = "DPI must be positive"
+        raise ValueError(msg)
 
     if not (0 <= config.plot_style.alpha <= 1):
-        raise ValueError("Alpha must be between 0 and 1")
+        msg = "Alpha must be between 0 and 1"
+        raise ValueError(msg)
 
     # Validate layout parameters
     if config.layout.n_rows <= 0 or config.layout.n_cols <= 0:
-        raise ValueError("Number of rows and columns must be positive")
+        msg = "Number of rows and columns must be positive"
+        raise ValueError(msg)
 
     if not (0 <= config.layout.horizontal_spacing <= 1):
-        raise ValueError("Horizontal spacing must be between 0 and 1")
+        msg = "Horizontal spacing must be between 0 and 1"
+        raise ValueError(msg)
 
     if not (0 <= config.layout.vertical_spacing <= 1):
-        raise ValueError("Vertical spacing must be between 0 and 1")
+        msg = "Vertical spacing must be between 0 and 1"
+        raise ValueError(msg)
 
     # Validate data processing parameters
     if config.data_processing.time_series_sampling_rate <= 0:
-        raise ValueError("Sampling rate must be positive")
+        msg = "Sampling rate must be positive"
+        raise ValueError(msg)
 
     if config.data_processing.outlier_threshold <= 0:
-        raise ValueError("Outlier threshold must be positive")
+        msg = "Outlier threshold must be positive"
+        raise ValueError(msg)
 
     if not (0 < config.data_processing.confidence_level < 1):
-        raise ValueError("Confidence level must be between 0 and 1")
+        msg = "Confidence level must be between 0 and 1"
+        raise ValueError(msg)
 
     # Validate animation parameters
     if config.animation.animation_interval <= 0:
-        raise ValueError("Animation interval must be positive")
+        msg = "Animation interval must be positive"
+        raise ValueError(msg)
 
     if config.animation.animation_frames <= 0:
-        raise ValueError("Number of animation frames must be positive")
+        msg = "Number of animation frames must be positive"
+        raise ValueError(msg)
 
     return True

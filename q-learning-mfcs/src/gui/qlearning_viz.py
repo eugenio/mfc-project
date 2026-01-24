@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Advanced Q-Learning Visualization Components
+"""Advanced Q-Learning Visualization Components.
 
 This module provides specialized visualization components for Q-learning
 algorithm analysis in MFC systems, designed for researchers and practitioners
@@ -21,6 +20,8 @@ Literature References:
 3. Mnih, V. et al. (2015). "Human-level control through deep reinforcement learning"
 """
 
+from __future__ import annotations
+
 import json
 import os
 import pickle
@@ -40,8 +41,10 @@ from plotly.subplots import make_subplots
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 class QLearningVisualizationType(Enum):
     """Types of Q-learning visualizations available."""
+
     Q_TABLE_HEATMAP = "q_table_heatmap"
     POLICY_EVOLUTION = "policy_evolution"
     ACTION_DISTRIBUTION = "action_distribution"
@@ -50,9 +53,11 @@ class QLearningVisualizationType(Enum):
     STATE_VISITATION = "state_visitation"
     EXPLORATION_VS_EXPLOITATION = "exploration_exploitation"
 
+
 @dataclass
 class QLearningVisualizationConfig:
     """Configuration for Q-learning visualizations."""
+
     colormap: str = "RdYlBu_r"
     show_values: bool = True
     interpolation: str = "nearest"
@@ -62,21 +67,27 @@ class QLearningVisualizationConfig:
     animation_speed: float = 0.5
     confidence_intervals: bool = True
 
+
 class QLearningVisualizer:
     """Advanced Q-learning visualization component."""
 
-    def __init__(self, config: QLearningVisualizationConfig = QLearningVisualizationConfig()):
+    def __init__(
+        self,
+        config: QLearningVisualizationConfig = QLearningVisualizationConfig(),
+    ) -> None:
         """Initialize Q-learning visualizer.
 
         Args:
             config: Visualization configuration
+
         """
         self.config = config
         self._initialize_styling()
 
-    def _initialize_styling(self):
+    def _initialize_styling(self) -> None:
         """Initialize custom styling for Q-learning components."""
-        st.markdown("""
+        st.markdown(
+            """
         <style>
         .qlearning-container {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -128,14 +139,16 @@ class QLearningVisualizer:
             color: white;
         }
         </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     def render_qlearning_dashboard(
         self,
         q_table: np.ndarray | None = None,
         training_history: dict[str, list[float]] | None = None,
         current_policy: np.ndarray | None = None,
-        title: str = "Q-Learning Analysis Dashboard"
+        title: str = "Q-Learning Analysis Dashboard",
     ) -> dict[str, go.Figure]:
         """Render comprehensive Q-learning analysis dashboard.
 
@@ -147,42 +160,60 @@ class QLearningVisualizer:
 
         Returns:
             Dictionary of generated figures
+
         """
         st.markdown('<div class="qlearning-container">', unsafe_allow_html=True)
-        st.markdown(f'<div class="qlearning-header">{title}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="qlearning-header">{title}</div>',
+            unsafe_allow_html=True,
+        )
 
         figures = {}
 
         # Dashboard tabs
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "🔥 Q-Table Analysis",
-            "📈 Learning Progress",
-            "🎯 Policy Visualization",
-            "📊 Performance Metrics"
-        ])
+        tab1, tab2, tab3, tab4 = st.tabs(
+            [
+                "🔥 Q-Table Analysis",
+                "📈 Learning Progress",
+                "🎯 Policy Visualization",
+                "📊 Performance Metrics",
+            ],
+        )
 
         with tab1:
             if q_table is not None:
-                figures['q_table'] = self._render_qtable_analysis(q_table)
+                figures["q_table"] = self._render_qtable_analysis(q_table)
             else:
-                st.info("Q-table data not available. Load a trained model to see Q-table analysis.")
+                st.info(
+                    "Q-table data not available. Load a trained model to see Q-table analysis.",
+                )
 
         with tab2:
             if training_history is not None:
-                figures['learning_curves'] = self._render_learning_curves(training_history)
+                figures["learning_curves"] = self._render_learning_curves(
+                    training_history,
+                )
             else:
-                st.info("Training history not available. Run training with logging enabled.")
+                st.info(
+                    "Training history not available. Run training with logging enabled.",
+                )
 
         with tab3:
             if current_policy is not None:
-                figures['policy'] = self._render_policy_visualization(current_policy, q_table)
+                figures["policy"] = self._render_policy_visualization(
+                    current_policy,
+                    q_table,
+                )
             else:
                 st.info("Policy data not available. Requires Q-table to derive policy.")
 
         with tab4:
-            figures['metrics'] = self._render_performance_metrics(q_table, training_history)
+            figures["metrics"] = self._render_performance_metrics(
+                q_table,
+                training_history,
+            )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         return figures
 
     def _render_qtable_analysis(self, q_table: np.ndarray) -> go.Figure:
@@ -193,6 +224,7 @@ class QLearningVisualizer:
 
         Returns:
             Plotly figure for Q-table visualization
+
         """
         st.markdown("### 🔥 Q-Table Heatmap Analysis")
 
@@ -209,18 +241,20 @@ class QLearningVisualizer:
             st.metric("Min Q-Value", f"{np.min(q_table):.3f}")
 
         # Interactive Q-table heatmap
-        fig = go.Figure(data=go.Heatmap(
-            z=q_table,
-            x=[f"Action {i}" for i in range(q_table.shape[1])],
-            y=[f"State {i}" for i in range(q_table.shape[0])],
-            colorscale='RdYlBu_r',
-            showscale=True,
-            text=q_table,
-            texttemplate="%{text:.3f}",
-            textfont={"size": 8},
-            hoverongaps=False,
-            hovertemplate="State: %{y}<br>Action: %{x}<br>Q-Value: %{z:.4f}<extra></extra>"
-        ))
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=q_table,
+                x=[f"Action {i}" for i in range(q_table.shape[1])],
+                y=[f"State {i}" for i in range(q_table.shape[0])],
+                colorscale="RdYlBu_r",
+                showscale=True,
+                text=q_table,
+                texttemplate="%{text:.3f}",
+                textfont={"size": 8},
+                hoverongaps=False,
+                hovertemplate="State: %{y}<br>Action: %{x}<br>Q-Value: %{z:.4f}<extra></extra>",
+            ),
+        )
 
         fig.update_layout(
             title="Q-Table Heatmap: State-Action Values",
@@ -228,7 +262,7 @@ class QLearningVisualizer:
             xaxis_title="Actions",
             yaxis_title="States",
             height=600,
-            template="plotly_white"
+            template="plotly_white",
         )
 
         st.plotly_chart(fig, use_container_width=True)
@@ -238,7 +272,7 @@ class QLearningVisualizer:
 
         return fig
 
-    def _display_qtable_insights(self, q_table: np.ndarray):
+    def _display_qtable_insights(self, q_table: np.ndarray) -> None:
         """Display insights from Q-table analysis."""
         st.markdown("#### 🔍 Q-Table Insights")
 
@@ -265,20 +299,20 @@ class QLearningVisualizer:
             if convergence_score > 0.8:
                 st.markdown(
                     f'<div class="convergence-indicator convergence-good">'
-                    f'✅ Well Converged (Score: {convergence_score:.2f})</div>',
-                    unsafe_allow_html=True
+                    f"✅ Well Converged (Score: {convergence_score:.2f})</div>",
+                    unsafe_allow_html=True,
                 )
             elif convergence_score > 0.5:
                 st.markdown(
                     f'<div class="convergence-indicator convergence-moderate">'
-                    f'⚠️ Partially Converged (Score: {convergence_score:.2f})</div>',
-                    unsafe_allow_html=True
+                    f"⚠️ Partially Converged (Score: {convergence_score:.2f})</div>",
+                    unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
                     f'<div class="convergence-indicator convergence-poor">'
-                    f'❌ Poor Convergence (Score: {convergence_score:.2f})</div>',
-                    unsafe_allow_html=True
+                    f"❌ Poor Convergence (Score: {convergence_score:.2f})</div>",
+                    unsafe_allow_html=True,
                 )
 
     def _calculate_convergence_score(self, q_table: np.ndarray) -> float:
@@ -289,6 +323,7 @@ class QLearningVisualizer:
 
         Returns:
             Convergence score between 0 and 1
+
         """
         # Calculate relative difference between best and second-best actions
         sorted_q = np.sort(q_table, axis=1)
@@ -307,13 +342,16 @@ class QLearningVisualizer:
             differences,
             max_values + 1e-10,  # Small epsilon to avoid division by zero
             out=np.zeros_like(differences),
-            where=(max_values != 0)
+            where=(max_values != 0),
         )
 
         # Convergence score: higher when actions are clearly differentiated
         return float(np.mean(relative_diffs))
 
-    def _render_learning_curves(self, training_history: dict[str, list[float]]) -> go.Figure:
+    def _render_learning_curves(
+        self,
+        training_history: dict[str, list[float]],
+    ) -> go.Figure:
         """Render learning curves and training progress.
 
         Args:
@@ -321,6 +359,7 @@ class QLearningVisualizer:
 
         Returns:
             Plotly figure for learning curves
+
         """
         st.markdown("### 📈 Learning Progress Analysis")
 
@@ -337,7 +376,7 @@ class QLearningVisualizer:
             cols=2,
             subplot_titles=metrics,
             vertical_spacing=0.1,
-            horizontal_spacing=0.1
+            horizontal_spacing=0.1,
         )
 
         colors = px.colors.qualitative.Set1
@@ -357,28 +396,38 @@ class QLearningVisualizer:
                     y=values_array,
                     name=metric_name,
                     line={"color": colors[i % len(colors)], "width": 2},
-                    mode='lines',
-                    hovertemplate=f"{metric_name}: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>"
+                    mode="lines",
+                    hovertemplate=f"{metric_name}: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>",
                 ),
-                row=row, col=col
+                row=row,
+                col=col,
             )
 
             # Add smoothed trend line if enough data points
             if len(values_array) > 10:
                 window_size = max(len(values_array) // 20, 5)
-                smoothed = pd.Series(values_array).rolling(window=window_size, center=True).mean()
+                smoothed = (
+                    pd.Series(values_array)
+                    .rolling(window=window_size, center=True)
+                    .mean()
+                )
 
                 fig.add_trace(
                     go.Scatter(
                         x=episodes,
                         y=smoothed,
                         name=f"{metric_name} (trend)",
-                        line={"color": colors[i % len(colors)], "width": 3, "dash": 'dash'},
-                        mode='lines',
+                        line={
+                            "color": colors[i % len(colors)],
+                            "width": 3,
+                            "dash": "dash",
+                        },
+                        mode="lines",
                         opacity=0.7,
-                        hovertemplate=f"{metric_name} Trend: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>"
+                        hovertemplate=f"{metric_name} Trend: %{{y:.4f}}<br>Episode: %{{x}}<extra></extra>",
                     ),
-                    row=row, col=col
+                    row=row,
+                    col=col,
                 )
 
         fig.update_layout(
@@ -386,7 +435,7 @@ class QLearningVisualizer:
             title_font_size=16,
             height=400 * ((n_metrics + 1) // 2),
             showlegend=False,
-            template="plotly_white"
+            template="plotly_white",
         )
 
         # Update x-axis labels
@@ -399,7 +448,10 @@ class QLearningVisualizer:
 
         return fig
 
-    def _display_learning_statistics(self, training_history: dict[str, list[float]]):
+    def _display_learning_statistics(
+        self,
+        training_history: dict[str, list[float]],
+    ) -> None:
         """Display learning statistics and insights."""
         st.markdown("#### 📊 Learning Statistics")
 
@@ -411,7 +463,9 @@ class QLearningVisualizer:
                 if values:
                     final_value = values[-1]
                     initial_value = values[0]
-                    improvement = ((final_value - initial_value) / abs(initial_value + 1e-10)) * 100
+                    improvement = (
+                        (final_value - initial_value) / abs(initial_value + 1e-10)
+                    ) * 100
 
                     st.write(f"• **{metric_name}**:")
                     st.write(f"  - Initial: {initial_value:.4f}")
@@ -425,7 +479,7 @@ class QLearningVisualizer:
             for metric_name, values in training_history.items():
                 if len(values) > 20:
                     # Calculate coefficient of variation for last 20% of training
-                    last_portion = values[int(len(values) * 0.8):]
+                    last_portion = values[int(len(values) * 0.8) :]
                     cv = np.std(last_portion) / (abs(np.mean(last_portion)) + 1e-10)
 
                     if cv < 0.1:
@@ -440,7 +494,7 @@ class QLearningVisualizer:
     def _render_policy_visualization(
         self,
         policy: np.ndarray,
-        q_table: np.ndarray | None = None
+        q_table: np.ndarray | None = None,
     ) -> go.Figure:
         """Render policy visualization with action preferences.
 
@@ -450,6 +504,7 @@ class QLearningVisualizer:
 
         Returns:
             Plotly figure for policy visualization
+
         """
         st.markdown("### 🎯 Policy Visualization")
 
@@ -461,19 +516,23 @@ class QLearningVisualizer:
 
         with col1:
             # Action distribution pie chart
-            fig_pie = go.Figure(data=[go.Pie(
-                labels=[f"Action {i}" for i in range(n_actions)],
-                values=action_distribution,
-                hole=0.3,
-                textinfo='label+percent',
-                textposition='auto',
-                hovertemplate="Action %{label}<br>States: %{value}<br>Percentage: %{percent}<extra></extra>"
-            )])
+            fig_pie = go.Figure(
+                data=[
+                    go.Pie(
+                        labels=[f"Action {i}" for i in range(n_actions)],
+                        values=action_distribution,
+                        hole=0.3,
+                        textinfo="label+percent",
+                        textposition="auto",
+                        hovertemplate="Action %{label}<br>States: %{value}<br>Percentage: %{percent}<extra></extra>",
+                    ),
+                ],
+            )
 
             fig_pie.update_layout(
                 title="Policy Action Distribution",
                 title_font_size=14,
-                height=400
+                height=400,
             )
 
             st.plotly_chart(fig_pie, use_container_width=True)
@@ -483,20 +542,22 @@ class QLearningVisualizer:
             if q_table is not None:
                 policy_confidence = self._calculate_policy_confidence(q_table)
 
-                fig_conf = go.Figure(data=go.Heatmap(
-                    z=policy_confidence.reshape(-1, 1),
-                    y=[f"State {i}" for i in range(len(policy_confidence))],
-                    x=["Confidence"],
-                    colorscale='Viridis',
-                    showscale=True,
-                    hovertemplate="State: %{y}<br>Confidence: %{z:.3f}<extra></extra>"
-                ))
+                fig_conf = go.Figure(
+                    data=go.Heatmap(
+                        z=policy_confidence.reshape(-1, 1),
+                        y=[f"State {i}" for i in range(len(policy_confidence))],
+                        x=["Confidence"],
+                        colorscale="Viridis",
+                        showscale=True,
+                        hovertemplate="State: %{y}<br>Confidence: %{z:.3f}<extra></extra>",
+                    ),
+                )
 
                 fig_conf.update_layout(
                     title="Policy Confidence by State",
                     title_font_size=14,
                     height=400,
-                    yaxis={"autorange": "reversed"}
+                    yaxis={"autorange": "reversed"},
                 )
 
                 st.plotly_chart(fig_conf, use_container_width=True)
@@ -516,6 +577,7 @@ class QLearningVisualizer:
 
         Returns:
             Array of confidence scores per state
+
         """
         # Calculate confidence as difference between best and second-best actions
         sorted_q = np.sort(q_table, axis=1)
@@ -528,16 +590,18 @@ class QLearningVisualizer:
 
         # Normalize confidence by the absolute values
         max_abs = np.maximum(np.abs(best_values), np.abs(second_best))
-        confidence = np.divide(
+        return np.divide(
             np.abs(best_values - second_best),
             max_abs + 1e-10,
             out=np.zeros_like(best_values),
-            where=(max_abs != 0)
+            where=(max_abs != 0),
         )
 
-        return confidence
-
-    def _display_policy_analysis(self, policy: np.ndarray, q_table: np.ndarray | None):
+    def _display_policy_analysis(
+        self,
+        policy: np.ndarray,
+        q_table: np.ndarray | None,
+    ) -> None:
         """Display policy analysis and insights."""
         st.markdown("#### 🔍 Policy Analysis")
 
@@ -550,7 +614,9 @@ class QLearningVisualizer:
 
             for action_id, count in enumerate(action_counts):
                 percentage = (count / total_states) * 100
-                st.write(f"• Action {action_id}: {count}/{total_states} states ({percentage:.1f}%)")
+                st.write(
+                    f"• Action {action_id}: {count}/{total_states} states ({percentage:.1f}%)",
+                )
 
             # Policy diversity (entropy)
             probabilities = action_counts / total_states
@@ -558,7 +624,9 @@ class QLearningVisualizer:
             max_entropy = np.log(len(action_counts))
             diversity = entropy / max_entropy if max_entropy > 0 else 0
 
-            st.write(f"• **Policy Diversity**: {diversity:.3f} (0=deterministic, 1=uniform)")
+            st.write(
+                f"• **Policy Diversity**: {diversity:.3f} (0=deterministic, 1=uniform)",
+            )
 
         with col2:
             if q_table is not None:
@@ -571,10 +639,14 @@ class QLearningVisualizer:
 
                 # Identify low-confidence states
                 low_confidence_threshold = 0.3
-                low_conf_states = np.where(confidence_scores < low_confidence_threshold)[0]
+                low_conf_states = np.where(
+                    confidence_scores < low_confidence_threshold,
+                )[0]
 
                 if len(low_conf_states) > 0:
-                    st.warning(f"📊 {len(low_conf_states)} states have low confidence (<{low_confidence_threshold})")
+                    st.warning(
+                        f"📊 {len(low_conf_states)} states have low confidence (<{low_confidence_threshold})",
+                    )
                     st.write("Low confidence states:", low_conf_states[:10].tolist())
                 else:
                     st.success("✅ All states have high policy confidence")
@@ -582,7 +654,7 @@ class QLearningVisualizer:
     def _render_performance_metrics(
         self,
         q_table: np.ndarray | None,
-        training_history: dict[str, list[float]] | None
+        training_history: dict[str, list[float]] | None,
     ) -> go.Figure:
         """Render comprehensive performance metrics dashboard.
 
@@ -592,6 +664,7 @@ class QLearningVisualizer:
 
         Returns:
             Plotly figure for performance metrics
+
         """
         st.markdown("### 📊 Performance Metrics Dashboard")
 
@@ -607,34 +680,34 @@ class QLearningVisualizer:
             with col1:
                 st.markdown(
                     f'<div class="metric-highlight">'
-                    f'<h3>{convergence_score:.3f}</h3>'
-                    f'<p>Convergence Score</p></div>',
-                    unsafe_allow_html=True
+                    f"<h3>{convergence_score:.3f}</h3>"
+                    f"<p>Convergence Score</p></div>",
+                    unsafe_allow_html=True,
                 )
 
             with col2:
                 st.markdown(
                     f'<div class="metric-highlight">'
-                    f'<h3>{policy_diversity:.3f}</h3>'
-                    f'<p>Policy Diversity</p></div>',
-                    unsafe_allow_html=True
+                    f"<h3>{policy_diversity:.3f}</h3>"
+                    f"<p>Policy Diversity</p></div>",
+                    unsafe_allow_html=True,
                 )
 
             with col3:
                 st.markdown(
                     f'<div class="metric-highlight">'
-                    f'<h3>{value_stability:.3f}</h3>'
-                    f'<p>Value Stability</p></div>',
-                    unsafe_allow_html=True
+                    f"<h3>{value_stability:.3f}</h3>"
+                    f"<p>Value Stability</p></div>",
+                    unsafe_allow_html=True,
                 )
 
             with col4:
                 exploration_rate = self._estimate_exploration_rate(q_table)
                 st.markdown(
                     f'<div class="metric-highlight">'
-                    f'<h3>{exploration_rate:.3f}</h3>'
-                    f'<p>Est. Exploration</p></div>',
-                    unsafe_allow_html=True
+                    f"<h3>{exploration_rate:.3f}</h3>"
+                    f"<p>Est. Exploration</p></div>",
+                    unsafe_allow_html=True,
                 )
 
         # Performance trends
@@ -684,7 +757,10 @@ class QLearningVisualizer:
         # Convert to exploration estimate (0 = no exploration, 1 = full exploration)
         return min(normalized_range, 1.0)
 
-    def _render_performance_trends(self, training_history: dict[str, list[float]]):
+    def _render_performance_trends(
+        self,
+        training_history: dict[str, list[float]],
+    ) -> None:
         """Render performance trends over training."""
         st.markdown("#### 📈 Performance Trends")
 
@@ -722,17 +798,17 @@ class QLearningVisualizer:
 
                     st.markdown(
                         f'<div style="text-align: center; color: {color};">'
-                        f'<h4>{trend_emoji}</h4>'
-                        f'<p><strong>{metric}</strong><br>{trend_text}</p>'
-                        f'</div>',
-                        unsafe_allow_html=True
+                        f"<h4>{trend_emoji}</h4>"
+                        f"<p><strong>{metric}</strong><br>{trend_text}</p>"
+                        f"</div>",
+                        unsafe_allow_html=True,
                     )
 
     def _render_performance_recommendations(
         self,
         q_table: np.ndarray | None,
-        training_history: dict[str, list[float]] | None
-    ):
+        training_history: dict[str, list[float]] | None,
+    ) -> None:
         """Render performance improvement recommendations."""
         st.markdown("#### 💡 Performance Recommendations")
 
@@ -744,34 +820,42 @@ class QLearningVisualizer:
 
             if convergence_score < 0.5:
                 recommendations.append(
-                    "🔄 **Low Convergence**: Consider increasing training episodes or reducing learning rate"
+                    "🔄 **Low Convergence**: Consider increasing training episodes or reducing learning rate",
                 )
 
             if policy_diversity < 0.2:
                 recommendations.append(
-                    "🎯 **Low Diversity**: Policy may be too deterministic - consider increasing exploration"
+                    "🎯 **Low Diversity**: Policy may be too deterministic - consider increasing exploration",
                 )
             elif policy_diversity > 0.8:
                 recommendations.append(
-                    "🎲 **High Diversity**: Policy may be too random - consider decreasing exploration rate"
+                    "🎲 **High Diversity**: Policy may be too random - consider decreasing exploration rate",
                 )
 
         if training_history:
             # Check for learning stagnation
-            if 'reward' in training_history:
-                recent_rewards = training_history['reward'][-20:] if len(training_history['reward']) > 20 else training_history['reward']
+            if "reward" in training_history:
+                recent_rewards = (
+                    training_history["reward"][-20:]
+                    if len(training_history["reward"]) > 20
+                    else training_history["reward"]
+                )
                 if len(recent_rewards) > 5 and np.std(recent_rewards) < 0.01:
                     recommendations.append(
-                        "📊 **Learning Stagnation**: Reward variance is very low - consider adjusting hyperparameters"
+                        "📊 **Learning Stagnation**: Reward variance is very low - consider adjusting hyperparameters",
                     )
 
         if not recommendations:
-            recommendations.append("✅ **Good Performance**: Current configuration appears to be working well!")
+            recommendations.append(
+                "✅ **Good Performance**: Current configuration appears to be working well!",
+            )
 
         for rec in recommendations:
             st.markdown(rec)
 
+
 # Utility functions for Q-learning visualization
+
 
 def load_qtable_from_file(file_path: str) -> np.ndarray | None:
     """Load Q-table from file (pickle or numpy format).
@@ -781,20 +865,21 @@ def load_qtable_from_file(file_path: str) -> np.ndarray | None:
 
     Returns:
         Q-table array or None if loading fails
+
     """
     try:
         path = Path(file_path)
 
-        if path.suffix == '.pkl':
-            with open(path, 'rb') as f:
+        if path.suffix == ".pkl":
+            with open(path, "rb") as f:
                 q_table = pickle.load(f)
-        elif path.suffix in ['.npy', '.npz']:
+        elif path.suffix in [".npy", ".npz"]:
             q_table = np.load(path)
         else:
             # Try JSON format
             with open(path) as f:
                 data = json.load(f)
-                q_table = np.array(data['q_table'])
+                q_table = np.array(data["q_table"])
 
         return q_table
 
@@ -802,26 +887,31 @@ def load_qtable_from_file(file_path: str) -> np.ndarray | None:
         st.error(f"Failed to load Q-table from {file_path}: {e}")
         return None
 
-def save_visualization_config(config: QLearningVisualizationConfig, file_path: str):
+
+def save_visualization_config(
+    config: QLearningVisualizationConfig,
+    file_path: str,
+) -> None:
     """Save visualization configuration to file.
 
     Args:
         config: Visualization configuration
         file_path: Output file path
+
     """
     try:
         config_dict = {
-            'colormap': config.colormap,
-            'show_values': config.show_values,
-            'interpolation': config.interpolation,
-            'figure_size': config.figure_size,
-            'font_size': config.font_size,
-            'show_policy_arrows': config.show_policy_arrows,
-            'animation_speed': config.animation_speed,
-            'confidence_intervals': config.confidence_intervals
+            "colormap": config.colormap,
+            "show_values": config.show_values,
+            "interpolation": config.interpolation,
+            "figure_size": config.figure_size,
+            "font_size": config.font_size,
+            "show_policy_arrows": config.show_policy_arrows,
+            "animation_speed": config.animation_speed,
+            "confidence_intervals": config.confidence_intervals,
         }
 
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(config_dict, f, indent=2)
 
         st.success(f"Configuration saved to {file_path}")
@@ -829,11 +919,17 @@ def save_visualization_config(config: QLearningVisualizationConfig, file_path: s
     except Exception as e:
         st.error(f"Failed to save configuration: {e}")
 
-def create_demo_qlearning_data() -> tuple[np.ndarray, dict[str, list[float]], np.ndarray]:
+
+def create_demo_qlearning_data() -> tuple[
+    np.ndarray,
+    dict[str, list[float]],
+    np.ndarray,
+]:
     """Create demo Q-learning data for testing visualizations.
 
     Returns:
         Tuple of (q_table, training_history, policy)
+
     """
     # Create demo Q-table
     n_states, n_actions = 20, 4
@@ -847,13 +943,20 @@ def create_demo_qlearning_data() -> tuple[np.ndarray, dict[str, list[float]], np
     # Create demo training history
     n_episodes = 1000
     training_data = {
-        'reward': np.cumsum(np.random.randn(n_episodes) * 0.1) + np.linspace(0, 10, n_episodes),
-        'epsilon': np.maximum(0.01, 1.0 - np.linspace(0, 0.99, n_episodes)),
-        'loss': np.maximum(0, 5.0 * np.exp(-np.linspace(0, 5, n_episodes)) + np.random.randn(n_episodes) * 0.1)
+        "reward": np.cumsum(np.random.randn(n_episodes) * 0.1)
+        + np.linspace(0, 10, n_episodes),
+        "epsilon": np.maximum(0.01, 1.0 - np.linspace(0, 0.99, n_episodes)),
+        "loss": np.maximum(
+            0,
+            5.0 * np.exp(-np.linspace(0, 5, n_episodes))
+            + np.random.randn(n_episodes) * 0.1,
+        ),
     }
 
     # Convert to lists with explicit float conversion
-    training_history: dict[str, list[float]] = {k: [float(x) for x in v.tolist()] for k, v in training_data.items()}
+    training_history: dict[str, list[float]] = {
+        k: [float(x) for x in v.tolist()] for k, v in training_data.items()
+    }
 
     # Create policy with explicit type
     policy = np.argmax(q_table, axis=1).astype(np.int64)

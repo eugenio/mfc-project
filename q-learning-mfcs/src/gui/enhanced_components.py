@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Enhanced UI Components for Scientific Community Engagement
+"""Enhanced UI Components for Scientific Community Engagement.
 
 This module provides advanced Streamlit components designed specifically for
 scientific researchers and practitioners working with MFC systems.
@@ -18,17 +17,18 @@ Literature References:
 3. Few, S. (2009). "Now You See It: Simple Visualization Techniques"
 """
 
+from __future__ import annotations
+
 import io
 import json
 import os
 
 # Import existing configurations
 import sys
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -39,17 +39,23 @@ from plotly.subplots import make_subplots
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.visualization_config import get_publication_visualization_config
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class ComponentTheme(Enum):
     """UI theme options for different contexts."""
+
     LIGHT = "light"
     DARK = "dark"
     SCIENTIFIC = "scientific"
     HIGH_CONTRAST = "high_contrast"
 
+
 @dataclass
 class UIThemeConfig:
     """UI theme configuration for enhanced components."""
+
     primary_color: str = "#2E86AB"
     secondary_color: str = "#A23B72"
     success_color: str = "#27AE60"
@@ -60,21 +66,24 @@ class UIThemeConfig:
     border_color: str = "#BDC3C7"
     accent_color: str = "#9B59B6"
 
+
 class ScientificParameterInput:
     """Enhanced parameter input with scientific validation and literature references."""
 
-    def __init__(self, theme: UIThemeConfig = UIThemeConfig()):
+    def __init__(self, theme: UIThemeConfig = UIThemeConfig()) -> None:
         """Initialize scientific parameter input component.
 
         Args:
             theme: UI theme configuration
+
         """
         self.theme = theme
         self._initialize_custom_css()
 
-    def _initialize_custom_css(self):
+    def _initialize_custom_css(self) -> None:
         """Initialize custom CSS styles for scientific components."""
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <style>
         .scientific-container {{
             background-color: {self.theme.background_color};
@@ -131,13 +140,15 @@ class ScientificParameterInput:
             margin: 20px 0;
         }}
         </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     def render_parameter_section(
         self,
         title: str,
         parameters: dict[str, dict[str, Any]],
-        key_prefix: str = ""
+        key_prefix: str = "",
     ) -> dict[str, Any]:
         """Render a section of scientific parameters with validation.
 
@@ -148,9 +159,13 @@ class ScientificParameterInput:
 
         Returns:
             Dictionary of parameter values
+
         """
         st.markdown('<div class="scientific-container">', unsafe_allow_html=True)
-        st.markdown(f'<div class="parameter-header">{title}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="parameter-header">{title}</div>',
+            unsafe_allow_html=True,
+        )
 
         values = {}
         cols = st.columns(2)
@@ -160,17 +175,19 @@ class ScientificParameterInput:
 
             with col:
                 values[param_name] = self._render_single_parameter(
-                    param_name, config, f"{key_prefix}_{param_name}"
+                    param_name,
+                    config,
+                    f"{key_prefix}_{param_name}",
                 )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         return values
 
     def _render_single_parameter(
         self,
         param_name: str,
         config: dict[str, Any],
-        key: str
+        key: str,
     ) -> float | int | bool | str:
         """Render a single parameter input with validation.
 
@@ -181,26 +198,29 @@ class ScientificParameterInput:
 
         Returns:
             Parameter value
+
         """
-        param_type = config.get('type', 'float')
-        default_value = config.get('default', 0.0)
-        min_val = config.get('min', None)
-        max_val = config.get('max', None)
-        unit = config.get('unit', '')
-        description = config.get('description', '')
-        literature_ref = config.get('literature_reference', '')
+        param_type = config.get("type", "float")
+        default_value = config.get("default", 0.0)
+        min_val = config.get("min")
+        max_val = config.get("max")
+        unit = config.get("unit", "")
+        description = config.get("description", "")
+        literature_ref = config.get("literature_reference", "")
 
         # Display parameter name and description
-        st.markdown(f"**{param_name.replace('_', ' ').title()}** "
-                   f"<span class='scientific-unit'>({unit})</span>",
-                   unsafe_allow_html=True)
+        st.markdown(
+            f"**{param_name.replace('_', ' ').title()}** "
+            f"<span class='scientific-unit'>({unit})</span>",
+            unsafe_allow_html=True,
+        )
 
         if description:
             st.markdown(f"*{description}*")
 
         # Input widget based on parameter type
         value: float | int | bool | str
-        if param_type == 'float':
+        if param_type == "float":
             value = st.number_input(
                 label="",
                 min_value=min_val,
@@ -208,9 +228,9 @@ class ScientificParameterInput:
                 value=float(default_value),
                 step=0.01,
                 key=key,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
-        elif param_type == 'int':
+        elif param_type == "int":
             value = st.number_input(
                 label="",
                 min_value=int(min_val) if min_val else None,
@@ -218,39 +238,39 @@ class ScientificParameterInput:
                 value=int(default_value),
                 step=1,
                 key=key,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
-        elif param_type == 'bool':
+        elif param_type == "bool":
             value = st.checkbox(
                 label="",
                 value=bool(default_value),
                 key=key,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
-        elif param_type == 'select':
-            options = config.get('options', [])
+        elif param_type == "select":
+            options = config.get("options", [])
             value = st.selectbox(
                 label="",
                 options=options,
                 index=options.index(default_value) if default_value in options else 0,
                 key=key,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
         else:
             text_value = st.text_input(
                 label="",
                 value=str(default_value),
                 key=key,
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
             # Convert based on expected parameter type
-            param_type = config.get('type', 'float')
-            if param_type == 'float':
+            param_type = config.get("type", "float")
+            if param_type == "float":
                 try:
                     value = float(text_value)
                 except ValueError:
                     value = float(default_value)
-            elif param_type == 'int':
+            elif param_type == "int":
                 try:
                     value = int(text_value)
                 except ValueError:
@@ -259,7 +279,11 @@ class ScientificParameterInput:
                 value = text_value
 
         # Validation and literature reference (only for numeric values)
-        if min_val is not None and max_val is not None and isinstance(value, float | int):
+        if (
+            min_val is not None
+            and max_val is not None
+            and isinstance(value, float | int)
+        ):
             self._display_validation_status(value, min_val, max_val, param_name)
 
         if literature_ref:
@@ -273,42 +297,44 @@ class ScientificParameterInput:
         value: float,
         min_val: float,
         max_val: float,
-        param_name: str
-    ):
+        param_name: str,
+    ) -> None:
         """Display parameter validation status with scientific context."""
         if min_val <= value <= max_val:
             st.markdown(
                 f'<span class="validation-success">✓ Valid range: {min_val} - {max_val}</span>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
         elif value < min_val:
             st.markdown(
                 f'<span class="validation-error">⚠ Below minimum ({min_val}): '
-                f'May affect biofilm viability</span>',
-                unsafe_allow_html=True
+                f"May affect biofilm viability</span>",
+                unsafe_allow_html=True,
             )
         else:
             st.markdown(
                 f'<span class="validation-error">⚠ Above maximum ({max_val}): '
-                f'May exceed system limits</span>',
-                unsafe_allow_html=True
+                f"May exceed system limits</span>",
+                unsafe_allow_html=True,
             )
 
-    def _display_literature_reference(self, reference: str):
+    def _display_literature_reference(self, reference: str) -> None:
         """Display literature reference for parameter."""
         st.markdown(
             f'<div class="literature-reference">📚 Literature: {reference}</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
+
 
 class InteractiveVisualization:
     """Enhanced interactive visualization component for scientific data."""
 
-    def __init__(self, theme: UIThemeConfig = UIThemeConfig()):
+    def __init__(self, theme: UIThemeConfig = UIThemeConfig()) -> None:
         """Initialize interactive visualization component.
 
         Args:
             theme: UI theme configuration
+
         """
         self.theme = theme
         self.viz_config = get_publication_visualization_config()
@@ -317,7 +343,7 @@ class InteractiveVisualization:
         self,
         data: dict[str, pd.DataFrame],
         layout: str = "2x2",
-        title: str = "MFC Performance Dashboard"
+        title: str = "MFC Performance Dashboard",
     ) -> go.Figure:
         """Render multi-panel interactive dashboard.
 
@@ -328,9 +354,10 @@ class InteractiveVisualization:
 
         Returns:
             Plotly figure object
+
         """
         # Parse layout
-        rows, cols = map(int, layout.split('x'))
+        rows, cols = map(int, layout.split("x"))
 
         # Create subplot structure
         fig = make_subplots(
@@ -339,7 +366,7 @@ class InteractiveVisualization:
             subplot_titles=list(data.keys()),
             vertical_spacing=0.1,
             horizontal_spacing=0.1,
-            specs=[[{"secondary_y": True} for _ in range(cols)] for _ in range(rows)]
+            specs=[[{"secondary_y": True} for _ in range(cols)] for _ in range(rows)],
         )
 
         # Add traces for each panel
@@ -356,7 +383,7 @@ class InteractiveVisualization:
             showlegend=True,
             template="plotly_white",
             height=800,
-            hovermode='x unified'
+            hovermode="x unified",
         )
 
         return fig
@@ -367,23 +394,24 @@ class InteractiveVisualization:
         df: pd.DataFrame,
         row: int,
         col: int,
-        panel_name: str
-    ):
+        panel_name: str,
+    ) -> None:
         """Add traces to a specific panel."""
         # Determine trace type based on panel name and data structure
-        if 'time' in df.columns:
+        if "time" in df.columns:
             # Time series data
             for column in df.columns:
-                if column != 'time':
+                if column != "time":
                     fig.add_trace(
                         go.Scatter(
-                            x=df['time'],
+                            x=df["time"],
                             y=df[column],
                             name=f"{panel_name}: {column}",
-                            mode='lines',
-                            line={"width": 2}
+                            mode="lines",
+                            line={"width": 2},
                         ),
-                        row=row, col=col
+                        row=row,
+                        col=col,
                     )
         else:
             # Non-time series data
@@ -394,31 +422,30 @@ class InteractiveVisualization:
                         x=df[numeric_cols[0]],
                         y=df[numeric_cols[1]],
                         name=panel_name,
-                        mode='markers',
-                        marker={"size": 6}
+                        mode="markers",
+                        marker={"size": 6},
                     ),
-                    row=row, col=col
+                    row=row,
+                    col=col,
                 )
 
     def render_real_time_monitor(
         self,
         data_stream: Callable[[], dict[str, float]],
         refresh_interval: int = 5,
-        max_points: int = 100
-    ):
+        max_points: int = 100,
+    ) -> None:
         """Render real-time monitoring component.
 
         Args:
             data_stream: Function that returns current data point
             refresh_interval: Refresh interval in seconds
             max_points: Maximum points to display
+
         """
         # Initialize session state for real-time data
-        if 'realtime_data' not in st.session_state:
-            st.session_state.realtime_data = {
-                'timestamps': [],
-                'values': {}
-            }
+        if "realtime_data" not in st.session_state:
+            st.session_state.realtime_data = {"timestamps": [], "values": {}}
 
         # Control panel
         col1, col2, col3 = st.columns([1, 1, 2])
@@ -431,7 +458,9 @@ class InteractiveVisualization:
                 self._update_realtime_data(data_stream)
 
         with col3:
-            st.markdown(f"**Refresh Rate**: {refresh_interval}s | **Buffer Size**: {max_points} points")
+            st.markdown(
+                f"**Refresh Rate**: {refresh_interval}s | **Buffer Size**: {max_points} points",
+            )
 
         # Real-time plot
         if is_monitoring:
@@ -451,23 +480,23 @@ class InteractiveVisualization:
             with placeholder.container():
                 if st.button("🔄 Auto-refresh (5s)", key="auto_refresh"):
                     import time
+
                     with st.spinner("Refreshing data..."):
                         time.sleep(1)  # Brief pause for UX
                         self._update_realtime_data(data_stream, max_points)
                         st.rerun()
+        # Static display
+        elif st.session_state.realtime_data["timestamps"]:
+            fig = self._create_realtime_figure()
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            # Static display
-            if st.session_state.realtime_data['timestamps']:
-                fig = self._create_realtime_figure()
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Enable live monitoring to see real-time data")
+            st.info("Enable live monitoring to see real-time data")
 
     def _update_realtime_data(
         self,
         data_stream: Callable[[], dict[str, float]],
-        max_points: int = 100
-    ):
+        max_points: int = 100,
+    ) -> None:
         """Update real-time data buffer."""
         try:
             # Get new data point
@@ -475,22 +504,24 @@ class InteractiveVisualization:
             current_time = datetime.now()
 
             # Update timestamps
-            st.session_state.realtime_data['timestamps'].append(current_time)
+            st.session_state.realtime_data["timestamps"].append(current_time)
 
             # Update values
             for key, value in new_data.items():
-                if key not in st.session_state.realtime_data['values']:
-                    st.session_state.realtime_data['values'][key] = []
-                st.session_state.realtime_data['values'][key].append(value)
+                if key not in st.session_state.realtime_data["values"]:
+                    st.session_state.realtime_data["values"][key] = []
+                st.session_state.realtime_data["values"][key].append(value)
 
             # Maintain buffer size
-            if len(st.session_state.realtime_data['timestamps']) > max_points:
-                st.session_state.realtime_data['timestamps'] = \
-                    st.session_state.realtime_data['timestamps'][-max_points:]
+            if len(st.session_state.realtime_data["timestamps"]) > max_points:
+                st.session_state.realtime_data["timestamps"] = (
+                    st.session_state.realtime_data["timestamps"][-max_points:]
+                )
 
-                for key in st.session_state.realtime_data['values']:
-                    st.session_state.realtime_data['values'][key] = \
-                        st.session_state.realtime_data['values'][key][-max_points:]
+                for key in st.session_state.realtime_data["values"]:
+                    st.session_state.realtime_data["values"][key] = (
+                        st.session_state.realtime_data["values"][key][-max_points:]
+                    )
 
         except Exception as e:
             st.error(f"Error updating real-time data: {e}")
@@ -499,8 +530,8 @@ class InteractiveVisualization:
         """Create real-time monitoring figure."""
         fig = go.Figure()
 
-        timestamps = st.session_state.realtime_data['timestamps']
-        values = st.session_state.realtime_data['values']
+        timestamps = st.session_state.realtime_data["timestamps"]
+        values = st.session_state.realtime_data["values"]
 
         for metric_name, metric_values in values.items():
             fig.add_trace(
@@ -508,10 +539,10 @@ class InteractiveVisualization:
                     x=timestamps,
                     y=metric_values,
                     name=metric_name,
-                    mode='lines+markers',
+                    mode="lines+markers",
                     line={"width": 2},
-                    marker={"size": 4}
-                )
+                    marker={"size": 4},
+                ),
             )
 
         fig.update_layout(
@@ -522,37 +553,41 @@ class InteractiveVisualization:
             template="plotly_white",
             height=400,
             showlegend=True,
-            hovermode='x unified'
+            hovermode="x unified",
         )
 
         return fig
 
+
 class ExportManager:
     """Advanced export functionality for research data and visualizations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize export manager."""
         self.supported_formats = {
-            'data': ['csv', 'json', 'xlsx', 'hdf5', 'parquet', 'feather', 'pickle'],
-            'figures': ['png', 'jpg', 'pdf', 'svg', 'html', 'eps'],
-            'reports': ['pdf', 'html', 'docx', 'markdown']
+            "data": ["csv", "json", "xlsx", "hdf5", "parquet", "feather", "pickle"],
+            "figures": ["png", "jpg", "pdf", "svg", "html", "eps"],
+            "reports": ["pdf", "html", "docx", "markdown"],
         }
 
     def render_export_panel(
         self,
         data: dict[str, pd.DataFrame] | None = None,
-        figures: dict[str, go.Figure] | None = None
-    ):
+        figures: dict[str, go.Figure] | None = None,
+    ) -> None:
         """Render comprehensive export panel.
 
         Args:
             data: Dictionary of DataFrames to export
             figures: Dictionary of figures to export
+
         """
         st.markdown("### 📤 Export Center")
 
         # Export tabs
-        tab1, tab2, tab3 = st.tabs(["📊 Data Export", "📈 Figure Export", "📄 Report Export"])
+        tab1, tab2, tab3 = st.tabs(
+            ["📊 Data Export", "📈 Figure Export", "📄 Report Export"],
+        )
 
         with tab1:
             self._render_data_export(data)
@@ -563,7 +598,7 @@ class ExportManager:
         with tab3:
             self._render_report_export(data, figures)
 
-    def _render_data_export(self, data: dict[str, pd.DataFrame] | None):
+    def _render_data_export(self, data: dict[str, pd.DataFrame] | None) -> None:
         """Render data export options."""
         if not data:
             st.info("No data available for export")
@@ -574,7 +609,10 @@ class ExportManager:
         # Dataset selection
         selected_datasets = []
         for dataset_name, df in data.items():
-            if st.checkbox(f"{dataset_name} ({len(df)} rows)", key=f"export_data_{dataset_name}"):
+            if st.checkbox(
+                f"{dataset_name} ({len(df)} rows)",
+                key=f"export_data_{dataset_name}",
+            ):
                 selected_datasets.append(dataset_name)
 
         if selected_datasets:
@@ -587,17 +625,17 @@ class ExportManager:
             with col1:
                 export_format = st.selectbox(
                     "Export Format",
-                    options=self.supported_formats['data'],
+                    options=self.supported_formats["data"],
                     format_func=lambda x: {
-                        'csv': 'CSV - Comma Separated Values',
-                        'json': 'JSON - JavaScript Object Notation',
-                        'xlsx': 'Excel - Microsoft Excel Format',
-                        'hdf5': 'HDF5 - Hierarchical Data Format',
-                        'parquet': 'Parquet - High Performance Columnar',
-                        'feather': 'Feather - Fast Binary Format',
-                        'pickle': 'Pickle - Python Native Format'
+                        "csv": "CSV - Comma Separated Values",
+                        "json": "JSON - JavaScript Object Notation",
+                        "xlsx": "Excel - Microsoft Excel Format",
+                        "hdf5": "HDF5 - Hierarchical Data Format",
+                        "parquet": "Parquet - High Performance Columnar",
+                        "feather": "Feather - Fast Binary Format",
+                        "pickle": "Pickle - Python Native Format",
                     }.get(x, x),
-                    key="data_export_format"
+                    key="data_export_format",
                 )
 
             with col2:
@@ -605,26 +643,26 @@ class ExportManager:
                     "Include Metadata",
                     value=True,
                     key="include_metadata",
-                    help="Include dataset information and generation timestamps"
+                    help="Include dataset information and generation timestamps",
                 )
 
             with col3:
                 compression_enabled = st.checkbox(
                     "Enable Compression",
-                    value=export_format in ['parquet', 'hdf5'],
+                    value=export_format in ["parquet", "hdf5"],
                     key="enable_compression",
-                    help="Reduce file size (available for some formats)"
+                    help="Reduce file size (available for some formats)",
                 )
 
             # Export format information
             format_info = {
-                'csv': "📄 Best for: Excel compatibility, human-readable format",
-                'json': "🔧 Best for: Web applications, JavaScript integration",
-                'xlsx': "📊 Best for: Excel analysis, formatted spreadsheets",
-                'hdf5': "🗄️ Best for: Large datasets, scientific computing",
-                'parquet': "⚡ Best for: Big data analytics, high performance",
-                'feather': "🚀 Best for: Fast I/O between Python/R",
-                'pickle': "🐍 Best for: Python-only workflows, preserves types"
+                "csv": "📄 Best for: Excel compatibility, human-readable format",
+                "json": "🔧 Best for: Web applications, JavaScript integration",
+                "xlsx": "📊 Best for: Excel analysis, formatted spreadsheets",
+                "hdf5": "🗄️ Best for: Large datasets, scientific computing",
+                "parquet": "⚡ Best for: Big data analytics, high performance",
+                "feather": "🚀 Best for: Fast I/O between Python/R",
+                "pickle": "🐍 Best for: Python-only workflows, preserves types",
             }
 
             if export_format in format_info:
@@ -636,7 +674,7 @@ class ExportManager:
                     {name: data[name] for name in selected_datasets},
                     export_format,
                     include_metadata,
-                    compression_enabled
+                    compression_enabled,
                 )
 
             # Batch export option
@@ -647,16 +685,16 @@ class ExportManager:
                 if st.button("📦 Export All Formats", key="export_all_formats"):
                     self._batch_export_all_formats(
                         {name: data[name] for name in selected_datasets},
-                        include_metadata
+                        include_metadata,
                     )
 
             with col2:
                 if st.button("📋 Generate Export Summary", key="export_summary"):
                     self._generate_export_summary(
-                        {name: data[name] for name in selected_datasets}
+                        {name: data[name] for name in selected_datasets},
                     )
 
-    def _render_figure_export(self, figures: dict[str, go.Figure] | None):
+    def _render_figure_export(self, figures: dict[str, go.Figure] | None) -> None:
         """Render figure export options."""
         if not figures:
             st.info("No figures available for export")
@@ -666,7 +704,7 @@ class ExportManager:
 
         # Figure selection
         selected_figures = []
-        for fig_name, _fig in figures.items():
+        for fig_name in figures:
             if st.checkbox(f"{fig_name}", key=f"export_fig_{fig_name}"):
                 selected_figures.append(fig_name)
 
@@ -677,8 +715,8 @@ class ExportManager:
             with col1:
                 export_format = st.selectbox(
                     "Format",
-                    options=self.supported_formats['figures'],
-                    key="figure_export_format"
+                    options=self.supported_formats["figures"],
+                    key="figure_export_format",
                 )
 
             with col2:
@@ -686,14 +724,14 @@ class ExportManager:
                     "Resolution (DPI)",
                     options=[300, 600, 1200],
                     index=1,
-                    key="figure_resolution"
+                    key="figure_resolution",
                 )
 
             with col3:
                 include_data = st.checkbox(
                     "Include Data",
                     value=True,
-                    key="figure_include_data"
+                    key="figure_include_data",
                 )
 
             # Export button
@@ -702,14 +740,14 @@ class ExportManager:
                     {name: figures[name] for name in selected_figures},
                     export_format,
                     resolution,
-                    include_data
+                    include_data,
                 )
 
     def _render_report_export(
         self,
         data: dict[str, pd.DataFrame] | None,
-        figures: dict[str, go.Figure] | None
-    ):
+        figures: dict[str, go.Figure] | None,
+    ) -> None:
         """Render comprehensive report export."""
         st.markdown("#### Generate Comprehensive Report")
 
@@ -720,37 +758,57 @@ class ExportManager:
             report_title = st.text_input(
                 "Report Title",
                 value="MFC Analysis Report",
-                key="report_title"
+                key="report_title",
             )
 
             report_format = st.selectbox(
                 "Report Format",
-                options=self.supported_formats['reports'],
-                key="report_format"
+                options=self.supported_formats["reports"],
+                key="report_format",
             )
 
         with col2:
             include_methods = st.checkbox(
                 "Include Methods Section",
                 value=True,
-                key="include_methods"
+                key="include_methods",
             )
 
             include_references = st.checkbox(
                 "Include Literature References",
                 value=True,
-                key="include_references"
+                key="include_references",
             )
 
         # Report sections
         st.markdown("**Report Sections**")
         sections = {
-            "Executive Summary": st.checkbox("Executive Summary", value=True, key="section_summary"),
-            "Methodology": st.checkbox("Methodology", value=include_methods, key="section_methods"),
+            "Executive Summary": st.checkbox(
+                "Executive Summary",
+                value=True,
+                key="section_summary",
+            ),
+            "Methodology": st.checkbox(
+                "Methodology",
+                value=include_methods,
+                key="section_methods",
+            ),
             "Results": st.checkbox("Results", value=True, key="section_results"),
-            "Discussion": st.checkbox("Discussion", value=True, key="section_discussion"),
-            "Conclusions": st.checkbox("Conclusions", value=True, key="section_conclusions"),
-            "References": st.checkbox("References", value=include_references, key="section_references")
+            "Discussion": st.checkbox(
+                "Discussion",
+                value=True,
+                key="section_discussion",
+            ),
+            "Conclusions": st.checkbox(
+                "Conclusions",
+                value=True,
+                key="section_conclusions",
+            ),
+            "References": st.checkbox(
+                "References",
+                value=include_references,
+                key="section_references",
+            ),
         }
 
         # Generate report
@@ -760,7 +818,7 @@ class ExportManager:
                 report_format,
                 sections,
                 data,
-                figures
+                figures,
             )
 
     def _export_data(
@@ -768,24 +826,29 @@ class ExportManager:
         datasets: dict[str, pd.DataFrame],
         format: str,
         include_metadata: bool,
-        compression_enabled: bool = False
-    ):
+        compression_enabled: bool = False,
+    ) -> None:
         """Export selected datasets."""
         try:
-            if format == 'csv':
+            if format == "csv":
                 # Create ZIP file for multiple CSVs
                 import zipfile
+
                 zip_buffer = io.BytesIO()
 
-                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                     for name, df in datasets.items():
                         csv_buffer = io.StringIO()
 
                         if include_metadata:
                             # Add metadata header
                             csv_buffer.write(f"# Dataset: {name}\n")
-                            csv_buffer.write(f"# Generated: {datetime.now().isoformat()}\n")
-                            csv_buffer.write(f"# Rows: {len(df)}, Columns: {len(df.columns)}\n")
+                            csv_buffer.write(
+                                f"# Generated: {datetime.now().isoformat()}\n",
+                            )
+                            csv_buffer.write(
+                                f"# Rows: {len(df)}, Columns: {len(df.columns)}\n",
+                            )
                             csv_buffer.write(f"# Columns: {', '.join(df.columns)}\n")
                             csv_buffer.write("#\n")
 
@@ -797,20 +860,24 @@ class ExportManager:
                     label="📥 Download CSV Files",
                     data=zip_buffer.getvalue(),
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-                    mime="application/zip"
+                    mime="application/zip",
                 )
 
-            elif format == 'json':
+            elif format == "json":
                 # Export as JSON
                 export_data = {}
                 for name, df in datasets.items():
                     export_data[name] = {
-                        'metadata': {
-                            'rows': len(df),
-                            'columns': len(df.columns),
-                            'generated': datetime.now().isoformat()
-                        } if include_metadata else {},
-                        'data': df.to_dict('records')
+                        "metadata": (
+                            {
+                                "rows": len(df),
+                                "columns": len(df.columns),
+                                "generated": datetime.now().isoformat(),
+                            }
+                            if include_metadata
+                            else {}
+                        ),
+                        "data": df.to_dict("records"),
                     }
 
                 json_str = json.dumps(export_data, indent=2, default=str)
@@ -819,28 +886,40 @@ class ExportManager:
                     label="📥 Download JSON File",
                     data=json_str,
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
+                    mime="application/json",
                 )
 
-            elif format == 'xlsx':
+            elif format == "xlsx":
                 # Export as Excel file with multiple sheets
                 excel_buffer = io.BytesIO()
 
-                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
                     for name, df in datasets.items():
                         # Create metadata sheet if requested
                         if include_metadata:
-                            metadata_df = pd.DataFrame({
-                                'Property': ['Dataset Name', 'Generated', 'Rows', 'Columns', 'Column Names'],
-                                'Value': [
-                                    name,
-                                    datetime.now().isoformat(),
-                                    len(df),
-                                    len(df.columns),
-                                    ', '.join(df.columns)
-                                ]
-                            })
-                            metadata_df.to_excel(writer, sheet_name=f'{name}_metadata', index=False)
+                            metadata_df = pd.DataFrame(
+                                {
+                                    "Property": [
+                                        "Dataset Name",
+                                        "Generated",
+                                        "Rows",
+                                        "Columns",
+                                        "Column Names",
+                                    ],
+                                    "Value": [
+                                        name,
+                                        datetime.now().isoformat(),
+                                        len(df),
+                                        len(df.columns),
+                                        ", ".join(df.columns),
+                                    ],
+                                },
+                            )
+                            metadata_df.to_excel(
+                                writer,
+                                sheet_name=f"{name}_metadata",
+                                index=False,
+                            )
 
                         # Write data sheet
                         df.to_excel(writer, sheet_name=name, index=False)
@@ -849,43 +928,52 @@ class ExportManager:
                     label="📥 Download Excel File",
                     data=excel_buffer.getvalue(),
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
-            elif format == 'hdf5':
+            elif format == "hdf5":
                 # Export as HDF5 file
                 import os
                 import tempfile
 
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.h5') as tmp_file:
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=".h5",
+                ) as tmp_file:
                     tmp_path = tmp_file.name
 
                 try:
-                    with pd.HDFStore(tmp_path, mode='w') as store:
+                    with pd.HDFStore(tmp_path, mode="w") as store:
                         for name, df in datasets.items():
                             # Store data
-                            store.put(f'data/{name}', df, format='table')
+                            store.put(f"data/{name}", df, format="table")
 
                             # Store metadata if requested
                             if include_metadata:
-                                metadata = pd.Series({
-                                    'dataset_name': name,
-                                    'generated': datetime.now().isoformat(),
-                                    'rows': len(df),
-                                    'columns': len(df.columns),
-                                    'column_names': ', '.join(df.columns)
-                                })
-                                store.put(f'metadata/{name}', pd.DataFrame([metadata]), format='table')
+                                metadata = pd.Series(
+                                    {
+                                        "dataset_name": name,
+                                        "generated": datetime.now().isoformat(),
+                                        "rows": len(df),
+                                        "columns": len(df.columns),
+                                        "column_names": ", ".join(df.columns),
+                                    },
+                                )
+                                store.put(
+                                    f"metadata/{name}",
+                                    pd.DataFrame([metadata]),
+                                    format="table",
+                                )
 
                     # Read the file back for download
-                    with open(tmp_path, 'rb') as f:
+                    with open(tmp_path, "rb") as f:
                         hdf5_data = f.read()
 
                     st.download_button(
                         label="📥 Download HDF5 File",
                         data=hdf5_data,
                         file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h5",
-                        mime="application/x-hdf"
+                        mime="application/x-hdf",
                     )
 
                 finally:
@@ -893,12 +981,13 @@ class ExportManager:
                     if os.path.exists(tmp_path):
                         os.unlink(tmp_path)
 
-            elif format == 'parquet':
+            elif format == "parquet":
                 # Export as Parquet files (high performance columnar format)
                 import zipfile
+
                 zip_buffer = io.BytesIO()
 
-                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                     for name, df in datasets.items():
                         parquet_buffer = io.BytesIO()
                         df.to_parquet(parquet_buffer, index=False)
@@ -911,8 +1000,8 @@ Dataset: {name}
 Generated: {datetime.now().isoformat()}
 Rows: {len(df)}
 Columns: {len(df.columns)}
-Column Names: {', '.join(df.columns)}
-Column Types: {', '.join([f"{col}:{str(dtype)}" for col, dtype in df.dtypes.items()])}
+Column Names: {", ".join(df.columns)}
+Column Types: {", ".join([f"{col}:{dtype!s}" for col, dtype in df.dtypes.items()])}
 """
                             zip_file.writestr(f"{name}_metadata.txt", metadata_content)
 
@@ -920,15 +1009,16 @@ Column Types: {', '.join([f"{col}:{str(dtype)}" for col, dtype in df.dtypes.item
                     label="📥 Download Parquet Files",
                     data=zip_buffer.getvalue(),
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_parquet.zip",
-                    mime="application/zip"
+                    mime="application/zip",
                 )
 
-            elif format == 'feather':
+            elif format == "feather":
                 # Export as Feather files (fast binary format)
                 import zipfile
+
                 zip_buffer = io.BytesIO()
 
-                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                     for name, df in datasets.items():
                         feather_buffer = io.BytesIO()
                         df.to_feather(feather_buffer)
@@ -941,7 +1031,7 @@ Dataset: {name}
 Generated: {datetime.now().isoformat()}
 Rows: {len(df)}
 Columns: {len(df.columns)}
-Column Names: {', '.join(df.columns)}
+Column Names: {", ".join(df.columns)}
 Format: Apache Arrow Feather (fast binary)
 """
                             zip_file.writestr(f"{name}_metadata.txt", metadata_content)
@@ -950,16 +1040,17 @@ Format: Apache Arrow Feather (fast binary)
                     label="📥 Download Feather Files",
                     data=zip_buffer.getvalue(),
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_feather.zip",
-                    mime="application/zip"
+                    mime="application/zip",
                 )
 
-            elif format == 'pickle':
+            elif format == "pickle":
                 # Export as Python pickle files (preserves exact data types)
                 import pickle
                 import zipfile
+
                 zip_buffer = io.BytesIO()
 
-                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                     for name, df in datasets.items():
                         pickle_buffer = io.BytesIO()
                         pickle.dump(df, pickle_buffer)
@@ -968,23 +1059,26 @@ Format: Apache Arrow Feather (fast binary)
                         # Add metadata file if requested
                         if include_metadata:
                             metadata_dict = {
-                                'dataset_name': name,
-                                'generated': datetime.now().isoformat(),
-                                'rows': len(df),
-                                'columns': len(df.columns),
-                                'column_names': list(df.columns),
-                                'dtypes': df.dtypes.to_dict(),
-                                'format': 'Python Pickle (preserves exact data types)'
+                                "dataset_name": name,
+                                "generated": datetime.now().isoformat(),
+                                "rows": len(df),
+                                "columns": len(df.columns),
+                                "column_names": list(df.columns),
+                                "dtypes": df.dtypes.to_dict(),
+                                "format": "Python Pickle (preserves exact data types)",
                             }
                             metadata_buffer = io.BytesIO()
                             pickle.dump(metadata_dict, metadata_buffer)
-                            zip_file.writestr(f"{name}_metadata.pkl", metadata_buffer.getvalue())
+                            zip_file.writestr(
+                                f"{name}_metadata.pkl",
+                                metadata_buffer.getvalue(),
+                            )
 
                 st.download_button(
                     label="📥 Download Pickle Files",
                     data=zip_buffer.getvalue(),
                     file_name=f"mfc_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_pickle.zip",
-                    mime="application/zip"
+                    mime="application/zip",
                 )
 
             st.success(f"Data exported successfully in {format.upper()} format!")
@@ -995,49 +1089,73 @@ Format: Apache Arrow Feather (fast binary)
     def _batch_export_all_formats(
         self,
         datasets: dict[str, pd.DataFrame],
-        include_metadata: bool
-    ):
+        include_metadata: bool,
+    ) -> None:
         """Export datasets in all supported formats as a single package."""
         try:
             import zipfile
+
             zip_buffer = io.BytesIO()
 
-            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                 # Export in each format
-                for format_name in ['csv', 'json', 'xlsx']:  # Most commonly used formats
+                for format_name in [
+                    "csv",
+                    "json",
+                    "xlsx",
+                ]:  # Most commonly used formats
                     try:
                         # Create subfolder for each format
-                        if format_name == 'csv':
+                        if format_name == "csv":
                             for name, df in datasets.items():
                                 csv_buffer = io.StringIO()
                                 if include_metadata:
                                     csv_buffer.write(f"# Dataset: {name}\n")
-                                    csv_buffer.write(f"# Generated: {datetime.now().isoformat()}\n")
+                                    csv_buffer.write(
+                                        f"# Generated: {datetime.now().isoformat()}\n",
+                                    )
                                     csv_buffer.write("#\n")
                                 df.to_csv(csv_buffer, index=False)
-                                zip_file.writestr(f"csv/{name}.csv", csv_buffer.getvalue())
+                                zip_file.writestr(
+                                    f"csv/{name}.csv",
+                                    csv_buffer.getvalue(),
+                                )
 
-                        elif format_name == 'json':
+                        elif format_name == "json":
                             for name, df in datasets.items():
                                 export_data = {
-                                    'metadata': {
-                                        'dataset_name': name,
-                                        'generated': datetime.now().isoformat(),
-                                        'rows': len(df),
-                                        'columns': len(df.columns)
-                                    } if include_metadata else {},
-                                    'data': df.to_dict('records')
+                                    "metadata": (
+                                        {
+                                            "dataset_name": name,
+                                            "generated": datetime.now().isoformat(),
+                                            "rows": len(df),
+                                            "columns": len(df.columns),
+                                        }
+                                        if include_metadata
+                                        else {}
+                                    ),
+                                    "data": df.to_dict("records"),
                                 }
-                                json_str = json.dumps(export_data, indent=2, default=str)
+                                json_str = json.dumps(
+                                    export_data,
+                                    indent=2,
+                                    default=str,
+                                )
                                 zip_file.writestr(f"json/{name}.json", json_str)
 
-                        elif format_name == 'xlsx':
+                        elif format_name == "xlsx":
                             # Create a single Excel file with multiple sheets
                             excel_buffer = io.BytesIO()
-                            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                            with pd.ExcelWriter(
+                                excel_buffer,
+                                engine="openpyxl",
+                            ) as writer:
                                 for name, df in datasets.items():
                                     df.to_excel(writer, sheet_name=name, index=False)
-                            zip_file.writestr("excel/mfc_data_all.xlsx", excel_buffer.getvalue())
+                            zip_file.writestr(
+                                "excel/mfc_data_all.xlsx",
+                                excel_buffer.getvalue(),
+                            )
 
                     except Exception:
                         # Continue with other formats if one fails
@@ -1046,7 +1164,7 @@ Format: Apache Arrow Feather (fast binary)
                 # Add README file
                 readme_content = f"""# MFC Data Export Package
 Generated: {datetime.now().isoformat()}
-Datasets included: {', '.join(datasets.keys())}
+Datasets included: {", ".join(datasets.keys())}
 
 Format descriptions:
 - csv/: Comma-separated values (Excel compatible)
@@ -1054,7 +1172,7 @@ Format descriptions:
 - excel/: Microsoft Excel format with multiple sheets
 
 Total files: {len(datasets) * 2 + 1}
-Metadata included: {'Yes' if include_metadata else 'No'}
+Metadata included: {"Yes" if include_metadata else "No"}
 """
                 zip_file.writestr("README.txt", readme_content)
 
@@ -1062,7 +1180,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
                 label="📦 Download Complete Export Package",
                 data=zip_buffer.getvalue(),
                 file_name=f"mfc_complete_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-                mime="application/zip"
+                mime="application/zip",
             )
 
             st.success("Complete export package generated with multiple formats!")
@@ -1070,7 +1188,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         except Exception as e:
             st.error(f"Batch export failed: {e}")
 
-    def _generate_export_summary(self, datasets: dict[str, pd.DataFrame]):
+    def _generate_export_summary(self, datasets: dict[str, pd.DataFrame]) -> None:
         """Generate a summary of datasets for export planning."""
         st.markdown("#### Export Summary")
 
@@ -1080,14 +1198,19 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         total_columns = 0
 
         for name, df in datasets.items():
-            summary_data.append({
-                'Dataset': name,
-                'Rows': len(df),
-                'Columns': len(df.columns),
-                'Memory (MB)': round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
-                'Data Types': len(df.dtypes.unique()),
-                'Null Values': df.isnull().sum().sum()
-            })
+            summary_data.append(
+                {
+                    "Dataset": name,
+                    "Rows": len(df),
+                    "Columns": len(df.columns),
+                    "Memory (MB)": round(
+                        df.memory_usage(deep=True).sum() / 1024 / 1024,
+                        2,
+                    ),
+                    "Data Types": len(df.dtypes.unique()),
+                    "Null Values": df.isnull().sum().sum(),
+                },
+            )
             total_rows += len(df)
             total_columns += len(df.columns)
 
@@ -1105,23 +1228,25 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         with col3:
             st.metric("Total Columns", total_columns)
         with col4:
-            total_memory = summary_df['Memory (MB)'].sum()
+            total_memory = summary_df["Memory (MB)"].sum()
             st.metric("Total Memory", f"{total_memory:.1f} MB")
 
         # Estimated file sizes
         st.markdown("#### Estimated Export File Sizes")
         size_estimates = {
-            'CSV': f"{total_memory * 0.8:.1f} MB (compressed)",
-            'JSON': f"{total_memory * 1.2:.1f} MB",
-            'Excel': f"{total_memory * 0.6:.1f} MB",
-            'Parquet': f"{total_memory * 0.3:.1f} MB",
-            'HDF5': f"{total_memory * 0.4:.1f} MB"
+            "CSV": f"{total_memory * 0.8:.1f} MB (compressed)",
+            "JSON": f"{total_memory * 1.2:.1f} MB",
+            "Excel": f"{total_memory * 0.6:.1f} MB",
+            "Parquet": f"{total_memory * 0.3:.1f} MB",
+            "HDF5": f"{total_memory * 0.4:.1f} MB",
         }
 
-        size_df = pd.DataFrame([
-            {'Format': fmt, 'Estimated Size': size}
-            for fmt, size in size_estimates.items()
-        ])
+        size_df = pd.DataFrame(
+            [
+                {"Format": fmt, "Estimated Size": size}
+                for fmt, size in size_estimates.items()
+            ],
+        )
         st.dataframe(size_df, use_container_width=True)
 
     def _export_figures(
@@ -1129,28 +1254,29 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         figures: dict[str, go.Figure],
         format: str,
         resolution: int,
-        include_data: bool
-    ):
+        include_data: bool,
+    ) -> None:
         """Export selected figures."""
         try:
             import zipfile
+
             zip_buffer = io.BytesIO()
 
-            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                 for name, fig in figures.items():
-                    if format == 'png':
-                        img_bytes = fig.to_image(format="png", scale=resolution/300)
+                    if format == "png":
+                        img_bytes = fig.to_image(format="png", scale=resolution / 300)
                         zip_file.writestr(f"{name}.png", img_bytes)
 
-                    elif format == 'pdf':
+                    elif format == "pdf":
                         pdf_bytes = fig.to_image(format="pdf")
                         zip_file.writestr(f"{name}.pdf", pdf_bytes)
 
-                    elif format == 'svg':
+                    elif format == "svg":
                         svg_str = fig.to_image(format="svg").decode()
                         zip_file.writestr(f"{name}.svg", svg_str)
 
-                    elif format == 'html':
+                    elif format == "html":
                         html_str = fig.to_html(include_plotlyjs=True)
                         zip_file.writestr(f"{name}.html", html_str)
 
@@ -1159,7 +1285,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
                 label="📥 Download Figures",
                 data=zip_buffer.getvalue(),
                 file_name=f"mfc_figures_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-                mime="application/zip"
+                mime="application/zip",
             )
 
             st.success(f"Figures exported successfully in {format.upper()} format!")
@@ -1173,18 +1299,23 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         format: str,
         sections: dict[str, bool],
         data: dict[str, pd.DataFrame] | None,
-        figures: dict[str, go.Figure] | None
-    ):
+        figures: dict[str, go.Figure] | None,
+    ) -> None:
         """Generate comprehensive research report."""
         try:
-            if format == 'html':
-                html_content = self._generate_html_report(title, sections, data, figures)
+            if format == "html":
+                html_content = self._generate_html_report(
+                    title,
+                    sections,
+                    data,
+                    figures,
+                )
 
                 st.download_button(
                     label="📄 Download HTML Report",
                     data=html_content,
                     file_name=f"mfc_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                    mime="text/html"
+                    mime="text/html",
                 )
 
             st.success("Report generated successfully!")
@@ -1197,7 +1328,7 @@ Metadata included: {'Yes' if include_metadata else 'No'}
         title: str,
         sections: dict[str, bool],
         data: dict[str, pd.DataFrame] | None,
-        figures: dict[str, go.Figure] | None
+        figures: dict[str, go.Figure] | None,
     ) -> str:
         """Generate HTML report content."""
         html_parts = [
@@ -1211,33 +1342,41 @@ Metadata included: {'Yes' if include_metadata else 'No'}
             "th { background-color: #f2f2f2; }",
             "</style></head><body>",
             f"<h1>{title}</h1>",
-            f"<p><strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
+            f"<p><strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>",
         ]
 
         # Add selected sections
         if sections.get("Executive Summary", False):
-            html_parts.extend([
-                "<h2>Executive Summary</h2>",
-                "<p>This report presents comprehensive analysis of MFC performance data, ",
-                "including real-time monitoring results, parameter optimization outcomes, ",
-                "and comparative studies against literature benchmarks.</p>"
-            ])
+            html_parts.extend(
+                [
+                    "<h2>Executive Summary</h2>",
+                    "<p>This report presents comprehensive analysis of MFC performance data, ",
+                    "including real-time monitoring results, parameter optimization outcomes, ",
+                    "and comparative studies against literature benchmarks.</p>",
+                ],
+            )
 
         if sections.get("Results", False) and data:
             html_parts.append("<h2>Results</h2>")
             for name, df in data.items():
-                html_parts.extend([
-                    f"<h3>{name}</h3>",
-                    df.head(10).to_html(),
-                    f"<p><em>Showing first 10 rows of {len(df)} total records.</em></p>"
-                ])
+                html_parts.extend(
+                    [
+                        f"<h3>{name}</h3>",
+                        df.head(10).to_html(),
+                        f"<p><em>Showing first 10 rows of {len(df)} total records.</em></p>",
+                    ],
+                )
 
         html_parts.append("</body></html>")
         return "\n".join(html_parts)
 
+
 # Utility functions for component integration
 
-def initialize_enhanced_ui(theme: ComponentTheme = ComponentTheme.SCIENTIFIC) -> tuple[UIThemeConfig, dict[str, Any]]:
+
+def initialize_enhanced_ui(
+    theme: ComponentTheme = ComponentTheme.SCIENTIFIC,
+) -> tuple[UIThemeConfig, dict[str, Any]]:
     """Initialize enhanced UI components with theme.
 
     Args:
@@ -1245,38 +1384,41 @@ def initialize_enhanced_ui(theme: ComponentTheme = ComponentTheme.SCIENTIFIC) ->
 
     Returns:
         Tuple of theme configuration and component instances
+
     """
     # Select theme configuration
     if theme == ComponentTheme.SCIENTIFIC:
         theme_config = UIThemeConfig(
             primary_color="#2E86AB",
             secondary_color="#A23B72",
-            background_color="#FDFDFD"
+            background_color="#FDFDFD",
         )
     elif theme == ComponentTheme.DARK:
         theme_config = UIThemeConfig(
             primary_color="#64B5F6",
             secondary_color="#BA68C8",
             background_color="#1E1E1E",
-            text_color="#FFFFFF"
+            text_color="#FFFFFF",
         )
     else:
         theme_config = UIThemeConfig()
 
     # Initialize components
     components = {
-        'parameter_input': ScientificParameterInput(theme_config),
-        'visualization': InteractiveVisualization(theme_config),
-        'export_manager': ExportManager()
+        "parameter_input": ScientificParameterInput(theme_config),
+        "visualization": InteractiveVisualization(theme_config),
+        "export_manager": ExportManager(),
     }
 
     return theme_config, components
+
 
 def render_enhanced_sidebar() -> dict[str, Any]:
     """Render enhanced sidebar with scientific tools.
 
     Returns:
         Dictionary of sidebar selections and configurations
+
     """
     st.sidebar.markdown("## 🔬 Scientific Tools")
 
@@ -1284,29 +1426,32 @@ def render_enhanced_sidebar() -> dict[str, Any]:
     theme = st.sidebar.selectbox(
         "UI Theme",
         options=[t.value for t in ComponentTheme],
-        index=2  # Default to scientific theme
+        index=2,  # Default to scientific theme
     )
 
     # Visualization options
     st.sidebar.markdown("### 📊 Visualization")
     viz_options = {
-        'publication_ready': st.sidebar.checkbox("Publication Ready", value=True),
-        'interactive_plots': st.sidebar.checkbox("Interactive Plots", value=True),
-        'real_time_monitoring': st.sidebar.checkbox("Real-time Monitoring", value=False),
-        'export_enabled': st.sidebar.checkbox("Enable Export", value=True)
+        "publication_ready": st.sidebar.checkbox("Publication Ready", value=True),
+        "interactive_plots": st.sidebar.checkbox("Interactive Plots", value=True),
+        "real_time_monitoring": st.sidebar.checkbox(
+            "Real-time Monitoring",
+            value=False,
+        ),
+        "export_enabled": st.sidebar.checkbox("Enable Export", value=True),
     }
 
     # Advanced options
     with st.sidebar.expander("🔧 Advanced Options"):
         advanced_options = {
-            'parameter_validation': st.checkbox("Parameter Validation", value=True),
-            'literature_references': st.checkbox("Literature References", value=True),
-            'statistical_analysis': st.checkbox("Statistical Analysis", value=True),
-            'collaboration_tools': st.checkbox("Collaboration Tools", value=False)
+            "parameter_validation": st.checkbox("Parameter Validation", value=True),
+            "literature_references": st.checkbox("Literature References", value=True),
+            "statistical_analysis": st.checkbox("Statistical Analysis", value=True),
+            "collaboration_tools": st.checkbox("Collaboration Tools", value=False),
         }
 
     return {
-        'theme': ComponentTheme(theme),
-        'visualization': viz_options,
-        'advanced': advanced_options
+        "theme": ComponentTheme(theme),
+        "visualization": viz_options,
+        "advanced": advanced_options,
     }

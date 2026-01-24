@@ -1,6 +1,5 @@
-"""
-Create GitLab issue for IntegratedMFCModel mfc_stack AttributeError.
-"""
+"""Create GitLab issue for IntegratedMFCModel mfc_stack AttributeError."""
+
 from gitlab_issue_manager import (
     GitLabIssueManager,
     IssueData,
@@ -12,7 +11,6 @@ from gitlab_issue_manager import (
 
 def create_mfc_stack_issue():
     """Create the mfc_stack AttributeError issue."""
-
     # Initialize GitLab issue manager
     issue_manager = GitLabIssueManager()
 
@@ -84,21 +82,19 @@ Method: `test_biofilm_metabolic_coupling`
         stack_trace="""q-learning-mfcs/tests/test_integrated_model.py:192: AttributeError
     self.model.mfc_stack.reservoir.substrate_concentration = 25.0
     ^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'"""
+E   AttributeError: 'IntegratedMFCModel' object has no attribute 'mfc_stack'""",
     )
 
     # Create the issue
     try:
-        result = issue_manager.create_issue(issue_data)
-        print(f"🎯 Successfully created issue: {result['web_url']}")
-        return result
-    except Exception as e:
-        print(f"❌ Error creating issue: {e}")
+        return issue_manager.create_issue(issue_data)
+    except Exception:
         return None
+
 
 if __name__ == "__main__":
     result = create_mfc_stack_issue()
     if result:
-        print(f"✅ Issue created successfully with IID: {result['iid']}")
+        pass
     else:
-        print("❌ Failed to create issue")
+        pass

@@ -1,12 +1,12 @@
 def dataclass_to_dict(obj: Any) -> dict[str, Any]:
-    """
-    Convert dataclass to dictionary recursively.
+    """Convert dataclass to dictionary recursively.
 
     Args:
         obj: Dataclass object or nested structure
 
     Returns:
         Dictionary representation
+
     """
     if is_dataclass(obj) and not isinstance(obj, type):
         # Custom dict factory to handle enums

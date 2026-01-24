@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simplified Bayesian Optimization for MFC Electrode Parameter Tuning
+"""Simplified Bayesian Optimization for MFC Electrode Parameter Tuning.
 
 This module provides a lightweight Bayesian optimization implementation
 specifically designed for electrode parameter optimization using the Phase 2
@@ -21,20 +20,25 @@ from scipy.stats import norm
 @dataclass
 class OptimizationBounds:
     """Parameter bounds for optimization."""
+
     name: str
     lower: float
     upper: float
     units: str = ""
     description: str = ""
 
+
 class SimpleGaussianProcess:
-    """
-    Simplified Gaussian Process implementation for surrogate modeling.
+    """Simplified Gaussian Process implementation for surrogate modeling.
 
     Uses RBF kernel with noise for fast approximation.
     """
 
-    def __init__(self, kernel_lengthscale: float = 1.0, noise_level: float = 0.1):
+    def __init__(
+        self,
+        kernel_lengthscale: float = 1.0,
+        noise_level: float = 0.1,
+    ) -> None:
         self.lengthscale = kernel_lengthscale
         self.noise = noise_level
         self.X_train = None
@@ -49,12 +53,15 @@ class SimpleGaussianProcess:
             X2 = X2.reshape(-1, 1)
 
         # Compute squared distances
-        sq_dists = np.sum(X1**2, axis=1, keepdims=True) + \
-                   np.sum(X2**2, axis=1) - 2 * np.dot(X1, X2.T)
+        sq_dists = (
+            np.sum(X1**2, axis=1, keepdims=True)
+            + np.sum(X2**2, axis=1)
+            - 2 * np.dot(X1, X2.T)
+        )
 
         return np.exp(-sq_dists / (2 * self.lengthscale**2))
 
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """Fit the Gaussian Process to training data."""
         self.X_train = np.array(X)
         self.y_train = np.array(y)
@@ -68,10 +75,15 @@ class SimpleGaussianProcess:
 
         self.fitted = True
 
-    def predict(self, X: np.ndarray, return_std: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    def predict(
+        self,
+        X: np.ndarray,
+        return_std: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Predict mean and standard deviation at test points."""
         if not self.fitted:
-            raise ValueError("Model must be fitted before prediction")
+            msg = "Model must be fitted before prediction"
+            raise ValueError(msg)
 
         X = np.array(X)
         if X.ndim == 1:
@@ -91,21 +103,21 @@ class SimpleGaussianProcess:
             var = np.maximum(var, 1e-8)  # Numerical stability
             std = np.sqrt(var)
             return mean, std
-        else:
-            return mean, None
+        return mean, None
+
 
 class SimpleBayesianOptimizer:
-    """
-    Simplified Bayesian optimization for electrode parameter tuning.
+    """Simplified Bayesian optimization for electrode parameter tuning.
 
     Uses Gaussian Process surrogate model with Expected Improvement acquisition.
     """
 
-    def __init__(self,
-                 parameter_bounds: list[OptimizationBounds],
-                 objective_function: Callable[[dict[str, float]], float],
-                 acquisition_type: str = 'EI'):
-
+    def __init__(
+        self,
+        parameter_bounds: list[OptimizationBounds],
+        objective_function: Callable[[dict[str, float]], float],
+        acquisition_type: str = "EI",
+    ) -> None:
         self.parameter_bounds = parameter_bounds
         self.objective_function = objective_function
         self.acquisition_type = acquisition_type
@@ -188,7 +200,7 @@ class SimpleBayesianOptimizer:
             bounds = [(0, 1) for _ in self.parameter_bounds]
 
             try:
-                res = minimize(neg_acquisition, x0, bounds=bounds, method='L-BFGS-B')
+                res = minimize(neg_acquisition, x0, bounds=bounds, method="L-BFGS-B")
 
                 if res.success and -res.fun > best_acquisition:
                     best_acquisition = -res.fun
@@ -203,8 +215,7 @@ class SimpleBayesianOptimizer:
         return best_params
 
     def optimize(self, n_initial: int = 5, n_iterations: int = 20) -> dict:
-        """
-        Run Bayesian optimization.
+        """Run Bayesian optimization.
 
         Args:
             n_initial: Number of initial random samples
@@ -212,20 +223,12 @@ class SimpleBayesianOptimizer:
 
         Returns:
             Optimization results dictionary
+
         """
-
-        print("🚀 Starting Simplified Bayesian Optimization")
-        print(f"   Initial samples: {n_initial}")
-        print(f"   Optimization iterations: {n_iterations}")
-        print("=" * 50)
-
         # Phase 1: Initial random sampling
-        print("📊 Phase 1: Initial random sampling...")
         initial_params = self._sample_random_parameters(n_initial)
 
-        for i, params in enumerate(initial_params):
-            print(f"  Initial sample {i+1}/{n_initial}")
-
+        for _i, params in enumerate(initial_params):
             # Evaluate objective function
             try:
                 objective_value = self.objective_function(params)
@@ -240,26 +243,18 @@ class SimpleBayesianOptimizer:
                     self.best_value = objective_value
                     self.best_params = params.copy()
 
-                print(f"    Objective: {objective_value:.4f}")
-
-            except Exception as e:
-                print(f"    Failed: {e}")
+            except Exception:
                 continue
 
         # Fit initial GP model
         if len(self.X_obs) >= 2:
             self.gp.fit(np.array(self.X_obs), np.array(self.y_obs))
-            print(f"✅ Fitted GP model with {len(self.X_obs)} samples")
         else:
-            print("❌ Insufficient samples for GP fitting")
             return self._create_results()
 
         # Phase 2: Bayesian optimization iterations
-        print("\n🎯 Phase 2: Bayesian optimization iterations...")
 
-        for iteration in range(n_iterations):
-            print(f"  Iteration {iteration+1}/{n_iterations}")
-
+        for _iteration in range(n_iterations):
             # Find next sampling point
             next_params = self._optimize_acquisition()
 
@@ -276,91 +271,89 @@ class SimpleBayesianOptimizer:
                 if objective_value > self.best_value:
                     self.best_value = objective_value
                     self.best_params = next_params.copy()
-                    print(f"    🏆 New best! Objective: {objective_value:.4f}")
                 else:
-                    print(f"    Objective: {objective_value:.4f}")
+                    pass
 
                 # Update GP model
                 self.gp.fit(np.array(self.X_obs), np.array(self.y_obs))
 
-            except Exception as e:
-                print(f"    Failed: {e}")
+            except Exception:
                 continue
 
         # Return results
-        results = self._create_results()
-
-        print("\n" + "=" * 50)
-        print("🎉 Optimization completed!")
-        print(f"Best objective value: {self.best_value:.4f}")
-        print(f"Total evaluations: {len(self.y_obs)}")
-
-        return results
+        return self._create_results()
 
     def _create_results(self) -> dict:
         """Create results dictionary."""
         return {
-            'best_parameters': self.best_params,
-            'best_objective_value': self.best_value,
-            'all_parameters': self.param_history,
-            'all_objective_values': self.y_obs,
-            'n_evaluations': len(self.y_obs),
-            'parameter_bounds': {b.name: (b.lower, b.upper) for b in self.parameter_bounds}
+            "best_parameters": self.best_params,
+            "best_objective_value": self.best_value,
+            "all_parameters": self.param_history,
+            "all_objective_values": self.y_obs,
+            "n_evaluations": len(self.y_obs),
+            "parameter_bounds": {
+                b.name: (b.lower, b.upper) for b in self.parameter_bounds
+            },
         }
+
 
 def create_electrode_optimization_bounds() -> list[OptimizationBounds]:
     """Create standard electrode optimization parameter bounds."""
     return [
         OptimizationBounds(
-            name='electrode_length',
-            lower=0.02, upper=0.1,
-            units='m',
-            description='Electrode length'
+            name="electrode_length",
+            lower=0.02,
+            upper=0.1,
+            units="m",
+            description="Electrode length",
         ),
         OptimizationBounds(
-            name='electrode_width',
-            lower=0.02, upper=0.1,
-            units='m',
-            description='Electrode width'
+            name="electrode_width",
+            lower=0.02,
+            upper=0.1,
+            units="m",
+            description="Electrode width",
         ),
         OptimizationBounds(
-            name='electrode_thickness',
-            lower=0.001, upper=0.02,
-            units='m',
-            description='Electrode thickness'
+            name="electrode_thickness",
+            lower=0.001,
+            upper=0.02,
+            units="m",
+            description="Electrode thickness",
         ),
         OptimizationBounds(
-            name='flow_rate',
-            lower=0.5e-6, upper=5e-6,
-            units='m³/s',
-            description='Flow rate'
+            name="flow_rate",
+            lower=0.5e-6,
+            upper=5e-6,
+            units="m³/s",
+            description="Flow rate",
         ),
         OptimizationBounds(
-            name='max_biofilm_density',
-            lower=50.0, upper=120.0,
-            units='kg/m³',
-            description='Maximum biofilm density'
+            name="max_biofilm_density",
+            lower=50.0,
+            upper=120.0,
+            units="kg/m³",
+            description="Maximum biofilm density",
         ),
         OptimizationBounds(
-            name='max_substrate_consumption',
-            lower=0.05, upper=0.5,
-            units='mol/m³/s',
-            description='Maximum substrate consumption rate'
-        )
+            name="max_substrate_consumption",
+            lower=0.05,
+            upper=0.5,
+            units="mol/m³/s",
+            description="Maximum substrate consumption rate",
+        ),
     ]
+
 
 if __name__ == "__main__":
     # Example usage
     def dummy_objective(params):
         """Dummy objective function for testing."""
         # Simple quadratic function with noise
-        x = params['electrode_length']
-        y = params['flow_rate'] * 1e6  # Scale for visibility
-        return -(x - 0.06)**2 - (y - 2)**2 + np.random.normal(0, 0.1)
+        x = params["electrode_length"]
+        y = params["flow_rate"] * 1e6  # Scale for visibility
+        return -((x - 0.06) ** 2) - (y - 2) ** 2 + np.random.normal(0, 0.1)
 
     bounds = create_electrode_optimization_bounds()
     optimizer = SimpleBayesianOptimizer(bounds, dummy_objective)
     results = optimizer.optimize(n_initial=5, n_iterations=10)
-
-    print(f"\nBest parameters: {results['best_parameters']}")
-    print(f"Best value: {results['best_objective_value']:.4f}")

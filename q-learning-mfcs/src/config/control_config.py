@@ -1,5 +1,4 @@
-"""
-Control System Configuration Classes
+"""Control System Configuration Classes.
 
 This module provides comprehensive configuration classes for MFC control systems,
 including PID controllers, flow control, substrate control, and recirculation systems.
@@ -25,6 +24,7 @@ from enum import Enum
 
 class ControlMode(Enum):
     """Control system operation modes."""
+
     MANUAL = "manual"
     AUTOMATIC = "automatic"
     CASCADE = "cascade"
@@ -34,6 +34,7 @@ class ControlMode(Enum):
 
 class SubstrateControlStrategy(Enum):
     """Substrate control strategies."""
+
     CONCENTRATION_BASED = "concentration_based"
     UTILIZATION_BASED = "utilization_based"
     POWER_BASED = "power_based"
@@ -68,18 +69,24 @@ class PIDConfig:
 
     # Adaptive parameters
     enable_gain_scheduling: bool = False  # Enable gain scheduling
-    operating_point_gains: dict[float, tuple[float, float, float]] = field(default_factory=dict)
+    operating_point_gains: dict[float, tuple[float, float, float]] = field(
+        default_factory=dict,
+    )
 
     def __post_init__(self):
         """Validate PID configuration parameters."""
         if self.kp < 0:
-            raise ValueError("Proportional gain must be non-negative")
+            msg = "Proportional gain must be non-negative"
+            raise ValueError(msg)
         if self.ki < 0:
-            raise ValueError("Integral gain must be non-negative")
+            msg = "Integral gain must be non-negative"
+            raise ValueError(msg)
         if self.kd < 0:
-            raise ValueError("Derivative gain must be non-negative")
+            msg = "Derivative gain must be non-negative"
+            raise ValueError(msg)
         if self.output_min >= self.output_max:
-            raise ValueError("Output minimum must be less than maximum")
+            msg = "Output minimum must be less than maximum"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -102,7 +109,9 @@ class FlowControlConfig:
 
     # Control parameters
     control_mode: ControlMode = ControlMode.AUTOMATIC
-    flow_pid: PIDConfig = field(default_factory=lambda: PIDConfig(kp=1.5, ki=0.2, kd=0.1))
+    flow_pid: PIDConfig = field(
+        default_factory=lambda: PIDConfig(kp=1.5, ki=0.2, kd=0.1),
+    )
 
     # Safety parameters
     emergency_shutdown_flow: float = 0.0  # Emergency shutdown flow rate (mL/h)
@@ -116,7 +125,9 @@ class SubstrateControlConfig:
 
     # Target concentrations (Pinto et al., 2011)
     target_outlet_concentration: float = 12.0  # Target outlet concentration (mmol/L)
-    target_reservoir_concentration: float = 20.0  # Target reservoir concentration (mmol/L)
+    target_reservoir_concentration: float = (
+        20.0  # Target reservoir concentration (mmol/L)
+    )
 
     # Substrate addition parameters
     min_addition_rate: float = 0.0  # Minimum addition rate (mmol/h)
@@ -124,11 +135,17 @@ class SubstrateControlConfig:
     nominal_addition_rate: float = 10.0  # Nominal addition rate (mmol/h)
 
     # Control strategy
-    control_strategy: SubstrateControlStrategy = SubstrateControlStrategy.CONCENTRATION_BASED
+    control_strategy: SubstrateControlStrategy = (
+        SubstrateControlStrategy.CONCENTRATION_BASED
+    )
 
     # PID controllers for cascade control
-    outlet_pid: PIDConfig = field(default_factory=lambda: PIDConfig(kp=2.0, ki=0.1, kd=0.5))
-    reservoir_pid: PIDConfig = field(default_factory=lambda: PIDConfig(kp=1.0, ki=0.05, kd=0.2))
+    outlet_pid: PIDConfig = field(
+        default_factory=lambda: PIDConfig(kp=2.0, ki=0.1, kd=0.5),
+    )
+    reservoir_pid: PIDConfig = field(
+        default_factory=lambda: PIDConfig(kp=1.0, ki=0.05, kd=0.2),
+    )
 
     # Substrate monitoring thresholds
     starvation_threshold_warning: float = 5.0  # Warning threshold (mmol/L)
@@ -197,10 +214,23 @@ class AdvancedControlConfig:
     substrate_utilization_max: float = 50.0  # Maximum substrate utilization
 
     # Action discretization
-    flow_rate_adjustments: list[float] = field(default_factory=lambda:
-        [-12.0, -10.0, -5.0, -2.0, -1.0, 0.0, 1.0, 2.0, 5.0, 6.0])
-    substrate_actions: list[float] = field(default_factory=lambda:
-        [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
+    flow_rate_adjustments: list[float] = field(
+        default_factory=lambda: [
+            -12.0,
+            -10.0,
+            -5.0,
+            -2.0,
+            -1.0,
+            0.0,
+            1.0,
+            2.0,
+            5.0,
+            6.0,
+        ],
+    )
+    substrate_actions: list[float] = field(
+        default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5],
+    )
 
     # Multi-objective weights
     power_objective_weight: float = 0.4  # Power optimization weight
@@ -230,9 +260,13 @@ class ControlSystemConfig:
 
     # Individual control subsystem configurations
     flow_control: FlowControlConfig = field(default_factory=FlowControlConfig)
-    substrate_control: SubstrateControlConfig = field(default_factory=SubstrateControlConfig)
+    substrate_control: SubstrateControlConfig = field(
+        default_factory=SubstrateControlConfig,
+    )
     recirculation: RecirculationConfig = field(default_factory=RecirculationConfig)
-    advanced_control: AdvancedControlConfig = field(default_factory=AdvancedControlConfig)
+    advanced_control: AdvancedControlConfig = field(
+        default_factory=AdvancedControlConfig,
+    )
 
     # Global control parameters
     control_update_interval: float = 60.0  # Control update interval (s)
@@ -244,7 +278,9 @@ class ControlSystemConfig:
 
     # Performance monitoring
     enable_performance_monitoring: bool = True  # Enable performance monitoring
-    performance_metrics_interval: float = 300.0  # Performance metrics update interval (s)
+    performance_metrics_interval: float = (
+        300.0  # Performance metrics update interval (s)
+    )
 
     # Configuration metadata
     configuration_name: str = "default_control"  # Configuration name
@@ -254,6 +290,7 @@ class ControlSystemConfig:
 
 
 # Pre-defined control configurations for different scenarios
+
 
 def get_conservative_control_config() -> ControlSystemConfig:
     """Get conservative control configuration for stable operation."""
@@ -336,8 +373,7 @@ def get_precision_control_config() -> ControlSystemConfig:
 
 # Configuration validation functions
 def validate_control_config(config: ControlSystemConfig) -> bool:
-    """
-    Validate control system configuration.
+    """Validate control system configuration.
 
     Args:
         config: Control system configuration to validate
@@ -347,43 +383,78 @@ def validate_control_config(config: ControlSystemConfig) -> bool:
 
     Raises:
         ValueError: If configuration is invalid
+
     """
     # Validate flow control parameters
     if config.flow_control.min_flow_rate >= config.flow_control.max_flow_rate:
-        raise ValueError("Minimum flow rate must be less than maximum flow rate")
+        msg = "Minimum flow rate must be less than maximum flow rate"
+        raise ValueError(msg)
 
-    if config.flow_control.nominal_flow_rate < config.flow_control.min_flow_rate or \
-       config.flow_control.nominal_flow_rate > config.flow_control.max_flow_rate:
-        raise ValueError("Nominal flow rate must be within min/max bounds")
+    if (
+        config.flow_control.nominal_flow_rate < config.flow_control.min_flow_rate
+        or config.flow_control.nominal_flow_rate > config.flow_control.max_flow_rate
+    ):
+        msg = "Nominal flow rate must be within min/max bounds"
+        raise ValueError(msg)
 
     # Validate substrate control parameters
-    if config.substrate_control.min_addition_rate >= config.substrate_control.max_addition_rate:
-        raise ValueError("Minimum addition rate must be less than maximum addition rate")
+    if (
+        config.substrate_control.min_addition_rate
+        >= config.substrate_control.max_addition_rate
+    ):
+        msg = "Minimum addition rate must be less than maximum addition rate"
+        raise ValueError(
+            msg,
+        )
 
-    if config.substrate_control.starvation_threshold_critical >= config.substrate_control.starvation_threshold_warning:
-        raise ValueError("Critical starvation threshold must be less than warning threshold")
+    if (
+        config.substrate_control.starvation_threshold_critical
+        >= config.substrate_control.starvation_threshold_warning
+    ):
+        msg = "Critical starvation threshold must be less than warning threshold"
+        raise ValueError(
+            msg,
+        )
 
     # Validate recirculation parameters
     if config.recirculation.reservoir_volume <= 0:
-        raise ValueError("Reservoir volume must be positive")
+        msg = "Reservoir volume must be positive"
+        raise ValueError(msg)
 
-    if config.recirculation.pump_efficiency <= 0 or config.recirculation.pump_efficiency > 1:
-        raise ValueError("Pump efficiency must be between 0 and 1")
+    if (
+        config.recirculation.pump_efficiency <= 0
+        or config.recirculation.pump_efficiency > 1
+    ):
+        msg = "Pump efficiency must be between 0 and 1"
+        raise ValueError(msg)
 
     # Validate Q-learning parameters
-    if config.advanced_control.learning_rate <= 0 or config.advanced_control.learning_rate > 1:
-        raise ValueError("Learning rate must be between 0 and 1")
+    if (
+        config.advanced_control.learning_rate <= 0
+        or config.advanced_control.learning_rate > 1
+    ):
+        msg = "Learning rate must be between 0 and 1"
+        raise ValueError(msg)
 
-    if config.advanced_control.discount_factor <= 0 or config.advanced_control.discount_factor > 1:
-        raise ValueError("Discount factor must be between 0 and 1")
+    if (
+        config.advanced_control.discount_factor <= 0
+        or config.advanced_control.discount_factor > 1
+    ):
+        msg = "Discount factor must be between 0 and 1"
+        raise ValueError(msg)
 
     # Validate weights sum to reasonable values
-    total_weight = (config.advanced_control.power_objective_weight +
-                   config.advanced_control.biofilm_health_weight +
-                   config.advanced_control.sensor_agreement_weight +
-                   config.advanced_control.stability_weight)
+    total_weight = (
+        config.advanced_control.power_objective_weight
+        + config.advanced_control.biofilm_health_weight
+        + config.advanced_control.sensor_agreement_weight
+        + config.advanced_control.stability_weight
+    )
 
     if not (0.8 <= total_weight <= 1.2):  # Allow some tolerance
-        raise ValueError(f"Multi-objective weights should sum to approximately 1.0, got {total_weight}")
+        msg = f"Multi-objective weights should sum to approximately 1.0, got {total_weight}"
+        raise ValueError(
+            msg,
+        )
 
     return True

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Scientific Parameter Widgets for Enhanced MFC Platform
+"""Scientific Parameter Widgets for Enhanced MFC Platform.
 
 Provides scientific parameter input widgets with real-time validation
 and literature-backed feedback for electrode configuration.
@@ -17,6 +16,7 @@ import streamlit as st
 @dataclass
 class ParameterSpec:
     """Scientific parameter specification with validation."""
+
     name: str
     unit: str
     min_value: float
@@ -29,13 +29,12 @@ class ParameterSpec:
 class ScientificParameterWidget:
     """Scientific parameter input widget with validation."""
 
-    def __init__(self, param_spec: ParameterSpec, key: str):
+    def __init__(self, param_spec: ParameterSpec, key: str) -> None:
         self.param_spec = param_spec
         self.key = key
 
     def render(self, label: str, value: float) -> float:
         """Render parameter input with validation."""
-
         # Input widget
         input_value = st.number_input(
             label,
@@ -43,7 +42,7 @@ class ScientificParameterWidget:
             max_value=self.param_spec.max_value,
             value=value,
             key=self.key,
-            help=f"{self.param_spec.description} ({self.param_spec.unit})"
+            help=f"{self.param_spec.description} ({self.param_spec.unit})",
         )
 
         # Validation feedback
@@ -51,17 +50,20 @@ class ScientificParameterWidget:
 
         return input_value
 
-    def _show_validation_feedback(self, value: float):
+    def _show_validation_feedback(self, value: float) -> None:
         """Show real-time validation feedback."""
-
         min_typical, max_typical = self.param_spec.typical_range
 
         if min_typical <= value <= max_typical:
             st.success(f"✅ Typical range ({self.param_spec.unit})")
         elif value < min_typical:
-            st.warning(f"⚠️ Below typical range ({min_typical}-{max_typical} {self.param_spec.unit})")
+            st.warning(
+                f"⚠️ Below typical range ({min_typical}-{max_typical} {self.param_spec.unit})",
+            )
         else:
-            st.warning(f"⚠️ Above typical range ({min_typical}-{max_typical} {self.param_spec.unit})")
+            st.warning(
+                f"⚠️ Above typical range ({min_typical}-{max_typical} {self.param_spec.unit})",
+            )
 
         # Literature reference
         if self.param_spec.literature_refs:
@@ -69,17 +71,22 @@ class ScientificParameterWidget:
                 st.info(self.param_spec.literature_refs)
 
 
-def create_parameter_section(title: str, parameters: dict[str, Any]) -> dict[str, float]:
+def create_parameter_section(
+    title: str,
+    parameters: dict[str, Any],
+) -> dict[str, float]:
     """Create a section of scientific parameters."""
-
     st.subheader(title)
     values = {}
 
     for param_name, param_config in parameters.items():
-        widget = ScientificParameterWidget(param_config["spec"], f"{title}_{param_name}")
+        widget = ScientificParameterWidget(
+            param_config["spec"],
+            f"{title}_{param_name}",
+        )
         values[param_name] = widget.render(
             param_config["label"],
-            param_config["default"]
+            param_config["default"],
         )
 
     return values
@@ -94,6 +101,6 @@ MFC_ELECTRODE_PARAMETERS = {
         max_value=10000000.0,
         typical_range=(100.0, 100000.0),
         literature_refs="Logan, B.E. (2008). Microbial Fuel Cells: Methodology and Technology",
-        description="Electrical conductivity of electrode material"
-    )
+        description="Electrical conductivity of electrode material",
+    ),
 }
