@@ -111,9 +111,9 @@
     }
   },
   "edit_thresholds": {
-    "max_lines_added": -1,
-    "max_lines_removed": -1,
-    "max_total_changes": -1,
+    "max_lines_added": 500,
+    "max_lines_removed": 500,
+    "max_total_changes": 1000,
     "enabled": true,
     "auto_commit": true,
     "commit_message_prefix": "Auto-commit: Large file changes detected - ",

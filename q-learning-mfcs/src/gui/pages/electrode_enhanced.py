@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Enhanced Electrode Configuration Page."""
 
+
 import numpy as np
 import pandas as pd
 import streamlit as st
+from config.electrode_config import MATERIAL_PROPERTIES_DATABASE, ElectrodeMaterial
 
 
 def render_enhanced_electrode_page() -> None:
@@ -48,7 +50,6 @@ def render_enhanced_configuration() -> None:
 
     with tab4:
         render_custom_material_creator()
-
 
 def render_material_selection() -> None:
     """Render enhanced material selection interface."""
@@ -125,19 +126,18 @@ def render_material_selector(electrode_type: str):
 
     return None
 
-
 def render_material_comparison(anode_material: str, cathode_material: str) -> None:
     """Render material comparison."""
     st.subheader("⚔️ Material Comparison")
     st.success(f"Anode: {anode_material} | Cathode: {cathode_material}")
     st.info("💡 Configuration validated - materials are compatible for MFC operation")
 
-
 def render_geometry_configuration() -> None:
     """Render geometry configuration interface."""
     st.subheader("📐 Electrode Geometry")
 
-    col1, col2 = st.columns(2)
+    # Four-column layout for dual electrode configuration
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         geometry_type = st.selectbox(
@@ -186,26 +186,94 @@ def render_geometry_configuration() -> None:
                 value=15.0,
             )
 
-            # Calculate areas
-            radius = diameter / 2
-            geometric_area = np.pi * radius**2
-            projected_area = diameter * length
-            total_surface_area = 2 * np.pi * radius * (radius + length)
+            # Calculate anode areas and mass
+            anode_geometric_area = anode_length * anode_width
+            anode_geometric_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
+
+            # Calculate volume and mass for specific surface area
+            anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
+            anode_mass_kg = anode_volume_m3 * anode_density
+            anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if anode_volumetric_ssa > 0:
+                # Total surface area = Volumetric SSA × Volume
+                anode_total_surface_area_m2 = anode_volumetric_ssa * anode_volume_m3
+                anode_total_surface_area = anode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                anode_total_surface_area = anode_geometric_surface_area
+
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_anode:
+                anode_specific_surface_area = anode_measured_ssa
+            else:
+                anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+                anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
+
+        elif anode_geometry_type == "Cylindrical Rod":
+            anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
+            anode_length = st.number_input("Anode Length (cm)", min_value=0.1, max_value=50.0, value=15.0, key="anode_length_cyl")
+            default_density_cyl = float(anode_mat_props.density) if anode_mat_props else 2700.0
+            anode_density = st.number_input("Anode Density (kg/m³)", min_value=0.1, max_value=50000.0, value=default_density_cyl, step=10.0, key="anode_density_cyl")
+
+            # Material properties
+            anode_porosity_cyl = st.number_input("Porosity (%)", min_value=0.0, max_value=99.9, value=85.0, step=0.1, key="anode_porosity_cyl", help="Typical values: Carbon felt: 85-95%, Graphite felt: 80-90%")
+            anode_volumetric_ssa_cyl = st.number_input("Volumetric SSA (m²/m³)", min_value=0.0, max_value=1e8, value=6.0e4, step=1000.0, format="%.2e", key="anode_volumetric_ssa_cyl", help="Specific surface area per unit volume. Literature: 6.0×10⁴ m²/m³ for carbon felt (SIGRI GmbH)")
+            anode_resistivity_cyl = st.number_input("Electrical Resistivity (Ω·m)", min_value=0.0, max_value=100.0, value=0.012, step=0.001, format="%.4f", key="anode_resistivity_cyl", help="Apparent electrical resistivity. Typical: 0.012 Ω·m for carbon felt, 0.005-0.01 Ω·m for graphite felt")
+
+            # Option to input measured SSA
+            use_measured_ssa_anode_cyl = st.checkbox("Use measured SSA value", key="use_measured_ssa_anode_cyl")
+            if use_measured_ssa_anode_cyl:
+                anode_measured_ssa_cyl = st.number_input("Measured SSA (m²/g)", min_value=0.0, max_value=1000.0, value=1.0, step=0.1, key="anode_measured_ssa_cyl", help="Enter the experimentally measured specific surface area (e.g., from BET, mercury intrusion). Literature values: PAN-based carbon felt: 1.0 m²/g, Graphite felt: 238-267 m²/g")
+
+            # Calculate anode areas and mass
+            anode_radius = anode_diameter / 2
+            anode_geometric_area = np.pi * anode_radius**2
+            # Correct formula: lateral surface area + two end caps
+            anode_geometric_surface_area = np.pi * anode_diameter * anode_length + 2 * np.pi * anode_radius**2
+
+            # Calculate volume and mass for specific surface area
+            anode_volume_m3 = np.pi * (anode_radius / 100)**2 * (anode_length / 100)  # Convert cm to m
+            anode_mass_kg = anode_volume_m3 * anode_density
+            anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
+
+            # Calculate total surface area using volumetric SSA if provided
+            if anode_volumetric_ssa_cyl > 0:
+                # Total surface area = Volumetric SSA × Volume
+                anode_total_surface_area_m2 = anode_volumetric_ssa_cyl * anode_volume_m3
+                anode_total_surface_area = anode_total_surface_area_m2 * 10000  # Convert m² to cm²
+            else:
+                # Use geometric surface area
+                anode_total_surface_area = anode_geometric_surface_area
+
+            # Calculate or use measured specific surface area (m²/g)
+            if use_measured_ssa_anode_cyl:
+                anode_specific_surface_area = anode_measured_ssa_cyl
+            else:
+                anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
+                anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
 
         else:
-            st.info("Geometry configuration coming soon!")
-            return
+            st.info("Anode geometry configuration coming soon!")
+            anode_geometric_area = anode_specific_surface_area = anode_total_surface_area = 0
+            anode_porosity = anode_volumetric_ssa = anode_resistivity = 0
+            anode_porosity_cyl = anode_volumetric_ssa_cyl = anode_resistivity_cyl = 0
 
     with col2:
-        st.markdown("#### 📊 Calculated Properties")
+        st.markdown("#### 🔋 Cathode Configuration")
 
-        st.metric("Geometric Area", f"{geometric_area:.2f} cm²")
-        st.metric("Projected Area", f"{projected_area:.2f} cm²")
-        st.metric("Total Surface Area", f"{total_surface_area:.2f} cm²")
+        # Material selection
+        cathode_material_name = st.selectbox(
+            "Cathode Material:",
+            options=list(material_options.keys()),
+            index=2,  # Default to Carbon Felt
+            key="cathode_material_select"
+        )
+        cathode_material = material_options[cathode_material_name]
 
-        # Biofilm capacity calculation
-        biofilm_capacity = total_surface_area * 0.1  # Rough estimate
-        st.metric("Est. Biofilm Capacity", f"{biofilm_capacity:.2f} mL")
+        # Get material properties
+        cathode_mat_props = MATERIAL_PROPERTIES_DATABASE.get(cathode_material)
 
 
 def render_performance_analysis() -> None:

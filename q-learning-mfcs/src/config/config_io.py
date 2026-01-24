@@ -115,13 +115,27 @@ def convert_lists_to_tuples_for_dataclass(
         "SensorFusionConfig": [],
     }
 
-    class_name = dataclass_type.__name__
-    if class_name in tuple_fields:
-        for field in tuple_fields[class_name]:
-            if field in data and isinstance(data[field], list):
-                data[field] = tuple(data[field])
+    def convert_recursive(obj: Any) -> Any:
+        """Recursively convert lists to tuples in nested structures."""
+        if isinstance(obj, dict):
+            result = {}
+            for key, value in obj.items():
+                if isinstance(value, dict):
+                    result[key] = convert_recursive(value)
+                else:
+                    result[key] = value
 
-    return data
+            # Apply tuple conversions to the current level
+            class_name = dataclass_type.__name__
+            if class_name in tuple_fields:
+                for field in tuple_fields[class_name]:
+                    if field in result and isinstance(result[field], list):
+                        result[field] = tuple(result[field])
+
+            return result
+        return obj
+
+    return convert_recursive(data)
 
 
 def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:

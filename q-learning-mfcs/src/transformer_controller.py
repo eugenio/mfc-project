@@ -192,7 +192,9 @@ class MultiHeadAttention(nn.Module):
             Output tensor and attention weights
 
         """
-        batch_size, seq_len, _ = query.size()
+        batch_size, seq_len_q, _ = query.size()
+        _, seq_len_k, _ = key.size()
+        _, seq_len_v, _ = value.size()
 
         # Linear projections and reshape for multi-head
         Q = (
@@ -407,7 +409,20 @@ class SensorFusionAttention(nn.Module):
 
         # Fuse all sensor representations
         if attention_outputs:
+            # Calculate the actual dimension needed for fusion
+            available_sensors = list(attention_outputs.keys())
+            expected_dim = self.config.d_model * len(self.sensor_types)
+            actual_dim = self.config.d_model * len(available_sensors)
+
             fused_tensor = torch.cat(list(attention_outputs.values()), dim=-1)
+
+            # Pad if necessary to match expected fusion layer input
+            if actual_dim < expected_dim:
+                batch_size, seq_len, _ = fused_tensor.shape
+                padding_dim = expected_dim - actual_dim
+                padding = torch.zeros(batch_size, seq_len, padding_dim, device=fused_tensor.device)
+                fused_tensor = torch.cat([fused_tensor, padding], dim=-1)
+
             fused_output = self.fusion_layer(fused_tensor)
         # Fallback if no cross-modal attention
         elif projected_sensors:
@@ -600,6 +615,14 @@ class TransformerMFCController(nn.Module):
         projected_inputs = {}
         for input_type, data in inputs.items():
             if input_type in self.input_projections:
+                # Ensure data has correct shape [batch_size, seq_len, input_dim]
+                if data.dim() == 2:
+                    # Add sequence dimension if missing
+                    data = data.unsqueeze(1)
+                elif data.dim() == 1:
+                    # Add both batch and sequence dimensions
+                    data = data.unsqueeze(0).unsqueeze(0)
+
                 projected_inputs[input_type] = self.input_projections[input_type](data)
 
         # Sensor fusion attention
@@ -1054,7 +1077,8 @@ if __name__ == "__main__":
         "system_features": torch.randn(1, 4, input_dims["system_features"]).to(device),
     }
 
-    dummy_health = torch.randn(1, 1, 5).to(device)
+    # Create health context with correct dimensions (should match d_model)
+    dummy_health = torch.randn(1, 1, controller.config.d_model).to(device)
 
     try:
         with torch.no_grad():
