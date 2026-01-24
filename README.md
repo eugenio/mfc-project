@@ -202,6 +202,33 @@ mypy .
    python q-learning-mfcs/tests/run_tests.py -c gpu_acceleration
    ```
 
+## Autonomous Agent Workflow (Ralph)
+
+This project includes [claude-ralph](https://github.com/RobinOppenstam/claude-ralph), an autonomous AI agent loop that runs Claude Code repeatedly until all PRD items are complete. It's located in `scripts/ralph/`.
+
+### Usage
+
+```bash
+# Navigate to ralph directory
+cd scripts/ralph
+
+# Create a prd.json defining your user stories
+# (see prd.json.example for format)
+
+# Run the autonomous loop
+./ralph.sh
+
+# Or run a single iteration
+./ralph-once.sh
+
+# Check status
+./ralph-status.sh
+```
+
+The agent reads the PRD, picks the highest priority incomplete story, implements it, runs quality checks, and commits the changes. It continues until all stories pass.
+
+For detailed documentation, see `scripts/ralph/README.md`.
+
 ## Contributing
 
 Contributions are welcome! Please ensure:
