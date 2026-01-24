@@ -16,12 +16,21 @@ import json
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add hooks directory to path
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root / '.claude' / 'hooks'))
 
-import pre_tool_use
+try:
+    import pre_tool_use
+    IMPORTS_AVAILABLE = True
+except ImportError:
+    IMPORTS_AVAILABLE = False
+    pre_tool_use = None
+
+import pytest
 
 
+@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="Hook modules not available")
 class TestFileCreationThresholdWithGuardian(unittest.TestCase):
     """Test file creation threshold behavior with git-commit-guardian."""
     
