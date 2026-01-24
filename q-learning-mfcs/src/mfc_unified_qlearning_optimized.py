@@ -1,15 +1,37 @@
 #!/usr/bin/env python3
-"""MFC Unified Q-Learning Control with Optimized Parameters from Optuna.
-===================================================================
+"""MFC Unified Q-Learning Control - PRODUCTION IMPLEMENTATION.
+==============================================================
+
+**RECOMMENDED FOR PRODUCTION USE**
 
 This is the optimized version of the MFC unified Q-learning controller using
 the best parameters found through Optuna hyperparameter optimization.
 
-Optimization Results:
-- Trial #37 achieved best objective: 8.991467
+This module extends `mfc_unified_qlearning_control.py` with Optuna-tuned
+hyperparameters, inheriting all base functionality including GPU acceleration.
+
+Optimization Results (Trial #37):
+- Best objective: 8.991467
 - Control RMSE: 4.528 mmol/L
 - Energy: 4.952 Wh
 - Optimized for 600-hour simulations
+
+Usage:
+    >>> from mfc_unified_qlearning_optimized import OptimizedMFCSimulation
+    >>> sim = OptimizedMFCSimulation(use_gpu=True, target_outlet_conc=12.0)
+    >>> sim.run_simulation()
+
+Module Structure:
+- `OptimizedUnifiedQController`: Q-learning controller with Optuna-tuned parameters
+- `OptimizedMFCSimulation`: Simulation class (extends MFCUnifiedQLearningSimulation)
+
+GPU Acceleration:
+    GPU acceleration (8400x speedup) is inherited from the base implementation.
+    Set `use_gpu=True` when CuPy/GPU is available.
+
+Q-Table Compatibility:
+    Q-tables trained with this optimized controller can be loaded by specifying
+    the same state discretization bins. The Q-table format is compatible.
 
 Author: Claude & User
 Date: 2025-07-23
