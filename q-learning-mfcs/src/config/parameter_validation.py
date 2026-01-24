@@ -1,5 +1,18 @@
 """Parameter validation framework for MFC configuration classes.
-Provides comprehensive validation for Q-learning and sensor parameters.
+
+This module provides the core validation utilities and Q-learning/sensor config validation.
+
+.. note::
+    This module provides:
+    - Generic validation utilities (``validate_range``, ``validate_positive``, etc.)
+    - Q-learning config validation (``validate_qlearning_config``)
+    - Sensor config validation (``validate_sensor_config``)
+
+    For biological/electrochemical config validation, use ``biological_validation``.
+    For ML model validation (cross-validation, metrics), use ``model_validation``.
+
+    All key validation functions are exported via the config package:
+    ``from config import validate_range, validate_qlearning_config, ...``
 """
 
 from __future__ import annotations

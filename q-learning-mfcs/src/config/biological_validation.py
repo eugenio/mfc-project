@@ -1,5 +1,28 @@
 """Validation functions for biological configuration parameters.
-Ensures biological plausibility and parameter consistency.
+
+This module validates biological, electrochemical, and substrate configurations
+for MFC systems, ensuring biological plausibility and parameter consistency.
+
+.. note::
+    This module focuses on **domain-specific biological parameter validation**.
+    For other validation types, use:
+
+    - ``parameter_validation`` - Q-learning/sensor config (generic utilities)
+    - ``model_validation`` - ML/statistical model validation (metrics)
+
+    Key functions are exported via the config package for a unified interface.
+
+Functions:
+    - validate_kinetic_parameters: Validate Michaelis-Menten kinetic parameters
+    - validate_metabolic_reaction: Validate metabolic reaction stoichiometry
+    - validate_species_metabolic_config: Validate species-specific metabolic settings
+    - validate_biofilm_kinetics_config: Validate biofilm growth/transport parameters
+    - validate_substrate_kinetics_config: Validate substrate uptake kinetics
+    - validate_comprehensive_substrate_config: Full substrate config validation
+    - validate_electrochemical_config: Validate electrode and membrane parameters
+    - validate_all_biological_configs: Cross-validate all biological configs
+
+Uses ConfigValidationError and validate_range from parameter_validation module.
 """
 
 from .biological_config import (
