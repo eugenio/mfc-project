@@ -1,13 +1,42 @@
 #!/usr/bin/env python3
 """Live Performance Monitoring Dashboard for MFC Research Platform.
 
-Implements Feature 1.3.1: Live Performance Monitoring Dashboard
+ADVANCED REAL-TIME MONITORING COMPONENT
+---------------------------------------
+This module provides comprehensive live monitoring capabilities for MFC systems,
+distinct from the simple overview dashboard (gui/pages/dashboard.py).
+
+Features:
 - Real-time streaming data visualization (<5 second updates)
 - Customizable dashboard layout with drag-and-drop panels
 - Key performance indicators: power output, substrate concentration, pH
 - Historical data integration with zoom and pan functionality
 - Alert system for critical parameter thresholds
 - Multi-cell stack monitoring support
+
+Dashboard Component Hierarchy:
+-----------------------------
+1. **gui/pages/dashboard.py**: Simple overview page
+   - High-level system status and phase completion
+   - Used by NavigationController for main GUI
+
+2. **This file (gui/live_monitoring_dashboard.py)**: ADVANCED MONITORING
+   - Detailed performance charts with Plotly
+   - AlertManager for configurable alert rules
+   - LiveDataGenerator for real-time/simulated data
+   - Multi-cell comparison and analysis
+
+3. **monitoring/dashboard_api.py**: REST API backend
+   - DashboardAPI class for programmatic access
+   - FastAPI endpoints for data and control
+
+4. **monitoring/dashboard_frontend.py**: Streamlit API client
+   - Frontend for dashboard_api.py backend
+
+Usage:
+    >>> from gui.live_monitoring_dashboard import LiveMonitoringDashboard
+    >>> dashboard = LiveMonitoringDashboard(n_cells=5)
+    >>> dashboard.render_dashboard()  # In Streamlit context
 
 Created: 2025-07-31
 Story Points: 13 (High Priority)
