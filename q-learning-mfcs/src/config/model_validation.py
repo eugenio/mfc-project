@@ -1,7 +1,17 @@
 """Model Validation and Comparison Framework.
 
-This module provides comprehensive model validation and comparison tools for MFC systems,
+This module provides comprehensive **ML/statistical model validation** tools for MFC systems,
 including cross-validation, performance metrics, statistical tests, and benchmarking.
+
+.. note::
+    This module is for validating **predictive models** (e.g., ML models, regression models).
+    For validating **configuration parameters**, use:
+
+    - ``parameter_validation`` - Q-learning and sensor config validation
+    - ``biological_validation`` - Biological/electrochemical config validation
+
+    All validation modules are accessible via the config package:
+    ``from config import validate_qlearning_config, validate_sensor_config``
 
 Classes:
 - ModelValidator: Main validation framework with cross-validation methods
