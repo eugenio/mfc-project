@@ -1,5 +1,31 @@
 #!/usr/bin/env python3
-"""Dashboard Page - Enhanced MFC Platform."""
+"""Dashboard Page - Enhanced MFC Platform.
+
+This is a simple Streamlit dashboard page that displays:
+- System overview metrics (health, GPU acceleration, simulations, validation)
+- Phase status overview with progress indicators
+
+Dashboard Component Hierarchy:
+-----------------------------
+1. **This file (gui/pages/dashboard.py)**: Simple overview page
+   - Used by NavigationController for main GUI navigation
+   - Shows high-level system status and phase completion
+
+2. **gui/live_monitoring_dashboard.py**: Advanced real-time monitoring
+   - Detailed performance charts (power, substrate, multi-cell comparison)
+   - Alert management with configurable thresholds
+   - Live data streaming with customizable refresh rates
+   - Use this for detailed operational monitoring
+
+3. **monitoring/dashboard_api.py**: REST API backend
+   - DashboardAPI class for programmatic access
+   - FastAPI endpoints for data and control
+   - Simple/Advanced modes via configuration
+
+4. **monitoring/dashboard_frontend.py**: Streamlit API client
+   - Frontend for dashboard_api.py backend
+   - Secure HTTPS communication
+"""
 
 import streamlit as st
 

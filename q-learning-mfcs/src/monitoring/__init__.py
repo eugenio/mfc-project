@@ -8,16 +8,36 @@ A comprehensive monitoring solution for Microbial Fuel Cell (MFC) systems provid
 - REST API for system control and data access
 - Historical data analysis and reporting
 
-Components:
-- dashboard_api: FastAPI-based REST API server
-- dashboard_frontend: Streamlit-based web dashboard
-- realtime_streamer: WebSocket streaming service
-- safety_monitor: Safety monitoring and emergency response system
-- start_monitoring: System startup and management script
+Dashboard Components:
+---------------------
+The dashboard system has a clear separation of concerns:
+
+1. **GUI Pages** (gui/pages/dashboard.py):
+   - Simple Streamlit page showing system overview metrics
+   - Used by navigation_controller.py for main GUI
+
+2. **Live Monitoring Dashboard** (gui/live_monitoring_dashboard.py):
+   - Advanced real-time monitoring with Plotly charts
+   - Multi-cell comparison, alerts, customizable layouts
+   - Use for detailed performance monitoring
+
+3. **Dashboard API** (monitoring/dashboard_api.py):
+   - FastAPI REST endpoints for data and control
+   - DashboardAPI class for programmatic access
+   - Simple/Advanced modes via configuration
+   - Models: SimulationConfig, SimulationData, SystemMetrics, ControlCommand
+
+4. **Dashboard Frontend** (monitoring/dashboard_frontend.py):
+   - Streamlit client for Dashboard API
+   - Secure HTTPS communication with API server
 
 Quick Start:
-    >>> from monitoring import start_monitoring
-    >>> # Start all monitoring services
+    # Programmatic access
+    >>> from monitoring import DashboardAPI
+    >>> api = DashboardAPI(mode='simple')
+    >>> metrics = api.get_system_metrics()
+
+    # Start all monitoring services
     >>> python start_monitoring.py start
 
 Access Points:
@@ -27,7 +47,8 @@ Access Points:
 - Health Check: http://localhost:8000/api/health
 """
 
-from .api_models import AlertMessage, SystemMetrics, SystemStatus
+from .api_models import AlertMessage, SystemStatus
+from .dashboard_api import ControlCommand, DashboardAPI, SystemMetrics
 from .dashboard_api import app as dashboard_app
 from .observability_manager import (
     Alert,
@@ -39,21 +60,33 @@ from .observability_manager import (
     get_default_manager,
 )
 from .realtime_streamer import DataStreamManager
-from .safety_monitor import EmergencyAction, SafetyLevel, SafetyMonitor, SafetyThreshold
+from .safety_monitor import (
+    EmergencyAction,
+    SafetyLevel,
+    SafetyMonitor,
+    SafetyThreshold,
+)
 
 __version__ = "1.0.0"
 __author__ = "MFC Development Team"
 
 __all__ = [
+    "Alert",
+    "AlertCondition",
     "AlertMessage",
+    "AlertSeverity",
+    "ControlCommand",
+    "DashboardAPI",
+    "DataStreamManager",
     "EmergencyAction",
-    "RealTimeStreamer",
+    "HealthStatus",
+    "ObservabilityManager",
     "SafetyLevel",
     "SafetyMonitor",
     "SafetyThreshold",
-    "StreamEvent",
-    "StreamEventType",
+    "ServiceHealth",
     "SystemMetrics",
     "SystemStatus",
     "dashboard_app",
+    "get_default_manager",
 ]

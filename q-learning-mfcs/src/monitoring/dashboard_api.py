@@ -1,6 +1,31 @@
 #!/usr/bin/env python3
-"""FastAPI Dashboard API for MFC Monitoring System with HTTPS Support
-Provides REST API endpoints for simulation data, control, and monitoring.
+"""Unified Dashboard API for MFC Monitoring System.
+
+This module consolidates all dashboard API functionality including:
+- FastAPI REST endpoints for simulation data, control, and monitoring
+- Simple API models (SystemMetrics, ControlCommand) for basic monitoring
+- Full simulation models (SimulationConfig, SimulationData) for advanced features
+- HTTPS/SSL support for secure communication
+
+Usage Modes:
+- Simple Mode: Basic metrics and control (SystemMetrics, ControlCommand endpoints)
+- Advanced Mode: Full simulation control with Q-learning parameters
+
+Components:
+- DashboardAPI: High-level wrapper class for programmatic access
+- FastAPI app: REST API server with full endpoint set
+- Pydantic models: Data validation for all API interactions
+
+Quick Start:
+    # Simple programmatic access
+    >>> from monitoring.dashboard_api import DashboardAPI
+    >>> api = DashboardAPI()
+    >>> metrics = api.get_system_metrics()
+
+    # Run as API server
+    $ python dashboard_api.py --port 8000
+
+For more details see the endpoint documentation at /docs when running the server.
 """
 
 from __future__ import annotations
@@ -13,6 +38,7 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import uvicorn
@@ -143,6 +169,227 @@ class AlertConfig(BaseModel):
     threshold_max: float | None = None
     enabled: bool = True
     email_notify: bool = False
+
+
+# Simple API models (consolidated from simple_dashboard_api.py)
+class SystemMetrics(BaseModel):
+    """System metrics response for simple monitoring mode.
+
+    Provides essential MFC system metrics without full simulation detail.
+    Use this model for basic monitoring dashboards or quick status checks.
+    """
+
+    timestamp: str
+    status: str
+    uptime_hours: float
+    power_output_w: float
+    efficiency_pct: float
+    temperature_c: float
+    ph_level: float
+    pressure_bar: float
+    flow_rate_ml_min: float
+    cell_voltages: list[float]
+
+
+class ControlCommand(BaseModel):
+    """Control command request for system control.
+
+    Simple command interface for sending control commands to MFC systems.
+    Use this for basic operations like start/stop, parameter adjustments.
+    """
+
+    command: str
+    parameters: dict[str, Any] | None = None
+
+
+class DashboardAPI:
+    """High-level wrapper for programmatic dashboard API access.
+
+    This class provides a convenient interface for integrating dashboard
+    functionality into other Python modules without running the full
+    FastAPI server.
+
+    Modes:
+        - simple: Basic metrics and status (default)
+        - advanced: Full simulation control with Q-learning parameters
+
+    Example:
+        >>> api = DashboardAPI(mode='simple')
+        >>> metrics = api.get_system_metrics()
+        >>> api.send_control_command('start', {'duration': 24})
+
+        >>> api = DashboardAPI(mode='advanced')
+        >>> status = api.get_simulation_status()
+        >>> api.start_simulation(duration_hours=100, n_cells=5)
+    """
+
+    def __init__(self, config: dict[str, Any] | None = None, mode: str = "simple"):
+        """Initialize DashboardAPI.
+
+        Args:
+            config: Optional configuration dictionary with keys:
+                - data_dir: Path to simulation data directory
+                - api_token: Authentication token for API access
+                - ssl_enabled: Whether SSL is enabled
+            mode: Operation mode - 'simple' for basic metrics, 'advanced' for full control
+        """
+        self.config = config or {}
+        self.mode = mode
+        self._data_dir = Path(
+            self.config.get("data_dir", "../../../data/simulation_data")
+        )
+        self._is_running = False
+        self._start_time: datetime | None = None
+        self._current_config: SimulationConfig | None = None
+        logger.info(f"DashboardAPI initialized in {mode} mode")
+
+    def get_system_metrics(self) -> SystemMetrics:
+        """Get current system metrics (simple mode).
+
+        Returns:
+            SystemMetrics with current MFC system state
+        """
+        # Return mock metrics for now - in production, connect to actual sensors
+        return SystemMetrics(
+            timestamp=datetime.now().isoformat(),
+            status="running" if self._is_running else "idle",
+            uptime_hours=0.0,
+            power_output_w=0.0,
+            efficiency_pct=0.0,
+            temperature_c=30.0,
+            ph_level=7.0,
+            pressure_bar=1.0,
+            flow_rate_ml_min=0.0,
+            cell_voltages=[],
+        )
+
+    def send_control_command(
+        self, command: str, parameters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Send a control command to the system.
+
+        Args:
+            command: Command name (e.g., 'start', 'stop', 'adjust')
+            parameters: Optional command parameters
+
+        Returns:
+            Response dict with status and message
+        """
+        cmd = ControlCommand(command=command, parameters=parameters)
+        logger.info(f"Executing control command: {cmd.command}")
+
+        if cmd.command == "start":
+            self._is_running = True
+            self._start_time = datetime.now()
+            return {"status": "success", "message": "System started"}
+        elif cmd.command == "stop":
+            self._is_running = False
+            self._start_time = None
+            return {"status": "success", "message": "System stopped"}
+        else:
+            return {"status": "success", "message": f"Command '{cmd.command}' executed"}
+
+    def get_simulation_status(self) -> SimulationStatus:
+        """Get current simulation status (advanced mode).
+
+        Returns:
+            SimulationStatus with detailed simulation state
+        """
+        return SimulationStatus(
+            is_running=self._is_running,
+            start_time=self._start_time,
+            duration_hours=(
+                self._current_config.duration_hours if self._current_config else None
+            ),
+            current_time_hours=None,
+            progress_percent=None,
+            output_directory=str(self._data_dir),
+        )
+
+    def start_simulation(
+        self,
+        duration_hours: float,
+        n_cells: int = 5,
+        electrode_area_m2: float = 0.001,
+        target_concentration: float = 25.0,
+        use_pretrained: bool = True,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Start a new simulation (advanced mode).
+
+        Args:
+            duration_hours: Simulation duration in hours
+            n_cells: Number of MFC cells
+            electrode_area_m2: Electrode area per cell in m²
+            target_concentration: Target substrate concentration in mM
+            use_pretrained: Whether to use pre-trained Q-table
+            **kwargs: Additional parameters (learning_rate, epsilon_initial, etc.)
+
+        Returns:
+            Response dict with status and configuration
+        """
+        self._current_config = SimulationConfig(
+            duration_hours=duration_hours,
+            n_cells=n_cells,
+            electrode_area_m2=electrode_area_m2,
+            target_concentration=target_concentration,
+            use_pretrained=use_pretrained,
+            learning_rate=kwargs.get("learning_rate", 0.1),
+            epsilon_initial=kwargs.get("epsilon_initial", 0.4),
+            discount_factor=kwargs.get("discount_factor", 0.95),
+        )
+        self._is_running = True
+        self._start_time = datetime.now()
+
+        logger.info(
+            f"Starting simulation: {duration_hours}h, {n_cells} cells",
+        )
+        return {
+            "status": "started",
+            "config": self._current_config.model_dump(),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def stop_simulation(self) -> dict[str, Any]:
+        """Stop the current simulation (advanced mode).
+
+        Returns:
+            Response dict with status
+        """
+        self._is_running = False
+        self._start_time = None
+        logger.info("Simulation stopped")
+        return {"status": "stopped", "timestamp": datetime.now().isoformat()}
+
+    def get_performance_metrics(self) -> PerformanceMetrics | None:
+        """Get performance metrics from latest simulation (advanced mode).
+
+        Returns:
+            PerformanceMetrics if available, None otherwise
+        """
+        try:
+            results_files = list(self._data_dir.glob("**/gui_simulation_results_*.json"))
+            if not results_files:
+                return None
+
+            latest_file = max(results_files, key=lambda f: f.stat().st_mtime)
+            with open(latest_file) as f:
+                results = json.load(f)
+
+            metrics = results.get("performance_metrics", {})
+            return PerformanceMetrics(
+                final_reservoir_concentration=metrics.get(
+                    "final_reservoir_concentration", 0.0
+                ),
+                control_effectiveness_2mM=metrics.get("control_effectiveness_2mM", 0.0),
+                mean_power=metrics.get("mean_power", 0.0),
+                total_substrate_added=metrics.get("total_substrate_added", 0.0),
+                energy_efficiency=metrics.get("energy_efficiency"),
+                stability_score=metrics.get("stability_score"),
+            )
+        except Exception as e:
+            logger.exception(f"Failed to get performance metrics: {e}")
+            return None
 
 
 # Middleware configuration

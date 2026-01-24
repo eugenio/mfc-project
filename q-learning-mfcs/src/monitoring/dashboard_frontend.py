@@ -1,6 +1,42 @@
 #!/usr/bin/env python3
-"""Streamlit Dashboard Frontend for MFC Monitoring System with HTTPS Support
-Provides secure web interface for simulation monitoring and control.
+"""Streamlit Dashboard Frontend for MFC Monitoring System with HTTPS Support.
+
+DASHBOARD API CLIENT
+--------------------
+This module provides a Streamlit-based web frontend that communicates
+with the Dashboard API backend (dashboard_api.py) over HTTPS.
+
+Features:
+- Secure HTTPS communication with API server
+- APIClient class for REST endpoint access
+- Real-time monitoring visualization
+- Simulation control (start/stop/configure)
+- Performance metrics display
+- SSL/TLS configuration management
+
+Dashboard Component Hierarchy:
+-----------------------------
+1. **gui/pages/dashboard.py**: Simple overview page
+   - High-level system status
+
+2. **gui/live_monitoring_dashboard.py**: Advanced standalone monitoring
+   - Detailed real-time charts (no API dependency)
+
+3. **monitoring/dashboard_api.py**: REST API backend
+   - DashboardAPI class + FastAPI endpoints
+   - The backend this frontend communicates with
+
+4. **This file (monitoring/dashboard_frontend.py)**: API CLIENT FRONTEND
+   - Streamlit UI consuming the dashboard_api.py REST API
+   - Secure HTTPS communication
+   - Full simulation control and monitoring
+
+Usage:
+    # Run directly
+    $ streamlit run dashboard_frontend.py
+
+    # Run with HTTPS
+    $ python dashboard_frontend.py run_https 8444
 """
 
 from __future__ import annotations
