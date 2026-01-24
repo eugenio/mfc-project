@@ -263,7 +263,6 @@ def run_file_import_tests():
         'physics_accurate_biofilm_qcm.py',
         'eis_qcm_biofilm_correlation.py',
         'flow_rate_optimization.py',
-        'flow_rate_optimization_realistic.py',
         'energy_sustainability_analysis.py',
         'stack_physical_specs.py',
         'create_summary_plots.py',
