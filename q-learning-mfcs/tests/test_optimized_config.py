@@ -12,9 +12,10 @@ import sys
 import json
 import argparse
 from typing import Dict, Any
+from pathlib import Path
 
 # Add src to path for imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from hyperparameter_optimization import apply_optimized_config
 from mfc_recirculation_control import run_mfc_simulation
