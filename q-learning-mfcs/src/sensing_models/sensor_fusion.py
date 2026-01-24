@@ -1,7 +1,12 @@
-"""Sensor Fusion Model for EIS and QCM Integration.
+"""Base Sensor Fusion Model for EIS and QCM Integration.
 
-This module implements sensor fusion algorithms to combine EIS and QCM
+This module implements the base sensor fusion algorithms to combine EIS and QCM
 measurements for improved biofilm characterization accuracy and robustness.
+
+For new implementations, use the AdvancedSensorFusion class from
+advanced_sensor_fusion.py which provides predictive Kalman filtering,
+statistical anomaly detection, and biofilm growth pattern recognition.
+Import via: from sensing_models import AdvancedSensorFusion
 
 Key Features:
 - Kalman filter for state estimation
