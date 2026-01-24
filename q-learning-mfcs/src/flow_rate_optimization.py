@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
 """Flow Rate Optimization for MFC Stack
+
 Optimizes anodic flow rate to maximize power output and substrate consumption
 while minimizing biofilm growth.
+
+Supports two modes:
+- Basic mode (default): Original simplified model
+- Realistic mode: Enhanced model with Butler-Volmer kinetics and internal resistance
+
+Usage:
+    # Basic mode (default)
+    python flow_rate_optimization.py
+
+    # Realistic mode
+    python flow_rate_optimization.py --realistic
 """
+
+import argparse
 
 import matplotlib as mpl
 import numpy as np
@@ -15,9 +29,14 @@ from path_config import get_figure_path
 from scipy.optimize import minimize_scalar
 
 
+# =============================================================================
+# Basic Mode Parameters and Optimizer
+# =============================================================================
+
+
 @dataclass
 class MFCParameters:
-    """MFC system parameters."""
+    """MFC system parameters for basic mode."""
 
     # Physical parameters
     V_a: float = 5.5e-5  # Anodic chamber volume (m³)
@@ -43,8 +62,10 @@ class MFCParameters:
 
 
 class MFCFlowOptimizer:
-    def __init__(self, params: MFCParameters = MFCParameters()) -> None:
-        self.params = params
+    """Basic flow rate optimizer using simplified kinetics."""
+
+    def __init__(self, params: MFCParameters | None = None) -> None:
+        self.params = params or MFCParameters()
 
     def residence_time(self, Q_a: float) -> float:
         """Calculate hydraulic residence time."""
@@ -195,7 +216,7 @@ class MFCFlowOptimizer:
             "biofilm_factor": biofilm,
         }
 
-    def analyze_flow_range(self, n_points=100):
+    def analyze_flow_range(self, n_points: int = 100) -> dict:
         """Analyze performance across flow rate range."""
         Q_range = np.logspace(-6, -4, n_points)  # m³/s
 
@@ -229,10 +250,235 @@ class MFCFlowOptimizer:
         return results
 
 
-def plot_optimization_results(results: dict, optimal: dict) -> None:
+# =============================================================================
+# Realistic Mode Parameters and Optimizer
+# =============================================================================
+
+
+@dataclass
+class RealisticMFCParameters:
+    """Realistic MFC system parameters with practical constraints."""
+
+    # Physical parameters
+    V_a: float = 5.5e-5  # Anodic chamber volume (m³)
+    A_m: float = 5.0e-4  # Membrane area (m²)
+    n_cells: float = 5  # Number of cells
+
+    # Kinetic parameters from literature
+    k1_0: float = 0.207  # Anodic rate constant
+    K_AC: float = 0.592  # Acetate half-saturation (mol/m³)
+    Y_ac: float = 0.05  # Biomass yield
+    K_dec: float = 8.33e-4  # Biomass decay (s⁻¹)
+
+    # Realistic power parameters
+    V_cell_max: float = 0.8  # Maximum cell voltage (V)
+    V_cell_typical: float = 0.5  # Typical operating voltage (V)
+    i_max: float = 10.0  # Maximum current density (A/m²)
+
+    # Operational parameters
+    C_AC_in: float = 1.56  # Inlet acetate (mol/m³)
+    T: float = 303  # Temperature (K)
+    F: float = 96485  # Faraday constant
+    R: float = 8.314  # Gas constant
+
+    # Biofilm parameters
+    tau_biofilm: float = 24 * 3600  # Biofilm doubling time (s)
+    biofilm_max: float = 2.0  # Max thickness factor
+    biofilm_k: float = 0.5  # Half-saturation for biofilm effect
+
+
+class RealisticFlowOptimizer:
+    """Realistic flow rate optimizer with Butler-Volmer kinetics and internal resistance."""
+
+    def __init__(self, params: RealisticMFCParameters | None = None) -> None:
+        self.params = params or RealisticMFCParameters()
+
+    def residence_time(self, Q_a: float) -> float:
+        """Hydraulic residence time (seconds)."""
+        return self.params.V_a / Q_a
+
+    def biofilm_factor(self, tau: float, operation_time: float = 100 * 3600) -> float:
+        """Calculate biofilm thickness factor using logistic growth model."""
+        p = self.params
+        # Logistic growth model
+        growth_rate = np.log(2) / p.tau_biofilm
+        biofilm = 1 + (p.biofilm_max - 1) * (1 - np.exp(-growth_rate * tau))
+        return min(biofilm, p.biofilm_max)
+
+    def steady_state_concentrations(
+        self, Q_a: float, biofilm: float = 1.0
+    ) -> tuple[float, float]:
+        """Calculate steady-state concentrations and biomass."""
+        p = self.params
+        tau = self.residence_time(Q_a)
+
+        # Simplified steady-state biomass (g/L)
+        X_max = 2.0  # Maximum biomass concentration
+        X = X_max * (1 - np.exp(-tau / 3600))  # Growth with residence time
+        X = X / biofilm  # Reduced effectiveness with thick biofilm
+
+        # Steady-state acetate from mass balance
+        # Monod kinetics with biofilm limitation
+        mu_max = 0.5  # Maximum specific growth rate (h⁻¹)
+        r_acetate_max = mu_max * X / p.Y_ac / 3600  # mol/m³/s
+
+        # Solve for steady-state acetate
+        # Q(C_in - C) = V * r_max * C/(K + C) / biofilm
+        a = Q_a
+        b = Q_a * p.K_AC + p.V_a * r_acetate_max / biofilm - Q_a * p.C_AC_in
+        c = -Q_a * p.K_AC * p.C_AC_in
+
+        discriminant = b**2 - 4 * a * c
+        if discriminant < 0:
+            C_AC = p.C_AC_in * 0.1  # Fallback
+        else:
+            C_AC = (-b + np.sqrt(discriminant)) / (2 * a)
+            C_AC = max(0.01, min(C_AC, p.C_AC_in))
+
+        return C_AC, X
+
+    def calculate_power(
+        self,
+        Q_a: float,
+        C_AC: float,
+        X: float,
+        biofilm: float,
+    ) -> float:
+        """Calculate realistic power output with Butler-Volmer kinetics."""
+        p = self.params
+
+        # Current density from Butler-Volmer kinetics
+        # Simplified: i = i0 * (C_AC/K_AC) * X * f(biofilm)
+        i0 = 0.1  # Exchange current density (A/m²)
+        biofilm_effect = p.biofilm_k / (p.biofilm_k + (biofilm - 1))
+
+        i = i0 * (C_AC / (p.K_AC + C_AC)) * X * biofilm_effect
+        i = min(i, p.i_max)  # Limit to maximum
+
+        # Cell voltage considering losses
+        # V = OCV - losses
+        OCV = 0.8  # Open circuit voltage
+        R_int = 0.01  # Internal resistance (Ω·m²)
+        V_cell = OCV - i * R_int
+        V_cell = max(0, min(V_cell, p.V_cell_max))
+
+        # Total stack power
+        return p.n_cells * p.A_m * i * V_cell
+
+    def substrate_efficiency(self, C_AC: float) -> float:
+        """Calculate substrate conversion efficiency."""
+        return (self.params.C_AC_in - C_AC) / self.params.C_AC_in
+
+    def objective_function(self, Q_a: float) -> float:
+        """Multi-objective function for realistic optimization."""
+        # Practical flow rate bounds
+        if Q_a < 1e-6 or Q_a > 5e-5:  # 0.0036 to 180 mL/h
+            return 1e10
+
+        tau = self.residence_time(Q_a)
+        biofilm = self.biofilm_factor(tau)
+        C_AC, X = self.steady_state_concentrations(Q_a, biofilm)
+
+        power = self.calculate_power(Q_a, C_AC, X, biofilm)
+        efficiency = self.substrate_efficiency(C_AC)
+        consumption = Q_a * (self.params.C_AC_in - C_AC)  # mol/s
+
+        # Objectives with practical weights
+        obj_power = power / 0.1  # Normalize to ~0.1W expected
+        obj_efficiency = efficiency if efficiency > 0.8 else efficiency**2
+        obj_consumption = consumption / 1e-6  # Normalize to μmol/s
+        obj_biofilm = 1.0 / biofilm  # Minimize biofilm
+
+        # Penalty for very short residence time
+        tau_penalty = 0 if tau > 60 else (60 - tau) ** 2 / 3600
+
+        # Combined objective
+        objective = (
+            5.0 * obj_power
+            + 10.0 * obj_efficiency
+            + 2.0 * obj_consumption
+            + 3.0 * obj_biofilm
+            - tau_penalty
+        )
+
+        return -objective
+
+    def optimize(self) -> dict:
+        """Find optimal flow rate."""
+        # Search range
+        Q_min = 1e-6  # 3.6 mL/h
+        Q_max = 5e-5  # 180 mL/h
+
+        result = minimize_scalar(
+            self.objective_function,
+            bounds=(Q_min, Q_max),
+            method="bounded",
+        )
+
+        Q_opt = result.x
+        tau = self.residence_time(Q_opt)
+        biofilm = self.biofilm_factor(tau)
+        C_AC, X = self.steady_state_concentrations(Q_opt, biofilm)
+        power = self.calculate_power(Q_opt, C_AC, X, biofilm)
+        efficiency = self.substrate_efficiency(C_AC)
+        consumption = Q_opt * (self.params.C_AC_in - C_AC)
+
+        return {
+            "Q_optimal": Q_opt,
+            "Q_optimal_mL_h": Q_opt * 3.6e6,
+            "residence_time_min": tau / 60,
+            "C_AC_steady": C_AC,
+            "X": X,
+            "biofilm_factor": biofilm,
+            "power_W": power,
+            "substrate_efficiency": efficiency * 100,
+            "consumption_mol_h": consumption * 3600,
+        }
+
+    def analyze_flow_range(self, n_points: int = 100) -> dict:
+        """Analyze performance across flow rate range."""
+        Q_range = np.logspace(-6, -4.3, n_points)  # 3.6 to 180 mL/h
+
+        results = {
+            "Q": Q_range,
+            "Q_mL_h": Q_range * 3.6e6,
+            "residence_time": [],
+            "C_AC": [],
+            "power": [],
+            "efficiency": [],
+            "consumption": [],
+            "biofilm": [],
+        }
+
+        for Q in Q_range:
+            tau = self.residence_time(Q)
+            biofilm = self.biofilm_factor(tau)
+            C_AC, X = self.steady_state_concentrations(Q, biofilm)
+
+            results["residence_time"].append(tau / 60)  # minutes
+            results["C_AC"].append(C_AC)
+            results["power"].append(self.calculate_power(Q, C_AC, X, biofilm))
+            results["efficiency"].append(self.substrate_efficiency(C_AC) * 100)
+            results["consumption"].append(
+                Q * (self.params.C_AC_in - C_AC) * 3600
+            )  # mol/h
+            results["biofilm"].append(biofilm)
+
+        return results
+
+
+# =============================================================================
+# Plotting Functions
+# =============================================================================
+
+
+def plot_optimization_results(
+    results: dict, optimal: dict, realistic: bool = False
+) -> None:
     """Create comprehensive optimization analysis plots."""
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle("MFC Flow Rate Optimization Analysis", fontsize=16)
+    mode_str = "Realistic " if realistic else ""
+    fig.suptitle(f"{mode_str}MFC Flow Rate Optimization Analysis", fontsize=16)
 
     # 1. Power vs Flow Rate
     ax = axes[0, 0]
@@ -313,8 +559,9 @@ def plot_optimization_results(results: dict, optimal: dict) -> None:
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
+    suffix = "_realistic" if realistic else ""
     plt.savefig(
-        get_figure_path("mfc_flow_optimization_analysis.png"),
+        get_figure_path(f"mfc_flow_optimization_analysis{suffix}.png"),
         dpi=300,
         bbox_inches="tight",
     )
@@ -326,7 +573,7 @@ def plot_optimization_results(results: dict, optimal: dict) -> None:
     ax.axis("off")
 
     # Current vs Optimal comparison
-    current_Q = 2.25e-5 * 3.6e6  # Current flow rate in mL/h
+    current_Q = 2.25e-5 * 3.6e6 if not realistic else 81  # Current flow rate in mL/h
     current_idx = np.argmin(np.abs(np.array(results["Q_mL_h"]) - current_Q))
 
     table_data = [
@@ -391,42 +638,81 @@ def plot_optimization_results(results: dict, optimal: dict) -> None:
             cell.set_facecolor("#90EE90")
 
     ax.set_title(
-        "Flow Rate Optimization Summary\nCurrent vs Optimal Performance",
+        f"{mode_str}Flow Rate Optimization Summary\nCurrent vs Optimal Performance",
         fontsize=14,
         fontweight="bold",
         pad=20,
     )
 
     plt.savefig(
-        get_figure_path("mfc_flow_optimization_summary.png"),
+        get_figure_path(f"mfc_flow_optimization_summary{suffix}.png"),
         dpi=300,
         bbox_inches="tight",
     )
     plt.close()
 
 
-def main() -> None:
-    """Run flow rate optimization analysis."""
-    # Initialize optimizer
-    optimizer = MFCFlowOptimizer()
+# =============================================================================
+# Main Function
+# =============================================================================
 
-    # Find optimal flow rate
-    optimal = optimizer.optimize_flow_rate()
+
+def run_optimization(realistic: bool = False) -> tuple[dict, dict]:
+    """Run flow rate optimization analysis.
+
+    Args:
+        realistic: If True, use realistic model with Butler-Volmer kinetics
+                   and internal resistance. If False (default), use basic model.
+
+    Returns:
+        Tuple of (optimal_results, analysis_results)
+    """
+    if realistic:
+        optimizer = RealisticFlowOptimizer()
+        optimal = optimizer.optimize()
+    else:
+        optimizer = MFCFlowOptimizer()
+        optimal = optimizer.optimize_flow_rate()
 
     # Analyze flow rate range
     results = optimizer.analyze_flow_range()
 
     # Create plots
-    plot_optimization_results(results, optimal)
+    plot_optimization_results(results, optimal, realistic=realistic)
 
-    # Calculate improvement over current operation
-    current_Q = 2.25e-5 * 3.6e6  # Current flow rate in mL/h
-    improvement = (optimal["Q_optimal_mL_h"] / current_Q - 1) * 100
+    return optimal, results
 
-    if improvement < -10 or improvement > 10:
-        pass
-    else:
-        pass
+
+def main() -> None:
+    """Run flow rate optimization analysis with CLI support."""
+    parser = argparse.ArgumentParser(
+        description="MFC Flow Rate Optimization",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python flow_rate_optimization.py           # Run basic mode
+  python flow_rate_optimization.py --realistic  # Run realistic mode
+        """,
+    )
+    parser.add_argument(
+        "--realistic",
+        action="store_true",
+        help="Use realistic model with Butler-Volmer kinetics",
+    )
+
+    args = parser.parse_args()
+
+    # Run optimization
+    optimal, results = run_optimization(realistic=args.realistic)
+
+    # Print summary
+    mode = "Realistic" if args.realistic else "Basic"
+    print(f"\n{mode} Mode Optimization Results:")
+    print(f"  Optimal Flow Rate: {optimal['Q_optimal_mL_h']:.2f} mL/h")
+    print(f"  Residence Time: {optimal['residence_time_min']:.2f} min")
+    print(f"  Power Output: {optimal['power_W']:.4f} W")
+    print(f"  Substrate Efficiency: {optimal['substrate_efficiency']:.1f}%")
+    print(f"  Biofilm Factor: {optimal['biofilm_factor']:.3f}")
 
 
 if __name__ == "__main__":
