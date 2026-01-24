@@ -14,7 +14,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend for testing
 
 # Add src directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from path_config import (
     get_figure_path, get_simulation_data_path, get_model_path,
@@ -253,7 +253,7 @@ class TestActualFiles(unittest.TestCase):
 def run_file_import_tests():
     """Test that all modified files can be imported without errors."""
 
-    src_dir = Path(__file__).parent
+    src_dir = Path(__file__).parent.parent / "src"
     python_files = [
         'mfc_unified_qlearning_control.py',
         'mfc_qlearning_optimization.py',

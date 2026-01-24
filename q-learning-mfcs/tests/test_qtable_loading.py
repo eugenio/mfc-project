@@ -31,7 +31,8 @@ def load_validated_qtable():
         - Values: Expected cumulative reward for each state-action pair
     """
 
-    qtable_path = Path("../q_learning_models/q_table_unified_20250724_022416.pkl")
+    # Path relative to the q-learning-mfcs directory
+    qtable_path = Path(__file__).parent.parent / "q_learning_models" / "q_table_unified_20250724_022416.pkl"
 
     if not qtable_path.exists():
         print(f"⚠️  Validated Q-table not found at {qtable_path}")

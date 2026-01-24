@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 # Add src to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from path_config import (
     is_debug_mode, get_current_base_path, enable_debug_mode, disable_debug_mode,
