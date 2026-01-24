@@ -1,29 +1,21 @@
 """
-Comprehensive tests for biofilm kinetics model.
+Test suite for BiofilmKineticsModel class.
 
-Tests cover:
-- Species parameter loading and validation
-- Substrate parameter loading and validation  
-- Environmental compensation (pH, temperature)
-- Biofilm dynamics simulation
-- GPU acceleration functionality
-- Mixed culture synergy calculations
+This module contains comprehensive unit tests for the biofilm kinetics model,
+including growth dynamics, substrate consumption, current generation,
+and environmental effects using pytest framework.
 """
-
-import unittest
-import sys
 import os
-import warnings
+import sys
+import unittest
 
-# Add source path first
+# Add source path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-import matplotlib
-from biofilm_kinetics import BiofilmKineticsModel, SpeciesParameters, SubstrateParameters
-
-# Configure matplotlib after imports
-warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
-matplotlib.use('Agg')  # Non-interactive backend
+# Import the classes under test
+from biofilm_kinetics.biofilm_model import BiofilmKineticsModel
+from biofilm_kinetics.species_params import SpeciesParameters
+from biofilm_kinetics.substrate_params import SubstrateParameters
 
 
 class TestSpeciesParameters(unittest.TestCase):
@@ -208,7 +200,7 @@ class TestBiofilmKineticsModel(unittest.TestCase):
 
     def test_model_initialization(self):
         """Test model initialization with different configurations."""
-        for name, model in self.models.items():
+        for _name, model in self.models.items():
             self.assertIsNotNone(model.kinetic_params)
             self.assertIsNotNone(model.substrate_props)
             self.assertEqual(model.biofilm_thickness, 0.1)
@@ -376,7 +368,7 @@ class TestBiofilmKineticsModel(unittest.TestCase):
 
     def test_theoretical_maximum_current(self):
         """Test theoretical maximum current calculations."""
-        for name, model in self.models.items():
+        for _name, model in self.models.items():
             max_current = model.calculate_theoretical_maximum_current()
 
             self.assertGreater(max_current, 0)
@@ -428,7 +420,7 @@ class TestModelIntegration(unittest.TestCase):
         thickness_points = []
         current_points = []
 
-        for hour in range(24):
+        for _hour in range(24):
             result = model.step_biofilm_dynamics(
                 dt=1.0,
                 anode_potential=-0.25,

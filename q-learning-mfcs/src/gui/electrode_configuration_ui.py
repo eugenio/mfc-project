@@ -451,7 +451,7 @@ class ElectrodeConfigurationUI:
         st.markdown(f"### 📊 {electrode_type.title()} Surface Area Analysis")
 
         try:
-            projected_area = config.geometry.calculate_projected_area()
+            specific_surface_area = config.geometry.calculate_specific_surface_area()
             total_geometric_area = config.geometry.calculate_total_surface_area()
             effective_area = config.calculate_effective_surface_area()
             biofilm_capacity = config.calculate_biofilm_capacity()
@@ -482,7 +482,7 @@ class ElectrodeConfigurationUI:
                 )
 
             with col4:
-                enhancement_factor = effective_area / projected_area
+                enhancement_factor = effective_area / specific_surface_area
                 st.metric(
                     "Area Enhancement",
                     f"{enhancement_factor:.1f}×",
@@ -604,7 +604,7 @@ class ElectrodeConfigurationUI:
         with col1:
             st.write(f"**Material:** {summary['material'].replace('_', ' ').title()}")
             st.write(f"**Geometry:** {summary['geometry'].replace('_', ' ').title()}")
-            st.write(f"**Projected Area:** {summary['projected_area_cm2']:.2f} cm²")
+            st.write(f"**Specific Surface Area:** {summary['specific_surface_area_m2_per_g']:.2f} m²/g")
             st.write(f"**Effective Area:** {summary['effective_area_cm2']:.2f} cm²")
 
         with col2:

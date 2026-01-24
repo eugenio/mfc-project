@@ -13,7 +13,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-import jax.numpy as jnp
+# Use numpy instead of JAX for compatibility
+try:
+    import jax.numpy as jnp
+except ImportError:
+    import numpy as jnp
 
 
 @dataclass

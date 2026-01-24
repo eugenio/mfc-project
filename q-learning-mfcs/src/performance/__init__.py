@@ -1,15 +1,21 @@
 """Performance Optimization and Benchmarking Module.
 
-Provides GPU memory management, performance benchmarking,
-and system optimization for MFC simulations.
-"""
-
-from .benchmark_suite import BenchmarkResult, PerformanceBenchmark, run_benchmark_demo
 from .gpu_memory_manager import (
     GPUMemoryManager,
     ManagedGPUContext,
     MemoryStats,
     PerformanceProfile,
+)
+from .performance_metrics import (
+    MetricsCollector,
+    MetricSummary,
+    MetricType,
+    MetricValue,
+    MFCMetricsCollector,
+    get_default_collector,
+    record_metric,
+    start_metrics_collection,
+    stop_metrics_collection,
 )
 
 __all__ = [

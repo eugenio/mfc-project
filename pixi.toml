@@ -47,6 +47,7 @@ test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration 
 # CI-friendly test (with XML output)
 test-ci = "cd q-learning-mfcs/tests && python -m pytest . --junitxml=test-results.xml --cov=../src --cov-report=xml"
 
+
 # Linting and type checking
 ruff-check = "ruff check ."
 ruff-fix = "ruff check . --fix"
@@ -106,6 +107,16 @@ play-success = "python scripts/audio_notifier.py success"
 play-failure = "python scripts/audio_notifier.py failure"
 play-completion = "python scripts/audio_notifier.py completion"
 
+
+# Notification System TDD Tests
+test-notifications = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py"
+test-notifications-coverage = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern='' --no-coverage=false"
+test-notifications-core = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern=core"
+test-notifications-audio = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --pattern=audio"
+test-notifications-categories = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --categories"
+test-notifications-validate = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --validate"
+test-notifications-ci = "DISABLE_AUDIO=true MOCK_EMAIL=true cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --no-coverage"
+
 # GUI Tasks
 gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_main_app.py"
 
@@ -137,6 +148,8 @@ mypy = ">=1.17.1,<2"
 glab = ">=1.62.0,<2"
 fastapi = ">=0.115.14,<0.117"
 uvicorn = ">=0.35.0,<0.36"
+pytest = ">=8.4.1,<9"
+pytest-cov = ">=6.2.1,<7"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -232,6 +245,8 @@ python-gitlab = ">=4.0.0"
 [feature.advanced-ml.pypi-dependencies]
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
+
+
 
 # GPU acceleration (optional features)
 # WARNING: JAX/JAXlib versions are frozen for compatibility between jax and jaxlib

@@ -68,6 +68,9 @@ class MaterialProperties:
     specific_surface_area: float | None = None  # m²/m³ - for porous materials
     porosity: float | None = None  # dimensionless - void fraction for porous materials
 
+    # Material density
+    density: float | None = None  # kg/m³ - material density
+
     # Literature reference
     reference: str = "User specified"
 
@@ -86,13 +89,15 @@ class ElectrodeGeometrySpec:
     thickness: float | None = None  # m
 
     # For custom geometries
-    projected_area: float | None = None  # m² - manually specified
+    specific_surface_area: float | None = None  # m²/g - manually specified
     total_surface_area: float | None = None  # m² - manually specified
 
-    def calculate_projected_area(self) -> float:
-        """Calculate projected area based on geometry type."""
-        if self.projected_area is not None:
-            return self.projected_area
+    # Material density
+    density: float | None = None  # kg/m³ - material density
+    def calculate_specific_surface_area(self) -> float:
+        """Calculate specific surface area based on geometry type."""
+        if self.specific_surface_area is not None:
+            return self.specific_surface_area
 
         if self.geometry_type == ElectrodeGeometry.RECTANGULAR_PLATE:
             if self.length and self.width:
@@ -112,6 +117,14 @@ class ElectrodeGeometrySpec:
 
         msg = f"Insufficient dimensions for {self.geometry_type}"
         raise ValueError(msg)
+
+    def calculate_mass(self) -> float:
+        """Calculate electrode mass based on volume and density."""
+        if self.density is None:
+            raise ValueError("Density not specified for mass calculation")
+
+        volume = self.calculate_volume()
+        return volume * self.density  # kg
 
     def calculate_total_surface_area(self) -> float:
         """Calculate total surface area available for microbial colonization."""
@@ -204,7 +217,7 @@ class ElectrodeConfiguration:
         """Calculate effective surface area for microbial colonization.
         Accounts for material-specific surface area enhancement.
         """
-        projected_area = self.geometry.calculate_projected_area()
+        specific_surface_area = self.geometry.calculate_specific_surface_area()
 
         # For porous materials, use specific surface area
         if self.material_properties.specific_surface_area is not None:
@@ -302,7 +315,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=85,  # degrees - More hydrophobic
         surface_roughness=15.0,  # Very high surface area
         biofilm_adhesion_coefficient=2.5,  # Excellent for biofilm
-        attachment_energy=-18.0,  # kJ/mol - Very favorable
+        attachment_energy=-18.0,
+        density=120,  # kg/m³
         specific_surface_area=1500,  # m²/m³ - High specific surface area
         porosity=0.95,  # 95% void space
         reference="Wei, J. et al. (2011). Biosens. Bioelectron.",
@@ -314,7 +328,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=80,  # degrees
         surface_roughness=8.0,  # High surface area
         biofilm_adhesion_coefficient=2.0,  # Very good
-        attachment_energy=-15.5,  # kJ/mol
+        attachment_energy=-15.5,
+        density=400,  # kg/m³
         specific_surface_area=800,  # m²/m³
         porosity=0.85,  # 85% void space
         reference="Santoro, C. et al. (2017). Chem. Soc. Rev.",
@@ -326,7 +341,8 @@ MATERIAL_PROPERTIES_DATABASE = {
         hydrophobicity_angle=90,  # degrees - Hydrophobic
         surface_roughness=5.0,  # Moderate surface area
         biofilm_adhesion_coefficient=1.5,  # Good
-        attachment_energy=-14.0,  # kJ/mol
+        attachment_energy=-14.0,
+        density=450,  # kg/m³
         specific_surface_area=400,  # m²/m³
         porosity=0.70,  # 70% void space
         reference="Erable, B. et al. (2012). Electrochem. Commun.",

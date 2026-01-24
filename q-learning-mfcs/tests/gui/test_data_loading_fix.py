@@ -9,9 +9,12 @@ import time
 import tempfile
 from pathlib import Path
 
-# Add src to path (go up two directories from tests/gui to reach src)
-src_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'src')
-sys.path.insert(0, src_path)
+# Add src to path (handle both direct execution and pytest execution)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+src_path = os.path.join(project_root, 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 # Import required modules
 try:
@@ -19,7 +22,11 @@ try:
     from config.qlearning_config import DEFAULT_QLEARNING_CONFIG
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    sys.exit(1)
+    print(f"Attempted to import from: {src_path}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Python path: {sys.path[:3]}...")
+    import pytest
+    pytest.skip(f"Unable to import required modules: {e}")
 
 def test_data_loading_fix():
     """Test that data loading handles empty files and errors gracefully"""

@@ -25,10 +25,9 @@ from .biofilm_model import BiofilmKineticsModel
 # Import sensing models
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "sensing_models"))
 try:
-    from sensing_models.eis_model import BacterialSpecies, EISMeasurement, EISModel
-    from sensing_models.qcm_model import QCMMeasurement, QCMModel
+    from sensing_models.eis_model import BacterialSpecies, EISModel
+    from sensing_models.qcm_model import QCMModel
     from sensing_models.sensor_fusion import (
-        FusedMeasurement,
         FusionMethod,
         SensorFusion,
     )
@@ -102,6 +101,7 @@ class EnhancedBiofilmModel(BiofilmKineticsModel):
                 "mixed": BacterialSpecies.MIXED,
             }
 
+        if EISModel and enable_eis:
             self.eis_model = EISModel(
                 species=species_map.get(species, BacterialSpecies.MIXED),
                 electrode_area=1e-4,  # m² (1 cm² electrode) - fixed for optimal EIS sensing

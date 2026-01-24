@@ -10,15 +10,16 @@ Tests cover:
 - Performance under various conditions
 """
 
-import unittest
-import numpy as np
-import sys
 import os
+import sys
+import unittest
 import warnings
 
-# Suppress matplotlib backend warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 import matplotlib
+import numpy as np
+
+# Suppress matplotlib backend warnings and set non-interactive backend
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 matplotlib.use('Agg')  # Non-interactive backend
 
 # Add source path
@@ -27,14 +28,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 # Import sensing models
 try:
     from sensing_models.eis_model import (
-        EISModel, EISMeasurement, EISCircuitModel, BacterialSpecies
+        BacterialSpecies,
+        EISMeasurement,
+        EISModel,
     )
     from sensing_models.qcm_model import (
-        QCMModel, QCMMeasurement, SauerbreyModel, ViscoelasticModel,
-        CrystalType, ElectrodeType
+        CrystalType,
+        ElectrodeType,
+        QCMMeasurement,
+        QCMModel,
     )
     from sensing_models.sensor_fusion import (
-        SensorFusion, SensorCalibration, KalmanFilter, FusedMeasurement, FusionMethod
+        FusedMeasurement,
+        FusionMethod,
+        SensorFusion,
     )
     SENSING_MODELS_AVAILABLE = True
 except ImportError as e:
@@ -361,7 +368,7 @@ class TestQCMModel(unittest.TestCase):
         # Generate measurement history
         for i in range(20):
             mass = 50.0 + i * 5.0  # Increasing mass
-            measurement = self.qcm_model.simulate_measurement(mass, 10.0 + i, time_hours=i * 0.1)
+            self.qcm_model.simulate_measurement(mass, 10.0 + i, time_hours=i * 0.1)
 
         # Get stability metrics
         stability = self.qcm_model.get_frequency_stability_metrics(window_hours=1.0)
@@ -521,7 +528,7 @@ class TestSensorFusion(unittest.TestCase):
                 print(f"Warning: {method.value} fusion failed: {e}")
 
         # All successful methods should give reasonable results
-        for method, thickness in results.items():
+        for _method, thickness in results.items():
             self.assertGreater(thickness, 0)
             self.assertLess(thickness, 100)  # Reasonable biofilm thickness range
 
@@ -537,7 +544,7 @@ class TestSensorFusion(unittest.TestCase):
 
         # Generate multiple measurements with disagreement
         for i in range(10):
-            fused_result = self.sensor_fusion.fuse_measurements(
+            self.sensor_fusion.fuse_measurements(
                 eis_measurement, qcm_measurement, eis_properties, qcm_properties, i
             )
 
@@ -603,7 +610,7 @@ class TestIntegration(unittest.TestCase):
 
         fused_results = []
 
-        for i, (time, thickness) in enumerate(zip(times, thicknesses)):
+        for _i, (time, thickness) in enumerate(zip(times, thicknesses, strict=False)):
             # Simulate measurements
             biomass = thickness * 0.3  # Approximate biomass
 

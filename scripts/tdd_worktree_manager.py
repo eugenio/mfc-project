@@ -411,7 +411,9 @@ from typing import Dict, List, Optional
         report_file = reports_dir / f"feature-{feature_name}-completion.md"
 class TDDWorktreeManager:
     def __init__(self):
-        self.worktrees_dir = Path("worktrees")
+        # Create worktrees one level above the project root
+        project_root = Path.cwd()
+        self.worktrees_dir = project_root.parent / "mfc-worktrees"
         self.worktrees_dir.mkdir(exist_ok=True)
         self.scripts_dir = Path("scripts")
         

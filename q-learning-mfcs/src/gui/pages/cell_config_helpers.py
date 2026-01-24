@@ -110,6 +110,11 @@ def render_validation_analysis() -> None:
     with validation_tabs[1]:
         st.markdown("#### ⚡ Performance Analysis")
 
+        # Initialize default values
+        estimated_power_density = 0.0
+        coulombic_efficiency = 0.0
+        energy_efficiency = 0.0
+
         # Performance predictions
         if electrode_area > 0 and volume > 0:
             col1, col2 = st.columns(2)
@@ -157,6 +162,8 @@ def render_validation_analysis() -> None:
                 # Treatment efficiency (for wastewater applications)
                 treatment_efficiency = min(0.95, volume / 1000 * area_efficiency)
                 st.metric("Est. Treatment Efficiency", f"{treatment_efficiency:.1%}")
+        else:
+            st.warning("⚠️ Please configure electrode area and cell volume to see performance predictions")
 
         # Performance comparison
         st.markdown("#### 📊 Benchmark Comparison")

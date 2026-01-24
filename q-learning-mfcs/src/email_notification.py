@@ -44,6 +44,17 @@ def send_completion_email(results_file, recipient_email=None) -> None:
         perf = results.get("performance_summary", {})
         maint = results.get("maintenance_requirements", {})
 
+        # Helper function to format numbers safely
+        def format_number(value: float | int | None, decimals: int = 2) -> str:
+            try:
+                return f"{value:.{decimals}f}"
+            except (TypeError, ValueError):
+                return "N/A"
+
+        def safe_get(dictionary: dict, key: str, default: str = "N/A") -> str:
+            value = dictionary.get(key, default)
+            return value if value != default else default
+
         body = f"""
 MFC 1-Year Continuous Operation Simulation Complete!
 

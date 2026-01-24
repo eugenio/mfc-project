@@ -192,3 +192,6 @@ test_phase*.py
 claude-code-hooks-multi-agent-observability/
 protein-models-4-mfc/ProteinDT/
 KEGG-MCP-Server/
+
+# Worktrees
+worktrees/

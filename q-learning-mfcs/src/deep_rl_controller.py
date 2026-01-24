@@ -108,6 +108,19 @@ class DRLConfig:
     warmup_steps: int = 10000
     max_episodes: int = 10000
 
+    # PPO specific parameters
+    ppo_clip_ratio: float = 0.2
+    ppo_epochs: int = 10
+    ppo_value_loss_coef: float = 0.5
+    ppo_entropy_coef: float = 0.01
+    ppo_gae_lambda: float = 0.95
+
+    # A3C specific parameters
+    a3c_update_steps: int = 20
+    a3c_num_workers: int = 4
+    a3c_entropy_coef: float = 0.01
+    a3c_value_loss_coef: float = 0.5
+
     def __post_init__(self):
         if self.hidden_layers is None:
             self.hidden_layers = [512, 256, 128]
@@ -475,6 +488,170 @@ class NoisyLinear(nn.Module):
         return F.linear(x, weight, bias)
 
 
+class ActorCriticNetwork(nn.Module):
+    """Actor-Critic network for PPO and A3C algorithms."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """
+        Initialize actor-critic network.
+
+        Args:
+            state_dim: Input state dimension
+            action_dim: Number of actions
+            config: DRL configuration
+        """
+        super().__init__()
+
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.config = config
+
+        # Shared feature extraction layers
+        layers = []
+        input_dim = state_dim
+
+        for hidden_dim in config.hidden_layers[:-1]:  # All but last layer
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            if config.batch_norm:
+                layers.append(nn.BatchNorm1d(hidden_dim))
+            layers.append(self._get_activation(config.activation))
+            if config.dropout_rate > 0:
+                layers.append(nn.Dropout(config.dropout_rate))
+            input_dim = hidden_dim
+
+        self.shared_layers = nn.Sequential(*layers)
+
+        # Actor head (policy network)
+        self.actor = nn.Sequential(
+            nn.Linear(input_dim, config.hidden_layers[-1]),
+            self._get_activation(config.activation),
+            nn.Linear(config.hidden_layers[-1], action_dim),
+            nn.Softmax(dim=-1)
+        )
+
+        # Critic head (value network)
+        self.critic = nn.Sequential(
+            nn.Linear(input_dim, config.hidden_layers[-1]),
+            self._get_activation(config.activation),
+            nn.Linear(config.hidden_layers[-1], 1)
+        )
+
+        # Initialize weights
+        self.apply(self._init_weights)
+
+        logger.info(f"ActorCriticNetwork initialized: {state_dim}→{config.hidden_layers}→{action_dim}")
+
+    def _get_activation(self, activation: str) -> nn.Module:
+        """Get activation function."""
+        activations = {
+            'relu': nn.ReLU(),
+            'leaky_relu': nn.LeakyReLU(),
+            'tanh': nn.Tanh(),
+            'elu': nn.ELU(),
+            'swish': nn.SiLU()
+        }
+        return activations.get(activation, nn.ReLU())
+
+    def _init_weights(self, m):
+        """Initialize network weights."""
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            torch.nn.init.constant_(m.bias, 0)
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass through actor-critic network.
+
+        Args:
+            x: Input state tensor
+
+        Returns:
+            Tuple of (action_probabilities, state_value)
+        """
+        shared_features = self.shared_layers(x)
+
+        action_probs = self.actor(shared_features)
+        state_value = self.critic(shared_features)
+
+        return action_probs, state_value
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Get action, log probability, and value for PPO.
+
+        Args:
+            x: Input state tensor
+
+        Returns:
+            Tuple of (action, log_prob, value)
+        """
+        action_probs, value = self.forward(x)
+
+        # Sample action from probability distribution
+        dist = torch.distributions.Categorical(action_probs)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+
+        return action, log_prob, value
+
+
+class PPONetwork(nn.Module):
+    """PPO-specific network with clipped surrogate objective."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """Initialize PPO network."""
+        super().__init__()
+
+        self.actor_critic = ActorCriticNetwork(state_dim, action_dim, config)
+        self.config = config
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass."""
+        return self.actor_critic.forward(x)
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get action and value for PPO training."""
+        return self.actor_critic.get_action_and_value(x)
+
+    def evaluate_actions(self, x: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Evaluate actions for PPO loss computation.
+
+        Args:
+            x: State tensor
+            actions: Action tensor
+
+        Returns:
+            Tuple of (log_probs, values, entropy)
+        """
+        action_probs, values = self.forward(x)
+
+        dist = torch.distributions.Categorical(action_probs)
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy()
+
+        return log_probs, values.squeeze(-1), entropy
+
+
+class A3CNetwork(nn.Module):
+    """A3C-specific network with shared parameters."""
+
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
+        """Initialize A3C network."""
+        super().__init__()
+
+        self.actor_critic = ActorCriticNetwork(state_dim, action_dim, config)
+        self.config = config
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass."""
+        return self.actor_critic.forward(x)
+
+    def get_action_and_value(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get action and value for A3C training."""
+        return self.actor_critic.get_action_and_value(x)
+
+
 class DeepRLController:
     """Advanced Deep Reinforcement Learning Controller for MFC systems.
 
@@ -564,6 +741,21 @@ class DeepRLController:
                 self.action_dim,
                 self.config,
             ).to(self.device)
+            # Copy parameters to target network
+            self.target_network.load_state_dict(self.q_network.state_dict())
+            self.target_network.eval()
+        elif self.algorithm == DRLAlgorithm.PPO:
+            self.policy_network = PPONetwork(
+                self.state_dim, self.action_dim, self.config
+            ).to(self.device)
+            # PPO doesn't use target network
+            self.target_network = None
+        elif self.algorithm == DRLAlgorithm.A3C:
+            self.policy_network = A3CNetwork(
+                self.state_dim, self.action_dim, self.config
+            ).to(self.device)
+            # A3C doesn't use target network
+            self.target_network = None
         else:
             # Default to Dueling DQN
             self.q_network = DuelingDQN(
@@ -576,6 +768,9 @@ class DeepRLController:
                 self.action_dim,
                 self.config,
             ).to(self.device)
+            # Copy parameters to target network
+            self.target_network.load_state_dict(self.q_network.state_dict())
+            self.target_network.eval()
 
         # Copy parameters to target network
         self.target_network.load_state_dict(self.q_network.state_dict())
@@ -640,25 +835,41 @@ class DeepRLController:
             Selected action index
 
         """
-        if training and self.algorithm != DRLAlgorithm.RAINBOW_DQN:
-            # Epsilon-greedy exploration
-            if random.random() < self.epsilon:
-                return random.randint(0, self.action_dim - 1)
-
-        # Neural network action selection
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
-                q_values = self.q_network.get_q_values(state_tensor)
+            if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+                # Policy-based action selection
+                action_probs, value = self.policy_network(state_tensor)
+                if training:
+                    # Sample from probability distribution
+                    dist = torch.distributions.Categorical(action_probs)
+                    action = dist.sample().item()
+                else:
+                    # Greedy action selection
+                    action = action_probs.argmax(dim=1).item()
+
+                # Log value for monitoring
+                if len(self.q_value_history) == 0 or self.steps % 100 == 0:
+                    self.q_value_history.append(value.item())
+
             else:
-                q_values = self.q_network(state_tensor)
+                # Q-learning based action selection
+                if training and self.algorithm != DRLAlgorithm.RAINBOW_DQN:
+                    # Epsilon-greedy exploration
+                    if random.random() < self.epsilon:
+                        return random.randint(0, self.action_dim - 1)
 
-            action = q_values.argmax(dim=1).item()
+                if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
+                    q_values = self.q_network.get_q_values(state_tensor)
+                else:
+                    q_values = self.q_network(state_tensor)
 
-        # Log Q-values for monitoring
-        if len(self.q_value_history) == 0 or self.steps % 100 == 0:
-            self.q_value_history.append(q_values.mean().item())
+                action = q_values.argmax(dim=1).item()
+
+                # Log Q-values for monitoring
+                if len(self.q_value_history) == 0 or self.steps % 100 == 0:
+                    self.q_value_history.append(q_values.mean().item())
 
         return action
 
@@ -686,6 +897,13 @@ class DeepRLController:
         if len(self.replay_buffer) < self.config.warmup_steps:
             return {"loss": 0.0, "q_value": 0.0}
 
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            return self._train_policy_gradient()
+        else:
+            return self._train_dqn()
+
+    def _train_dqn(self) -> dict[str, float]:
+        """Train DQN-based algorithms."""
         # Sample batch
         if self.config.priority_replay:
             batch, indices, is_weights = self.replay_buffer.sample(
@@ -760,7 +978,6 @@ class DeepRLController:
         }
 
         self.loss_history.append(loss.item())
-
         return metrics
 
     def _compute_dqn_loss(
@@ -938,6 +1155,14 @@ class DeepRLController:
         # Select action
         action = self.select_action(state_features)
 
+        self.steps += 1
+
+        # Get network parameters count
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            network_params = sum(p.numel() for p in self.policy_network.parameters())
+        else:
+            network_params = sum(p.numel() for p in self.q_network.parameters())
+
         # Control information
         control_info = {
             "algorithm": self.algorithm.value,
@@ -947,8 +1172,6 @@ class DeepRLController:
             "state_features": state_features,
             "network_parameters": sum(p.numel() for p in self.q_network.parameters()),
         }
-
-        self.steps += 1
 
         return action, control_info
 
@@ -1015,12 +1238,28 @@ class DeepRLController:
             "algorithm": self.algorithm.value,
         }
 
+        # Save appropriate network based on algorithm
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            save_dict['policy_network'] = self.policy_network.state_dict()
+        else:
+            save_dict['q_network'] = self.q_network.state_dict()
+            if self.target_network is not None:
+                save_dict['target_network'] = self.target_network.state_dict()
+
         torch.save(save_dict, path)
         logger.info(f"Model saved to {path}")
 
     def load_model(self, path: str) -> None:
         """Load model and training state."""
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+
+        # Load appropriate network based on algorithm
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            self.policy_network.load_state_dict(checkpoint['policy_network'])
+        else:
+            self.q_network.load_state_dict(checkpoint['q_network'])
+            if self.target_network is not None and 'target_network' in checkpoint:
+                self.target_network.load_state_dict(checkpoint['target_network'])
 
         self.q_network.load_state_dict(checkpoint["q_network"])
         self.target_network.load_state_dict(checkpoint["target_network"])
@@ -1036,6 +1275,12 @@ class DeepRLController:
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
+        # Get network parameters count
+        if self.algorithm in [DRLAlgorithm.PPO, DRLAlgorithm.A3C]:
+            network_params = sum(p.numel() for p in self.policy_network.parameters())
+        else:
+            network_params = sum(p.numel() for p in self.q_network.parameters())
+
         return {
             "algorithm": self.algorithm.value,
             "steps": self.steps,
