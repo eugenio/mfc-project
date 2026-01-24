@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
-"""SSL/TLS Configuration Module for MFC Monitoring System
+"""SSL/TLS Configuration Module for MFC Monitoring System.
+
 Provides certificate management, Let's Encrypt integration, and security configuration.
+
+Supports both production and development modes:
+- Production mode (default): Uses system-wide certificate paths and Let's Encrypt
+- Development mode: Uses local directories with self-signed certificates
+
+Set MFC_SSL_MODE=development environment variable for development configuration.
 """
 
 from __future__ import annotations
@@ -20,6 +27,15 @@ from typing import Any
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def is_development_mode() -> bool:
+    """Check if running in development mode.
+
+    Returns True if MFC_SSL_MODE environment variable is set to 'development' or 'dev'.
+    """
+    mode = os.getenv("MFC_SSL_MODE", "").lower()
+    return mode in ("development", "dev")
 
 
 @dataclass
@@ -66,6 +82,52 @@ class SSLConfig:
     def from_dict(cls, data: dict) -> SSLConfig:
         """Create from dictionary."""
         return cls(**data)
+
+    @classmethod
+    def create_development_config(cls, project_root: Path | None = None) -> SSLConfig:
+        """Create SSL configuration suitable for development.
+
+        Uses local directories instead of system-wide paths and disables Let's Encrypt.
+
+        Args:
+            project_root: Project root directory. If None, auto-detected from
+                this file's location.
+
+        Returns:
+            SSLConfig configured for development use.
+
+        """
+        if project_root is None:
+            project_root = Path(__file__).parent.parent.parent
+
+        ssl_dir = project_root / "ssl_certificates"
+        ssl_dir.mkdir(exist_ok=True)
+
+        # Create subdirectories
+        (ssl_dir / "certs").mkdir(exist_ok=True)
+        (ssl_dir / "private").mkdir(exist_ok=True)
+
+        return cls(
+            # Local certificate paths
+            cert_file=str(ssl_dir / "certs" / "mfc-monitoring.crt"),
+            key_file=str(ssl_dir / "private" / "mfc-monitoring.key"),
+            ca_file=None,
+            # Development settings
+            use_letsencrypt=False,  # Use self-signed for development
+            domain="localhost",
+            email="dev@mfc-project.local",
+            staging=True,
+            # Relaxed security for development
+            verify_mode="CERT_NONE",
+            # Development ports (avoiding privileged ports)
+            https_port_api=8443,
+            https_port_frontend=8444,
+            wss_port_streaming=8445,
+            # Security headers (still enabled for testing)
+            enable_hsts=True,
+            hsts_max_age=86400,  # 1 day for development
+            enable_csp=True,
+        )
 
 
 class CertificateManager:
@@ -384,8 +446,21 @@ class SSLContextManager:
 
 
 def load_ssl_config(config_file: str | None = None) -> SSLConfig:
-    """Load SSL configuration from file or environment variables."""
-    # Check for development config first
+    """Load SSL configuration from file or environment variables.
+
+    The function checks for configuration in this order:
+    1. Explicit config_file parameter
+    2. Development mode (MFC_SSL_MODE=development) - uses development config
+    3. Existing ssl_config_dev.json file
+    4. MFC_SSL_CONFIG environment variable
+    5. Default production config file (/etc/mfc/ssl-config.json)
+    """
+    # Check for development mode via environment variable
+    if config_file is None and is_development_mode():
+        logger.info("Development mode detected (MFC_SSL_MODE), using development configuration")
+        return SSLConfig.create_development_config()
+
+    # Check for development config file
     dev_config_file = Path(__file__).parent / "ssl_config_dev.json"
     if dev_config_file.exists() and config_file is None:
         config_file = str(dev_config_file)
@@ -543,6 +618,52 @@ def test_ssl_connection(host: str, port: int, timeout: int = 10) -> bool:
         return False
 
 
+def setup_development_ssl(project_root: Path | None = None) -> bool:
+    """Set up SSL infrastructure for development.
+
+    Creates self-signed certificates in a local ssl_certificates directory
+    and saves a development configuration file.
+
+    Args:
+        project_root: Project root directory. If None, auto-detected.
+
+    Returns:
+        True if setup was successful, False otherwise.
+
+    """
+    logger.info("Setting up SSL infrastructure for development...")
+
+    try:
+        # Create development configuration
+        config = SSLConfig.create_development_config(project_root)
+
+        # Generate self-signed certificates for development
+        cert_manager = CertificateManager(config)
+        success = cert_manager.generate_self_signed_certificate()
+        if not success:
+            logger.error("Failed to generate self-signed certificates")
+            return False
+
+        # Save the configuration
+        if project_root is None:
+            project_root = Path(__file__).parent.parent.parent
+        config_file = Path(__file__).parent / "ssl_config_dev.json"
+        save_success = save_ssl_config(config, str(config_file))
+        if not save_success:
+            logger.error("Failed to save SSL configuration")
+            return False
+
+        logger.info("Development SSL infrastructure setup complete")
+        logger.info(f"Certificate files created in: {Path(config.cert_file).parent}")
+        logger.info(f"Configuration saved to: {config_file}")
+
+        return True
+
+    except Exception as e:
+        logger.exception(f"Error setting up development SSL: {e}")
+        return False
+
+
 if __name__ == "__main__":
     # Command-line interface for SSL management
     import argparse
@@ -552,6 +673,11 @@ if __name__ == "__main__":
         "--init",
         action="store_true",
         help="Initialize SSL infrastructure",
+    )
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Set up development SSL with self-signed certificates",
     )
     parser.add_argument("--test", action="store_true", help="Test SSL connections")
     parser.add_argument("--renew", action="store_true", help="Renew certificates")
@@ -569,7 +695,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.init:
+    if args.dev:
+        # Set up development SSL infrastructure
+        success = setup_development_ssl()
+        if not success:
+            sys.exit(1)
+
+    elif args.init:
         config = SSLConfig(domain=args.domain, email=args.email, staging=args.staging)
         success, final_config = initialize_ssl_infrastructure(config)
         if success:
