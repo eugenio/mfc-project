@@ -36,6 +36,8 @@ logger = logging.getLogger(__name__)
 def convert_values_for_serialization(obj: Any) -> Any:
     """Convert values recursively for serialization compatibility.
 
+    Handles enums, tuples, and nested structures.
+
     Args:
         obj: Object to convert
 
@@ -43,17 +45,33 @@ def convert_values_for_serialization(obj: Any) -> Any:
         Converted object
 
     """
+    if isinstance(obj, Enum):
+        return obj.value
     if isinstance(obj, tuple):
-        return list(obj)
+        return [convert_values_for_serialization(item) for item in obj]
     if isinstance(obj, dict):
         return {
             key: convert_values_for_serialization(value) for key, value in obj.items()
         }
     if isinstance(obj, list):
         return [convert_values_for_serialization(item) for item in obj]
-    if isinstance(obj, Enum):
-        return obj.value
     return obj
+
+
+def _enum_dict_factory(field_list: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Convert Enum values recursively for asdict dict_factory.
+
+    Handle enums nested inside dicts, lists, and tuples, converting
+    them to their string/value representation for serialization.
+
+    Args:
+        field_list: List of (field_name, value) tuples from asdict
+
+    Returns:
+        Dictionary with enum values converted to their value representation
+
+    """
+    return {k: convert_values_for_serialization(v) for k, v in field_list}
 
 
 def dataclass_to_dict(obj: Any) -> dict[str, Any]:
@@ -67,19 +85,7 @@ def dataclass_to_dict(obj: Any) -> dict[str, Any]:
 
     """
     if is_dataclass(obj) and not isinstance(obj, type):
-        # Custom dict factory to handle enums
-        def enum_dict_factory(field_list):
-            result = {}
-            for k, v in field_list:
-                if isinstance(v, Enum):
-                    result[k] = v.value
-                else:
-                    result[k] = v
-            return result
-
-        result = asdict(obj, dict_factory=enum_dict_factory)
-        # Recursively convert all values for serialization
-        return convert_values_for_serialization(result)
+        return asdict(obj, dict_factory=_enum_dict_factory)
     return obj
 
 
