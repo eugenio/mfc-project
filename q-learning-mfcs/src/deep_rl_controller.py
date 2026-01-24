@@ -1,5 +1,4 @@
-"""
-Deep Reinforcement Learning Controller for Advanced MFC Control
+"""Deep Reinforcement Learning Controller for Advanced MFC Control.
 
 This module implements state-of-the-art deep reinforcement learning algorithms
 for MFC control, replacing traditional Q-tables with deep neural networks.
@@ -23,31 +22,34 @@ Created: 2025-07-31
 Last Modified: 2025-07-31
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn, optim
 
 # Optional tensorboard import
 try:
     from torch.utils.tensorboard import SummaryWriter
+
     TENSORBOARD_AVAILABLE = True
 except ImportError:
     TENSORBOARD_AVAILABLE = False
-    print("Warning: TensorBoard not available - logging will be disabled")
 
 # Import Phase 2 components
-from adaptive_mfc_controller import SystemState
 from ml_optimization import FeatureEngineer
+
+if TYPE_CHECKING:
+    from adaptive_mfc_controller import SystemState
 
 # Import configuration
 
@@ -58,6 +60,7 @@ logger = logging.getLogger(__name__)
 
 class DRLAlgorithm(Enum):
     """Deep RL algorithm types."""
+
     DQN = "deep_q_network"
     DOUBLE_DQN = "double_dqn"
     DUELING_DQN = "dueling_dqn"
@@ -113,13 +116,13 @@ class DRLConfig:
 class PriorityReplayBuffer:
     """Priority experience replay buffer with proportional prioritization."""
 
-    def __init__(self, capacity: int, alpha: float = 0.6):
-        """
-        Initialize priority replay buffer.
+    def __init__(self, capacity: int, alpha: float = 0.6) -> None:
+        """Initialize priority replay buffer.
 
         Args:
             capacity: Maximum buffer size
             alpha: Prioritization exponent (0 = uniform, 1 = full priority)
+
         """
         self.capacity = capacity
         self.alpha = alpha
@@ -130,11 +133,11 @@ class PriorityReplayBuffer:
         # Sum tree for efficient priority sampling
         self.tree_ptr = 0
         self.sum_tree = np.zeros((2 * capacity - 1,), dtype=np.float32)
-        self.min_tree = np.full((2 * capacity - 1,), float('inf'), dtype=np.float32)
+        self.min_tree = np.full((2 * capacity - 1,), float("inf"), dtype=np.float32)
 
         self.max_priority = 1.0
 
-    def _update_tree(self, tree_idx: int, priority: float):
+    def _update_tree(self, tree_idx: int, priority: float) -> None:
         """Update sum and min trees."""
         change = priority - self.sum_tree[tree_idx]
         self.sum_tree[tree_idx] = priority
@@ -146,11 +149,17 @@ class PriorityReplayBuffer:
             self.sum_tree[tree_idx] += change
             self.min_tree[tree_idx] = min(
                 self.min_tree[2 * tree_idx + 1],
-                self.min_tree[2 * tree_idx + 2]
+                self.min_tree[2 * tree_idx + 2],
             )
 
-    def push(self, state: np.ndarray, action: int, reward: float,
-             next_state: np.ndarray, done: bool):
+    def push(
+        self,
+        state: np.ndarray,
+        action: int,
+        reward: float,
+        next_state: np.ndarray,
+        done: bool,
+    ) -> None:
         """Add experience with maximum priority."""
         experience = (state, action, reward, next_state, done)
 
@@ -161,11 +170,15 @@ class PriorityReplayBuffer:
 
         # Set maximum priority for new experience
         tree_idx = self.pos + self.capacity - 1
-        self._update_tree(tree_idx, self.max_priority ** self.alpha)
+        self._update_tree(tree_idx, self.max_priority**self.alpha)
 
         self.pos = (self.pos + 1) % self.capacity
 
-    def sample(self, batch_size: int, beta: float = 0.4) -> tuple[list, np.ndarray, np.ndarray]:
+    def sample(
+        self,
+        batch_size: int,
+        beta: float = 0.4,
+    ) -> tuple[list, np.ndarray, np.ndarray]:
         """Sample experiences with importance sampling."""
         indices = []
         priorities = []
@@ -207,28 +220,28 @@ class PriorityReplayBuffer:
 
         return idx
 
-    def update_priorities(self, indices: np.ndarray, priorities: np.ndarray):
+    def update_priorities(self, indices: np.ndarray, priorities: np.ndarray) -> None:
         """Update priorities for given indices."""
         for idx, priority in zip(indices, priorities, strict=False):
             tree_idx = idx + self.capacity - 1
             self.max_priority = max(self.max_priority, priority)
-            self._update_tree(tree_idx, priority ** self.alpha)
+            self._update_tree(tree_idx, priority**self.alpha)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.buffer)
 
 
 class DuelingDQN(nn.Module):
     """Dueling DQN architecture with separate value and advantage streams."""
 
-    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig):
-        """
-        Initialize dueling DQN.
+    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig) -> None:
+        """Initialize dueling DQN.
 
         Args:
             state_dim: Input state dimension
             action_dim: Number of actions
             config: DRL configuration
+
         """
         super().__init__()
 
@@ -255,33 +268,35 @@ class DuelingDQN(nn.Module):
         self.value_stream = nn.Sequential(
             nn.Linear(config.hidden_layers[-1], config.hidden_layers[-1] // 2),
             self._get_activation(config.activation),
-            nn.Linear(config.hidden_layers[-1] // 2, 1)
+            nn.Linear(config.hidden_layers[-1] // 2, 1),
         )
 
         # Advantage stream
         self.advantage_stream = nn.Sequential(
             nn.Linear(config.hidden_layers[-1], config.hidden_layers[-1] // 2),
             self._get_activation(config.activation),
-            nn.Linear(config.hidden_layers[-1] // 2, action_dim)
+            nn.Linear(config.hidden_layers[-1] // 2, action_dim),
         )
 
         # Initialize weights
         self.apply(self._init_weights)
 
-        logger.info(f"DuelingDQN initialized: {state_dim}→{config.hidden_layers}→{action_dim}")
+        logger.info(
+            f"DuelingDQN initialized: {state_dim}→{config.hidden_layers}→{action_dim}",
+        )
 
     def _get_activation(self, activation: str) -> nn.Module:
         """Get activation function."""
         activations = {
-            'relu': nn.ReLU(),
-            'leaky_relu': nn.LeakyReLU(),
-            'tanh': nn.Tanh(),
-            'elu': nn.ELU(),
-            'swish': nn.SiLU()
+            "relu": nn.ReLU(),
+            "leaky_relu": nn.LeakyReLU(),
+            "tanh": nn.Tanh(),
+            "elu": nn.ELU(),
+            "swish": nn.SiLU(),
         }
         return activations.get(activation, nn.ReLU())
 
-    def _init_weights(self, m):
+    def _init_weights(self, m) -> None:
         """Initialize network weights."""
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight)
@@ -296,24 +311,27 @@ class DuelingDQN(nn.Module):
 
         # Combine value and advantage using dueling architecture
         # Q(s,a) = V(s) + A(s,a) - mean(A(s,a'))
-        q_values = value + advantage - advantage.mean(dim=1, keepdim=True)
-
-        return q_values
+        return value + advantage - advantage.mean(dim=1, keepdim=True)
 
 
 class RainbowDQN(nn.Module):
-    """
-    Rainbow DQN combining multiple improvements:
+    """Rainbow DQN combining multiple improvements:
     - Dueling architecture
     - Noisy networks
     - Distributional RL (C51)
-    - Multi-step learning
+    - Multi-step learning.
     """
 
-    def __init__(self, state_dim: int, action_dim: int, config: DRLConfig,
-                 atoms: int = 51, v_min: float = -10, v_max: float = 10):
-        """
-        Initialize Rainbow DQN.
+    def __init__(
+        self,
+        state_dim: int,
+        action_dim: int,
+        config: DRLConfig,
+        atoms: int = 51,
+        v_min: float = -10,
+        v_max: float = 10,
+    ) -> None:
+        """Initialize Rainbow DQN.
 
         Args:
             state_dim: Input state dimension
@@ -322,6 +340,7 @@ class RainbowDQN(nn.Module):
             atoms: Number of atoms for distributional RL
             v_min: Minimum value for value distribution
             v_max: Maximum value for value distribution
+
         """
         super().__init__()
 
@@ -337,9 +356,14 @@ class RainbowDQN(nn.Module):
 
         # Noisy value and advantage streams
         self.value_stream = NoisyLinear(config.hidden_layers[-1], atoms)
-        self.advantage_stream = NoisyLinear(config.hidden_layers[-1], action_dim * atoms)
+        self.advantage_stream = NoisyLinear(
+            config.hidden_layers[-1],
+            action_dim * atoms,
+        )
 
-        logger.info(f"RainbowDQN initialized with {atoms} atoms, value range [{v_min}, {v_max}]")
+        logger.info(
+            f"RainbowDQN initialized with {atoms} atoms, value range [{v_min}, {v_max}]",
+        )
 
     def _build_noisy_layers(self, input_dim: int, hidden_dims: list[int]) -> nn.Module:
         """Build noisy feature extraction layers."""
@@ -359,15 +383,17 @@ class RainbowDQN(nn.Module):
         features = self.feature_layers(x)
 
         value = self.value_stream(features).view(batch_size, 1, self.atoms)
-        advantage = self.advantage_stream(features).view(batch_size, self.action_dim, self.atoms)
+        advantage = self.advantage_stream(features).view(
+            batch_size,
+            self.action_dim,
+            self.atoms,
+        )
 
         # Dueling architecture for distributions
         q_dist = value + advantage - advantage.mean(dim=1, keepdim=True)
 
         # Apply softmax to get probability distributions
-        q_dist = F.softmax(q_dist, dim=-1)
-
-        return q_dist
+        return F.softmax(q_dist, dim=-1)
 
     def get_q_values(self, x: torch.Tensor) -> torch.Tensor:
         """Get Q-values from value distribution."""
@@ -377,22 +403,25 @@ class RainbowDQN(nn.Module):
         support = torch.linspace(self.v_min, self.v_max, self.atoms).to(x.device)
 
         # Expected Q-values
-        q_values = torch.sum(q_dist * support, dim=-1)
-
-        return q_values
+        return torch.sum(q_dist * support, dim=-1)
 
 
 class NoisyLinear(nn.Module):
     """Noisy linear layer for exploration in neural networks."""
 
-    def __init__(self, in_features: int, out_features: int, std_init: float = 0.4):
-        """
-        Initialize noisy linear layer.
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        std_init: float = 0.4,
+    ) -> None:
+        """Initialize noisy linear layer.
 
         Args:
             in_features: Input dimension
             out_features: Output dimension
             std_init: Initial standard deviation for noise
+
         """
         super().__init__()
 
@@ -407,13 +436,13 @@ class NoisyLinear(nn.Module):
         self.bias_sigma = nn.Parameter(torch.empty(out_features))
 
         # Noise tensors (not parameters)
-        self.register_buffer('weight_epsilon', torch.empty(out_features, in_features))
-        self.register_buffer('bias_epsilon', torch.empty(out_features))
+        self.register_buffer("weight_epsilon", torch.empty(out_features, in_features))
+        self.register_buffer("bias_epsilon", torch.empty(out_features))
 
         self.reset_parameters()
         self.reset_noise()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         """Initialize parameters."""
         mu_range = 1 / np.sqrt(self.in_features)
         self.weight_mu.data.uniform_(-mu_range, mu_range)
@@ -421,7 +450,7 @@ class NoisyLinear(nn.Module):
         self.bias_mu.data.uniform_(-mu_range, mu_range)
         self.bias_sigma.data.fill_(self.std_init / np.sqrt(self.out_features))
 
-    def reset_noise(self):
+    def reset_noise(self) -> None:
         """Generate new noise."""
         epsilon_in = self._scale_noise(self.in_features)
         epsilon_out = self._scale_noise(self.out_features)
@@ -447,19 +476,21 @@ class NoisyLinear(nn.Module):
 
 
 class DeepRLController:
-    """
-    Advanced Deep Reinforcement Learning Controller for MFC systems.
+    """Advanced Deep Reinforcement Learning Controller for MFC systems.
 
     Integrates with Phase 2 components and provides multiple DRL algorithms
     with state-of-the-art techniques for continuous learning and adaptation.
     """
 
-    def __init__(self, state_dim: int, action_dim: int,
-                 algorithm: DRLAlgorithm = DRLAlgorithm.RAINBOW_DQN,
-                 config: DRLConfig | None = None,
-                 device: str | None = None):
-        """
-        Initialize deep RL controller.
+    def __init__(
+        self,
+        state_dim: int,
+        action_dim: int,
+        algorithm: DRLAlgorithm = DRLAlgorithm.RAINBOW_DQN,
+        config: DRLConfig | None = None,
+        device: str | None = None,
+    ) -> None:
+        """Initialize deep RL controller.
 
         Args:
             state_dim: Dimension of state space
@@ -467,6 +498,7 @@ class DeepRLController:
             algorithm: DRL algorithm to use
             config: Configuration parameters
             device: Computing device ('cuda', 'cpu', or 'auto')
+
         """
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -474,8 +506,8 @@ class DeepRLController:
         self.config = config or DRLConfig()
 
         # Device selection
-        if device == 'auto' or device is None:
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if device == "auto" or device is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = torch.device(device)
 
@@ -486,7 +518,7 @@ class DeepRLController:
         if self.config.priority_replay:
             self.replay_buffer = PriorityReplayBuffer(
                 self.config.memory_size,
-                self.config.priority_alpha
+                self.config.priority_alpha,
             )
         else:
             self.replay_buffer = deque(maxlen=self.config.memory_size)
@@ -502,7 +534,9 @@ class DeepRLController:
 
         # Logging
         if TENSORBOARD_AVAILABLE:
-            self.writer = SummaryWriter(f'runs/deep_rl_{algorithm.value}_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+            self.writer = SummaryWriter(
+                f"runs/deep_rl_{algorithm.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            )
         else:
             self.writer = None
         # Performance tracking
@@ -511,26 +545,36 @@ class DeepRLController:
         self.q_value_history = deque(maxlen=1000)
         self.loss_history = deque(maxlen=1000)
 
-        logger.info(f"DeepRLController initialized with {algorithm.value} on {self.device}")
+        logger.info(
+            f"DeepRLController initialized with {algorithm.value} on {self.device}",
+        )
         logger.info(f"State dim: {state_dim}, Action dim: {action_dim}")
         logger.info(f"Network architecture: {self.config.hidden_layers}")
 
-    def _build_networks(self):
+    def _build_networks(self) -> None:
         """Build neural networks based on algorithm."""
         if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
             self.q_network = RainbowDQN(
-                self.state_dim, self.action_dim, self.config
+                self.state_dim,
+                self.action_dim,
+                self.config,
             ).to(self.device)
             self.target_network = RainbowDQN(
-                self.state_dim, self.action_dim, self.config
+                self.state_dim,
+                self.action_dim,
+                self.config,
             ).to(self.device)
         else:
             # Default to Dueling DQN
             self.q_network = DuelingDQN(
-                self.state_dim, self.action_dim, self.config
+                self.state_dim,
+                self.action_dim,
+                self.config,
             ).to(self.device)
             self.target_network = DuelingDQN(
-                self.state_dim, self.action_dim, self.config
+                self.state_dim,
+                self.action_dim,
+                self.config,
             ).to(self.device)
 
         # Copy parameters to target network
@@ -540,35 +584,41 @@ class DeepRLController:
         # Optimizer
         self.optimizer = optim.Adam(
             self.q_network.parameters(),
-            lr=self.config.learning_rate
+            lr=self.config.learning_rate,
         )
 
         # Learning rate scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer, step_size=10000, gamma=0.9
+            self.optimizer,
+            step_size=10000,
+            gamma=0.9,
         )
 
     def extract_state_features(self, system_state: SystemState) -> np.ndarray:
-        """
-        Extract features from system state for neural network input.
+        """Extract features from system state for neural network input.
 
         Args:
             system_state: Complete system state from Phase 2
 
         Returns:
             Feature vector for neural network
+
         """
         # Use Phase 2 feature engineering
         performance_metrics = {
-            'power_efficiency': system_state.power_output / max(system_state.current_density, 0.01),
-            'biofilm_health_score': system_state.health_metrics.overall_health_score,
-            'sensor_reliability': system_state.fused_measurement.fusion_confidence,
-            'system_stability': 1.0 - len(system_state.anomalies) / 10.0,  # Normalized
-            'control_confidence': 0.8  # Default value
+            "power_efficiency": system_state.power_output
+            / max(system_state.current_density, 0.01),
+            "biofilm_health_score": system_state.health_metrics.overall_health_score,
+            "sensor_reliability": system_state.fused_measurement.fusion_confidence,
+            "system_stability": 1.0 - len(system_state.anomalies) / 10.0,  # Normalized
+            "control_confidence": 0.8,  # Default value
         }
 
         # Extract comprehensive features
-        features = self.feature_engineer.extract_features(system_state, performance_metrics)
+        features = self.feature_engineer.extract_features(
+            system_state,
+            performance_metrics,
+        )
 
         # Convert to numpy array and normalize
         feature_vector = np.array(list(features.values()), dtype=np.float32)
@@ -577,13 +627,10 @@ class DeepRLController:
         feature_vector = np.nan_to_num(feature_vector, nan=0.0, posinf=1e6, neginf=-1e6)
 
         # Normalize features to [-1, 1] range
-        feature_vector = np.tanh(feature_vector / 100.0)  # Soft normalization
-
-        return feature_vector
+        return np.tanh(feature_vector / 100.0)  # Soft normalization
 
     def select_action(self, state: np.ndarray, training: bool = True) -> int:
-        """
-        Select action using epsilon-greedy or noisy networks.
+        """Select action using epsilon-greedy or noisy networks.
 
         Args:
             state: Current state
@@ -591,6 +638,7 @@ class DeepRLController:
 
         Returns:
             Selected action index
+
         """
         if training and self.algorithm != DRLAlgorithm.RAINBOW_DQN:
             # Epsilon-greedy exploration
@@ -614,8 +662,14 @@ class DeepRLController:
 
         return action
 
-    def store_experience(self, state: np.ndarray, action: int, reward: float,
-                        next_state: np.ndarray, done: bool):
+    def store_experience(
+        self,
+        state: np.ndarray,
+        action: int,
+        reward: float,
+        next_state: np.ndarray,
+        done: bool,
+    ) -> None:
         """Store experience in replay buffer."""
         if self.config.priority_replay:
             self.replay_buffer.push(state, action, reward, next_state, done)
@@ -623,19 +677,20 @@ class DeepRLController:
             self.replay_buffer.append((state, action, reward, next_state, done))
 
     def train_step(self) -> dict[str, float]:
-        """
-        Perform one training step.
+        """Perform one training step.
 
         Returns:
             Training metrics
+
         """
         if len(self.replay_buffer) < self.config.warmup_steps:
-            return {'loss': 0.0, 'q_value': 0.0}
+            return {"loss": 0.0, "q_value": 0.0}
 
         # Sample batch
         if self.config.priority_replay:
             batch, indices, is_weights = self.replay_buffer.sample(
-                self.config.batch_size, self.beta
+                self.config.batch_size,
+                self.beta,
             )
             is_weights = torch.FloatTensor(is_weights).to(self.device)
         else:
@@ -653,11 +708,21 @@ class DeepRLController:
         # Compute loss based on algorithm
         if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
             loss, td_errors = self._compute_distributional_loss(
-                states, actions, rewards, next_states, dones, is_weights
+                states,
+                actions,
+                rewards,
+                next_states,
+                dones,
+                is_weights,
             )
         else:
             loss, td_errors = self._compute_dqn_loss(
-                states, actions, rewards, next_states, dones, is_weights
+                states,
+                actions,
+                rewards,
+                next_states,
+                dones,
+                is_weights,
             )
 
         # Optimization step
@@ -666,7 +731,8 @@ class DeepRLController:
 
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(
-            self.q_network.parameters(), self.config.gradient_clip
+            self.q_network.parameters(),
+            self.config.gradient_clip,
         )
 
         self.optimizer.step()
@@ -686,28 +752,38 @@ class DeepRLController:
 
         # Log metrics
         metrics = {
-            'loss': loss.item(),
-            'q_value': self.q_value_history[-1] if self.q_value_history else 0.0,
-            'epsilon': self.epsilon,
-            'learning_rate': self.scheduler.get_last_lr()[0],
-            'beta': self.beta
+            "loss": loss.item(),
+            "q_value": self.q_value_history[-1] if self.q_value_history else 0.0,
+            "epsilon": self.epsilon,
+            "learning_rate": self.scheduler.get_last_lr()[0],
+            "beta": self.beta,
         }
 
         self.loss_history.append(loss.item())
 
         return metrics
 
-    def _compute_dqn_loss(self, states: torch.Tensor, actions: torch.Tensor,
-                         rewards: torch.Tensor, next_states: torch.Tensor,
-                         dones: torch.Tensor, is_weights: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def _compute_dqn_loss(
+        self,
+        states: torch.Tensor,
+        actions: torch.Tensor,
+        rewards: torch.Tensor,
+        next_states: torch.Tensor,
+        dones: torch.Tensor,
+        is_weights: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute DQN loss with importance sampling."""
-        current_q_values = self.q_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        current_q_values = (
+            self.q_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        )
 
         with torch.no_grad():
             if self.algorithm == DRLAlgorithm.DOUBLE_DQN:
                 # Double DQN: use online network for action selection
                 next_actions = self.q_network(next_states).argmax(1).unsqueeze(1)
-                next_q_values = self.target_network(next_states).gather(1, next_actions).squeeze(1)
+                next_q_values = (
+                    self.target_network(next_states).gather(1, next_actions).squeeze(1)
+                )
             else:
                 # Standard DQN
                 next_q_values = self.target_network(next_states).max(1)[0]
@@ -722,9 +798,15 @@ class DeepRLController:
 
         return loss, td_errors
 
-    def _compute_distributional_loss(self, states: torch.Tensor, actions: torch.Tensor,
-                                   rewards: torch.Tensor, next_states: torch.Tensor,
-                                   dones: torch.Tensor, is_weights: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def _compute_distributional_loss(
+        self,
+        states: torch.Tensor,
+        actions: torch.Tensor,
+        rewards: torch.Tensor,
+        next_states: torch.Tensor,
+        dones: torch.Tensor,
+        is_weights: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute distributional (C51) loss."""
         batch_size = states.size(0)
 
@@ -740,14 +822,22 @@ class DeepRLController:
 
             # Support for value distribution
             support = torch.linspace(
-                self.q_network.v_min, self.q_network.v_max,
-                self.q_network.atoms
+                self.q_network.v_min,
+                self.q_network.v_max,
+                self.q_network.atoms,
             ).to(self.device)
 
             # Project target distribution
-            delta_z = (self.q_network.v_max - self.q_network.v_min) / (self.q_network.atoms - 1)
-            target_support = rewards.unsqueeze(1) + self.config.gamma * support.unsqueeze(0) * (~dones).unsqueeze(1)
-            target_support = target_support.clamp(self.q_network.v_min, self.q_network.v_max)
+            delta_z = (self.q_network.v_max - self.q_network.v_min) / (
+                self.q_network.atoms - 1
+            )
+            target_support = rewards.unsqueeze(
+                1,
+            ) + self.config.gamma * support.unsqueeze(0) * (~dones).unsqueeze(1)
+            target_support = target_support.clamp(
+                self.q_network.v_min,
+                self.q_network.v_max,
+            )
 
             # Distribute probability mass
             b = (target_support - self.q_network.v_min) / delta_z
@@ -755,10 +845,26 @@ class DeepRLController:
             upper = b.ceil().long()
 
             target_dist = torch.zeros_like(next_dist)
-            target_dist.view(-1).index_add_(0, (lower + (torch.arange(batch_size) * self.q_network.atoms).unsqueeze(1).to(self.device)).view(-1),
-                                          (next_dist * (upper.float() - b)).view(-1))
-            target_dist.view(-1).index_add_(0, (upper + (torch.arange(batch_size) * self.q_network.atoms).unsqueeze(1).to(self.device)).view(-1),
-                                          (next_dist * (b - lower.float())).view(-1))
+            target_dist.view(-1).index_add_(
+                0,
+                (
+                    lower
+                    + (torch.arange(batch_size) * self.q_network.atoms)
+                    .unsqueeze(1)
+                    .to(self.device)
+                ).view(-1),
+                (next_dist * (upper.float() - b)).view(-1),
+            )
+            target_dist.view(-1).index_add_(
+                0,
+                (
+                    upper
+                    + (torch.arange(batch_size) * self.q_network.atoms)
+                    .unsqueeze(1)
+                    .to(self.device)
+                ).view(-1),
+                (next_dist * (b - lower.float())).view(-1),
+            )
 
         # Cross-entropy loss
         loss = -(target_dist * current_dist.log()).sum(1)
@@ -774,45 +880,57 @@ class DeepRLController:
 
         return loss, td_errors
 
-    def _update_target_network(self):
+    def _update_target_network(self) -> None:
         """Update target network with soft or hard update."""
         if self.config.tau < 1.0:
             # Soft update
-            for target_param, param in zip(self.target_network.parameters(), self.q_network.parameters(), strict=False):
+            for target_param, param in zip(
+                self.target_network.parameters(),
+                self.q_network.parameters(),
+                strict=False,
+            ):
                 target_param.data.copy_(
-                    self.config.tau * param.data + (1.0 - self.config.tau) * target_param.data
+                    self.config.tau * param.data
+                    + (1.0 - self.config.tau) * target_param.data,
                 )
         else:
             # Hard update
             self.target_network.load_state_dict(self.q_network.state_dict())
 
-    def _update_exploration(self):
+    def _update_exploration(self) -> None:
         """Update exploration parameters."""
         # Epsilon decay
         if self.epsilon > self.config.epsilon_end:
-            self.epsilon -= (self.config.epsilon_start - self.config.epsilon_end) / self.config.epsilon_decay
+            self.epsilon -= (
+                self.config.epsilon_start - self.config.epsilon_end
+            ) / self.config.epsilon_decay
             self.epsilon = max(self.epsilon, self.config.epsilon_end)
 
         # Beta annealing for priority replay
-        if self.config.priority_replay:
-            if self.beta < 1.0:
-                self.beta += (1.0 - self.config.priority_beta_start) / self.config.priority_beta_frames
-                self.beta = min(self.beta, 1.0)
+        if self.config.priority_replay and self.beta < 1.0:
+            self.beta += (
+                1.0 - self.config.priority_beta_start
+            ) / self.config.priority_beta_frames
+            self.beta = min(self.beta, 1.0)
 
         # Reset noise for noisy networks
         if self.algorithm == DRLAlgorithm.RAINBOW_DQN:
-            self.q_network.apply(lambda m: m.reset_noise() if hasattr(m, 'reset_noise') else None)
-            self.target_network.apply(lambda m: m.reset_noise() if hasattr(m, 'reset_noise') else None)
+            self.q_network.apply(
+                lambda m: m.reset_noise() if hasattr(m, "reset_noise") else None,
+            )
+            self.target_network.apply(
+                lambda m: m.reset_noise() if hasattr(m, "reset_noise") else None,
+            )
 
     def control_step(self, system_state: SystemState) -> tuple[int, dict[str, Any]]:
-        """
-        Execute one control step with deep RL.
+        """Execute one control step with deep RL.
 
         Args:
             system_state: Current system state
 
         Returns:
             Action and control information
+
         """
         # Extract state features
         state_features = self.extract_state_features(system_state)
@@ -822,22 +940,27 @@ class DeepRLController:
 
         # Control information
         control_info = {
-            'algorithm': self.algorithm.value,
-            'epsilon': self.epsilon,
-            'steps': self.steps,
-            'q_values': self.q_value_history[-1] if self.q_value_history else 0.0,
-            'state_features': state_features,
-            'network_parameters': sum(p.numel() for p in self.q_network.parameters())
+            "algorithm": self.algorithm.value,
+            "epsilon": self.epsilon,
+            "steps": self.steps,
+            "q_values": self.q_value_history[-1] if self.q_value_history else 0.0,
+            "state_features": state_features,
+            "network_parameters": sum(p.numel() for p in self.q_network.parameters()),
         }
 
         self.steps += 1
 
         return action, control_info
 
-    def update_with_reward(self, prev_state: SystemState, action: int, reward: float,
-                          next_state: SystemState, done: bool):
-        """
-        Update the controller with reward feedback.
+    def update_with_reward(
+        self,
+        prev_state: SystemState,
+        action: int,
+        reward: float,
+        next_state: SystemState,
+        done: bool,
+    ) -> None:
+        """Update the controller with reward feedback.
 
         Args:
             prev_state: Previous system state
@@ -845,6 +968,7 @@ class DeepRLController:
             reward: Reward received
             next_state: Next system state
             done: Whether episode is done
+
         """
         # Extract features
         prev_features = self.extract_state_features(prev_state)
@@ -859,68 +983,88 @@ class DeepRLController:
 
             # Log to tensorboard if available
             if self.writer is not None:
-                self.writer.add_scalar('Loss/Training', metrics['loss'], self.steps)
-                self.writer.add_scalar('Q_Value/Average', metrics['q_value'], self.steps)
-                self.writer.add_scalar('Exploration/Epsilon', metrics['epsilon'], self.steps)
-                self.writer.add_scalar('Learning/Rate', metrics['learning_rate'], self.steps)
+                self.writer.add_scalar("Loss/Training", metrics["loss"], self.steps)
+                self.writer.add_scalar(
+                    "Q_Value/Average",
+                    metrics["q_value"],
+                    self.steps,
+                )
+                self.writer.add_scalar(
+                    "Exploration/Epsilon",
+                    metrics["epsilon"],
+                    self.steps,
+                )
+                self.writer.add_scalar(
+                    "Learning/Rate",
+                    metrics["learning_rate"],
+                    self.steps,
+                )
 
-    def save_model(self, path: str):
+    def save_model(self, path: str) -> None:
         """Save model and training state."""
         save_dict = {
-            'q_network': self.q_network.state_dict(),
-            'target_network': self.target_network.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'scheduler': self.scheduler.state_dict(),
-            'steps': self.steps,
-            'episodes': self.episodes,
-            'epsilon': self.epsilon,
-            'beta': self.beta,
-            'config': self.config,
-            'algorithm': self.algorithm.value
+            "q_network": self.q_network.state_dict(),
+            "target_network": self.target_network.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "scheduler": self.scheduler.state_dict(),
+            "steps": self.steps,
+            "episodes": self.episodes,
+            "epsilon": self.epsilon,
+            "beta": self.beta,
+            "config": self.config,
+            "algorithm": self.algorithm.value,
         }
 
         torch.save(save_dict, path)
         logger.info(f"Model saved to {path}")
 
-    def load_model(self, path: str):
+    def load_model(self, path: str) -> None:
         """Load model and training state."""
         checkpoint = torch.load(path, map_location=self.device)
 
-        self.q_network.load_state_dict(checkpoint['q_network'])
-        self.target_network.load_state_dict(checkpoint['target_network'])
-        self.optimizer.load_state_dict(checkpoint['optimizer'])
-        self.scheduler.load_state_dict(checkpoint['scheduler'])
+        self.q_network.load_state_dict(checkpoint["q_network"])
+        self.target_network.load_state_dict(checkpoint["target_network"])
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
+        self.scheduler.load_state_dict(checkpoint["scheduler"])
 
-        self.steps = checkpoint['steps']
-        self.episodes = checkpoint['episodes']
-        self.epsilon = checkpoint['epsilon']
-        self.beta = checkpoint['beta']
+        self.steps = checkpoint["steps"]
+        self.episodes = checkpoint["episodes"]
+        self.epsilon = checkpoint["epsilon"]
+        self.beta = checkpoint["beta"]
 
         logger.info(f"Model loaded from {path}")
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
         return {
-            'algorithm': self.algorithm.value,
-            'steps': self.steps,
-            'episodes': self.episodes,
-            'avg_episode_reward': np.mean(self.episode_rewards) if self.episode_rewards else 0.0,
-            'avg_episode_length': np.mean(self.episode_lengths) if self.episode_lengths else 0.0,
-            'avg_q_value': np.mean(self.q_value_history) if self.q_value_history else 0.0,
-            'avg_loss': np.mean(self.loss_history) if self.loss_history else 0.0,
-            'epsilon': self.epsilon,
-            'beta': self.beta,
-            'replay_buffer_size': len(self.replay_buffer),
-            'device': str(self.device),
-            'network_parameters': sum(p.numel() for p in self.q_network.parameters())
+            "algorithm": self.algorithm.value,
+            "steps": self.steps,
+            "episodes": self.episodes,
+            "avg_episode_reward": (
+                np.mean(self.episode_rewards) if self.episode_rewards else 0.0
+            ),
+            "avg_episode_length": (
+                np.mean(self.episode_lengths) if self.episode_lengths else 0.0
+            ),
+            "avg_q_value": (
+                np.mean(self.q_value_history) if self.q_value_history else 0.0
+            ),
+            "avg_loss": np.mean(self.loss_history) if self.loss_history else 0.0,
+            "epsilon": self.epsilon,
+            "beta": self.beta,
+            "replay_buffer_size": len(self.replay_buffer),
+            "device": str(self.device),
+            "network_parameters": sum(p.numel() for p in self.q_network.parameters()),
         }
 
 
-def create_deep_rl_controller(state_dim: int, action_dim: int,
-                            algorithm: str = "rainbow_dqn",
-                            **kwargs) -> DeepRLController:
-    """
-    Factory function to create deep RL controller.
+def create_deep_rl_controller(
+    state_dim: int,
+    action_dim: int,
+    algorithm: str = "rainbow_dqn",
+    **kwargs,
+) -> DeepRLController:
+    """Factory function to create deep RL controller.
 
     Args:
         state_dim: State space dimension
@@ -930,15 +1074,16 @@ def create_deep_rl_controller(state_dim: int, action_dim: int,
 
     Returns:
         Configured deep RL controller
+
     """
     algorithm_map = {
-        'dqn': DRLAlgorithm.DQN,
-        'double_dqn': DRLAlgorithm.DOUBLE_DQN,
-        'dueling_dqn': DRLAlgorithm.DUELING_DQN,
-        'rainbow_dqn': DRLAlgorithm.RAINBOW_DQN,
-        'ppo': DRLAlgorithm.PPO,
-        'sac': DRLAlgorithm.SAC,
-        'a3c': DRLAlgorithm.A3C
+        "dqn": DRLAlgorithm.DQN,
+        "double_dqn": DRLAlgorithm.DOUBLE_DQN,
+        "dueling_dqn": DRLAlgorithm.DUELING_DQN,
+        "rainbow_dqn": DRLAlgorithm.RAINBOW_DQN,
+        "ppo": DRLAlgorithm.PPO,
+        "sac": DRLAlgorithm.SAC,
+        "a3c": DRLAlgorithm.A3C,
     }
 
     algo = algorithm_map.get(algorithm.lower(), DRLAlgorithm.RAINBOW_DQN)
@@ -948,7 +1093,7 @@ def create_deep_rl_controller(state_dim: int, action_dim: int,
         state_dim=state_dim,
         action_dim=action_dim,
         algorithm=algo,
-        config=config
+        config=config,
     )
 
     logger.info(f"Deep RL controller created with {algorithm} algorithm")
@@ -970,20 +1115,9 @@ if __name__ == "__main__":
         algorithm="rainbow_dqn",
         hidden_layers=[512, 256, 128],
         learning_rate=1e-4,
-        batch_size=64
+        batch_size=64,
     )
-
-    print("🚀 Deep RL Controller Test")
-    print("=" * 50)
-    print(f"Algorithm: {controller.algorithm.value}")
-    print(f"State dimension: {state_dim}")
-    print(f"Action dimension: {action_dim}")
-    print(f"Device: {controller.device}")
-    print(f"Network parameters: {sum(p.numel() for p in controller.q_network.parameters()):,}")
 
     # Test forward pass
     dummy_state = np.random.randn(state_dim).astype(np.float32)
     action = controller.select_action(dummy_state)
-
-    print(f"\nTest action selection: {action}")
-    print("✅ Deep RL controller test completed successfully!")

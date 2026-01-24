@@ -1,5 +1,4 @@
-"""
-Simulation Chronology Management System
+"""Simulation Chronology Management System.
 
 This module provides functionality to save, maintain, and export chronological
 records of simulation parameters and results with YAML export/import capabilities.
@@ -7,19 +6,23 @@ records of simulation parameters and results with YAML export/import capabilitie
 Created: 2025-07-31
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
 from .config_io import convert_values_for_serialization, dataclass_to_dict
-from .qlearning_config import QLearningConfig
-from .sensor_config import SensorConfig
+
+if TYPE_CHECKING:
+    from .qlearning_config import QLearningConfig
+    from .sensor_config import SensorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -96,12 +99,15 @@ class SimulationChronology:
 class ChronologyManager:
     """Manages simulation chronology with YAML export/import capabilities."""
 
-    def __init__(self, chronology_file: str | Path = "simulation_chronology.yaml"):
-        """
-        Initialize chronology manager.
+    def __init__(
+        self,
+        chronology_file: str | Path = "simulation_chronology.yaml",
+    ) -> None:
+        """Initialize chronology manager.
 
         Args:
             chronology_file: Path to chronology YAML file
+
         """
         self.chronology_file = Path(chronology_file)
         self.chronology = SimulationChronology()
@@ -110,16 +116,17 @@ class ChronologyManager:
         if self.chronology_file.exists():
             self.load_chronology()
 
-    def create_entry(self,
-                    simulation_name: str,
-                    description: str = "",
-                    duration_hours: float = 0.0,
-                    qlearning_config: QLearningConfig | None = None,
-                    sensor_config: SensorConfig | None = None,
-                    parameters: dict[str, Any] | None = None,
-                    tags: list[str] | None = None) -> SimulationEntry:
-        """
-        Create a new simulation entry.
+    def create_entry(
+        self,
+        simulation_name: str,
+        description: str = "",
+        duration_hours: float = 0.0,
+        qlearning_config: QLearningConfig | None = None,
+        sensor_config: SensorConfig | None = None,
+        parameters: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+    ) -> SimulationEntry:
+        """Create a new simulation entry.
 
         Args:
             simulation_name: Name of the simulation
@@ -132,13 +139,14 @@ class ChronologyManager:
 
         Returns:
             New simulation entry
+
         """
         entry = SimulationEntry(
             simulation_name=simulation_name,
             description=description,
             duration_hours=duration_hours,
             parameters=parameters or {},
-            tags=tags or []
+            tags=tags or [],
         )
 
         # Convert configurations to dictionaries
@@ -155,15 +163,16 @@ class ChronologyManager:
         self.chronology.add_entry(entry)
         self.save_chronology()
 
-    def update_entry_results(self,
-                           entry_id: str,
-                           results_summary: dict[str, Any],
-                           result_files: dict[str, str] | None = None,
-                           execution_time: float | None = None,
-                           success: bool = True,
-                           error_message: str = "") -> bool:
-        """
-        Update simulation entry with results.
+    def update_entry_results(
+        self,
+        entry_id: str,
+        results_summary: dict[str, Any],
+        result_files: dict[str, str] | None = None,
+        execution_time: float | None = None,
+        success: bool = True,
+        error_message: str = "",
+    ) -> bool:
+        """Update simulation entry with results.
 
         Args:
             entry_id: ID of the entry to update
@@ -175,6 +184,7 @@ class ChronologyManager:
 
         Returns:
             True if entry was found and updated
+
         """
         entry = self.chronology.get_entry_by_id(entry_id)
         if not entry:
@@ -204,16 +214,19 @@ class ChronologyManager:
 
             self.chronology_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(self.chronology_file, 'w') as f:
-                yaml.dump(chronology_dict, f,
-                         default_flow_style=False,
-                         indent=2,
-                         sort_keys=False)
+            with open(self.chronology_file, "w") as f:
+                yaml.dump(
+                    chronology_dict,
+                    f,
+                    default_flow_style=False,
+                    indent=2,
+                    sort_keys=False,
+                )
 
             logger.info(f"Chronology saved to: {self.chronology_file}")
 
         except Exception as e:
-            logger.error(f"Failed to save chronology: {e}")
+            logger.exception(f"Failed to save chronology: {e}")
             raise
 
     def load_chronology(self) -> None:
@@ -230,39 +243,56 @@ class ChronologyManager:
             self.chronology = SimulationChronology()
 
             # Set basic metadata
-            self.chronology.created_at = data.get('created_at', self.chronology.created_at)
-            self.chronology.last_updated = data.get('last_updated', self.chronology.last_updated)
-            self.chronology.version = data.get('version', self.chronology.version)
-            self.chronology.project_name = data.get('project_name', self.chronology.project_name)
-            self.chronology.author = data.get('author', self.chronology.author)
-            self.chronology.notes = data.get('notes', self.chronology.notes)
+            self.chronology.created_at = data.get(
+                "created_at",
+                self.chronology.created_at,
+            )
+            self.chronology.last_updated = data.get(
+                "last_updated",
+                self.chronology.last_updated,
+            )
+            self.chronology.version = data.get("version", self.chronology.version)
+            self.chronology.project_name = data.get(
+                "project_name",
+                self.chronology.project_name,
+            )
+            self.chronology.author = data.get("author", self.chronology.author)
+            self.chronology.notes = data.get("notes", self.chronology.notes)
 
             # Reconstruct entries
-            for entry_data in data.get('entries', []):
+            for entry_data in data.get("entries", []):
                 entry = SimulationEntry(
-                    id=entry_data.get('id', str(uuid.uuid4())[:8]),
-                    timestamp=entry_data.get('timestamp', datetime.now(UTC).isoformat()),
-                    simulation_name=entry_data.get('simulation_name', ''),
-                    description=entry_data.get('description', ''),
-                    duration_hours=entry_data.get('duration_hours', 0.0),
-                    qlearning_config=entry_data.get('qlearning_config'),
-                    sensor_config=entry_data.get('sensor_config'),
-                    parameters=entry_data.get('parameters', {}),
-                    results_summary=entry_data.get('results_summary', {}),
-                    result_files=entry_data.get('result_files', {}),
-                    tags=entry_data.get('tags', []),
-                    execution_time_seconds=entry_data.get('execution_time_seconds', 0.0),
-                    success=entry_data.get('success', True),
-                    error_message=entry_data.get('error_message', '')
+                    id=entry_data.get("id", str(uuid.uuid4())[:8]),
+                    timestamp=entry_data.get(
+                        "timestamp",
+                        datetime.now(UTC).isoformat(),
+                    ),
+                    simulation_name=entry_data.get("simulation_name", ""),
+                    description=entry_data.get("description", ""),
+                    duration_hours=entry_data.get("duration_hours", 0.0),
+                    qlearning_config=entry_data.get("qlearning_config"),
+                    sensor_config=entry_data.get("sensor_config"),
+                    parameters=entry_data.get("parameters", {}),
+                    results_summary=entry_data.get("results_summary", {}),
+                    result_files=entry_data.get("result_files", {}),
+                    tags=entry_data.get("tags", []),
+                    execution_time_seconds=entry_data.get(
+                        "execution_time_seconds",
+                        0.0,
+                    ),
+                    success=entry_data.get("success", True),
+                    error_message=entry_data.get("error_message", ""),
                 )
                 self.chronology.entries.append(entry)
 
-            logger.info(f"Loaded chronology with {len(self.chronology.entries)} entries")
+            logger.info(
+                f"Loaded chronology with {len(self.chronology.entries)} entries",
+            )
 
         except FileNotFoundError:
             logger.info("No existing chronology file found")
         except Exception as e:
-            logger.error(f"Failed to load chronology: {e}")
+            logger.exception(f"Failed to load chronology: {e}")
             raise
 
     def export_chronology_yaml(self, output_path: str | Path) -> None:
@@ -275,11 +305,14 @@ class ChronologyManager:
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
-            yaml.dump(chronology_dict, f,
-                     default_flow_style=False,
-                     indent=2,
-                     sort_keys=False)
+        with open(output_path, "w") as f:
+            yaml.dump(
+                chronology_dict,
+                f,
+                default_flow_style=False,
+                indent=2,
+                sort_keys=False,
+            )
 
         logger.info(f"Chronology exported to: {output_path}")
 
@@ -292,7 +325,7 @@ class ChronologyManager:
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(chronology_dict, f, indent=2)
 
         logger.info(f"Chronology exported to JSON: {output_path}")
@@ -302,10 +335,11 @@ class ChronologyManager:
         input_path = Path(input_path)
 
         if not input_path.exists():
-            raise FileNotFoundError(f"Chronology file not found: {input_path}")
+            msg = f"Chronology file not found: {input_path}"
+            raise FileNotFoundError(msg)
 
         # Backup current chronology
-        backup_path = self.chronology_file.with_suffix('.backup.yaml')
+        backup_path = self.chronology_file.with_suffix(".backup.yaml")
         if self.chronology_file.exists():
             self.export_chronology_yaml(backup_path)
             logger.info(f"Backed up current chronology to: {backup_path}")
@@ -323,7 +357,9 @@ class ChronologyManager:
         failed_runs = total_entries - successful_runs
 
         total_simulation_time = sum(e.duration_hours for e in self.chronology.entries)
-        total_execution_time = sum(e.execution_time_seconds for e in self.chronology.entries)
+        total_execution_time = sum(
+            e.execution_time_seconds for e in self.chronology.entries
+        )
 
         # Get all unique tags
         all_tags = set()
@@ -331,15 +367,17 @@ class ChronologyManager:
             all_tags.update(entry.tags)
 
         return {
-            'total_entries': total_entries,
-            'successful_runs': successful_runs,
-            'failed_runs': failed_runs,
-            'success_rate': (successful_runs / total_entries * 100) if total_entries > 0 else 0,
-            'total_simulation_time_hours': total_simulation_time,
-            'total_execution_time_seconds': total_execution_time,
-            'unique_tags': sorted(all_tags),
-            'created_at': self.chronology.created_at,
-            'last_updated': self.chronology.last_updated
+            "total_entries": total_entries,
+            "successful_runs": successful_runs,
+            "failed_runs": failed_runs,
+            "success_rate": (
+                (successful_runs / total_entries * 100) if total_entries > 0 else 0
+            ),
+            "total_simulation_time_hours": total_simulation_time,
+            "total_execution_time_seconds": total_execution_time,
+            "unique_tags": sorted(all_tags),
+            "created_at": self.chronology.created_at,
+            "last_updated": self.chronology.last_updated,
         }
 
 
@@ -347,7 +385,9 @@ class ChronologyManager:
 _chronology_manager: ChronologyManager | None = None
 
 
-def get_chronology_manager(chronology_file: str | Path = "simulation_chronology.yaml") -> ChronologyManager:
+def get_chronology_manager(
+    chronology_file: str | Path = "simulation_chronology.yaml",
+) -> ChronologyManager:
     """Get or create global chronology manager instance."""
     global _chronology_manager
 

@@ -1,5 +1,4 @@
-"""
-Cross-Phase Integration Module
+"""Cross-Phase Integration Module.
 
 Provides seamless integration between all MFC system phases.
 """
@@ -10,8 +9,4 @@ from .cross_phase_integrator import (
     IntegrationResult,
 )
 
-__all__ = [
-    'CrossPhaseIntegrator',
-    'IntegrationConfig',
-    'IntegrationResult'
-]
+__all__ = ["CrossPhaseIntegrator", "IntegrationConfig", "IntegrationResult"]

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Base membrane model for MFC simulations
+"""Base membrane model for MFC simulations.
 
 Provides abstract base class for all membrane types with common transport
 mechanisms, selectivity calculations, and performance metrics.
@@ -14,6 +13,8 @@ Key transport mechanisms:
 Created: 2025-07-27
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -24,6 +25,7 @@ import jax.numpy as jnp
 
 class IonType(Enum):
     """Types of ions that can transport through membranes."""
+
     PROTON = "H+"
     HYDROXIDE = "OH-"
     SODIUM = "Na+"
@@ -37,9 +39,10 @@ class IonType(Enum):
 
 class TransportMechanism(Enum):
     """Transport mechanisms through membranes."""
-    MIGRATION = "migration"          # Electric field driven
-    DIFFUSION = "diffusion"         # Concentration gradient driven
-    CONVECTION = "convection"       # Pressure/flow driven
+
+    MIGRATION = "migration"  # Electric field driven
+    DIFFUSION = "diffusion"  # Concentration gradient driven
+    CONVECTION = "convection"  # Pressure/flow driven
     ELECTROOSMOTIC = "electroosmotic"  # Water drag with ions
 
 
@@ -48,30 +51,30 @@ class MembraneParameters:
     """Base parameters for all membrane types."""
 
     # Physical properties
-    thickness: float = 100e-6        # m - membrane thickness
-    area: float = 1e-4              # m² - membrane area
-    porosity: float = 0.3           # - void fraction
-    tortuosity: float = 2.5         # - pore tortuosity
-    pore_size: float = 1e-9         # m - average pore size
+    thickness: float = 100e-6  # m - membrane thickness
+    area: float = 1e-4  # m² - membrane area
+    porosity: float = 0.3  # - void fraction
+    tortuosity: float = 2.5  # - pore tortuosity
+    pore_size: float = 1e-9  # m - average pore size
 
     # Operating conditions
-    temperature: float = 298.15      # K - operating temperature
-    pressure_anode: float = 101325   # Pa - anode pressure
-    pressure_cathode: float = 101325 # Pa - cathode pressure
+    temperature: float = 298.15  # K - operating temperature
+    pressure_anode: float = 101325  # Pa - anode pressure
+    pressure_cathode: float = 101325  # Pa - cathode pressure
 
     # Ion exchange capacity
     ion_exchange_capacity: float = 1.2  # mol/kg - IEC
-    water_content: float = 10.0         # mol H2O/mol functional group
+    water_content: float = 10.0  # mol H2O/mol functional group
     fixed_charge_density: float = 1200  # mol/m³
 
     # Physical constants
-    faraday_constant: float = 96485.0   # C/mol
-    gas_constant: float = 8.314         # J/(mol·K)
+    faraday_constant: float = 96485.0  # C/mol
+    gas_constant: float = 8.314  # J/(mol·K)
 
     # Degradation parameters
-    initial_conductivity: float = 0.1    # S/cm - initial ionic conductivity
-    degradation_rate: float = 1e-6       # h⁻¹ - conductivity loss rate
-    fouling_resistance: float = 0.0      # Ω·m² - additional fouling resistance
+    initial_conductivity: float = 0.1  # S/cm - initial ionic conductivity
+    degradation_rate: float = 1e-6  # h⁻¹ - conductivity loss rate
+    fouling_resistance: float = 0.0  # Ω·m² - additional fouling resistance
 
 
 @dataclass
@@ -79,17 +82,16 @@ class IonTransportMechanisms:
     """Ion transport properties and mechanisms."""
 
     ion_type: IonType
-    diffusion_coefficient: float      # m²/s - in membrane
-    mobility: float                   # m²/(V·s) - ion mobility
-    partition_coefficient: float      # - membrane/solution partition
-    hydration_number: float          # - water molecules per ion
-    charge: int                      # - ion charge
-    stokes_radius: float             # m - hydrated ion radius
+    diffusion_coefficient: float  # m²/s - in membrane
+    mobility: float  # m²/(V·s) - ion mobility
+    partition_coefficient: float  # - membrane/solution partition
+    hydration_number: float  # - water molecules per ion
+    charge: int  # - ion charge
+    stokes_radius: float  # m - hydrated ion radius
 
 
 class BaseMembraneModel(ABC):
-    """
-    Abstract base class for membrane models in MFC simulations.
+    """Abstract base class for membrane models in MFC simulations.
 
     Provides common functionality for all membrane types:
     - Multi-ion transport calculations
@@ -100,7 +102,7 @@ class BaseMembraneModel(ABC):
     - Degradation effects
     """
 
-    def __init__(self, parameters: MembraneParameters):
+    def __init__(self, parameters: MembraneParameters) -> None:
         self.params = parameters
         self.thickness = parameters.thickness
         self.area = parameters.area
@@ -116,19 +118,19 @@ class BaseMembraneModel(ABC):
     @abstractmethod
     def _setup_ion_transport(self):
         """Setup membrane-specific ion transport mechanisms."""
-        pass
 
     @abstractmethod
     def _calculate_membrane_properties(self):
         """Calculate membrane-specific properties."""
-        pass
 
-    def calculate_nernst_planck_flux(self, ion: IonType,
-                                    concentration_anode: float,
-                                    concentration_cathode: float,
-                                    potential_gradient: float) -> float:
-        """
-        Calculate ion flux using Nernst-Planck equation.
+    def calculate_nernst_planck_flux(
+        self,
+        ion: IonType,
+        concentration_anode: float,
+        concentration_cathode: float,
+        potential_gradient: float,
+    ) -> float:
+        """Calculate ion flux using Nernst-Planck equation.
 
         J = -D * (dC/dx) - z * F * D * C * (dφ/dx) / (R*T) + C * v
 
@@ -140,6 +142,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Ion flux (mol/m²/s)
+
         """
         if ion not in self.ion_transport:
             return 0.0
@@ -167,14 +170,14 @@ class BaseMembraneModel(ABC):
         flux_migration = -z * F * D_eff * C_avg * potential_gradient / (R * T)
 
         # Total flux
-        total_flux = flux_diffusion + flux_migration
+        return flux_diffusion + flux_migration
 
-        return total_flux
-
-    def calculate_donnan_potential(self, ion_concentrations_anode: dict[IonType, float],
-                                  ion_concentrations_cathode: dict[IonType, float]) -> float:
-        """
-        Calculate Donnan potential at membrane interfaces.
+    def calculate_donnan_potential(
+        self,
+        ion_concentrations_anode: dict[IonType, float],
+        ion_concentrations_cathode: dict[IonType, float],
+    ) -> float:
+        """Calculate Donnan potential at membrane interfaces.
 
         Args:
             ion_concentrations_anode: Ion concentrations at anode (mol/m³)
@@ -182,6 +185,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Donnan potential (V)
+
         """
         R = self.params.gas_constant
         T = self.temperature
@@ -204,17 +208,19 @@ class BaseMembraneModel(ABC):
         # Simplified Donnan potential calculation
         if ionic_strength_anode > 0 and ionic_strength_cathode > 0:
             donnan_potential = (R * T / F) * jnp.log(
-                ionic_strength_cathode / ionic_strength_anode
+                ionic_strength_cathode / ionic_strength_anode,
             )
         else:
             donnan_potential = 0.0
 
         return float(donnan_potential)
 
-    def calculate_water_transport(self, current_density: float,
-                                 primary_ion: IonType) -> float:
-        """
-        Calculate water transport through electro-osmotic drag.
+    def calculate_water_transport(
+        self,
+        current_density: float,
+        primary_ion: IonType,
+    ) -> float:
+        """Calculate water transport through electro-osmotic drag.
 
         Args:
             current_density: Current density (A/m²)
@@ -222,6 +228,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Water flux (mol/m²/s)
+
         """
         if primary_ion not in self.ion_transport:
             return 0.0
@@ -234,18 +241,21 @@ class BaseMembraneModel(ABC):
         hydration_number = self.ion_transport[primary_ion].hydration_number
 
         # Account for membrane water content
-        water_activity = min(1.0, self.params.water_content / 14.0)  # Normalized to Nafion
+        water_activity = min(
+            1.0,
+            self.params.water_content / 14.0,
+        )  # Normalized to Nafion
         effective_hydration = hydration_number * water_activity
 
         # Water flux
-        water_flux = effective_hydration * ion_flux
+        return effective_hydration * ion_flux
 
-        return water_flux
-
-    def calculate_gas_permeability(self, gas_type: str,
-                                  pressure_difference: float) -> float:
-        """
-        Calculate gas permeability through membrane.
+    def calculate_gas_permeability(
+        self,
+        gas_type: str,
+        pressure_difference: float,
+    ) -> float:
+        """Calculate gas permeability through membrane.
 
         Args:
             gas_type: Type of gas ("O2", "H2", "CO2", etc.)
@@ -253,14 +263,15 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Gas flux (mol/m²/s)
+
         """
         # Literature permeability values (mol·m/(m²·s·Pa))
         permeability_data = {
-            "O2": 1.8e-15,   # Oxygen
-            "H2": 3.5e-15,   # Hydrogen
+            "O2": 1.8e-15,  # Oxygen
+            "H2": 3.5e-15,  # Hydrogen
             "CO2": 5.2e-15,  # Carbon dioxide
-            "N2": 0.9e-15,   # Nitrogen
-            "CH4": 2.1e-15   # Methane
+            "N2": 0.9e-15,  # Nitrogen
+            "CH4": 2.1e-15,  # Methane
         }
 
         if gas_type not in permeability_data:
@@ -272,8 +283,11 @@ class BaseMembraneModel(ABC):
         # Temperature correction (Arrhenius)
         T_ref = 298.15
         activation_energy = 20000  # J/mol (typical)
-        temp_factor = jnp.exp(-activation_energy / self.params.gas_constant *
-                             (1/self.temperature - 1/T_ref))
+        temp_factor = jnp.exp(
+            -activation_energy
+            / self.params.gas_constant
+            * (1 / self.temperature - 1 / T_ref),
+        )
 
         # Water content effect (hydrated membranes have higher permeability)
         water_factor = 1.0 + 0.1 * self.params.water_content
@@ -286,20 +300,27 @@ class BaseMembraneModel(ABC):
 
         return float(gas_flux)
 
-    def calculate_membrane_resistance(self, ionic_conductivity: float | None = None) -> float:
-        """
-        Calculate membrane resistance including degradation effects.
+    def calculate_membrane_resistance(
+        self,
+        ionic_conductivity: float | None = None,
+    ) -> float:
+        """Calculate membrane resistance including degradation effects.
 
         Args:
             ionic_conductivity: Override conductivity (S/m)
 
         Returns:
             Membrane resistance (Ω)
+
         """
         if ionic_conductivity is None:
             # Use degraded conductivity
-            degradation_factor = jnp.exp(-self.params.degradation_rate * self.operating_hours)
-            ionic_conductivity = self.params.initial_conductivity * degradation_factor * 100  # S/m
+            degradation_factor = jnp.exp(
+                -self.params.degradation_rate * self.operating_hours,
+            )
+            ionic_conductivity = (
+                self.params.initial_conductivity * degradation_factor * 100
+            )  # S/m
 
         # Resistance = thickness / (conductivity * area)
         resistance = self.thickness / (ionic_conductivity * self.area)
@@ -309,10 +330,13 @@ class BaseMembraneModel(ABC):
 
         return float(resistance)
 
-    def calculate_selectivity(self, ion1: IonType, ion2: IonType,
-                            concentration_ratio: float = 1.0) -> float:
-        """
-        Calculate membrane selectivity between two ions.
+    def calculate_selectivity(
+        self,
+        ion1: IonType,
+        ion2: IonType,
+        concentration_ratio: float = 1.0,
+    ) -> float:
+        """Calculate membrane selectivity between two ions.
 
         Selectivity = (P1/P2) * (D1/D2) * (K1/K2)
 
@@ -323,6 +347,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Selectivity coefficient
+
         """
         if ion1 not in self.ion_transport or ion2 not in self.ion_transport:
             return 1.0
@@ -345,18 +370,20 @@ class BaseMembraneModel(ABC):
         elif z1 == z2:  # Same charge
             charge_selectivity = 1.0
         else:  # Different magnitudes
-            charge_selectivity = abs(z1/z2)
+            charge_selectivity = abs(z1 / z2)
 
         # Total selectivity
         selectivity = D_ratio * K_ratio * charge_selectivity
 
         return float(selectivity)
 
-    def calculate_transport_number(self, ion: IonType,
-                                  all_ion_concentrations: dict[IonType, float],
-                                  current_density: float) -> float:
-        """
-        Calculate transport number for specific ion.
+    def calculate_transport_number(
+        self,
+        ion: IonType,
+        all_ion_concentrations: dict[IonType, float],
+        current_density: float,
+    ) -> float:
+        """Calculate transport number for specific ion.
 
         t_i = |z_i| * u_i * C_i / Σ(|z_j| * u_j * C_j)
 
@@ -367,6 +394,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Transport number (0-1)
+
         """
         if ion not in self.ion_transport or ion not in all_ion_concentrations:
             return 0.0
@@ -397,10 +425,12 @@ class BaseMembraneModel(ABC):
         return float(transport_number)
 
     @abstractmethod
-    def calculate_ionic_conductivity(self, temperature: float | None = None,
-                                   water_content: float | None = None) -> float:
-        """
-        Calculate ionic conductivity specific to membrane type.
+    def calculate_ionic_conductivity(
+        self,
+        temperature: float | None = None,
+        water_content: float | None = None,
+    ) -> float:
+        """Calculate ionic conductivity specific to membrane type.
 
         Args:
             temperature: Temperature (K)
@@ -408,12 +438,15 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Ionic conductivity (S/m)
-        """
-        pass
 
-    def update_operating_conditions(self, temperature: float | None = None,
-                                  pressure_anode: float | None = None,
-                                  pressure_cathode: float | None = None):
+        """
+
+    def update_operating_conditions(
+        self,
+        temperature: float | None = None,
+        pressure_anode: float | None = None,
+        pressure_cathode: float | None = None,
+    ) -> None:
         """Update membrane operating conditions."""
         if temperature is not None:
             self.temperature = temperature
@@ -428,18 +461,20 @@ class BaseMembraneModel(ABC):
         # Recalculate properties
         self._calculate_membrane_properties()
 
-    def update_degradation(self, operating_hours: float):
+    def update_degradation(self, operating_hours: float) -> None:
         """Update membrane degradation state."""
         self.operating_hours = operating_hours
 
-    def add_fouling_resistance(self, additional_resistance: float):
+    def add_fouling_resistance(self, additional_resistance: float) -> None:
         """Add fouling resistance to membrane."""
         self.params.fouling_resistance += additional_resistance
 
-    def get_performance_metrics(self, current_density: float,
-                              ion_concentrations: dict[IonType, float]) -> dict[str, float]:
-        """
-        Calculate comprehensive membrane performance metrics.
+    def get_performance_metrics(
+        self,
+        current_density: float,
+        ion_concentrations: dict[IonType, float],
+    ) -> dict[str, float]:
+        """Calculate comprehensive membrane performance metrics.
 
         Args:
             current_density: Operating current density (A/m²)
@@ -447,6 +482,7 @@ class BaseMembraneModel(ABC):
 
         Returns:
             Dictionary of performance metrics
+
         """
         # Calculate conductivity
         conductivity = self.calculate_ionic_conductivity()
@@ -464,52 +500,58 @@ class BaseMembraneModel(ABC):
         transport_numbers = {}
         for ion in ion_concentrations:
             if ion in self.ion_transport:
-                t_ion = self.calculate_transport_number(ion, ion_concentrations, current_density)
+                t_ion = self.calculate_transport_number(
+                    ion,
+                    ion_concentrations,
+                    current_density,
+                )
                 transport_numbers[f"transport_number_{ion.value}"] = t_ion
 
         return {
-            'ionic_conductivity_S_m': float(conductivity),
-            'membrane_resistance_ohm': float(resistance),
-            'voltage_drop_V': float(voltage_drop),
-            'power_loss_W': float(power_loss),
-            'thickness_um': self.thickness * 1e6,
-            'area_cm2': self.area * 1e4,
-            'operating_hours': self.operating_hours,
-            'fouling_resistance_ohm_m2': self.params.fouling_resistance,
-            **transport_numbers
+            "ionic_conductivity_S_m": float(conductivity),
+            "membrane_resistance_ohm": float(resistance),
+            "voltage_drop_V": float(voltage_drop),
+            "power_loss_W": float(power_loss),
+            "thickness_um": self.thickness * 1e6,
+            "area_cm2": self.area * 1e4,
+            "operating_hours": self.operating_hours,
+            "fouling_resistance_ohm_m2": self.params.fouling_resistance,
+            **transport_numbers,
         }
 
     def get_transport_properties(self) -> dict[str, Any]:
         """Get all transport properties for inspection."""
         properties = {
-            'membrane_type': self.__class__.__name__,
-            'thickness_m': self.thickness,
-            'area_m2': self.area,
-            'porosity': self.params.porosity,
-            'tortuosity': self.params.tortuosity,
-            'ion_exchange_capacity_mol_kg': self.params.ion_exchange_capacity,
-            'water_content': self.params.water_content,
-            'temperature_K': self.temperature,
-            'ion_transport_mechanisms': {}
+            "membrane_type": self.__class__.__name__,
+            "thickness_m": self.thickness,
+            "area_m2": self.area,
+            "porosity": self.params.porosity,
+            "tortuosity": self.params.tortuosity,
+            "ion_exchange_capacity_mol_kg": self.params.ion_exchange_capacity,
+            "water_content": self.params.water_content,
+            "temperature_K": self.temperature,
+            "ion_transport_mechanisms": {},
         }
 
         # Add ion transport details
         for ion, transport in self.ion_transport.items():
-            properties['ion_transport_mechanisms'][ion.value] = {
-                'diffusion_coefficient_m2_s': transport.diffusion_coefficient,
-                'mobility_m2_V_s': transport.mobility,
-                'partition_coefficient': transport.partition_coefficient,
-                'hydration_number': transport.hydration_number,
-                'charge': transport.charge
+            properties["ion_transport_mechanisms"][ion.value] = {
+                "diffusion_coefficient_m2_s": transport.diffusion_coefficient,
+                "mobility_m2_V_s": transport.mobility,
+                "partition_coefficient": transport.partition_coefficient,
+                "hydration_number": transport.hydration_number,
+                "charge": transport.charge,
             }
 
         return properties
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}("
-                f"thickness={self.thickness*1e6:.1f} μm, "
-                f"area={self.area*1e4:.1f} cm², "
-                f"T={self.temperature:.1f} K)")
+        return (
+            f"{self.__class__.__name__}("
+            f"thickness={self.thickness * 1e6:.1f} μm, "
+            f"area={self.area * 1e4:.1f} cm², "
+            f"T={self.temperature:.1f} K)"
+        )
 
 
 class IonTransportDatabase:
@@ -520,12 +562,12 @@ class IonTransportDatabase:
         """Get proton transport properties."""
         return IonTransportMechanisms(
             ion_type=IonType.PROTON,
-            diffusion_coefficient=9.3e-9,    # m²/s in water
-            mobility=3.6e-7,                 # m²/(V·s)
-            partition_coefficient=1.0,        # For PEM
-            hydration_number=3.0,            # H3O+
+            diffusion_coefficient=9.3e-9,  # m²/s in water
+            mobility=3.6e-7,  # m²/(V·s)
+            partition_coefficient=1.0,  # For PEM
+            hydration_number=3.0,  # H3O+
             charge=1,
-            stokes_radius=2.8e-10            # m
+            stokes_radius=2.8e-10,  # m
         )
 
     @staticmethod
@@ -533,12 +575,12 @@ class IonTransportDatabase:
         """Get hydroxide transport properties."""
         return IonTransportMechanisms(
             ion_type=IonType.HYDROXIDE,
-            diffusion_coefficient=5.3e-9,     # m²/s in water
-            mobility=2.0e-7,                  # m²/(V·s)
-            partition_coefficient=0.8,         # For AEM
+            diffusion_coefficient=5.3e-9,  # m²/s in water
+            mobility=2.0e-7,  # m²/(V·s)
+            partition_coefficient=0.8,  # For AEM
             hydration_number=3.0,
             charge=-1,
-            stokes_radius=3.0e-10             # m
+            stokes_radius=3.0e-10,  # m
         )
 
     @staticmethod
@@ -546,10 +588,10 @@ class IonTransportDatabase:
         """Get sodium transport properties."""
         return IonTransportMechanisms(
             ion_type=IonType.SODIUM,
-            diffusion_coefficient=1.3e-9,      # m²/s in water
-            mobility=5.2e-8,                   # m²/(V·s)
-            partition_coefficient=0.3,          # Lower for ion exchange membranes
+            diffusion_coefficient=1.3e-9,  # m²/s in water
+            mobility=5.2e-8,  # m²/(V·s)
+            partition_coefficient=0.3,  # Lower for ion exchange membranes
             hydration_number=4.0,
             charge=1,
-            stokes_radius=3.6e-10              # m
+            stokes_radius=3.6e-10,  # m
         )

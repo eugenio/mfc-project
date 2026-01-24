@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+"""Standardized plotting utilities for MFC simulations
+Supports arbitrary data length with Latin character subplot labels.
 """
-Standardized plotting utilities for MFC simulations
-Supports arbitrary data length with Latin character subplot labels
-"""
+
+from __future__ import annotations
 
 import string
 from typing import Any
@@ -11,17 +12,17 @@ import matplotlib.pyplot as plt
 
 
 class SubplotLabeler:
-    """Helper class to generate Latin alphabet labels for subplots"""
+    """Helper class to generate Latin alphabet labels for subplots."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
 
-    def reset(self):
-        """Reset to letter 'a' for new plot page"""
+    def reset(self) -> None:
+        """Reset to letter 'a' for new plot page."""
         self.current_index = 0
 
     def next_label(self) -> str:
-        """Get next letter in sequence (a, b, c, ..., z, aa, ab, ...)"""
+        """Get next letter in sequence (a, b, c, ..., z, aa, ab, ...)."""
         if self.current_index < 26:
             label = string.ascii_lowercase[self.current_index]
         else:
@@ -29,7 +30,10 @@ class SubplotLabeler:
             first_letter_idx = (self.current_index - 26) // 26
             second_letter_idx = (self.current_index - 26) % 26
             if first_letter_idx < 26:
-                label = string.ascii_lowercase[first_letter_idx] + string.ascii_lowercase[second_letter_idx]
+                label = (
+                    string.ascii_lowercase[first_letter_idx]
+                    + string.ascii_lowercase[second_letter_idx]
+                )
             else:
                 # Beyond 'zz', just use numbers
                 label = f"subplot_{self.current_index}"
@@ -38,10 +42,13 @@ class SubplotLabeler:
         return label
 
 
-def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float] = (12, 8),
-                           title: str | None = None) -> tuple[plt.Figure, list[plt.Axes], SubplotLabeler]:
-    """
-    Create figure with subplots and Latin character labels
+def create_labeled_subplots(
+    nrows: int,
+    ncols: int,
+    figsize: tuple[float, float] = (12, 8),
+    title: str | None = None,
+) -> tuple[plt.Figure, list[plt.Axes], SubplotLabeler]:
+    """Create figure with subplots and Latin character labels.
 
     Args:
         nrows: Number of subplot rows
@@ -53,6 +60,7 @@ def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float]
         fig: Matplotlib figure
         axes: Flattened list of axes
         labeler: SubplotLabeler instance for this figure
+
     """
     fig, axes_array = plt.subplots(nrows, ncols, figsize=figsize)
 
@@ -60,7 +68,7 @@ def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float]
     if nrows * ncols == 1:
         axes = [axes_array]
     else:
-        axes = axes_array.flatten() if hasattr(axes_array, 'flatten') else [axes_array]
+        axes = axes_array.flatten() if hasattr(axes_array, "flatten") else [axes_array]
 
     # Add figure title if provided
     if title:
@@ -77,27 +85,45 @@ def create_labeled_subplots(nrows: int, ncols: int, figsize: tuple[float, float]
     return fig, axes, labeler
 
 
-def add_subplot_label(ax: plt.Axes, label: str, fontsize: int = 14, fontweight: str = 'bold'):
-    """
-    Add Latin character label to subplot in upper left corner, outside plot area
+def add_subplot_label(
+    ax: plt.Axes,
+    label: str,
+    fontsize: int = 14,
+    fontweight: str = "bold",
+) -> None:
+    """Add Latin character label to subplot in upper left corner, outside plot area.
 
     Args:
         ax: Matplotlib axes object
         label: Label text (e.g., 'a', 'b', etc.)
         fontsize: Font size for label
         fontweight: Font weight for label
+
     """
     # Position label outside the plot area in upper left
     # Use transform coordinates: (-0.15, 1.05) places it outside the axes
-    ax.text(-0.15, 1.05, f'({label})', transform=ax.transAxes,
-            fontsize=fontsize, fontweight=fontweight,
-            verticalalignment='bottom', horizontalalignment='right')
+    ax.text(
+        -0.15,
+        1.05,
+        f"({label})",
+        transform=ax.transAxes,
+        fontsize=fontsize,
+        fontweight=fontweight,
+        verticalalignment="bottom",
+        horizontalalignment="right",
+    )
 
 
-def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
-               grid: bool = True, legend: bool = True, legend_loc: str = 'best'):
-    """
-    Standard axis setup helper
+def setup_axis(
+    ax: plt.Axes,
+    xlabel: str,
+    ylabel: str,
+    title: str,
+    grid: bool = True,
+    legend: bool = True,
+    legend_loc: str = "best",
+) -> None:
+    """Standard axis setup helper.
 
     Args:
         ax: Matplotlib axes object
@@ -107,6 +133,7 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
         grid: Whether to show grid
         legend: Whether to show legend
         legend_loc: Legend location
+
     """
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -115,15 +142,23 @@ def setup_axis(ax: plt.Axes, xlabel: str, ylabel: str, title: str,
     if grid:
         ax.grid(True, alpha=0.3)
 
-    if legend and ax.get_legend_handles_labels()[0]:  # Only add legend if there are labeled lines
+    if (
+        legend and ax.get_legend_handles_labels()[0]
+    ):  # Only add legend if there are labeled lines
         ax.legend(loc=legend_loc)
 
 
-def plot_time_series(ax: plt.Axes, df: Any, time_col: str, y_cols: list[str],
-                    labels: list[str] | None = None, colors: list[str] | None = None,
-                    linestyles: list[str] | None = None, linewidths: list[float] | None = None):
-    """
-    Plot multiple time series on the same axes
+def plot_time_series(
+    ax: plt.Axes,
+    df: Any,
+    time_col: str,
+    y_cols: list[str],
+    labels: list[str] | None = None,
+    colors: list[str] | None = None,
+    linestyles: list[str] | None = None,
+    linewidths: list[float] | None = None,
+) -> None:
+    """Plot multiple time series on the same axes.
 
     Args:
         ax: Matplotlib axes object
@@ -134,38 +169,52 @@ def plot_time_series(ax: plt.Axes, df: Any, time_col: str, y_cols: list[str],
         colors: Optional colors for each series
         linestyles: Optional line styles for each series
         linewidths: Optional line widths for each series
+
     """
     if labels is None:
         labels = y_cols
 
     for i, (col, label) in enumerate(zip(y_cols, labels, strict=False)):
-        plot_kwargs = {'label': label}
+        plot_kwargs = {"label": label}
 
         if colors and i < len(colors):
-            plot_kwargs['color'] = colors[i]
+            plot_kwargs["color"] = colors[i]
 
         if linestyles and i < len(linestyles):
-            plot_kwargs['linestyle'] = linestyles[i]
+            plot_kwargs["linestyle"] = linestyles[i]
 
         if linewidths and i < len(linewidths):
-            plot_kwargs['linewidth'] = linewidths[i]
+            plot_kwargs["linewidth"] = linewidths[i]
         else:
-            plot_kwargs['linewidth'] = 2
+            plot_kwargs["linewidth"] = 2
 
         ax.plot(df[time_col], df[col], **plot_kwargs)
 
 
-def add_horizontal_line(ax: plt.Axes, y_value: float, label: str,
-                       color: str = 'red', linestyle: str = '--', alpha: float = 0.5):
-    """Add a horizontal reference line to axes"""
+def add_horizontal_line(
+    ax: plt.Axes,
+    y_value: float,
+    label: str,
+    color: str = "red",
+    linestyle: str = "--",
+    alpha: float = 0.5,
+) -> None:
+    """Add a horizontal reference line to axes."""
     ax.axhline(y=y_value, color=color, linestyle=linestyle, alpha=alpha, label=label)
 
 
-def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.05,
-                       ha: str = 'right', va: str = 'bottom', boxstyle: str = 'round',
-                       facecolor: str = 'wheat', alpha: float = 0.5):
-    """
-    Add text annotation box to axes
+def add_text_annotation(
+    ax: plt.Axes,
+    text: str,
+    x: float = 0.95,
+    y: float = 0.05,
+    ha: str = "right",
+    va: str = "bottom",
+    boxstyle: str = "round",
+    facecolor: str = "wheat",
+    alpha: float = 0.5,
+) -> None:
+    """Add text annotation box to axes.
 
     Args:
         ax: Matplotlib axes object
@@ -176,43 +225,62 @@ def add_text_annotation(ax: plt.Axes, text: str, x: float = 0.95, y: float = 0.0
         boxstyle: Box style
         facecolor: Box face color
         alpha: Box transparency
+
     """
-    ax.text(x, y, text, transform=ax.transAxes,
-            verticalalignment=va, horizontalalignment=ha,
-            bbox={"boxstyle": boxstyle, "facecolor": facecolor, "alpha": alpha})
+    ax.text(
+        x,
+        y,
+        text,
+        transform=ax.transAxes,
+        verticalalignment=va,
+        horizontalalignment=ha,
+        bbox={"boxstyle": boxstyle, "facecolor": facecolor, "alpha": alpha},
+    )
 
 
-def save_figure(fig: plt.Figure, filename: str, dpi: int = 300, bbox_inches: str = 'tight'):
-    """Save figure with standard settings"""
+def save_figure(
+    fig: plt.Figure,
+    filename: str,
+    dpi: int = 300,
+    bbox_inches: str = "tight",
+) -> None:
+    """Save figure with standard settings."""
     fig.savefig(filename, dpi=dpi, bbox_inches=bbox_inches)
-    print(f"Figure saved to: {filename}")
 
 
 # Example usage function
 def create_standard_mfc_plots(df: Any, output_prefix: str = "mfc_results"):
-    """
-    Example of creating standardized MFC plots
+    """Example of creating standardized MFC plots.
 
     Args:
         df: DataFrame with MFC simulation data
         output_prefix: Prefix for output filenames
+
     """
     # Create first figure with 2x2 subplots
-    fig1, axes1, labeler1 = create_labeled_subplots(2, 2, figsize=(12, 10),
-                                                    title="MFC Simulation Results - Overview")
+    fig1, axes1, labeler1 = create_labeled_subplots(
+        2,
+        2,
+        figsize=(12, 10),
+        title="MFC Simulation Results - Overview",
+    )
 
     # Plot 1a: Substrate concentrations
     ax = axes1[0]
-    plot_time_series(ax, df, 'time_hours',
-                    ['reservoir_concentration', 'outlet_concentration'],
-                    labels=['Reservoir', 'Outlet'])
-    add_horizontal_line(ax, 25, 'Target (25 mM)')
-    setup_axis(ax, 'Time (hours)', 'Concentration (mmol/L)', 'Substrate Concentrations')
+    plot_time_series(
+        ax,
+        df,
+        "time_hours",
+        ["reservoir_concentration", "outlet_concentration"],
+        labels=["Reservoir", "Outlet"],
+    )
+    add_horizontal_line(ax, 25, "Target (25 mM)")
+    setup_axis(ax, "Time (hours)", "Concentration (mmol/L)", "Substrate Concentrations")
 
     # Plot 1b: Power output
     ax = axes1[1]
-    plot_time_series(ax, df, 'time_hours', ['total_power'])
-    setup_axis(ax, 'Time (hours)', 'Power (W)', 'Total Power Output')
+    plot_time_series(ax, df, "time_hours", ["total_power"])
+    setup_axis(ax, "Time (hours)", "Power (W)", "Total Power Output")
 
     # ... continue with other subplots
 
@@ -220,8 +288,12 @@ def create_standard_mfc_plots(df: Any, output_prefix: str = "mfc_results"):
     save_figure(fig1, f"{output_prefix}_page1.png")
 
     # Create second figure with different layout
-    fig2, axes2, labeler2 = create_labeled_subplots(3, 1, figsize=(10, 12),
-                                                    title="MFC Simulation Results - Details")
+    fig2, axes2, labeler2 = create_labeled_subplots(
+        3,
+        1,
+        figsize=(10, 12),
+        title="MFC Simulation Results - Details",
+    )
     # labeler2 automatically starts from 'a' again
 
     # ... add plots to second figure

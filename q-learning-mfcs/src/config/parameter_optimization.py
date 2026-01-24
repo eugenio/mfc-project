@@ -1,5 +1,4 @@
-"""
-Parameter Optimization Framework
+"""Parameter Optimization Framework.
 
 This module provides comprehensive parameter optimization algorithms for MFC systems,
 including Bayesian optimization, genetic algorithms, and gradient-based methods.
@@ -25,10 +24,11 @@ Literature References:
 4. Forrester, A., et al. (2008). "Engineering Design via Surrogate Modelling"
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -39,25 +39,39 @@ import numpy as np
 try:
     from scipy.optimize import differential_evolution, minimize
     from scipy.stats import norm
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some optimization features will be limited.", stacklevel=2)
+    warnings.warn(
+        "SciPy not available. Some optimization features will be limited.",
+        stacklevel=2,
+    )
 
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Bayesian optimization will be limited.", stacklevel=2)
+    warnings.warn(
+        "Scikit-learn not available. Bayesian optimization will be limited.",
+        stacklevel=2,
+    )
 
 # Import configuration classes
-from .sensitivity_analysis import ParameterSpace
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .sensitivity_analysis import ParameterSpace
 
 
 class OptimizationMethod(Enum):
     """Available optimization methods."""
+
     BAYESIAN = "bayesian"
     GENETIC = "genetic"
     GRADIENT_BASED = "gradient_based"
@@ -68,6 +82,7 @@ class OptimizationMethod(Enum):
 
 class ObjectiveType(Enum):
     """Optimization objective types."""
+
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
@@ -75,6 +90,7 @@ class ObjectiveType(Enum):
 @dataclass
 class OptimizationObjective:
     """Definition of optimization objective."""
+
     name: str
     type: ObjectiveType
     weight: float = 1.0
@@ -85,6 +101,7 @@ class OptimizationObjective:
 @dataclass
 class OptimizationConstraint:
     """Definition of optimization constraint."""
+
     name: str
     constraint_function: Callable[[np.ndarray], float]
     constraint_type: str = "ineq"  # "eq" for equality, "ineq" for inequality
@@ -125,7 +142,7 @@ class OptimizationResult:
     mean_evaluation_time: float = 0.0
     std_evaluation_time: float = 0.0
 
-    def set_end_time(self):
+    def set_end_time(self) -> None:
         """Set the end time of optimization."""
         self.end_time = datetime.now()
 
@@ -139,18 +156,21 @@ class OptimizationResult:
 class ParameterOptimizer(ABC):
     """Abstract base class for parameter optimizers."""
 
-    def __init__(self, parameter_space: ParameterSpace,
-                 objectives: list[OptimizationObjective],
-                 constraints: list[OptimizationConstraint] | None = None,
-                 random_seed: int | None = None):
-        """
-        Initialize parameter optimizer.
+    def __init__(
+        self,
+        parameter_space: ParameterSpace,
+        objectives: list[OptimizationObjective],
+        constraints: list[OptimizationConstraint] | None = None,
+        random_seed: int | None = None,
+    ) -> None:
+        """Initialize parameter optimizer.
 
         Args:
             parameter_space: Parameter space definition
             objectives: List of optimization objectives
             constraints: Optional list of constraints
             random_seed: Random seed for reproducibility
+
         """
         self.parameter_space = parameter_space
         self.objectives = objectives
@@ -162,11 +182,13 @@ class ParameterOptimizer(ABC):
             np.random.seed(random_seed)
 
     @abstractmethod
-    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
-                max_evaluations: int = 100,
-                **kwargs) -> OptimizationResult:
-        """
-        Perform parameter optimization.
+    def optimize(
+        self,
+        objective_function: Callable[[np.ndarray], dict[str, float]],
+        max_evaluations: int = 100,
+        **kwargs,
+    ) -> OptimizationResult:
+        """Perform parameter optimization.
 
         Args:
             objective_function: Function to optimize
@@ -175,13 +197,15 @@ class ParameterOptimizer(ABC):
 
         Returns:
             Optimization results
-        """
-        pass
 
-    def _evaluate_objectives(self, parameters: np.ndarray,
-                           objective_function: Callable) -> dict[str, float]:
         """
-        Evaluate objectives for given parameters.
+
+    def _evaluate_objectives(
+        self,
+        parameters: np.ndarray,
+        objective_function: Callable,
+    ) -> dict[str, float]:
+        """Evaluate objectives for given parameters.
 
         Args:
             parameters: Parameter values
@@ -189,24 +213,31 @@ class ParameterOptimizer(ABC):
 
         Returns:
             Dictionary of objective values
+
         """
         try:
             return objective_function(parameters)
         except Exception as e:
             self.logger.warning(f"Objective evaluation failed: {e}")
             # Return worst possible values
-            return {obj.name: float('inf') if obj.type == ObjectiveType.MINIMIZE else -float('inf')
-                   for obj in self.objectives}
+            return {
+                obj.name: (
+                    float("inf")
+                    if obj.type == ObjectiveType.MINIMIZE
+                    else -float("inf")
+                )
+                for obj in self.objectives
+            }
 
     def _check_constraints(self, parameters: np.ndarray) -> bool:
-        """
-        Check if parameters satisfy all constraints.
+        """Check if parameters satisfy all constraints.
 
         Args:
             parameters: Parameter values
 
         Returns:
             True if all constraints are satisfied
+
         """
         for constraint in self.constraints:
             try:
@@ -222,14 +253,14 @@ class ParameterOptimizer(ABC):
         return True
 
     def _calculate_overall_score(self, objective_values: dict[str, float]) -> float:
-        """
-        Calculate overall optimization score from multiple objectives.
+        """Calculate overall optimization score from multiple objectives.
 
         Args:
             objective_values: Dictionary of objective values
 
         Returns:
             Combined score
+
         """
         score = 0.0
         for obj in self.objectives:
@@ -244,14 +275,16 @@ class ParameterOptimizer(ABC):
 class BayesianOptimizer(ParameterOptimizer):
     """Bayesian optimization using Gaussian Processes."""
 
-    def __init__(self, parameter_space: ParameterSpace,
-                 objectives: list[OptimizationObjective],
-                 constraints: list[OptimizationConstraint] | None = None,
-                 acquisition_function: str = "expected_improvement",
-                 kernel_type: str = "matern",
-                 random_seed: int | None = None):
-        """
-        Initialize Bayesian optimizer.
+    def __init__(
+        self,
+        parameter_space: ParameterSpace,
+        objectives: list[OptimizationObjective],
+        constraints: list[OptimizationConstraint] | None = None,
+        acquisition_function: str = "expected_improvement",
+        kernel_type: str = "matern",
+        random_seed: int | None = None,
+    ) -> None:
+        """Initialize Bayesian optimizer.
 
         Args:
             parameter_space: Parameter space definition
@@ -260,21 +293,25 @@ class BayesianOptimizer(ParameterOptimizer):
             acquisition_function: Acquisition function ("ei", "ucb", "poi")
             kernel_type: GP kernel type ("matern", "rbf", "periodic")
             random_seed: Random seed for reproducibility
+
         """
         super().__init__(parameter_space, objectives, constraints, random_seed)
         self.acquisition_function = acquisition_function
         self.kernel_type = kernel_type
 
         if not HAS_SKLEARN:
-            raise ImportError("Scikit-learn required for Bayesian optimization")
+            msg = "Scikit-learn required for Bayesian optimization"
+            raise ImportError(msg)
 
-    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
-                max_evaluations: int = 100,
-                n_initial_points: int = 10,
-                acquisition_optimizer: str = "lbfgs",
-                **kwargs) -> OptimizationResult:
-        """
-        Perform Bayesian optimization.
+    def optimize(
+        self,
+        objective_function: Callable[[np.ndarray], dict[str, float]],
+        max_evaluations: int = 100,
+        n_initial_points: int = 10,
+        acquisition_optimizer: str = "lbfgs",
+        **kwargs,
+    ) -> OptimizationResult:
+        """Perform Bayesian optimization.
 
         Args:
             objective_function: Function to optimize
@@ -285,6 +322,7 @@ class BayesianOptimizer(ParameterOptimizer):
 
         Returns:
             Optimization results
+
         """
         result = OptimizationResult(method=OptimizationMethod.BAYESIAN)
 
@@ -333,7 +371,11 @@ class BayesianOptimizer(ParameterOptimizer):
                 break
 
         # Find best solution
-        best_idx = np.argmax(y) if self.objectives[0].type == ObjectiveType.MAXIMIZE else np.argmin(y)
+        best_idx = (
+            np.argmax(y)
+            if self.objectives[0].type == ObjectiveType.MAXIMIZE
+            else np.argmin(y)
+        )
         result.best_parameters = X[best_idx]
         result.best_objective_values = result.all_objectives[best_idx]
         result.best_overall_score = y[best_idx]
@@ -344,9 +386,11 @@ class BayesianOptimizer(ParameterOptimizer):
 
     def _generate_initial_points(self, n_points: int) -> np.ndarray:
         """Generate initial random points for Bayesian optimization."""
-        return self.parameter_space.sample(n_points,
-                                         method="latin_hypercube" if n_points > 5 else "random",
-                                         seed=self.random_seed)
+        return self.parameter_space.sample(
+            n_points,
+            method="latin_hypercube" if n_points > 5 else "random",
+            seed=self.random_seed,
+        )
 
     def _create_gaussian_process(self):
         """Create Gaussian Process regressor."""
@@ -362,17 +406,19 @@ class BayesianOptimizer(ParameterOptimizer):
             alpha=1e-6,
             normalize_y=True,
             n_restarts_optimizer=5,
-            random_state=self.random_seed
+            random_state=self.random_seed,
         )
 
     def _optimize_acquisition(self, gp, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Optimize acquisition function to find next evaluation point."""
-        bounds = [(param.bounds.min_value, param.bounds.max_value)
-                 for param in self.parameter_space.parameters]
+        bounds = [
+            (param.bounds.min_value, param.bounds.max_value)
+            for param in self.parameter_space.parameters
+        ]
 
         # Multiple random starts for acquisition optimization
         best_x = None
-        best_acq = -float('inf')
+        best_acq = -float("inf")
 
         for _ in range(10):  # Multiple restarts
             x0 = self.parameter_space.sample(1, seed=None)[0]
@@ -382,8 +428,12 @@ class BayesianOptimizer(ParameterOptimizer):
 
             try:
                 if HAS_SCIPY:
-                    res = minimize(acquisition_objective, x0, bounds=bounds,
-                                 method='L-BFGS-B')
+                    res = minimize(
+                        acquisition_objective,
+                        x0,
+                        bounds=bounds,
+                        method="L-BFGS-B",
+                    )
                     if res.success:
                         acq_val = -res.fun
                         if acq_val > best_acq:
@@ -394,47 +444,72 @@ class BayesianOptimizer(ParameterOptimizer):
 
         return best_x if best_x is not None else x0
 
-    def _acquisition_function(self, X: np.ndarray, gp, y_best: np.ndarray) -> np.ndarray:
+    def _acquisition_function(
+        self,
+        X: np.ndarray,
+        gp,
+        y_best: np.ndarray,
+    ) -> np.ndarray:
         """Calculate acquisition function value."""
         mean, std = gp.predict(X, return_std=True)
 
         if self.acquisition_function == "expected_improvement":
             return self._expected_improvement(mean, std, np.max(y_best))
-        elif self.acquisition_function == "upper_confidence_bound":
+        if self.acquisition_function == "upper_confidence_bound":
             return self._upper_confidence_bound(mean, std, beta=2.0)
-        elif self.acquisition_function == "probability_of_improvement":
+        if self.acquisition_function == "probability_of_improvement":
             return self._probability_of_improvement(mean, std, np.max(y_best))
-        else:
-            return self._expected_improvement(mean, std, np.max(y_best))
+        return self._expected_improvement(mean, std, np.max(y_best))
 
-    def _expected_improvement(self, mean: np.ndarray, std: np.ndarray,
-                            f_best: float, xi: float = 0.01) -> np.ndarray:
+    def _expected_improvement(
+        self,
+        mean: np.ndarray,
+        std: np.ndarray,
+        f_best: float,
+        xi: float = 0.01,
+    ) -> np.ndarray:
         """Expected Improvement acquisition function."""
         improvement = mean - f_best - xi
         Z = improvement / (std + 1e-9)
-        ei = improvement * norm.cdf(Z) + std * norm.pdf(Z)
-        return ei
+        return improvement * norm.cdf(Z) + std * norm.pdf(Z)
 
-    def _upper_confidence_bound(self, mean: np.ndarray, std: np.ndarray,
-                              beta: float = 2.0) -> np.ndarray:
+    def _upper_confidence_bound(
+        self,
+        mean: np.ndarray,
+        std: np.ndarray,
+        beta: float = 2.0,
+    ) -> np.ndarray:
         """Upper Confidence Bound acquisition function."""
         return mean + beta * std
 
-    def _probability_of_improvement(self, mean: np.ndarray, std: np.ndarray,
-                                  f_best: float, xi: float = 0.01) -> np.ndarray:
+    def _probability_of_improvement(
+        self,
+        mean: np.ndarray,
+        std: np.ndarray,
+        f_best: float,
+        xi: float = 0.01,
+    ) -> np.ndarray:
         """Probability of Improvement acquisition function."""
         improvement = mean - f_best - xi
         Z = improvement / (std + 1e-9)
         return norm.cdf(Z)
 
-    def _check_convergence(self, history: list[float],
-                          window: int = 10, threshold: float = 1e-6) -> bool:
+    def _check_convergence(
+        self,
+        history: list[float],
+        window: int = 10,
+        threshold: float = 1e-6,
+    ) -> bool:
         """Check convergence based on improvement history."""
         if len(history) < window:
             return False
 
         recent_best = max(history[-window:])
-        older_best = max(history[-2*window:-window]) if len(history) >= 2*window else -float('inf')
+        older_best = (
+            max(history[-2 * window : -window])
+            if len(history) >= 2 * window
+            else -float("inf")
+        )
 
         improvement = recent_best - older_best
         return improvement < threshold
@@ -443,16 +518,18 @@ class BayesianOptimizer(ParameterOptimizer):
 class GeneticOptimizer(ParameterOptimizer):
     """Genetic Algorithm optimizer."""
 
-    def __init__(self, parameter_space: ParameterSpace,
-                 objectives: list[OptimizationObjective],
-                 constraints: list[OptimizationConstraint] | None = None,
-                 population_size: int = 50,
-                 crossover_rate: float = 0.8,
-                 mutation_rate: float = 0.1,
-                 selection_method: str = "tournament",
-                 random_seed: int | None = None):
-        """
-        Initialize Genetic Algorithm optimizer.
+    def __init__(
+        self,
+        parameter_space: ParameterSpace,
+        objectives: list[OptimizationObjective],
+        constraints: list[OptimizationConstraint] | None = None,
+        population_size: int = 50,
+        crossover_rate: float = 0.8,
+        mutation_rate: float = 0.1,
+        selection_method: str = "tournament",
+        random_seed: int | None = None,
+    ) -> None:
+        """Initialize Genetic Algorithm optimizer.
 
         Args:
             parameter_space: Parameter space definition
@@ -463,6 +540,7 @@ class GeneticOptimizer(ParameterOptimizer):
             mutation_rate: Mutation probability
             selection_method: Selection method ("tournament", "roulette", "rank")
             random_seed: Random seed for reproducibility
+
         """
         super().__init__(parameter_space, objectives, constraints, random_seed)
         self.population_size = population_size
@@ -470,13 +548,15 @@ class GeneticOptimizer(ParameterOptimizer):
         self.mutation_rate = mutation_rate
         self.selection_method = selection_method
 
-    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
-                max_evaluations: int = 1000,
-                max_generations: int | None = None,
-                elite_size: int = 2,
-                **kwargs) -> OptimizationResult:
-        """
-        Perform genetic algorithm optimization.
+    def optimize(
+        self,
+        objective_function: Callable[[np.ndarray], dict[str, float]],
+        max_evaluations: int = 1000,
+        max_generations: int | None = None,
+        elite_size: int = 2,
+        **kwargs,
+    ) -> OptimizationResult:
+        """Perform genetic algorithm optimization.
 
         Args:
             objective_function: Function to optimize
@@ -487,6 +567,7 @@ class GeneticOptimizer(ParameterOptimizer):
 
         Returns:
             Optimization results
+
         """
         result = OptimizationResult(method=OptimizationMethod.GENETIC)
 
@@ -494,7 +575,10 @@ class GeneticOptimizer(ParameterOptimizer):
             max_generations = max_evaluations // self.population_size
 
         # Initialize population
-        population = self.parameter_space.sample(self.population_size, seed=self.random_seed)
+        population = self.parameter_space.sample(
+            self.population_size,
+            seed=self.random_seed,
+        )
 
         # Evaluate initial population
         fitness_scores = []
@@ -518,7 +602,10 @@ class GeneticOptimizer(ParameterOptimizer):
             result.convergence_history.append(best_fitness)
 
             # Selection
-            selected_indices = self._selection(fitness_scores, self.population_size - elite_size)
+            selected_indices = self._selection(
+                fitness_scores,
+                self.population_size - elite_size,
+            )
             selected_population = population[selected_indices]
 
             # Elitism - preserve best individuals
@@ -542,7 +629,7 @@ class GeneticOptimizer(ParameterOptimizer):
                 offspring.extend([child1, child2])
 
             # Create new population
-            offspring = np.array(offspring[:self.population_size - elite_size])
+            offspring = np.array(offspring[: self.population_size - elite_size])
             population = np.vstack([elite_population, offspring])
 
             # Evaluate new individuals
@@ -552,7 +639,10 @@ class GeneticOptimizer(ParameterOptimizer):
                     # Elite individuals already evaluated
                     new_fitness.append(fitness_scores[elite_indices[i]])
                 else:
-                    obj_values = self._evaluate_objectives(individual, objective_function)
+                    obj_values = self._evaluate_objectives(
+                        individual,
+                        objective_function,
+                    )
                     overall_score = self._calculate_overall_score(obj_values)
                     new_fitness.append(overall_score)
 
@@ -587,25 +677,36 @@ class GeneticOptimizer(ParameterOptimizer):
         """Select individuals for reproduction."""
         if self.selection_method == "tournament":
             return self._tournament_selection(fitness_scores, n_select)
-        elif self.selection_method == "roulette":
+        if self.selection_method == "roulette":
             return self._roulette_selection(fitness_scores, n_select)
-        elif self.selection_method == "rank":
+        if self.selection_method == "rank":
             return self._rank_selection(fitness_scores, n_select)
-        else:
-            return self._tournament_selection(fitness_scores, n_select)
+        return self._tournament_selection(fitness_scores, n_select)
 
-    def _tournament_selection(self, fitness_scores: np.ndarray,
-                            n_select: int, tournament_size: int = 3) -> np.ndarray:
+    def _tournament_selection(
+        self,
+        fitness_scores: np.ndarray,
+        n_select: int,
+        tournament_size: int = 3,
+    ) -> np.ndarray:
         """Tournament selection."""
         selected = []
         for _ in range(n_select):
-            tournament_indices = np.random.choice(len(fitness_scores), tournament_size, replace=False)
+            tournament_indices = np.random.choice(
+                len(fitness_scores),
+                tournament_size,
+                replace=False,
+            )
             tournament_fitness = fitness_scores[tournament_indices]
             winner_idx = tournament_indices[np.argmax(tournament_fitness)]
             selected.append(winner_idx)
         return np.array(selected)
 
-    def _roulette_selection(self, fitness_scores: np.ndarray, n_select: int) -> np.ndarray:
+    def _roulette_selection(
+        self,
+        fitness_scores: np.ndarray,
+        n_select: int,
+    ) -> np.ndarray:
         """Roulette wheel selection."""
         # Handle negative fitness scores
         min_fitness = np.min(fitness_scores)
@@ -615,19 +716,29 @@ class GeneticOptimizer(ParameterOptimizer):
             adjusted_fitness = fitness_scores + 1e-6
 
         probabilities = adjusted_fitness / np.sum(adjusted_fitness)
-        selected = np.random.choice(len(fitness_scores), n_select,
-                                  replace=True, p=probabilities)
-        return selected
+        return np.random.choice(
+            len(fitness_scores),
+            n_select,
+            replace=True,
+            p=probabilities,
+        )
 
     def _rank_selection(self, fitness_scores: np.ndarray, n_select: int) -> np.ndarray:
         """Rank-based selection."""
         ranks = np.argsort(np.argsort(fitness_scores)) + 1
         probabilities = ranks / np.sum(ranks)
-        selected = np.random.choice(len(fitness_scores), n_select,
-                                  replace=True, p=probabilities)
-        return selected
+        return np.random.choice(
+            len(fitness_scores),
+            n_select,
+            replace=True,
+            p=probabilities,
+        )
 
-    def _crossover(self, parent1: np.ndarray, parent2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _crossover(
+        self,
+        parent1: np.ndarray,
+        parent2: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Uniform crossover operation."""
         mask = np.random.random(len(parent1)) < 0.5
         child1 = np.where(mask, parent1, parent2)
@@ -656,17 +767,28 @@ class GeneticOptimizer(ParameterOptimizer):
         """Clip individual to parameter bounds."""
         clipped = individual.copy()
         for i, param in enumerate(self.parameter_space.parameters):
-            clipped[i] = np.clip(clipped[i], param.bounds.min_value, param.bounds.max_value)
+            clipped[i] = np.clip(
+                clipped[i],
+                param.bounds.min_value,
+                param.bounds.max_value,
+            )
         return clipped
 
-    def _check_convergence(self, history: list[float],
-                          window: int = 20, threshold: float = 1e-8) -> bool:
+    def _check_convergence(
+        self,
+        history: list[float],
+        window: int = 20,
+        threshold: float = 1e-8,
+    ) -> bool:
         """Check convergence based on fitness improvement."""
         if len(history) < window:
             return False
 
-        recent_improvement = max(history[-window:]) - max(history[-2*window:-window]) \
-                            if len(history) >= 2*window else float('inf')
+        recent_improvement = (
+            max(history[-window:]) - max(history[-2 * window : -window])
+            if len(history) >= 2 * window
+            else float("inf")
+        )
 
         return recent_improvement < threshold
 
@@ -674,13 +796,15 @@ class GeneticOptimizer(ParameterOptimizer):
 class GradientOptimizer(ParameterOptimizer):
     """Gradient-based optimizer using scipy methods."""
 
-    def __init__(self, parameter_space: ParameterSpace,
-                 objectives: list[OptimizationObjective],
-                 constraints: list[OptimizationConstraint] | None = None,
-                 method: str = "L-BFGS-B",
-                 random_seed: int | None = None):
-        """
-        Initialize gradient-based optimizer.
+    def __init__(
+        self,
+        parameter_space: ParameterSpace,
+        objectives: list[OptimizationObjective],
+        constraints: list[OptimizationConstraint] | None = None,
+        method: str = "L-BFGS-B",
+        random_seed: int | None = None,
+    ) -> None:
+        """Initialize gradient-based optimizer.
 
         Args:
             parameter_space: Parameter space definition
@@ -688,19 +812,23 @@ class GradientOptimizer(ParameterOptimizer):
             constraints: Optional list of constraints
             method: Optimization method ("L-BFGS-B", "SLSQP", "trust-constr")
             random_seed: Random seed for reproducibility
+
         """
         super().__init__(parameter_space, objectives, constraints, random_seed)
         self.method = method
 
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for gradient-based optimization")
+            msg = "SciPy required for gradient-based optimization"
+            raise ImportError(msg)
 
-    def optimize(self, objective_function: Callable[[np.ndarray], dict[str, float]],
-                max_evaluations: int = 1000,
-                n_restarts: int = 5,
-                **kwargs) -> OptimizationResult:
-        """
-        Perform gradient-based optimization.
+    def optimize(
+        self,
+        objective_function: Callable[[np.ndarray], dict[str, float]],
+        max_evaluations: int = 1000,
+        n_restarts: int = 5,
+        **kwargs,
+    ) -> OptimizationResult:
+        """Perform gradient-based optimization.
 
         Args:
             objective_function: Function to optimize
@@ -710,23 +838,28 @@ class GradientOptimizer(ParameterOptimizer):
 
         Returns:
             Optimization results
+
         """
         result = OptimizationResult(method=OptimizationMethod.GRADIENT_BASED)
 
-        bounds = [(param.bounds.min_value, param.bounds.max_value)
-                 for param in self.parameter_space.parameters]
+        bounds = [
+            (param.bounds.min_value, param.bounds.max_value)
+            for param in self.parameter_space.parameters
+        ]
 
         # Prepare constraints for scipy
         scipy_constraints = []
         for constraint in self.constraints:
-            scipy_constraints.append({
-                'type': constraint.constraint_type,
-                'fun': constraint.constraint_function,
-                'tol': constraint.tolerance
-            })
+            scipy_constraints.append(
+                {
+                    "type": constraint.constraint_type,
+                    "fun": constraint.constraint_function,
+                    "tol": constraint.tolerance,
+                },
+            )
 
         best_result = None
-        best_score = -float('inf')
+        best_score = -float("inf")
 
         # Multiple restarts for global optimization
         for restart in range(n_restarts):
@@ -743,12 +876,16 @@ class GradientOptimizer(ParameterOptimizer):
                 result.convergence_history.append(score)
 
                 # Minimize negative score for maximization
-                return -score if self.objectives[0].type == ObjectiveType.MAXIMIZE else score
+                return (
+                    -score
+                    if self.objectives[0].type == ObjectiveType.MAXIMIZE
+                    else score
+                )
 
             try:
                 # Run optimization
-                options = {'maxiter': max_evaluations // n_restarts}
-                options.update(kwargs.get('options', {}))
+                options = {"maxiter": max_evaluations // n_restarts}
+                options.update(kwargs.get("options", {}))
 
                 res = minimize(
                     scipy_objective,
@@ -756,7 +893,7 @@ class GradientOptimizer(ParameterOptimizer):
                     method=self.method,
                     bounds=bounds,
                     constraints=scipy_constraints if scipy_constraints else None,
-                    options=options
+                    options=options,
                 )
 
                 if res.success and res.fun < best_score:
@@ -769,7 +906,11 @@ class GradientOptimizer(ParameterOptimizer):
 
         if best_result is not None:
             result.best_parameters = best_result.x
-            result.best_overall_score = -best_result.fun if self.objectives[0].type == ObjectiveType.MAXIMIZE else best_result.fun
+            result.best_overall_score = (
+                -best_result.fun
+                if self.objectives[0].type == ObjectiveType.MAXIMIZE
+                else best_result.fun
+            )
             result.converged = best_result.success
             result.convergence_message = best_result.message
 
@@ -787,14 +928,14 @@ class GradientOptimizer(ParameterOptimizer):
 
 # Utility functions for multi-objective optimization
 def calculate_pareto_frontier(objectives: np.ndarray) -> np.ndarray:
-    """
-    Calculate Pareto frontier from multi-objective results.
+    """Calculate Pareto frontier from multi-objective results.
 
     Args:
         objectives: Array of objective values (n_points x n_objectives)
 
     Returns:
         Boolean array indicating Pareto optimal points
+
     """
     n_points, n_objectives = objectives.shape
     is_pareto = np.ones(n_points, dtype=bool)
@@ -802,16 +943,20 @@ def calculate_pareto_frontier(objectives: np.ndarray) -> np.ndarray:
     for i in range(n_points):
         if is_pareto[i]:
             # Check if any other point dominates this one
-            dominated = np.all(objectives[i+1:] >= objectives[i], axis=1) & \
-                       np.any(objectives[i+1:] > objectives[i], axis=1)
-            is_pareto[i+1:][dominated] = False
+            dominated = np.all(objectives[i + 1 :] >= objectives[i], axis=1) & np.any(
+                objectives[i + 1 :] > objectives[i],
+                axis=1,
+            )
+            is_pareto[i + 1 :][dominated] = False
 
     return is_pareto
 
 
-def hypervolume_indicator(pareto_front: np.ndarray, reference_point: np.ndarray) -> float:
-    """
-    Calculate hypervolume indicator for multi-objective optimization.
+def hypervolume_indicator(
+    pareto_front: np.ndarray,
+    reference_point: np.ndarray,
+) -> float:
+    """Calculate hypervolume indicator for multi-objective optimization.
 
     Args:
         pareto_front: Pareto frontier points
@@ -819,6 +964,7 @@ def hypervolume_indicator(pareto_front: np.ndarray, reference_point: np.ndarray)
 
     Returns:
         Hypervolume value
+
     """
     if len(pareto_front) == 0:
         return 0.0
@@ -832,29 +978,27 @@ def hypervolume_indicator(pareto_front: np.ndarray, reference_point: np.ndarray)
             if i == 0:
                 width = point[0] - reference_point[0]
             else:
-                width = point[0] - sorted_front[i-1, 0]
+                width = point[0] - sorted_front[i - 1, 0]
             height = point[1] - reference_point[1]
             volume += width * height
 
         return volume
 
     # For higher dimensions, use approximation
-    else:
-        # Monte Carlo approximation
-        n_samples = 10000
-        count = 0
+    # Monte Carlo approximation
+    n_samples = 10000
+    count = 0
 
-        # Generate random points in the reference space
-        mins = np.minimum(np.min(pareto_front, axis=0), reference_point)
-        maxs = np.maximum(np.max(pareto_front, axis=0), reference_point)
+    # Generate random points in the reference space
+    mins = np.minimum(np.min(pareto_front, axis=0), reference_point)
+    maxs = np.maximum(np.max(pareto_front, axis=0), reference_point)
 
-        for _ in range(n_samples):
-            point = np.random.uniform(mins, maxs)
+    for _ in range(n_samples):
+        point = np.random.uniform(mins, maxs)
 
-            # Check if point is dominated by any Pareto point
-            dominated = np.any(np.all(pareto_front >= point, axis=1))
-            if dominated and np.all(point >= reference_point):
-                count += 1
+        # Check if point is dominated by any Pareto point
+        dominated = np.any(np.all(pareto_front >= point, axis=1))
+        if dominated and np.all(point >= reference_point):
+            count += 1
 
-        volume = count / n_samples * np.prod(maxs - mins)
-        return volume
+    return count / n_samples * np.prod(maxs - mins)

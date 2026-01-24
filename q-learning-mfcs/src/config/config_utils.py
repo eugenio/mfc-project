@@ -1,5 +1,4 @@
-"""
-Configuration Validation and Loading Utilities
+"""Configuration Validation and Loading Utilities.
 
 This module provides utilities for loading, validating, and converting
 configuration files and objects for the MFC system.
@@ -26,22 +25,20 @@ Features:
 - Error reporting and debugging
 """
 
+from __future__ import annotations
+
 import json
+import logging
 import os
 import re
 import time
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-import yaml
-
-if TYPE_CHECKING:
-    pass
-import logging
 import warnings
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
+import yaml
 from jsonschema import ValidationError, validate
 
 # Import configuration classes
@@ -50,17 +47,16 @@ from .config_manager import ConfigurationError
 
 class ConfigurationFormatError(ConfigurationError):
     """Exception for configuration format errors."""
-    pass
 
 
 class ConfigurationSchemaError(ConfigurationError):
     """Exception for configuration schema validation errors."""
-    pass
 
 
 @dataclass
 class ValidationResult:
     """Results of configuration validation."""
+
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -68,11 +64,12 @@ class ValidationResult:
     validation_time: float = 0.0
 
 
-def load_yaml_config(file_path: str | Path,
-                    validate_schema: bool = True,
-                    substitute_env: bool = True) -> dict[str, Any]:
-    """
-    Load YAML configuration file with optional validation and environment substitution.
+def load_yaml_config(
+    file_path: str | Path,
+    validate_schema: bool = True,
+    substitute_env: bool = True,
+) -> dict[str, Any]:
+    """Load YAML configuration file with optional validation and environment substitution.
 
     Args:
         file_path: Path to YAML file
@@ -85,14 +82,16 @@ def load_yaml_config(file_path: str | Path,
     Raises:
         ConfigurationFormatError: If file format is invalid
         ConfigurationSchemaError: If schema validation fails
+
     """
     file_path = Path(file_path)
 
     if not file_path.exists():
-        raise ConfigurationFormatError(f"Configuration file not found: {file_path}")
+        msg = f"Configuration file not found: {file_path}"
+        raise ConfigurationFormatError(msg)
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Substitute environment variables if requested
@@ -109,22 +108,29 @@ def load_yaml_config(file_path: str | Path,
         if validate_schema:
             validation_result = validate_config_schema(config)
             if not validation_result.is_valid:
+                msg = f"Schema validation failed: {', '.join(validation_result.errors)}"
                 raise ConfigurationSchemaError(
-                    f"Schema validation failed: {', '.join(validation_result.errors)}")
+                    msg,
+                )
 
         return config
 
     except yaml.YAMLError as e:
-        raise ConfigurationFormatError(f"Invalid YAML format in {file_path}: {e}")
+        msg = f"Invalid YAML format in {file_path}: {e}"
+        raise ConfigurationFormatError(msg)
     except Exception as e:
-        raise ConfigurationFormatError(f"Failed to load configuration from {file_path}: {e}")
+        msg = f"Failed to load configuration from {file_path}: {e}"
+        raise ConfigurationFormatError(
+            msg,
+        )
 
 
-def load_json_config(file_path: str | Path,
-                    validate_schema: bool = True,
-                    substitute_env: bool = True) -> dict[str, Any]:
-    """
-    Load JSON configuration file with optional validation and environment substitution.
+def load_json_config(
+    file_path: str | Path,
+    validate_schema: bool = True,
+    substitute_env: bool = True,
+) -> dict[str, Any]:
+    """Load JSON configuration file with optional validation and environment substitution.
 
     Args:
         file_path: Path to JSON file
@@ -137,14 +143,16 @@ def load_json_config(file_path: str | Path,
     Raises:
         ConfigurationFormatError: If file format is invalid
         ConfigurationSchemaError: If schema validation fails
+
     """
     file_path = Path(file_path)
 
     if not file_path.exists():
-        raise ConfigurationFormatError(f"Configuration file not found: {file_path}")
+        msg = f"Configuration file not found: {file_path}"
+        raise ConfigurationFormatError(msg)
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Substitute environment variables if requested
@@ -158,20 +166,25 @@ def load_json_config(file_path: str | Path,
         if validate_schema:
             validation_result = validate_config_schema(config)
             if not validation_result.is_valid:
+                msg = f"Schema validation failed: {', '.join(validation_result.errors)}"
                 raise ConfigurationSchemaError(
-                    f"Schema validation failed: {', '.join(validation_result.errors)}")
+                    msg,
+                )
 
         return config
 
     except json.JSONDecodeError as e:
-        raise ConfigurationFormatError(f"Invalid JSON format in {file_path}: {e}")
+        msg = f"Invalid JSON format in {file_path}: {e}"
+        raise ConfigurationFormatError(msg)
     except Exception as e:
-        raise ConfigurationFormatError(f"Failed to load configuration from {file_path}: {e}")
+        msg = f"Failed to load configuration from {file_path}: {e}"
+        raise ConfigurationFormatError(
+            msg,
+        )
 
 
 def substitute_environment_variables(content: str) -> str:
-    """
-    Substitute environment variables in configuration content.
+    """Substitute environment variables in configuration content.
 
     Supports formats:
     - ${VAR_NAME}
@@ -183,13 +196,14 @@ def substitute_environment_variables(content: str) -> str:
 
     Returns:
         Content with environment variables substituted
+
     """
     # Pattern for ${VAR_NAME:default} format
-    pattern1 = re.compile(r'\$\{([^}:]+):([^}]*)\}')
+    pattern1 = re.compile(r"\$\{([^}:]+):([^}]*)\}")
     # Pattern for ${VAR_NAME} format
-    pattern2 = re.compile(r'\$\{([^}]+)\}')
+    pattern2 = re.compile(r"\$\{([^}]+)\}")
     # Pattern for $VAR_NAME format (word boundaries)
-    pattern3 = re.compile(r'\$([A-Za-z_][A-Za-z0-9_]*)')
+    pattern3 = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
 
     def replace_with_default(match):
         var_name = match.group(1)
@@ -203,19 +217,17 @@ def substitute_environment_variables(content: str) -> str:
     # Apply substitutions in order
     content = pattern1.sub(replace_with_default, content)
     content = pattern2.sub(replace_simple, content)
-    content = pattern3.sub(replace_simple, content)
-
-    return content
+    return pattern3.sub(replace_simple, content)
 
 
 def get_config_schema() -> dict[str, Any]:
-    """
-    Get JSON schema for MFC configuration validation.
+    """Get JSON schema for MFC configuration validation.
 
     Returns:
         JSON schema dictionary
+
     """
-    schema = {
+    return {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "MFC Configuration Schema",
         "type": "object",
@@ -230,13 +242,23 @@ def get_config_schema() -> dict[str, Any]:
                                 "type": "object",
                                 "properties": {
                                     "max_growth_rate": {"type": "number", "minimum": 0},
-                                    "electron_transport_efficiency": {"type": "number", "minimum": 0, "maximum": 1},
-                                    "cytochrome_content": {"type": "number", "minimum": 0},
-                                    "metabolite_concentrations": {"type": "object"}
+                                    "electron_transport_efficiency": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1,
+                                    },
+                                    "cytochrome_content": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                    },
+                                    "metabolite_concentrations": {"type": "object"},
                                 },
-                                "required": ["max_growth_rate", "electron_transport_efficiency"]
-                            }
-                        }
+                                "required": [
+                                    "max_growth_rate",
+                                    "electron_transport_efficiency",
+                                ],
+                            },
+                        },
                     },
                     "substrate_configs": {
                         "type": "object",
@@ -244,14 +266,17 @@ def get_config_schema() -> dict[str, Any]:
                             "^[a-zA-Z_][a-zA-Z0-9_]*$": {
                                 "type": "object",
                                 "properties": {
-                                    "molecular_weight": {"type": "number", "minimum": 0},
+                                    "molecular_weight": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                    },
                                     "chemical_formula": {"type": "string"},
-                                    "species_kinetics": {"type": "object"}
-                                }
-                            }
-                        }
-                    }
-                }
+                                    "species_kinetics": {"type": "object"},
+                                },
+                            },
+                        },
+                    },
+                },
             },
             "control": {
                 "type": "object",
@@ -261,27 +286,41 @@ def get_config_schema() -> dict[str, Any]:
                         "properties": {
                             "min_flow_rate": {"type": "number", "minimum": 0},
                             "max_flow_rate": {"type": "number", "minimum": 0},
-                            "nominal_flow_rate": {"type": "number", "minimum": 0}
-                        }
+                            "nominal_flow_rate": {"type": "number", "minimum": 0},
+                        },
                     },
                     "substrate_control": {
                         "type": "object",
                         "properties": {
-                            "target_outlet_concentration": {"type": "number", "minimum": 0},
-                            "target_reservoir_concentration": {"type": "number", "minimum": 0},
+                            "target_outlet_concentration": {
+                                "type": "number",
+                                "minimum": 0,
+                            },
+                            "target_reservoir_concentration": {
+                                "type": "number",
+                                "minimum": 0,
+                            },
                             "min_addition_rate": {"type": "number", "minimum": 0},
-                            "max_addition_rate": {"type": "number", "minimum": 0}
-                        }
+                            "max_addition_rate": {"type": "number", "minimum": 0},
+                        },
                     },
                     "advanced_control": {
                         "type": "object",
                         "properties": {
-                            "learning_rate": {"type": "number", "minimum": 0, "maximum": 1},
-                            "discount_factor": {"type": "number", "minimum": 0, "maximum": 1},
-                            "epsilon": {"type": "number", "minimum": 0, "maximum": 1}
-                        }
-                    }
-                }
+                            "learning_rate": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
+                            "discount_factor": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
+                            "epsilon": {"type": "number", "minimum": 0, "maximum": 1},
+                        },
+                    },
+                },
             },
             "visualization": {
                 "type": "object",
@@ -292,40 +331,49 @@ def get_config_schema() -> dict[str, Any]:
                             "figure_width": {"type": "number", "minimum": 0},
                             "figure_height": {"type": "number", "minimum": 0},
                             "dpi": {"type": "integer", "minimum": 1},
-                            "line_width": {"type": "number", "minimum": 0}
-                        }
+                            "line_width": {"type": "number", "minimum": 0},
+                        },
                     },
                     "color_scheme_type": {
                         "type": "string",
-                        "enum": ["default", "scientific", "colorblind_friendly", "high_contrast", "grayscale", "publication"]
+                        "enum": [
+                            "default",
+                            "scientific",
+                            "colorblind_friendly",
+                            "high_contrast",
+                            "grayscale",
+                            "publication",
+                        ],
                     },
                     "output_format": {
                         "type": "string",
-                        "enum": ["png", "pdf", "svg", "eps"]
-                    }
-                }
+                        "enum": ["png", "pdf", "svg", "eps"],
+                    },
+                },
             },
             "metadata": {
                 "type": "object",
                 "properties": {
                     "version": {"type": "string"},
                     "description": {"type": "string"},
-                    "environment": {"type": "string", "enum": ["development", "testing", "production"]},
+                    "environment": {
+                        "type": "string",
+                        "enum": ["development", "testing", "production"],
+                    },
                     "created_at": {"type": "string", "format": "date-time"},
-                    "updated_at": {"type": "string", "format": "date-time"}
-                }
-            }
+                    "updated_at": {"type": "string", "format": "date-time"},
+                },
+            },
         },
-        "additionalProperties": True
+        "additionalProperties": True,
     }
 
-    return schema
 
-
-def validate_config_schema(config: dict[str, Any],
-                          schema: dict[str, Any] | None = None) -> ValidationResult:
-    """
-    Validate configuration against JSON schema.
+def validate_config_schema(
+    config: dict[str, Any],
+    schema: dict[str, Any] | None = None,
+) -> ValidationResult:
+    """Validate configuration against JSON schema.
 
     Args:
         config: Configuration dictionary to validate
@@ -333,8 +381,10 @@ def validate_config_schema(config: dict[str, Any],
 
     Returns:
         Validation result
+
     """
     import time
+
     start_time = time.time()
 
     if schema is None:
@@ -352,21 +402,21 @@ def validate_config_schema(config: dict[str, Any],
             result.errors.append(f"Error path: {' -> '.join(str(p) for p in e.path)}")
 
     except Exception as e:
-        result.errors.append(f"Validation failed: {str(e)}")
+        result.errors.append(f"Validation failed: {e!s}")
 
     result.validation_time = time.time() - start_time
     return result
 
 
 def dataclass_to_dict(obj: Any) -> Any:
-    """
-    Convert dataclass instance to dictionary recursively.
+    """Convert dataclass instance to dictionary recursively.
 
     Args:
         obj: Dataclass instance or other object
 
     Returns:
         Dictionary representation
+
     """
     if is_dataclass(obj):
         result = {}
@@ -374,17 +424,15 @@ def dataclass_to_dict(obj: Any) -> Any:
             value = getattr(obj, field.name)
             result[field.name] = dataclass_to_dict(value)
         return result
-    elif isinstance(obj, list | tuple):
+    if isinstance(obj, list | tuple):
         return [dataclass_to_dict(item) for item in obj]
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: dataclass_to_dict(value) for key, value in obj.items()}
-    else:
-        return obj
+    return obj
 
 
 def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:
-    """
-    Convert dictionary to dataclass instance.
+    """Convert dictionary to dataclass instance.
 
     Args:
         data: Dictionary data
@@ -392,9 +440,11 @@ def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:
 
     Returns:
         Dataclass instance
+
     """
     if not is_dataclass(dataclass_type):
-        raise ValueError(f"Target type {dataclass_type} is not a dataclass")
+        msg = f"Target type {dataclass_type} is not a dataclass"
+        raise ValueError(msg)
 
     # Get field information
     field_types = {f.name: f.type for f in fields(dataclass_type)}
@@ -413,11 +463,12 @@ def dict_to_dataclass(data: dict[str, Any], dataclass_type: type) -> Any:
     return dataclass_type(**kwargs)
 
 
-def merge_config_files(*file_paths: str | Path,
-                      output_path: str | Path | None = None,
-                      format: str = "yaml") -> dict[str, Any]:
-    """
-    Merge multiple configuration files.
+def merge_config_files(
+    *file_paths: str | Path,
+    output_path: str | Path | None = None,
+    format: str = "yaml",
+) -> dict[str, Any]:
+    """Merge multiple configuration files.
 
     Args:
         file_paths: Paths to configuration files to merge
@@ -426,18 +477,22 @@ def merge_config_files(*file_paths: str | Path,
 
     Returns:
         Merged configuration dictionary
+
     """
     merged_config: dict[str, Any] = {}
 
     for file_path in file_paths:
         file_path = Path(file_path)
 
-        if file_path.suffix.lower() in ['.yaml', '.yml']:
+        if file_path.suffix.lower() in [".yaml", ".yml"]:
             config = load_yaml_config(file_path, validate_schema=False)
-        elif file_path.suffix.lower() == '.json':
+        elif file_path.suffix.lower() == ".json":
             config = load_json_config(file_path, validate_schema=False)
         else:
-            raise ConfigurationFormatError(f"Unsupported file format: {file_path.suffix}")
+            msg = f"Unsupported file format: {file_path.suffix}"
+            raise ConfigurationFormatError(
+                msg,
+            )
 
         # Deep merge configurations
         merged_config = deep_merge_dicts(merged_config, config)
@@ -450,8 +505,7 @@ def merge_config_files(*file_paths: str | Path,
 
 
 def deep_merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
-    """
-    Deep merge two dictionaries.
+    """Deep merge two dictionaries.
 
     Args:
         dict1: Base dictionary
@@ -459,6 +513,7 @@ def deep_merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, 
 
     Returns:
         Merged dictionary
+
     """
     result = dict1.copy()
 
@@ -471,51 +526,59 @@ def deep_merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, 
     return result
 
 
-def save_config_file(config: dict[str, Any],
-                    file_path: str | Path,
-                    format: str = "yaml") -> None:
-    """
-    Save configuration to file.
+def save_config_file(
+    config: dict[str, Any],
+    file_path: str | Path,
+    format: str = "yaml",
+) -> None:
+    """Save configuration to file.
 
     Args:
         config: Configuration dictionary
         file_path: Output file path
         format: File format ("yaml" or "json")
+
     """
     file_path = Path(file_path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
     if format.lower() == "yaml":
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             yaml.dump(config, f, default_flow_style=False, indent=2, sort_keys=False)
     elif format.lower() == "json":
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, sort_keys=False, default=str)
     else:
-        raise ValueError(f"Unsupported format: {format}")
+        msg = f"Unsupported format: {format}"
+        raise ValueError(msg)
 
 
 class ConfigLoader:
     """Comprehensive configuration loader with caching and validation."""
 
-    def __init__(self, cache_enabled: bool = True,
-                 validate_schema: bool = True):
-        """
-        Initialize configuration loader.
+    def __init__(
+        self,
+        cache_enabled: bool = True,
+        validate_schema: bool = True,
+    ) -> None:
+        """Initialize configuration loader.
 
         Args:
             cache_enabled: Enable configuration caching
             validate_schema: Enable schema validation
+
         """
         self.cache_enabled = cache_enabled
         self.validate_schema = validate_schema
         self.cache: dict[str, tuple[dict[str, Any], float]] = {}
         self.logger = logging.getLogger(__name__)
 
-    def load_config(self, file_path: str | Path,
-                   force_reload: bool = False) -> dict[str, Any]:
-        """
-        Load configuration with caching support.
+    def load_config(
+        self,
+        file_path: str | Path,
+        force_reload: bool = False,
+    ) -> dict[str, Any]:
+        """Load configuration with caching support.
 
         Args:
             file_path: Path to configuration file
@@ -523,14 +586,13 @@ class ConfigLoader:
 
         Returns:
             Configuration dictionary
+
         """
         file_path = Path(file_path)
         cache_key = str(file_path.absolute())
 
         # Check cache
-        if (self.cache_enabled and not force_reload and
-            cache_key in self.cache):
-
+        if self.cache_enabled and not force_reload and cache_key in self.cache:
             cached_config, cached_time = self.cache[cache_key]
             file_mtime = file_path.stat().st_mtime
 
@@ -539,12 +601,15 @@ class ConfigLoader:
                 return cached_config
 
         # Load configuration
-        if file_path.suffix.lower() in ['.yaml', '.yml']:
+        if file_path.suffix.lower() in [".yaml", ".yml"]:
             config = load_yaml_config(file_path, self.validate_schema)
-        elif file_path.suffix.lower() == '.json':
+        elif file_path.suffix.lower() == ".json":
             config = load_json_config(file_path, self.validate_schema)
         else:
-            raise ConfigurationFormatError(f"Unsupported file format: {file_path.suffix}")
+            msg = f"Unsupported file format: {file_path.suffix}"
+            raise ConfigurationFormatError(
+                msg,
+            )
 
         # Cache configuration
         if self.cache_enabled:
@@ -562,29 +627,30 @@ class ConfigLoader:
 class ConfigConverter:
     """Configuration format converter and migrator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration converter."""
         self.logger = logging.getLogger(__name__)
 
-    def convert_legacy_qlearning_config(self, legacy_config: dict[str, Any]) -> dict[str, Any]:
-        """
-        Convert legacy Q-learning configuration to new format.
+    def convert_legacy_qlearning_config(
+        self,
+        legacy_config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Convert legacy Q-learning configuration to new format.
 
         Args:
             legacy_config: Legacy configuration dictionary
 
         Returns:
             Converted configuration
+
         """
         converted = {
-            "control": {
-                "advanced_control": {}
-            },
+            "control": {"advanced_control": {}},
             "metadata": {
                 "version": "2.0.0",
                 "description": "Converted from legacy format",
-                "created_at": datetime.now().isoformat()
-            }
+                "created_at": datetime.now().isoformat(),
+            },
         }
 
         # Map legacy fields to new structure
@@ -597,7 +663,7 @@ class ConfigConverter:
             "power_bins": ["control", "advanced_control", "power_bins"],
             "power_max": ["control", "advanced_control", "power_max"],
             "flow_rate_min": ["control", "flow_control", "min_flow_rate"],
-            "flow_rate_max": ["control", "flow_control", "max_flow_rate"]
+            "flow_rate_max": ["control", "flow_control", "max_flow_rate"],
         }
 
         for legacy_key, new_path in field_mapping.items():
@@ -609,8 +675,16 @@ class ConfigConverter:
             rewards = legacy_config["rewards"]
             reward_mapping = {
                 "power_weight": ["control", "advanced_control", "power_reward_weight"],
-                "biofilm_weight": ["control", "advanced_control", "biofilm_reward_weight"],
-                "consumption_weight": ["control", "advanced_control", "substrate_consumption_weight"]
+                "biofilm_weight": [
+                    "control",
+                    "advanced_control",
+                    "biofilm_reward_weight",
+                ],
+                "consumption_weight": [
+                    "control",
+                    "advanced_control",
+                    "substrate_consumption_weight",
+                ],
             }
 
             for legacy_key, new_path in reward_mapping.items():
@@ -620,8 +694,12 @@ class ConfigConverter:
         self.logger.info("Converted legacy Q-learning configuration")
         return converted
 
-    def _set_nested_value(self, dictionary: dict[str, Any],
-                         path: list[str], value: Any) -> None:
+    def _set_nested_value(
+        self,
+        dictionary: dict[str, Any],
+        path: list[str],
+        value: Any,
+    ) -> None:
         """Set nested dictionary value using path."""
         current = dictionary
         for key in path[:-1]:
@@ -630,10 +708,12 @@ class ConfigConverter:
             current = current[key]
         current[path[-1]] = value
 
-    def migrate_config_version(self, config: dict[str, Any],
-                              target_version: str = "2.0.0") -> dict[str, Any]:
-        """
-        Migrate configuration to target version.
+    def migrate_config_version(
+        self,
+        config: dict[str, Any],
+        target_version: str = "2.0.0",
+    ) -> dict[str, Any]:
+        """Migrate configuration to target version.
 
         Args:
             config: Configuration to migrate
@@ -641,6 +721,7 @@ class ConfigConverter:
 
         Returns:
             Migrated configuration
+
         """
         current_version = config.get("metadata", {}).get("version", "1.0.0")
 
@@ -651,7 +732,10 @@ class ConfigConverter:
         if current_version == "1.0.0" and target_version == "2.0.0":
             return self._migrate_v1_to_v2(config)
 
-        warnings.warn(f"No migration path from {current_version} to {target_version}", stacklevel=2)
+        warnings.warn(
+            f"No migration path from {current_version} to {target_version}",
+            stacklevel=2,
+        )
         return config
 
     def _migrate_v1_to_v2(self, config: dict[str, Any]) -> dict[str, Any]:
@@ -673,10 +757,13 @@ class ConfigConverter:
 
 
 # Utility functions for common operations
-def get_config_value(config: dict[str, Any], path: str,
-                    default: Any = None, separator: str = ".") -> Any:
-    """
-    Get nested configuration value using dot notation.
+def get_config_value(
+    config: dict[str, Any],
+    path: str,
+    default: Any = None,
+    separator: str = ".",
+) -> Any:
+    """Get nested configuration value using dot notation.
 
     Args:
         config: Configuration dictionary
@@ -686,6 +773,7 @@ def get_config_value(config: dict[str, Any], path: str,
 
     Returns:
         Configuration value or default
+
     """
     keys = path.split(separator)
     current = config
@@ -698,16 +786,20 @@ def get_config_value(config: dict[str, Any], path: str,
         return default
 
 
-def set_config_value(config: dict[str, Any], path: str,
-                    value: Any, separator: str = ".") -> None:
-    """
-    Set nested configuration value using dot notation.
+def set_config_value(
+    config: dict[str, Any],
+    path: str,
+    value: Any,
+    separator: str = ".",
+) -> None:
+    """Set nested configuration value using dot notation.
 
     Args:
         config: Configuration dictionary
         path: Dot-separated path
         value: Value to set
         separator: Path separator
+
     """
     keys = path.split(separator)
     current = config
@@ -721,14 +813,14 @@ def set_config_value(config: dict[str, Any], path: str,
 
 
 def validate_config_types(config: dict[str, Any]) -> list[str]:
-    """
-    Validate configuration data types.
+    """Validate configuration data types.
 
     Args:
         config: Configuration dictionary
 
     Returns:
         List of type validation errors
+
     """
     errors = []
 
@@ -746,6 +838,8 @@ def validate_config_types(config: dict[str, Any]) -> list[str]:
     for path, expected_type in type_checks.items():
         value = get_config_value(config, path)
         if value is not None and not isinstance(value, expected_type):
-            errors.append(f"Invalid type for {path}: expected {expected_type}, got {type(value)}")
+            errors.append(
+                f"Invalid type for {path}: expected {expected_type}, got {type(value)}",
+            )
 
     return errors

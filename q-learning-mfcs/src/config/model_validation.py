@@ -1,5 +1,4 @@
-"""
-Model Validation and Comparison Framework
+"""Model Validation and Comparison Framework.
 
 This module provides comprehensive model validation and comparison tools for MFC systems,
 including cross-validation, performance metrics, statistical tests, and benchmarking.
@@ -28,48 +27,65 @@ Literature References:
 4. Hyndman, R. J., & Athanasopoulos, G. (2018). "Forecasting: principles and practice"
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Statistical dependencies
 try:
     from scipy import stats
     from scipy.optimize import minimize
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    warnings.warn("SciPy not available. Some statistical tests will be limited.", stacklevel=2)
+    warnings.warn(
+        "SciPy not available. Some statistical tests will be limited.",
+        stacklevel=2,
+    )
 
 try:
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
     from sklearn.model_selection import KFold, TimeSeriesSplit, cross_val_score
     from sklearn.preprocessing import StandardScaler
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("Scikit-learn not available. Some validation features will be limited.", stacklevel=2)
+    warnings.warn(
+        "Scikit-learn not available. Some validation features will be limited.",
+        stacklevel=2,
+    )
 
 # Plotting dependencies
 try:
     import matplotlib.pyplot as plt
     import seaborn as sns
+
     HAS_PLOTTING = True
 except ImportError:
     HAS_PLOTTING = False
-    warnings.warn("Matplotlib/Seaborn not available. Plotting features will be limited.", stacklevel=2)
+    warnings.warn(
+        "Matplotlib/Seaborn not available. Plotting features will be limited.",
+        stacklevel=2,
+    )
 
 # Import configuration classes
 
 
 class ValidationMethod(Enum):
     """Available validation methods."""
+
     K_FOLD = "k_fold"
     TIME_SERIES_SPLIT = "time_series_split"
     LEAVE_ONE_OUT = "leave_one_out"
@@ -81,6 +97,7 @@ class ValidationMethod(Enum):
 
 class MetricType(Enum):
     """Types of performance metrics."""
+
     REGRESSION = "regression"
     CLASSIFICATION = "classification"
     TIME_SERIES = "time_series"
@@ -89,6 +106,7 @@ class MetricType(Enum):
 
 class StatisticalTest(Enum):
     """Statistical tests for model comparison."""
+
     T_TEST_PAIRED = "t_test_paired"
     T_TEST_INDEPENDENT = "t_test_independent"
     WILCOXON_SIGNED_RANK = "wilcoxon_signed_rank"
@@ -101,6 +119,7 @@ class StatisticalTest(Enum):
 @dataclass
 class PerformanceMetric:
     """Definition of a performance metric."""
+
     name: str
     metric_type: MetricType
     higher_is_better: bool
@@ -152,7 +171,9 @@ class ValidationResult:
 
     # Bootstrap results
     bootstrap_scores: dict[str, np.ndarray] = field(default_factory=dict)
-    bootstrap_confidence_intervals: dict[str, tuple[float, float]] = field(default_factory=dict)
+    bootstrap_confidence_intervals: dict[str, tuple[float, float]] = field(
+        default_factory=dict,
+    )
 
     # Computation metadata
     computation_time: float = 0.0
@@ -160,7 +181,7 @@ class ValidationResult:
     n_samples: int = 0
     n_features: int = 0
 
-    def set_end_time(self):
+    def set_end_time(self) -> None:
         """Set the end time of validation."""
         self.end_time = datetime.now()
 
@@ -185,7 +206,9 @@ class ComparisonResult:
     effect_size: float | None = None
 
     # Pairwise comparisons
-    pairwise_results: dict[tuple[str, str], dict[str, float]] = field(default_factory=dict)
+    pairwise_results: dict[tuple[str, str], dict[str, float]] = field(
+        default_factory=dict,
+    )
 
     # Rankings
     model_rankings: dict[str, float] = field(default_factory=dict)
@@ -204,14 +227,17 @@ class ComparisonResult:
 class ModelValidator:
     """Main framework for model validation and cross-validation."""
 
-    def __init__(self, metrics: list[PerformanceMetric] | None = None,
-                 random_seed: int | None = None):
-        """
-        Initialize model validator.
+    def __init__(
+        self,
+        metrics: list[PerformanceMetric] | None = None,
+        random_seed: int | None = None,
+    ) -> None:
+        """Initialize model validator.
 
         Args:
             metrics: List of performance metrics to evaluate
             random_seed: Random seed for reproducibility
+
         """
         self.metrics = metrics or self._get_default_metrics()
         self.random_seed = random_seed
@@ -220,15 +246,19 @@ class ModelValidator:
         if random_seed is not None:
             np.random.seed(random_seed)
 
-    def validate_model(self, model: Any, X: np.ndarray, y: np.ndarray,
-                      validation_method: ValidationMethod = ValidationMethod.K_FOLD,
-                      n_folds: int = 5,
-                      test_size: float = 0.2,
-                      model_name: str = "model",
-                      dataset_name: str = "dataset",
-                      **kwargs) -> ValidationResult:
-        """
-        Perform comprehensive model validation.
+    def validate_model(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        validation_method: ValidationMethod = ValidationMethod.K_FOLD,
+        n_folds: int = 5,
+        test_size: float = 0.2,
+        model_name: str = "model",
+        dataset_name: str = "dataset",
+        **kwargs,
+    ) -> ValidationResult:
+        """Perform comprehensive model validation.
 
         Args:
             model: Model to validate (must have fit/predict methods)
@@ -243,8 +273,10 @@ class ModelValidator:
 
         Returns:
             Validation results
+
         """
         import time
+
         start_time = time.time()
 
         result = ValidationResult(
@@ -253,7 +285,7 @@ class ModelValidator:
             dataset_name=dataset_name,
             n_folds=n_folds,
             n_samples=len(X),
-            n_features=X.shape[1] if len(X.shape) > 1 else 1
+            n_features=X.shape[1] if len(X.shape) > 1 else 1,
         )
 
         # Perform cross-validation
@@ -266,43 +298,55 @@ class ModelValidator:
         elif validation_method == ValidationMethod.HOLDOUT:
             cv_results = self._holdout_validation(model, X, y, test_size, **kwargs)
         else:
-            raise ValueError(f"Unsupported validation method: {validation_method}")
+            msg = f"Unsupported validation method: {validation_method}"
+            raise ValueError(msg)
 
-        result.cv_scores = cv_results['cv_scores']
-        result.cv_mean_scores = cv_results['cv_mean_scores']
-        result.cv_std_scores = cv_results['cv_std_scores']
-        result.predictions = cv_results.get('predictions')
-        result.residuals = cv_results.get('residuals')
+        result.cv_scores = cv_results["cv_scores"]
+        result.cv_mean_scores = cv_results["cv_mean_scores"]
+        result.cv_std_scores = cv_results["cv_std_scores"]
+        result.predictions = cv_results.get("predictions")
+        result.residuals = cv_results.get("residuals")
 
         # Calculate information criteria if possible
-        if hasattr(model, 'score') and result.predictions is not None:
+        if hasattr(model, "score") and result.predictions is not None:
             result.information_criteria = self._calculate_information_criteria(
-                y, result.predictions, result.n_features
+                y,
+                result.predictions,
+                result.n_features,
             )
 
         # Perform diagnostic tests
         if result.residuals is not None:
             result.normality_tests = self._test_normality(result.residuals)
             result.heteroscedasticity_tests = self._test_heteroscedasticity(
-                result.predictions, result.residuals
+                result.predictions,
+                result.residuals,
             )
             result.autocorrelation_tests = self._test_autocorrelation(result.residuals)
 
         # Bootstrap confidence intervals
         if validation_method != ValidationMethod.BOOTSTRAP:
-            result.bootstrap_scores, result.bootstrap_confidence_intervals = \
+            result.bootstrap_scores, result.bootstrap_confidence_intervals = (
                 self._calculate_bootstrap_intervals(model, X, y, n_bootstrap=1000)
+            )
 
         result.computation_time = time.time() - start_time
         result.set_end_time()
 
         return result
 
-    def _k_fold_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                          n_folds: int, **kwargs) -> dict[str, Any]:
+    def _k_fold_validation(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        n_folds: int,
+        **kwargs,
+    ) -> dict[str, Any]:
         """Perform k-fold cross-validation."""
         if not HAS_SKLEARN:
-            raise ImportError("Scikit-learn required for k-fold validation")
+            msg = "Scikit-learn required for k-fold validation"
+            raise ImportError(msg)
 
         kf = KFold(n_splits=n_folds, shuffle=True, random_state=self.random_seed)
 
@@ -331,25 +375,34 @@ class ModelValidator:
 
         # Calculate statistics
         cv_scores = {name: np.array(scores) for name, scores in cv_scores.items()}
-        cv_mean_scores = {name: np.nanmean(scores) for name, scores in cv_scores.items()}
+        cv_mean_scores = {
+            name: np.nanmean(scores) for name, scores in cv_scores.items()
+        }
         cv_std_scores = {name: np.nanstd(scores) for name, scores in cv_scores.items()}
 
         predictions = np.array(all_predictions)
         residuals = np.array(all_true) - predictions
 
         return {
-            'cv_scores': cv_scores,
-            'cv_mean_scores': cv_mean_scores,
-            'cv_std_scores': cv_std_scores,
-            'predictions': predictions,
-            'residuals': residuals
+            "cv_scores": cv_scores,
+            "cv_mean_scores": cv_mean_scores,
+            "cv_std_scores": cv_std_scores,
+            "predictions": predictions,
+            "residuals": residuals,
         }
 
-    def _time_series_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                               n_splits: int, **kwargs) -> dict[str, Any]:
+    def _time_series_validation(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        n_splits: int,
+        **kwargs,
+    ) -> dict[str, Any]:
         """Perform time series cross-validation."""
         if not HAS_SKLEARN:
-            raise ImportError("Scikit-learn required for time series validation")
+            msg = "Scikit-learn required for time series validation"
+            raise ImportError(msg)
 
         tscv = TimeSeriesSplit(n_splits=n_splits)
 
@@ -378,22 +431,30 @@ class ModelValidator:
 
         # Calculate statistics
         cv_scores = {name: np.array(scores) for name, scores in cv_scores.items()}
-        cv_mean_scores = {name: np.nanmean(scores) for name, scores in cv_scores.items()}
+        cv_mean_scores = {
+            name: np.nanmean(scores) for name, scores in cv_scores.items()
+        }
         cv_std_scores = {name: np.nanstd(scores) for name, scores in cv_scores.items()}
 
         predictions = np.array(all_predictions)
         residuals = np.array(all_true) - predictions
 
         return {
-            'cv_scores': cv_scores,
-            'cv_mean_scores': cv_mean_scores,
-            'cv_std_scores': cv_std_scores,
-            'predictions': predictions,
-            'residuals': residuals
+            "cv_scores": cv_scores,
+            "cv_mean_scores": cv_mean_scores,
+            "cv_std_scores": cv_std_scores,
+            "predictions": predictions,
+            "residuals": residuals,
         }
 
-    def _bootstrap_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                             n_bootstrap: int, **kwargs) -> dict[str, Any]:
+    def _bootstrap_validation(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        n_bootstrap: int,
+        **kwargs,
+    ) -> dict[str, Any]:
         """Perform bootstrap validation."""
         cv_scores = {metric.name: [] for metric in self.metrics}
 
@@ -422,17 +483,25 @@ class ModelValidator:
 
         # Calculate statistics
         cv_scores = {name: np.array(scores) for name, scores in cv_scores.items()}
-        cv_mean_scores = {name: np.nanmean(scores) for name, scores in cv_scores.items()}
+        cv_mean_scores = {
+            name: np.nanmean(scores) for name, scores in cv_scores.items()
+        }
         cv_std_scores = {name: np.nanstd(scores) for name, scores in cv_scores.items()}
 
         return {
-            'cv_scores': cv_scores,
-            'cv_mean_scores': cv_mean_scores,
-            'cv_std_scores': cv_std_scores
+            "cv_scores": cv_scores,
+            "cv_mean_scores": cv_mean_scores,
+            "cv_std_scores": cv_std_scores,
         }
 
-    def _holdout_validation(self, model: Any, X: np.ndarray, y: np.ndarray,
-                           test_size: float, **kwargs) -> dict[str, Any]:
+    def _holdout_validation(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        test_size: float,
+        **kwargs,
+    ) -> dict[str, Any]:
         """Perform holdout validation."""
         # Split data
         n_test = int(len(X) * test_size)
@@ -462,28 +531,28 @@ class ModelValidator:
         residuals = y_test - y_pred
 
         return {
-            'cv_scores': cv_scores,
-            'cv_mean_scores': cv_mean_scores,
-            'cv_std_scores': cv_std_scores,
-            'predictions': y_pred,
-            'residuals': residuals
+            "cv_scores": cv_scores,
+            "cv_mean_scores": cv_mean_scores,
+            "cv_std_scores": cv_std_scores,
+            "predictions": y_pred,
+            "residuals": residuals,
         }
 
-    def _calculate_information_criteria(self, y_true: np.ndarray, y_pred: np.ndarray,
-                                      n_features: int) -> dict[str, float]:
+    def _calculate_information_criteria(
+        self,
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        n_features: int,
+    ) -> dict[str, float]:
         """Calculate information criteria (AIC, BIC)."""
         n = len(y_true)
         mse = np.mean((y_true - y_pred) ** 2)
-        log_likelihood = -n/2 * np.log(2 * np.pi * mse) - n/2
+        log_likelihood = -n / 2 * np.log(2 * np.pi * mse) - n / 2
 
         aic = 2 * n_features - 2 * log_likelihood
         bic = np.log(n) * n_features - 2 * log_likelihood
 
-        return {
-            'AIC': aic,
-            'BIC': bic,
-            'log_likelihood': log_likelihood
-        }
+        return {"AIC": aic, "BIC": bic, "log_likelihood": log_likelihood}
 
     def _test_normality(self, residuals: np.ndarray) -> dict[str, dict[str, float]]:
         """Test normality of residuals."""
@@ -493,24 +562,27 @@ class ModelValidator:
             # Shapiro-Wilk test
             if len(residuals) <= 5000:  # Shapiro-Wilk has sample size limit
                 stat, p_value = stats.shapiro(residuals)
-                tests['shapiro_wilk'] = {'statistic': stat, 'p_value': p_value}
+                tests["shapiro_wilk"] = {"statistic": stat, "p_value": p_value}
 
             # Jarque-Bera test
             stat, p_value = stats.jarque_bera(residuals)
-            tests['jarque_bera'] = {'statistic': stat, 'p_value': p_value}
+            tests["jarque_bera"] = {"statistic": stat, "p_value": p_value}
 
             # Anderson-Darling test
-            result = stats.anderson(residuals, dist='norm')
-            tests['anderson_darling'] = {
-                'statistic': result.statistic,
-                'critical_values': result.critical_values.tolist(),
-                'significance_levels': result.significance_levels.tolist()
+            result = stats.anderson(residuals, dist="norm")
+            tests["anderson_darling"] = {
+                "statistic": result.statistic,
+                "critical_values": result.critical_values.tolist(),
+                "significance_levels": result.significance_levels.tolist(),
             }
 
         return tests
 
-    def _test_heteroscedasticity(self, predictions: np.ndarray,
-                               residuals: np.ndarray) -> dict[str, dict[str, float]]:
+    def _test_heteroscedasticity(
+        self,
+        predictions: np.ndarray,
+        residuals: np.ndarray,
+    ) -> dict[str, dict[str, float]]:
         """Test for heteroscedasticity in residuals."""
         tests = {}
 
@@ -519,7 +591,7 @@ class ModelValidator:
             try:
                 # Regress squared residuals on predictions
                 X = np.column_stack([np.ones(len(predictions)), predictions])
-                y = residuals ** 2
+                y = residuals**2
 
                 # Simple linear regression
                 beta = np.linalg.lstsq(X, y, rcond=None)[0]
@@ -533,24 +605,24 @@ class ModelValidator:
                 lm_statistic = len(y) * r_squared
                 p_value = 1 - stats.chi2.cdf(lm_statistic, df=1)
 
-                tests['breusch_pagan'] = {
-                    'statistic': lm_statistic,
-                    'p_value': p_value
-                }
+                tests["breusch_pagan"] = {"statistic": lm_statistic, "p_value": p_value}
             except Exception as e:
                 self.logger.warning(f"Breusch-Pagan test failed: {e}")
 
         return tests
 
-    def _test_autocorrelation(self, residuals: np.ndarray) -> dict[str, dict[str, float]]:
+    def _test_autocorrelation(
+        self,
+        residuals: np.ndarray,
+    ) -> dict[str, dict[str, float]]:
         """Test for autocorrelation in residuals."""
         tests = {}
 
         if HAS_SCIPY and len(residuals) > 1:
             # Durbin-Watson test (simplified)
             diff_residuals = np.diff(residuals)
-            dw_statistic = np.sum(diff_residuals ** 2) / np.sum(residuals ** 2)
-            tests['durbin_watson'] = {'statistic': dw_statistic}
+            dw_statistic = np.sum(diff_residuals**2) / np.sum(residuals**2)
+            tests["durbin_watson"] = {"statistic": dw_statistic}
 
             # Ljung-Box test (simplified)
             try:
@@ -561,27 +633,43 @@ class ModelValidator:
 
                     for lag in range(1, lags + 1):
                         if n - lag > 0:
-                            autocorr = np.corrcoef(residuals[:-lag], residuals[lag:])[0, 1]
+                            autocorr = np.corrcoef(residuals[:-lag], residuals[lag:])[
+                                0,
+                                1,
+                            ]
                             autocorrs.append(autocorr if not np.isnan(autocorr) else 0)
 
                     if autocorrs:
-                        lb_statistic = n * (n + 2) * np.sum([(autocorr ** 2) / (n - lag - 1)
-                                                            for lag, autocorr in enumerate(autocorrs)])
+                        lb_statistic = (
+                            n
+                            * (n + 2)
+                            * np.sum(
+                                [
+                                    (autocorr**2) / (n - lag - 1)
+                                    for lag, autocorr in enumerate(autocorrs)
+                                ],
+                            )
+                        )
                         p_value = 1 - stats.chi2.cdf(lb_statistic, df=len(autocorrs))
 
-                        tests['ljung_box'] = {
-                            'statistic': lb_statistic,
-                            'p_value': p_value,
-                            'lags': len(autocorrs)
+                        tests["ljung_box"] = {
+                            "statistic": lb_statistic,
+                            "p_value": p_value,
+                            "lags": len(autocorrs),
                         }
             except Exception as e:
                 self.logger.warning(f"Ljung-Box test failed: {e}")
 
         return tests
 
-    def _calculate_bootstrap_intervals(self, model: Any, X: np.ndarray, y: np.ndarray,
-                                     n_bootstrap: int = 1000,
-                                     confidence_level: float = 0.95) -> tuple[dict[str, np.ndarray], dict[str, tuple[float, float]]]:
+    def _calculate_bootstrap_intervals(
+        self,
+        model: Any,
+        X: np.ndarray,
+        y: np.ndarray,
+        n_bootstrap: int = 1000,
+        confidence_level: float = 0.95,
+    ) -> tuple[dict[str, np.ndarray], dict[str, tuple[float, float]]]:
         """Calculate bootstrap confidence intervals."""
         bootstrap_scores = {metric.name: [] for metric in self.metrics}
 
@@ -601,7 +689,9 @@ class ModelValidator:
                 bootstrap_scores[metric.name].append(score)
 
         # Convert to arrays
-        bootstrap_scores = {name: np.array(scores) for name, scores in bootstrap_scores.items()}
+        bootstrap_scores = {
+            name: np.array(scores) for name, scores in bootstrap_scores.items()
+        }
 
         # Calculate confidence intervals
         alpha = 1 - confidence_level
@@ -623,40 +713,55 @@ class ModelValidator:
         metrics = []
 
         # Root Mean Square Error
-        metrics.append(PerformanceMetric(
-            name="RMSE",
-            metric_type=MetricType.REGRESSION,
-            higher_is_better=False,
-            metric_function=lambda y_true, y_pred: np.sqrt(np.mean((y_true - y_pred) ** 2)),
-            description="Root Mean Square Error"
-        ))
+        metrics.append(
+            PerformanceMetric(
+                name="RMSE",
+                metric_type=MetricType.REGRESSION,
+                higher_is_better=False,
+                metric_function=lambda y_true, y_pred: np.sqrt(
+                    np.mean((y_true - y_pred) ** 2),
+                ),
+                description="Root Mean Square Error",
+            ),
+        )
 
         # Mean Absolute Error
-        metrics.append(PerformanceMetric(
-            name="MAE",
-            metric_type=MetricType.REGRESSION,
-            higher_is_better=False,
-            metric_function=lambda y_true, y_pred: np.mean(np.abs(y_true - y_pred)),
-            description="Mean Absolute Error"
-        ))
+        metrics.append(
+            PerformanceMetric(
+                name="MAE",
+                metric_type=MetricType.REGRESSION,
+                higher_is_better=False,
+                metric_function=lambda y_true, y_pred: np.mean(np.abs(y_true - y_pred)),
+                description="Mean Absolute Error",
+            ),
+        )
 
         # R-squared
-        metrics.append(PerformanceMetric(
-            name="R2",
-            metric_type=MetricType.REGRESSION,
-            higher_is_better=True,
-            metric_function=lambda y_true, y_pred: 1 - np.sum((y_true - y_pred) ** 2) / np.sum((y_true - np.mean(y_true)) ** 2),
-            description="Coefficient of Determination"
-        ))
+        metrics.append(
+            PerformanceMetric(
+                name="R2",
+                metric_type=MetricType.REGRESSION,
+                higher_is_better=True,
+                metric_function=lambda y_true, y_pred: 1
+                - np.sum((y_true - y_pred) ** 2)
+                / np.sum((y_true - np.mean(y_true)) ** 2),
+                description="Coefficient of Determination",
+            ),
+        )
 
         # Mean Absolute Percentage Error
-        metrics.append(PerformanceMetric(
-            name="MAPE",
-            metric_type=MetricType.REGRESSION,
-            higher_is_better=False,
-            metric_function=lambda y_true, y_pred: np.mean(np.abs((y_true - y_pred) / (y_true + 1e-8))) * 100,
-            description="Mean Absolute Percentage Error"
-        ))
+        metrics.append(
+            PerformanceMetric(
+                name="MAPE",
+                metric_type=MetricType.REGRESSION,
+                higher_is_better=False,
+                metric_function=lambda y_true, y_pred: np.mean(
+                    np.abs((y_true - y_pred) / (y_true + 1e-8)),
+                )
+                * 100,
+                description="Mean Absolute Percentage Error",
+            ),
+        )
 
         return metrics
 
@@ -664,21 +769,23 @@ class ModelValidator:
 class StatisticalTester:
     """Statistical significance testing for model comparisons."""
 
-    def __init__(self, alpha: float = 0.05):
-        """
-        Initialize statistical tester.
+    def __init__(self, alpha: float = 0.05) -> None:
+        """Initialize statistical tester.
 
         Args:
             alpha: Significance level
+
         """
         self.alpha = alpha
         self.logger = logging.getLogger(__name__)
 
-    def compare_models(self, validation_results: list[ValidationResult],
-                      metric_name: str = "RMSE",
-                      test_type: StatisticalTest = StatisticalTest.T_TEST_PAIRED) -> ComparisonResult:
-        """
-        Compare multiple models using statistical tests.
+    def compare_models(
+        self,
+        validation_results: list[ValidationResult],
+        metric_name: str = "RMSE",
+        test_type: StatisticalTest = StatisticalTest.T_TEST_PAIRED,
+    ) -> ComparisonResult:
+        """Compare multiple models using statistical tests.
 
         Args:
             validation_results: List of validation results to compare
@@ -687,9 +794,11 @@ class StatisticalTester:
 
         Returns:
             Comparison results
+
         """
         if len(validation_results) < 2:
-            raise ValueError("At least two models required for comparison")
+            msg = "At least two models required for comparison"
+            raise ValueError(msg)
 
         model_names = [result.model_name for result in validation_results]
 
@@ -699,12 +808,13 @@ class StatisticalTester:
             if metric_name in result.cv_scores:
                 scores.append(result.cv_scores[metric_name])
             else:
-                raise ValueError(f"Metric {metric_name} not found in results")
+                msg = f"Metric {metric_name} not found in results"
+                raise ValueError(msg)
 
         result = ComparisonResult(
             model_names=model_names,
             comparison_method=test_type.value,
-            alpha=self.alpha
+            alpha=self.alpha,
         )
 
         if test_type == StatisticalTest.T_TEST_PAIRED:
@@ -714,16 +824,21 @@ class StatisticalTester:
         elif test_type == StatisticalTest.FRIEDMAN:
             result = self._friedman_test(scores, model_names, result)
         else:
-            raise ValueError(f"Unsupported test type: {test_type}")
+            msg = f"Unsupported test type: {test_type}"
+            raise ValueError(msg)
 
         return result
 
-    def _paired_t_test(self, scores: list[np.ndarray],
-                      model_names: list[str],
-                      result: ComparisonResult) -> ComparisonResult:
+    def _paired_t_test(
+        self,
+        scores: list[np.ndarray],
+        model_names: list[str],
+        result: ComparisonResult,
+    ) -> ComparisonResult:
         """Perform paired t-test between models."""
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for t-tests")
+            msg = "SciPy required for t-tests"
+            raise ImportError(msg)
 
         # Pairwise comparisons
         for i in range(len(scores)):
@@ -745,10 +860,10 @@ class StatisticalTester:
                 effect_size = np.mean(diff) / (pooled_std + 1e-8)
 
                 result.pairwise_results[(name1, name2)] = {
-                    'statistic': statistic,
-                    'p_value': p_value,
-                    'effect_size': effect_size,
-                    'significant': p_value < self.alpha
+                    "statistic": statistic,
+                    "p_value": p_value,
+                    "effect_size": effect_size,
+                    "significant": p_value < self.alpha,
                 }
 
                 if p_value < self.alpha:
@@ -765,12 +880,16 @@ class StatisticalTester:
 
         return result
 
-    def _wilcoxon_test(self, scores: list[np.ndarray],
-                      model_names: list[str],
-                      result: ComparisonResult) -> ComparisonResult:
+    def _wilcoxon_test(
+        self,
+        scores: list[np.ndarray],
+        model_names: list[str],
+        result: ComparisonResult,
+    ) -> ComparisonResult:
         """Perform Wilcoxon signed-rank test."""
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for Wilcoxon test")
+            msg = "SciPy required for Wilcoxon test"
+            raise ImportError(msg)
 
         # Pairwise comparisons
         for i in range(len(scores)):
@@ -788,25 +907,31 @@ class StatisticalTester:
                     statistic, p_value = stats.wilcoxon(score1, score2)
 
                     result.pairwise_results[(name1, name2)] = {
-                        'statistic': statistic,
-                        'p_value': p_value,
-                        'significant': p_value < self.alpha
+                        "statistic": statistic,
+                        "p_value": p_value,
+                        "significant": p_value < self.alpha,
                     }
 
                     if p_value < self.alpha:
                         result.significant_differences.append((name1, name2))
 
                 except Exception as e:
-                    self.logger.warning(f"Wilcoxon test failed for {name1} vs {name2}: {e}")
+                    self.logger.warning(
+                        f"Wilcoxon test failed for {name1} vs {name2}: {e}",
+                    )
 
         return result
 
-    def _friedman_test(self, scores: list[np.ndarray],
-                      model_names: list[str],
-                      result: ComparisonResult) -> ComparisonResult:
+    def _friedman_test(
+        self,
+        scores: list[np.ndarray],
+        model_names: list[str],
+        result: ComparisonResult,
+    ) -> ComparisonResult:
         """Perform Friedman test for multiple model comparison."""
         if not HAS_SCIPY:
-            raise ImportError("SciPy required for Friedman test")
+            msg = "SciPy required for Friedman test"
+            raise ImportError(msg)
 
         # Ensure all score arrays have the same length
         min_len = min(len(score) for score in scores)
@@ -835,42 +960,45 @@ class StatisticalTester:
 
 # Utility functions for model validation
 def calculate_residual_diagnostics(residuals: np.ndarray) -> dict[str, float]:
-    """
-    Calculate comprehensive residual diagnostics.
+    """Calculate comprehensive residual diagnostics.
 
     Args:
         residuals: Model residuals
 
     Returns:
         Dictionary of diagnostic statistics
+
     """
     diagnostics = {}
 
     # Basic statistics
-    diagnostics['mean'] = np.mean(residuals)
-    diagnostics['std'] = np.std(residuals)
-    diagnostics['skewness'] = stats.skew(residuals) if HAS_SCIPY else np.nan
-    diagnostics['kurtosis'] = stats.kurtosis(residuals) if HAS_SCIPY else np.nan
+    diagnostics["mean"] = np.mean(residuals)
+    diagnostics["std"] = np.std(residuals)
+    diagnostics["skewness"] = stats.skew(residuals) if HAS_SCIPY else np.nan
+    diagnostics["kurtosis"] = stats.kurtosis(residuals) if HAS_SCIPY else np.nan
 
     # Quantiles
-    diagnostics['q25'] = np.percentile(residuals, 25)
-    diagnostics['median'] = np.median(residuals)
-    diagnostics['q75'] = np.percentile(residuals, 75)
+    diagnostics["q25"] = np.percentile(residuals, 25)
+    diagnostics["median"] = np.median(residuals)
+    diagnostics["q75"] = np.percentile(residuals, 75)
 
     # Outlier detection
-    iqr = diagnostics['q75'] - diagnostics['q25']
-    lower_bound = diagnostics['q25'] - 1.5 * iqr
-    upper_bound = diagnostics['q75'] + 1.5 * iqr
-    diagnostics['n_outliers'] = np.sum((residuals < lower_bound) | (residuals > upper_bound))
-    diagnostics['outlier_fraction'] = diagnostics['n_outliers'] / len(residuals)
+    iqr = diagnostics["q75"] - diagnostics["q25"]
+    lower_bound = diagnostics["q25"] - 1.5 * iqr
+    upper_bound = diagnostics["q75"] + 1.5 * iqr
+    diagnostics["n_outliers"] = np.sum(
+        (residuals < lower_bound) | (residuals > upper_bound),
+    )
+    diagnostics["outlier_fraction"] = diagnostics["n_outliers"] / len(residuals)
 
     return diagnostics
 
 
-def create_validation_report(validation_results: list[ValidationResult],
-                           comparison_result: ComparisonResult | None = None) -> str:
-    """
-    Create comprehensive validation report.
+def create_validation_report(
+    validation_results: list[ValidationResult],
+    comparison_result: ComparisonResult | None = None,
+) -> str:
+    """Create comprehensive validation report.
 
     Args:
         validation_results: List of validation results
@@ -878,6 +1006,7 @@ def create_validation_report(validation_results: list[ValidationResult],
 
     Returns:
         Formatted validation report
+
     """
     report = []
     report.append("=" * 80)
@@ -888,7 +1017,7 @@ def create_validation_report(validation_results: list[ValidationResult],
 
     # Individual model results
     for i, result in enumerate(validation_results):
-        report.append(f"Model {i+1}: {result.model_name}")
+        report.append(f"Model {i + 1}: {result.model_name}")
         report.append("-" * 40)
         report.append(f"Dataset: {result.dataset_name}")
         report.append(f"Validation Method: {result.validation_method.value}")
@@ -913,7 +1042,10 @@ def create_validation_report(validation_results: list[ValidationResult],
         # Bootstrap confidence intervals
         if result.bootstrap_confidence_intervals:
             report.append("Bootstrap Confidence Intervals (95%):")
-            for metric_name, (lower, upper) in result.bootstrap_confidence_intervals.items():
+            for metric_name, (
+                lower,
+                upper,
+            ) in result.bootstrap_confidence_intervals.items():
                 report.append(f"  {metric_name}: [{lower:.4f}, {upper:.4f}]")
             report.append("")
 
@@ -929,8 +1061,10 @@ def create_validation_report(validation_results: list[ValidationResult],
 
         # Rankings
         report.append("Model Rankings:")
-        sorted_rankings = sorted(comparison_result.model_rankings.items(),
-                               key=lambda x: x[1])
+        sorted_rankings = sorted(
+            comparison_result.model_rankings.items(),
+            key=lambda x: x[1],
+        )
         for name, rank in sorted_rankings:
             report.append(f"  {rank}. {name}")
         report.append("")

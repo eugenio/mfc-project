@@ -1,5 +1,4 @@
-"""
-Quality Assessment System Stub
+"""Quality Assessment System Stub
 Minimal implementation to fix import issues.
 """
 
@@ -11,10 +10,12 @@ class QualityLevel(Enum):
     EXCELLENT = "excellent"
     GOOD = "good"
 
+
 @dataclass
 class QualityScore:
     overall_score: float = 0.0
     level: QualityLevel = QualityLevel.GOOD
+
 
 class QualityAssessor:
     pass

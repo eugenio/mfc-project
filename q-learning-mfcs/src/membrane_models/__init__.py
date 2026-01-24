@@ -1,5 +1,4 @@
-"""
-Membrane models for MFC simulations
+"""Membrane models for MFC simulations.
 
 This package provides comprehensive membrane models for microbial fuel cells,
 including proton exchange membranes (PEM), anion exchange membranes (AEM),
@@ -47,36 +46,31 @@ from .proton_exchange import (
 )
 
 __all__ = [
-    # Base classes
-    'BaseMembraneModel',
-    'MembraneParameters',
-    'IonTransportMechanisms',
-
-    # PEM
-    'ProtonExchangeMembrane',
-    'PEMParameters',
-    'create_nafion_membrane',
-    'create_speek_membrane',
-
+    "AEMParameters",
     # AEM
-    'AnionExchangeMembrane',
-    'AEMParameters',
-    'create_aem_membrane',
-
+    "AnionExchangeMembrane",
+    # Base classes
+    "BaseMembraneModel",
     # Bipolar
-    'BipolarMembrane',
-    'BipolarParameters',
-    'create_bipolar_membrane',
-
+    "BipolarMembrane",
+    "BipolarParameters",
     # Ceramic
-    'CeramicMembrane',
-    'CeramicParameters',
-    'create_ceramic_membrane',
-
+    "CeramicMembrane",
+    "CeramicParameters",
     # Fouling
-    'FoulingModel',
-    'FoulingParameters',
-    'calculate_fouling_resistance'
+    "FoulingModel",
+    "FoulingParameters",
+    "IonTransportMechanisms",
+    "MembraneParameters",
+    "PEMParameters",
+    # PEM
+    "ProtonExchangeMembrane",
+    "calculate_fouling_resistance",
+    "create_aem_membrane",
+    "create_bipolar_membrane",
+    "create_ceramic_membrane",
+    "create_nafion_membrane",
+    "create_speek_membrane",
 ]
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"

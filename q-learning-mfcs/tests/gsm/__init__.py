@@ -1,5 +1,4 @@
-"""
-GSM (Genome-Scale Metabolic) Integration Tests
+"""GSM (Genome-Scale Metabolic) Integration Tests.
 
 This package contains comprehensive tests for the GSM integration components:
 - test_gsm_integration.py: Core GSM model functionality

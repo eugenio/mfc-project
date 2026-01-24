@@ -1,3 +1,1 @@
-"""
-Configuration system test suite.
-"""
+"""Configuration system test suite."""

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""
-Core Layout Framework for Enhanced MFC Platform
+"""Core Layout Framework for Enhanced MFC Platform.
 
 Provides standardized layout components and navigation system.
 """
-
 
 import streamlit as st
 
@@ -14,12 +12,14 @@ PHASE_STATUS = {
     "advanced_physics": {"status": "complete", "progress": 100},
     "ml_optimization": {"status": "ready", "progress": 90},
     "gsm_integration": {"status": "complete", "progress": 100},
-    "literature_validation": {"status": "complete", "progress": 100}
+    "literature_validation": {"status": "complete", "progress": 100},
 }
 
-def apply_enhanced_theme():
+
+def apply_enhanced_theme() -> None:
     """Apply enhanced scientific theme."""
-    st.markdown("""
+    st.markdown(
+        """
     <style>
     .main-header {
         background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
@@ -29,9 +29,16 @@ def apply_enhanced_theme():
         margin-bottom: 1.5rem;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
-def create_phase_header(phase_name: str, phase_description: str, phase_key: str):
+
+def create_phase_header(
+    phase_name: str,
+    phase_description: str,
+    phase_key: str,
+) -> None:
     """Create standardized phase header with status indicators."""
     phase_info = PHASE_STATUS.get(phase_key, {"status": "pending", "progress": 0})
 
@@ -55,6 +62,7 @@ def create_phase_header(phase_name: str, phase_description: str, phase_key: str)
     with col3:
         st.metric("System Status", "Operational")
 
+
 def create_navigation_sidebar() -> str:
     """Create enhanced navigation sidebar."""
     st.sidebar.title("🔬 MFC Platform")
@@ -68,7 +76,7 @@ def create_navigation_sidebar() -> str:
         "🧬 GSM Integration": "gsm_integration",
         "📚 Literature Validation": "literature_validation",
         "📊 Performance Monitor": "performance_monitor",
-        "⚙️ Configuration": "system_configuration"
+        "⚙️ Configuration": "system_configuration",
     }
 
     selected_page = st.sidebar.radio("Navigate to:", list(nav_options.keys()))

@@ -1,5 +1,4 @@
-"""
-Cathode models for MFC simulations
+"""Cathode models for MFC simulations.
 
 This package provides cathode models for microbial fuel cell simulations,
 including platinum-based and biological cathode models with literature-based
@@ -30,15 +29,15 @@ from .platinum_cathode import (
 )
 
 __all__ = [
-    'BaseCathodeModel',
-    'CathodeParameters',
-    'ButlerVolmerKinetics',
-    'PlatinumCathodeModel',
-    'PlatinumParameters',
-    'create_platinum_cathode',
-    'BiologicalCathodeModel',
-    'BiologicalParameters',
-    'create_biological_cathode'
+    "BaseCathodeModel",
+    "BiologicalCathodeModel",
+    "BiologicalParameters",
+    "ButlerVolmerKinetics",
+    "CathodeParameters",
+    "PlatinumCathodeModel",
+    "PlatinumParameters",
+    "create_biological_cathode",
+    "create_platinum_cathode",
 ]
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"

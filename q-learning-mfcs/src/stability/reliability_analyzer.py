@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Reliability Analysis Module for MFC Systems
+"""Reliability Analysis Module for MFC Systems.
 
 This module provides comprehensive reliability analysis for Microbial Fuel Cell (MFC)
 systems, including failure rate analysis, Mean Time Between Failures (MTBF) calculation,
@@ -15,15 +14,17 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 from scipy import stats
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -35,11 +36,12 @@ ReliabilityValue = Union[float, np.floating]
 FailureTime = Union[float, int, np.number]
 
 # Generic types
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class FailureMode(Enum):
     """Enumeration of MFC failure modes."""
+
     BIOFILM_DEGRADATION = auto()
     MEMBRANE_FOULING = auto()
     ELECTRODE_CORROSION = auto()
@@ -51,11 +53,12 @@ class FailureMode(Enum):
     UNKNOWN = auto()
 
     def __str__(self) -> str:
-        return self.name.lower().replace('_', ' ')
+        return self.name.lower().replace("_", " ")
 
 
 class ReliabilityModel(Enum):
     """Enumeration of reliability models."""
+
     EXPONENTIAL = auto()
     WEIBULL = auto()
     LOGNORMAL = auto()
@@ -65,6 +68,7 @@ class ReliabilityModel(Enum):
 
 class MaintenanceStrategy(Enum):
     """Enumeration of maintenance strategies."""
+
     REACTIVE = auto()
     PREVENTIVE = auto()
     PREDICTIVE = auto()
@@ -74,6 +78,7 @@ class MaintenanceStrategy(Enum):
 @dataclass(frozen=True)
 class FailureEvent:
     """Represents a failure event in the MFC system."""
+
     failure_time: float
     failure_mode: FailureMode
     severity: float  # 0.0 to 1.0
@@ -85,16 +90,20 @@ class FailureEvent:
     def __post_init__(self) -> None:
         """Validate failure event data."""
         if not (0.0 <= self.severity <= 1.0):
-            raise ValueError("Severity must be between 0.0 and 1.0")
+            msg = "Severity must be between 0.0 and 1.0"
+            raise ValueError(msg)
         if self.failure_time < 0:
-            raise ValueError("Failure time must be non-negative")
+            msg = "Failure time must be non-negative"
+            raise ValueError(msg)
         if self.recovery_time < 0:
-            raise ValueError("Recovery time must be non-negative")
+            msg = "Recovery time must be non-negative"
+            raise ValueError(msg)
 
 
 @dataclass(frozen=True)
 class ReliabilityParameters:
     """Parameters for reliability distribution models."""
+
     model_type: ReliabilityModel
     parameters: dict[str, float]
     confidence_level: float = 0.95
@@ -103,7 +112,8 @@ class ReliabilityParameters:
     def __post_init__(self) -> None:
         """Validate reliability parameters."""
         if not (0.0 < self.confidence_level < 1.0):
-            raise ValueError("Confidence level must be between 0 and 1")
+            msg = "Confidence level must be between 0 and 1"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -124,11 +134,14 @@ class ReliabilityMetrics:
     def __post_init__(self) -> None:
         """Validate reliability metrics."""
         if self.failure_rate < 0:
-            raise ValueError("Failure rate must be non-negative")
+            msg = "Failure rate must be non-negative"
+            raise ValueError(msg)
         if self.mean_time_to_failure < 0:
-            raise ValueError("MTTF must be non-negative")
+            msg = "MTTF must be non-negative"
+            raise ValueError(msg)
         if not (0.0 <= self.availability <= 1.0):
-            raise ValueError("Availability must be between 0.0 and 1.0")
+            msg = "Availability must be between 0.0 and 1.0"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -157,7 +170,9 @@ class ReliabilityPrediction:
     prediction_horizon: float = 8760.0  # Default: 1 year in hours
 
     # Failure mode analysis
-    dominant_failure_modes: list[tuple[FailureMode, float]] = field(default_factory=list)
+    dominant_failure_modes: list[tuple[FailureMode, float]] = field(
+        default_factory=list,
+    )
     failure_mode_probabilities: dict[FailureMode, float] = field(default_factory=dict)
 
     # Maintenance recommendations
@@ -179,7 +194,9 @@ class ReliabilityPrediction:
     def _validate_metrics(self) -> None:
         """Validate reliability metrics."""
         if not (0.0 <= self.availability <= 1.0):
-            logger.warning(f"Availability {self.availability} outside expected range [0, 1]")
+            logger.warning(
+                f"Availability {self.availability} outside expected range [0, 1]",
+            )
 
         if self.mean_time_to_failure < 0:
             logger.warning("MTTF cannot be negative")
@@ -222,24 +239,29 @@ class ReliabilityPrediction:
     def to_dict(self) -> dict[str, Any]:
         """Convert prediction to dictionary format."""
         return {
-            'mean_time_to_failure': self.mean_time_to_failure,
-            'mean_time_between_failures': self.mean_time_between_failures,
-            'mean_time_to_repair': self.mean_time_to_repair,
-            'availability': self.availability,
-            'instantaneous_failure_rate': self.instantaneous_failure_rate,
-            'average_failure_rate': self.average_failure_rate,
-            'failure_rate_trend': self.failure_rate_trend,
-            'model_confidence': self.model_confidence,
-            'prediction_horizon': self.prediction_horizon,
-            'dominant_failure_modes': [(mode.name, prob) for mode, prob in self.dominant_failure_modes],
-            'failure_mode_probabilities': {mode.name: prob for mode, prob in self.failure_mode_probabilities.items()},
-            'recommended_maintenance_interval': self.recommended_maintenance_interval,
-            'maintenance_strategy': self.maintenance_strategy.name,
-            'cost_benefit_ratio': self.cost_benefit_ratio,
-            'analysis_timestamp': self.analysis_timestamp.isoformat(),
-            'data_period': self.data_period.total_seconds(),
-            'sample_size': self.sample_size,
-            'prediction_accuracy': self.prediction_accuracy
+            "mean_time_to_failure": self.mean_time_to_failure,
+            "mean_time_between_failures": self.mean_time_between_failures,
+            "mean_time_to_repair": self.mean_time_to_repair,
+            "availability": self.availability,
+            "instantaneous_failure_rate": self.instantaneous_failure_rate,
+            "average_failure_rate": self.average_failure_rate,
+            "failure_rate_trend": self.failure_rate_trend,
+            "model_confidence": self.model_confidence,
+            "prediction_horizon": self.prediction_horizon,
+            "dominant_failure_modes": [
+                (mode.name, prob) for mode, prob in self.dominant_failure_modes
+            ],
+            "failure_mode_probabilities": {
+                mode.name: prob
+                for mode, prob in self.failure_mode_probabilities.items()
+            },
+            "recommended_maintenance_interval": self.recommended_maintenance_interval,
+            "maintenance_strategy": self.maintenance_strategy.name,
+            "cost_benefit_ratio": self.cost_benefit_ratio,
+            "analysis_timestamp": self.analysis_timestamp.isoformat(),
+            "data_period": self.data_period.total_seconds(),
+            "sample_size": self.sample_size,
+            "prediction_accuracy": self.prediction_accuracy,
         }
 
 
@@ -250,7 +272,7 @@ class ReliabilityAnalyzer(Protocol):
         self,
         failure_data: Sequence[FailureEvent],
         operational_data: TimeSeriesData | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ReliabilityPrediction:
         """Analyze system reliability."""
         ...
@@ -258,7 +280,7 @@ class ReliabilityAnalyzer(Protocol):
     def predict_next_failure(
         self,
         current_time: float,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[float, float]:  # (predicted_time, confidence)
         """Predict next failure time."""
         ...
@@ -271,7 +293,7 @@ class BaseReliabilityAnalyzer(ABC):
         self,
         confidence_level: float = 0.95,
         prediction_horizon: float = 8760.0,  # 1 year in hours
-        min_failures_for_analysis: int = 3
+        min_failures_for_analysis: int = 3,
     ) -> None:
         """Initialize reliability analyzer.
 
@@ -279,6 +301,7 @@ class BaseReliabilityAnalyzer(ABC):
             confidence_level: Confidence level for statistical analysis
             prediction_horizon: Time horizon for predictions (hours)
             min_failures_for_analysis: Minimum failures needed for analysis
+
         """
         self.confidence_level = confidence_level
         self.prediction_horizon = prediction_horizon
@@ -294,19 +317,17 @@ class BaseReliabilityAnalyzer(ABC):
         self,
         failure_data: Sequence[FailureEvent],
         operational_data: TimeSeriesData | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ReliabilityPrediction:
         """Analyze system reliability."""
-        pass
 
     @abstractmethod
     def predict_next_failure(
         self,
         current_time: float,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[float, float]:
         """Predict next failure time."""
-        pass
 
     def validate_failure_data(self, failure_data: Sequence[FailureEvent]) -> bool:
         """Validate failure data quality.
@@ -316,11 +337,12 @@ class BaseReliabilityAnalyzer(ABC):
 
         Returns:
             True if data is valid, False otherwise
+
         """
         try:
             if len(failure_data) < self.min_failures_for_analysis:
                 self.logger.warning(
-                    f"Insufficient failure data: {len(failure_data)} < {self.min_failures_for_analysis}"
+                    f"Insufficient failure data: {len(failure_data)} < {self.min_failures_for_analysis}",
                 )
                 return False
 
@@ -337,10 +359,13 @@ class BaseReliabilityAnalyzer(ABC):
             return True
 
         except Exception as e:
-            self.logger.error(f"Failure data validation error: {str(e)}")
+            self.logger.exception(f"Failure data validation error: {e!s}")
             return False
 
-    def _calculate_time_between_failures(self, failure_data: Sequence[FailureEvent]) -> np.ndarray:
+    def _calculate_time_between_failures(
+        self,
+        failure_data: Sequence[FailureEvent],
+    ) -> np.ndarray:
         """Calculate time between consecutive failures."""
         failure_times = sorted([event.failure_time for event in failure_data])
 
@@ -352,67 +377,76 @@ class BaseReliabilityAnalyzer(ABC):
     def _fit_reliability_distribution(
         self,
         failure_times: np.ndarray,
-        distribution_type: ReliabilityModel = ReliabilityModel.WEIBULL
+        distribution_type: ReliabilityModel = ReliabilityModel.WEIBULL,
     ) -> ReliabilityParameters:
         """Fit reliability distribution to failure data."""
         if len(failure_times) < 2:
             return ReliabilityParameters(
                 model_type=distribution_type,
                 parameters={},
-                goodness_of_fit=0.0
+                goodness_of_fit=0.0,
             )
 
         try:
             if distribution_type == ReliabilityModel.EXPONENTIAL:
                 # Exponential distribution: single parameter (lambda)
                 rate = 1.0 / np.mean(failure_times)
-                params = {'lambda': rate}
+                params = {"lambda": rate}
 
                 # Kolmogorov-Smirnov test for goodness of fit
-                ks_stat, p_value = stats.kstest(failure_times, stats.expon(scale=1/rate).cdf)
+                ks_stat, p_value = stats.kstest(
+                    failure_times,
+                    stats.expon(scale=1 / rate).cdf,
+                )
                 goodness_of_fit = 1.0 - ks_stat
 
             elif distribution_type == ReliabilityModel.WEIBULL:
                 # Weibull distribution: shape (k) and scale (lambda) parameters
                 params_fit = stats.weibull_min.fit(failure_times, floc=0)
                 shape, loc, scale = params_fit
-                params = {'shape': shape, 'scale': scale}
+                params = {"shape": shape, "scale": scale}
 
                 # Goodness of fit test
-                ks_stat, p_value = stats.kstest(failure_times, lambda x: stats.weibull_min.cdf(x, shape, loc, scale))
+                ks_stat, p_value = stats.kstest(
+                    failure_times,
+                    lambda x: stats.weibull_min.cdf(x, shape, loc, scale),
+                )
                 goodness_of_fit = 1.0 - ks_stat
 
             elif distribution_type == ReliabilityModel.LOGNORMAL:
                 # Lognormal distribution
                 params_fit = stats.lognorm.fit(failure_times, floc=0)
                 s, loc, scale = params_fit
-                params = {'sigma': s, 'mu': np.log(scale)}
+                params = {"sigma": s, "mu": np.log(scale)}
 
                 # Goodness of fit test
-                ks_stat, p_value = stats.kstest(failure_times, lambda x: stats.lognorm.cdf(x, s, loc, scale))
+                ks_stat, p_value = stats.kstest(
+                    failure_times,
+                    lambda x: stats.lognorm.cdf(x, s, loc, scale),
+                )
                 goodness_of_fit = 1.0 - ks_stat
 
             else:
                 # Default to exponential if unsupported distribution
                 rate = 1.0 / np.mean(failure_times)
-                params = {'lambda': rate}
+                params = {"lambda": rate}
                 goodness_of_fit = 0.5
 
             return ReliabilityParameters(
                 model_type=distribution_type,
                 parameters=params,
                 confidence_level=self.confidence_level,
-                goodness_of_fit=max(0.0, goodness_of_fit)
+                goodness_of_fit=max(0.0, goodness_of_fit),
             )
 
         except Exception as e:
-            self.logger.error(f"Distribution fitting failed: {str(e)}")
+            self.logger.exception(f"Distribution fitting failed: {e!s}")
             # Return default exponential parameters
             rate = 1.0 / np.mean(failure_times) if len(failure_times) > 0 else 0.001
             return ReliabilityParameters(
                 model_type=ReliabilityModel.EXPONENTIAL,
-                parameters={'lambda': rate},
-                goodness_of_fit=0.0
+                parameters={"lambda": rate},
+                goodness_of_fit=0.0,
             )
 
 
@@ -424,7 +458,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         confidence_level: float = 0.95,
         prediction_horizon: float = 8760.0,
         min_failures_for_analysis: int = 3,
-        default_distribution: ReliabilityModel = ReliabilityModel.WEIBULL
+        default_distribution: ReliabilityModel = ReliabilityModel.WEIBULL,
     ) -> None:
         """Initialize statistical reliability analyzer.
 
@@ -433,8 +467,13 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             prediction_horizon: Time horizon for predictions (hours)
             min_failures_for_analysis: Minimum failures needed for analysis
             default_distribution: Default reliability distribution model
+
         """
-        super().__init__(confidence_level, prediction_horizon, min_failures_for_analysis)
+        super().__init__(
+            confidence_level,
+            prediction_horizon,
+            min_failures_for_analysis,
+        )
         self.default_distribution = default_distribution
         self.fitted_distribution: ReliabilityParameters | None = None
 
@@ -442,7 +481,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         self,
         failure_data: Sequence[FailureEvent],
         operational_data: TimeSeriesData | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ReliabilityPrediction:
         """Perform statistical reliability analysis.
 
@@ -453,9 +492,11 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
         Returns:
             ReliabilityPrediction with comprehensive reliability metrics
+
         """
         if not self.validate_failure_data(failure_data):
-            raise ValueError("Invalid failure data for reliability analysis")
+            msg = "Invalid failure data for reliability analysis"
+            raise ValueError(msg)
 
         # Extract failure times and calculate time between failures
         failure_times = np.array([event.failure_time for event in failure_data])
@@ -464,7 +505,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         # Fit reliability distribution
         self.fitted_distribution = self._fit_reliability_distribution(
             time_between_failures,
-            kwargs.get('distribution_type', self.default_distribution)
+            kwargs.get("distribution_type", self.default_distribution),
         )
 
         # Calculate basic reliability metrics
@@ -475,7 +516,9 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
         # Calculate failure rate metrics
         avg_failure_rate = self._calculate_average_failure_rate(time_between_failures)
-        instantaneous_failure_rate = self._calculate_instantaneous_failure_rate(failure_times)
+        instantaneous_failure_rate = self._calculate_instantaneous_failure_rate(
+            failure_times,
+        )
         failure_rate_trend = self._calculate_failure_rate_trend(failure_times)
 
         # Generate reliability functions
@@ -490,7 +533,11 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         # Generate maintenance recommendations
         maintenance_interval = self._recommend_maintenance_interval(mtbf, mttr)
         maintenance_strategy = self._recommend_maintenance_strategy(failure_data)
-        cost_benefit_ratio = self._calculate_cost_benefit_ratio(mtbf, mttr, maintenance_interval)
+        cost_benefit_ratio = self._calculate_cost_benefit_ratio(
+            mtbf,
+            mttr,
+            maintenance_interval,
+        )
 
         # Calculate prediction accuracy
         prediction_accuracy = self._assess_prediction_accuracy(failure_data)
@@ -503,27 +550,37 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             instantaneous_failure_rate=instantaneous_failure_rate,
             average_failure_rate=avg_failure_rate,
             failure_rate_trend=failure_rate_trend,
-            reliability_at_time=dict(zip(time_points, reliability_function, strict=False)),
+            reliability_at_time=dict(
+                zip(time_points, reliability_function, strict=False),
+            ),
             hazard_function=dict(zip(time_points, hazard_function, strict=False)),
             cumulative_hazard=dict(zip(time_points, cumulative_hazard, strict=False)),
             distribution_parameters=self.fitted_distribution,
-            model_confidence=self.fitted_distribution.goodness_of_fit if self.fitted_distribution else 0.0,
+            model_confidence=(
+                self.fitted_distribution.goodness_of_fit
+                if self.fitted_distribution
+                else 0.0
+            ),
             prediction_horizon=self.prediction_horizon,
-            dominant_failure_modes=failure_mode_analysis['dominant_modes'],
-            failure_mode_probabilities=failure_mode_analysis['mode_probabilities'],
+            dominant_failure_modes=failure_mode_analysis["dominant_modes"],
+            failure_mode_probabilities=failure_mode_analysis["mode_probabilities"],
             recommended_maintenance_interval=maintenance_interval,
             maintenance_strategy=maintenance_strategy,
             cost_benefit_ratio=cost_benefit_ratio,
             analysis_timestamp=datetime.now(),
-            data_period=timedelta(hours=failure_times[-1] - failure_times[0]) if len(failure_times) > 1 else timedelta(hours=1),
+            data_period=(
+                timedelta(hours=failure_times[-1] - failure_times[0])
+                if len(failure_times) > 1
+                else timedelta(hours=1)
+            ),
             sample_size=len(failure_data),
-            prediction_accuracy=prediction_accuracy
+            prediction_accuracy=prediction_accuracy,
         )
 
     def predict_next_failure(
         self,
         current_time: float,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> tuple[float, float]:
         """Predict next failure time using fitted distribution.
 
@@ -533,6 +590,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
         Returns:
             Tuple of (predicted_failure_time, confidence_level)
+
         """
         if not self.fitted_distribution or not self.fitted_distribution.parameters:
             return (current_time + 1000.0, 0.0)  # Default prediction
@@ -542,18 +600,22 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
             if self.fitted_distribution.model_type == ReliabilityModel.EXPONENTIAL:
                 # Exponential distribution prediction
-                lambda_rate = params['lambda']
+                lambda_rate = params["lambda"]
                 mean_time_to_next_failure = 1.0 / lambda_rate
                 predicted_time = current_time + mean_time_to_next_failure
                 confidence = self.fitted_distribution.goodness_of_fit
 
             elif self.fitted_distribution.model_type == ReliabilityModel.WEIBULL:
                 # Weibull distribution prediction
-                shape = params['shape']
-                scale = params['scale']
+                shape = params["shape"]
+                scale = params["scale"]
 
                 # Calculate conditional reliability and predict next failure
-                current_reliability = self._weibull_reliability(current_time, shape, scale)
+                current_reliability = self._weibull_reliability(
+                    current_time,
+                    shape,
+                    scale,
+                )
                 if current_reliability > 0.01:  # Avoid numerical issues
                     # Use median time to next failure
                     median_ttf = scale * (np.log(2)) ** (1.0 / shape)
@@ -565,14 +627,14 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
             else:
                 # Default prediction for other distributions
-                avg_tbf = 1.0 / params.get('lambda', 0.001)
+                avg_tbf = 1.0 / params.get("lambda", 0.001)
                 predicted_time = current_time + avg_tbf
                 confidence = 0.5
 
             return (float(predicted_time), float(confidence))
 
         except Exception as e:
-            self.logger.error(f"Failure prediction failed: {str(e)}")
+            self.logger.exception(f"Failure prediction failed: {e!s}")
             return (current_time + 1000.0, 0.0)
 
     # Helper methods for reliability calculations
@@ -597,7 +659,10 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             return 1.0
         return mtbf / (mtbf + mttr)
 
-    def _calculate_average_failure_rate(self, time_between_failures: np.ndarray) -> float:
+    def _calculate_average_failure_rate(
+        self,
+        time_between_failures: np.ndarray,
+    ) -> float:
         """Calculate average failure rate."""
         if len(time_between_failures) == 0:
             return 0.0
@@ -609,7 +674,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             return 0.0
 
         # Use recent failure data for instantaneous rate
-        recent_failures = failure_times[-min(5, len(failure_times)):]
+        recent_failures = failure_times[-min(5, len(failure_times)) :]
         if len(recent_failures) < 2:
             return 0.0
 
@@ -629,7 +694,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         times = []
 
         for i in range(window_size, len(failure_times)):
-            window_failures = failure_times[i-window_size:i]
+            window_failures = failure_times[i - window_size : i]
             time_span = window_failures[-1] - window_failures[0]
             rate = (window_size - 1) / time_span if time_span > 0 else 0.0
             rates.append(rate)
@@ -639,8 +704,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             return 0.0
 
         # Linear regression to find trend
-        trend_slope = float(np.polyfit(times, rates, 1)[0])
-        return trend_slope
+        return float(np.polyfit(times, rates, 1)[0])
 
     def _calculate_reliability_function(self, time_points: np.ndarray) -> np.ndarray:
         """Calculate reliability function R(t) for given time points."""
@@ -651,17 +715,16 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         params = self.fitted_distribution.parameters
 
         if self.fitted_distribution.model_type == ReliabilityModel.EXPONENTIAL:
-            lambda_rate = params['lambda']
+            lambda_rate = params["lambda"]
             return np.exp(-lambda_rate * time_points)
 
-        elif self.fitted_distribution.model_type == ReliabilityModel.WEIBULL:
-            shape = params['shape']
-            scale = params['scale']
-            return np.exp(-(time_points / scale) ** shape)
+        if self.fitted_distribution.model_type == ReliabilityModel.WEIBULL:
+            shape = params["shape"]
+            scale = params["scale"]
+            return np.exp(-((time_points / scale) ** shape))
 
-        else:
-            # Default exponential
-            return np.exp(-0.001 * time_points)
+        # Default exponential
+        return np.exp(-0.001 * time_points)
 
     def _calculate_hazard_function(self, time_points: np.ndarray) -> np.ndarray:
         """Calculate hazard function h(t) for given time points."""
@@ -672,19 +735,21 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         params = self.fitted_distribution.parameters
 
         if self.fitted_distribution.model_type == ReliabilityModel.EXPONENTIAL:
-            lambda_rate = params['lambda']
+            lambda_rate = params["lambda"]
             return np.full_like(time_points, lambda_rate)
 
-        elif self.fitted_distribution.model_type == ReliabilityModel.WEIBULL:
-            shape = params['shape']
-            scale = params['scale']
+        if self.fitted_distribution.model_type == ReliabilityModel.WEIBULL:
+            shape = params["shape"]
+            scale = params["scale"]
             return (shape / scale) * (time_points / scale) ** (shape - 1)
 
-        else:
-            # Default constant hazard
-            return np.full_like(time_points, 0.001)
+        # Default constant hazard
+        return np.full_like(time_points, 0.001)
 
-    def _calculate_cumulative_hazard_function(self, time_points: np.ndarray) -> np.ndarray:
+    def _calculate_cumulative_hazard_function(
+        self,
+        time_points: np.ndarray,
+    ) -> np.ndarray:
         """Calculate cumulative hazard function H(t)."""
         reliability = self._calculate_reliability_function(time_points)
         # H(t) = -ln(R(t))
@@ -692,9 +757,12 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
     def _weibull_reliability(self, time: float, shape: float, scale: float) -> float:
         """Calculate Weibull reliability at given time."""
-        return float(np.exp(-(time / scale) ** shape))
+        return float(np.exp(-((time / scale) ** shape)))
 
-    def _analyze_failure_modes(self, failure_data: Sequence[FailureEvent]) -> dict[str, Any]:
+    def _analyze_failure_modes(
+        self,
+        failure_data: Sequence[FailureEvent],
+    ) -> dict[str, Any]:
         """Analyze failure modes and their probabilities."""
         failure_modes = [event.failure_mode for event in failure_data]
         mode_counts: dict[FailureMode, int] = {}
@@ -704,20 +772,19 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
         total_failures = len(failure_data)
         mode_probabilities = {
-            mode: count / total_failures
-            for mode, count in mode_counts.items()
+            mode: count / total_failures for mode, count in mode_counts.items()
         }
 
         # Sort by probability
         dominant_modes = sorted(
             mode_probabilities.items(),
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )[:3]  # Top 3 failure modes
 
         return {
-            'mode_probabilities': mode_probabilities,
-            'dominant_modes': dominant_modes
+            "mode_probabilities": mode_probabilities,
+            "dominant_modes": dominant_modes,
         }
 
     def _recommend_maintenance_interval(self, mtbf: float, mttr: float) -> float:
@@ -729,7 +796,10 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         optimal_interval = 0.75 * mtbf
         return float(max(24.0, optimal_interval))  # At least 24 hours
 
-    def _recommend_maintenance_strategy(self, failure_data: Sequence[FailureEvent]) -> MaintenanceStrategy:
+    def _recommend_maintenance_strategy(
+        self,
+        failure_data: Sequence[FailureEvent],
+    ) -> MaintenanceStrategy:
         """Recommend maintenance strategy based on failure patterns."""
         if len(failure_data) < 3:
             return MaintenanceStrategy.PREVENTIVE
@@ -743,7 +813,9 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             recent_interval = np.mean(np.diff(failure_times[-3:]))
             early_interval = np.mean(np.diff(failure_times[:3]))
 
-            if recent_interval < 0.8 * early_interval:  # Failures becoming more frequent
+            if (
+                recent_interval < 0.8 * early_interval
+            ):  # Failures becoming more frequent
                 return MaintenanceStrategy.PREDICTIVE
 
         # High severity failures suggest condition-based maintenance
@@ -752,7 +824,12 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 
         return MaintenanceStrategy.PREVENTIVE
 
-    def _calculate_cost_benefit_ratio(self, mtbf: float, mttr: float, maintenance_interval: float) -> float:
+    def _calculate_cost_benefit_ratio(
+        self,
+        mtbf: float,
+        mttr: float,
+        maintenance_interval: float,
+    ) -> float:
         """Calculate cost-benefit ratio for maintenance strategy."""
         if mtbf <= 0 or maintenance_interval <= 0:
             return 0.0
@@ -770,9 +847,16 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         net_benefit = downtime_reduction - maintenance_downtime
         maintenance_cost_factor = maintenance_frequency * 0.1  # Normalized cost
 
-        return net_benefit / maintenance_cost_factor if maintenance_cost_factor > 0 else 0.0
+        return (
+            net_benefit / maintenance_cost_factor
+            if maintenance_cost_factor > 0
+            else 0.0
+        )
 
-    def _assess_prediction_accuracy(self, failure_data: Sequence[FailureEvent]) -> float:
+    def _assess_prediction_accuracy(
+        self,
+        failure_data: Sequence[FailureEvent],
+    ) -> float:
         """Assess accuracy of reliability predictions."""
         if not self.fitted_distribution or len(failure_data) < 3:
             return 0.0
@@ -798,10 +882,11 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
             if i == 0:
                 last_failure_time = training_data[-1].failure_time
             else:
-                last_failure_time = validation_times[i-1]
+                last_failure_time = validation_times[i - 1]
 
             predicted_time, _ = self._predict_failure_with_distribution(
-                last_failure_time, temp_distribution
+                last_failure_time,
+                temp_distribution,
             )
 
             error = abs(predicted_time - actual_time) / actual_time
@@ -816,7 +901,7 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
     def _predict_failure_with_distribution(
         self,
         current_time: float,
-        distribution: ReliabilityParameters
+        distribution: ReliabilityParameters,
     ) -> tuple[float, float]:
         """Predict failure using specific distribution parameters."""
         if not distribution.parameters:
@@ -825,12 +910,12 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
         params = distribution.parameters
 
         if distribution.model_type == ReliabilityModel.EXPONENTIAL:
-            lambda_rate = params['lambda']
+            lambda_rate = params["lambda"]
             predicted_time = current_time + (1.0 / lambda_rate)
 
         elif distribution.model_type == ReliabilityModel.WEIBULL:
-            shape = params['shape']
-            scale = params['scale']
+            shape = params["shape"]
+            scale = params["scale"]
             median_ttf = scale * (np.log(2)) ** (1.0 / shape)
             predicted_time = current_time + median_ttf
 
@@ -844,13 +929,13 @@ class StatisticalReliabilityAnalyzer(BaseReliabilityAnalyzer):
 def create_statistical_reliability_analyzer(
     confidence_level: float = 0.95,
     prediction_horizon: float = 8760.0,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> StatisticalReliabilityAnalyzer:
     """Create a statistical reliability analyzer."""
     return StatisticalReliabilityAnalyzer(
         confidence_level=confidence_level,
         prediction_horizon=prediction_horizon,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -879,29 +964,17 @@ def run_example_reliability_analysis() -> None:
             failure_mode=failure_mode,
             severity=severity,
             recovery_time=recovery_time,
-            root_cause=f"Synthetic cause {i+1}",
-            operator_notes=f"Test failure event {i+1}"
+            root_cause=f"Synthetic cause {i + 1}",
+            operator_notes=f"Test failure event {i + 1}",
         )
         failure_events.append(event)
 
     # Create analyzer and perform analysis
     analyzer = create_statistical_reliability_analyzer()
-    reliability_prediction = analyzer.analyze_reliability(failure_events)
-
-    print("Reliability Analysis Results:")
-    print(f"MTBF: {reliability_prediction.mean_time_between_failures:.1f} hours")
-    print(f"MTTR: {reliability_prediction.mean_time_to_repair:.1f} hours")
-    print(f"Availability: {reliability_prediction.availability:.3f}")
-    print(f"Average Failure Rate: {reliability_prediction.average_failure_rate:.6f} failures/hour")
-    print(f"Model Confidence: {reliability_prediction.model_confidence:.3f}")
-    print(f"Recommended Maintenance Interval: {reliability_prediction.recommended_maintenance_interval:.1f} hours")
-    print(f"Maintenance Strategy: {reliability_prediction.maintenance_strategy}")
+    analyzer.analyze_reliability(failure_events)
 
     # Predict next failure
     next_failure_time, confidence = analyzer.predict_next_failure(current_time)
-    print("\nNext Failure Prediction:")
-    print(f"Predicted Time: {next_failure_time:.1f} hours")
-    print(f"Confidence: {confidence:.3f}")
 
 
 if __name__ == "__main__":

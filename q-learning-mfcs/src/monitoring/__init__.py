@@ -1,5 +1,4 @@
-"""
-MFC Real-time Monitoring System
+"""MFC Real-time Monitoring System.
 
 A comprehensive monitoring solution for Microbial Fuel Cell (MFC) systems providing:
 
@@ -37,15 +36,15 @@ __version__ = "1.0.0"
 __author__ = "MFC Development Team"
 
 __all__ = [
-    "dashboard_app",
-    "SystemStatus",
-    "SystemMetrics",
     "AlertMessage",
-    "SafetyMonitor",
-    "SafetyLevel",
     "EmergencyAction",
-    "SafetyThreshold",
     "RealTimeStreamer",
+    "SafetyLevel",
+    "SafetyMonitor",
+    "SafetyThreshold",
+    "StreamEvent",
     "StreamEventType",
-    "StreamEvent"
+    "SystemMetrics",
+    "SystemStatus",
+    "dashboard_app",
 ]

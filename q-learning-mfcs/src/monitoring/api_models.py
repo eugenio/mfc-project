@@ -1,6 +1,6 @@
-"""
-API models for MFC monitoring system
-"""
+"""API models for MFC monitoring system."""
+
+from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 
 
 class SystemStatus(BaseModel):
-    """System status response"""
+    """System status response."""
+
     status: str = Field(..., description="System status: running, stopped, error")
     timestamp: datetime = Field(default_factory=datetime.now)
     message: str | None = None
@@ -17,7 +18,8 @@ class SystemStatus(BaseModel):
 
 
 class SystemMetrics(BaseModel):
-    """System metrics response"""
+    """System metrics response."""
+
     timestamp: str
     status: str
     uptime_hours: float
@@ -31,7 +33,8 @@ class SystemMetrics(BaseModel):
 
 
 class AlertMessage(BaseModel):
-    """Alert message model"""
+    """Alert message model."""
+
     timestamp: datetime = Field(default_factory=datetime.now)
     level: str = Field(..., description="Alert level: info, warning, error, critical")
     message: str

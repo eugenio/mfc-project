@@ -1,5 +1,4 @@
-"""
-Metabolic Model Module
+"""Metabolic Model Module.
 
 This module implements metabolic pathway models for exoelectrogenic bacteria
 including acetate and lactate metabolism, electron shuttle production,
@@ -23,8 +22,8 @@ __version__ = "1.0.0"
 __author__ = "MFC Simulation Project"
 
 __all__ = [
-    'MetabolicModel',
-    'PathwayDatabase',
-    'MembraneTransport',
-    'ElectronShuttleModel'
+    "ElectronShuttleModel",
+    "MembraneTransport",
+    "MetabolicModel",
+    "PathwayDatabase",
 ]

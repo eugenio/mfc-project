@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Navigation Controller for Enhanced MFC Platform"""
+"""Navigation Controller for Enhanced MFC Platform."""
 
 import streamlit as st
 from gui.core_layout import apply_enhanced_theme, create_navigation_sidebar
@@ -15,7 +15,7 @@ from gui.pages.system_configuration import render_system_configuration_page
 
 
 class NavigationController:
-    def __init__(self):
+    def __init__(self) -> None:
         self.pages = {
             "dashboard": render_dashboard_page,
             "electrode_system": render_enhanced_electrode_page,
@@ -25,21 +25,17 @@ class NavigationController:
             "gsm_integration": render_gsm_integration_page,
             "literature_validation": render_literature_validation_page,
             "performance_monitor": render_performance_monitor_page,
-            "system_configuration": render_system_configuration_page
+            "system_configuration": render_system_configuration_page,
         }
 
-    def run(self):
+    def run(self) -> None:
         apply_enhanced_theme()
-        st.set_page_config(
-            page_title="MFC Platform",
-            page_icon="🔬",
-            layout="wide"
-        )
+        st.set_page_config(page_title="MFC Platform", page_icon="🔬", layout="wide")
 
         selected_page = create_navigation_sidebar()
         if selected_page in self.pages:
             self.pages[selected_page]()
 
-    def _render_placeholder(self):
+    def _render_placeholder(self) -> None:
         st.title("Coming Soon")
         st.info("This page is under development!")

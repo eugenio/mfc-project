@@ -1,6 +1,4 @@
-"""
-Create GitLab issue for mypy type checking errors
-"""
+"""Create GitLab issue for mypy type checking errors."""
 
 from gitlab_issue_manager import (
     GitLabIssueManager,
@@ -12,8 +10,7 @@ from gitlab_issue_manager import (
 
 
 def create_mypy_issue():
-    """Create the mypy type checking issue"""
-
+    """Create the mypy type checking issue."""
     description = """## Type Checking Issue Summary
 
 MyPy analysis of the stability analysis system revealed **175 type errors** across 6 files that need to be addressed for production-quality code.
@@ -121,8 +118,15 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         severity=IssueSeverity.MEDIUM,
         urgency=IssueUrgency.MEDIUM,
         issue_type=IssueType.ENHANCEMENT,
-        labels=["type-checking", "code-quality", "mypy", "enhancement", "stability", "maintenance"],
-        component="stability"
+        labels=[
+            "type-checking",
+            "code-quality",
+            "mypy",
+            "enhancement",
+            "stability",
+            "maintenance",
+        ],
+        component="stability",
     )
 
     try:
@@ -130,36 +134,16 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         issue_manager = GitLabIssueManager()
 
         # Create the issue
-        print("🚀 Creating GitLab issue for mypy type checking errors...")
-        created_issue = issue_manager.create_issue(issue_data)
+        return issue_manager.create_issue(issue_data)
 
-        print("\n✅ Successfully created GitLab issue:")
-        print(f"   📝 Title: {created_issue['title']}")
-        print(f"   🔗 URL: {created_issue['web_url']}")
-        print(f"   🆔 Issue ID: #{created_issue['iid']}")
-        print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
-        print(f"   📊 State: {created_issue['state']}")
-
-        print("\n📋 MyPy type checking issue now tracked in GitLab")
-        print("🎯 175 type errors identified across 6 stability analysis files")
-
-        return created_issue
-
-    except Exception as e:
-        print(f"❌ Error creating GitLab issue: {e}")
+    except Exception:
         return None
+
 
 if __name__ == "__main__":
     result = create_mypy_issue()
 
     if result:
-        print("\n🎯 Next Steps:")
-        print("1. GitLab issue created for comprehensive type checking fixes")
-        print("2. Issue will help track progress on type safety improvements")
-        print("3. Priority set to medium - improvement but not blocking")
-        print("4. All 175 mypy errors documented and categorized")
+        pass
     else:
-        print("\n⚠️  Issue creation failed, but analysis is complete")
-        print("1. 175 mypy errors identified in stability analysis system")
-        print("2. Main issues: missing dataclass definitions and type annotations")
-        print("3. Code functions correctly but lacks type safety")
+        pass

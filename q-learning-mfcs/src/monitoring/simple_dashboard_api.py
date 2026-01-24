@@ -1,15 +1,18 @@
-"""
-Simplified MFC Real-time Monitoring Dashboard API
+"""Simplified MFC Real-time Monitoring Dashboard API.
 
 A minimal but functional monitoring API for MFC systems.
 """
+
+from __future__ import annotations
+
 from typing import Any
 
 from pydantic import BaseModel
 
 
 class SystemMetrics(BaseModel):
-    """System metrics response"""
+    """System metrics response."""
+
     timestamp: str
     status: str
     uptime_hours: float
@@ -21,7 +24,9 @@ class SystemMetrics(BaseModel):
     flow_rate_ml_min: float
     cell_voltages: list[float]
 
+
 class ControlCommand(BaseModel):
-    """Control command request"""
+    """Control command request."""
+
     command: str
     parameters: dict[str, Any] | None = None

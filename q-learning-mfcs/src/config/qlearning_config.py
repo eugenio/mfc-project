@@ -1,7 +1,8 @@
-"""
-Q-Learning configuration classes for MFC optimization.
+"""Q-Learning configuration classes for MFC optimization.
 Replaces hardcoded values in Q-learning controllers and optimization algorithms.
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 
@@ -13,26 +14,34 @@ class BiofilmPhysicsConfig:
     """Literature-based biofilm physics parameters for realistic modeling."""
 
     # Substrate diffusion parameters (literature values for lactate in biofilms)
-    substrate_diffusivity_biofilm: float = 0.6e-9  # m²/s, lactate in biofilm (Stewart 2003)
-    substrate_diffusivity_bulk: float = 1.0e-9     # m²/s, lactate in bulk liquid
-    biofilm_porosity: float = 0.8                  # Dimensionless, typical biofilm porosity
-    biofilm_tortuosity: float = 1.5                # Dimensionless, tortuosity factor
+    substrate_diffusivity_biofilm: float = (
+        0.6e-9  # m²/s, lactate in biofilm (Stewart 2003)
+    )
+    substrate_diffusivity_bulk: float = 1.0e-9  # m²/s, lactate in bulk liquid
+    biofilm_porosity: float = 0.8  # Dimensionless, typical biofilm porosity
+    biofilm_tortuosity: float = 1.5  # Dimensionless, tortuosity factor
 
     # Effective diffusivity in biofilm (Deff = D * porosity / tortuosity)
     @property
     def effective_diffusivity(self) -> float:
-        return self.substrate_diffusivity_biofilm * self.biofilm_porosity / self.biofilm_tortuosity
+        return (
+            self.substrate_diffusivity_biofilm
+            * self.biofilm_porosity
+            / self.biofilm_tortuosity
+        )
 
     # Biofilm kinetic parameters (literature-based)
-    max_specific_growth_rate: float = 0.05          # h⁻¹, maximum growth rate for lactate utilizers
-    yield_coefficient: float = 0.4                  # g-biomass/g-substrate, typical for lactate
-    half_saturation_constant: float = 5.0           # mM, Monod constant for lactate
-    decay_rate: float = 0.01                        # h⁻¹, biomass decay rate
+    max_specific_growth_rate: float = (
+        0.05  # h⁻¹, maximum growth rate for lactate utilizers
+    )
+    yield_coefficient: float = 0.4  # g-biomass/g-substrate, typical for lactate
+    half_saturation_constant: float = 5.0  # mM, Monod constant for lactate
+    decay_rate: float = 0.01  # h⁻¹, biomass decay rate
 
     # Biofilm physical properties
-    biofilm_density: float = 80.0                   # kg/m³, typical biofilm wet density
-    minimum_thickness: float = 0.1                  # μm, minimum viable biofilm thickness
-    diffusion_length_scale: float = 100.0           # μm, characteristic diffusion length
+    biofilm_density: float = 80.0  # kg/m³, typical biofilm wet density
+    minimum_thickness: float = 0.1  # μm, minimum viable biofilm thickness
+    diffusion_length_scale: float = 100.0  # μm, characteristic diffusion length
 
 
 @dataclass
@@ -40,26 +49,40 @@ class QLearningRewardWeights:
     """Reward function weights for Q-learning optimization."""
 
     # Power optimization weights (Bayesian optimized)
-    power_weight: float = 18.450199366779497  # Optimized weight for power output maximization
+    power_weight: float = (
+        18.450199366779497  # Optimized weight for power output maximization
+    )
     power_penalty_threshold: float = 50.0  # Penalty threshold for low power
     power_penalty_multiplier: float = 100.0  # Penalty multiplier for very low power
     power_base_reward_multiplier: float = 20.0  # Base reward multiplier
 
     # Substrate utilization weights (Bayesian optimized)
     consumption_weight: float = 5.0  # Weight for substrate consumption
-    substrate_reward_multiplier: float = 48.529149002822  # Optimized substrate utilization reward
-    substrate_penalty_multiplier: float = 86.3082652695326  # Optimized substrate waste penalty
+    substrate_reward_multiplier: float = (
+        48.529149002822  # Optimized substrate utilization reward
+    )
+    substrate_penalty_multiplier: float = (
+        86.3082652695326  # Optimized substrate waste penalty
+    )
     substrate_base_reward: float = 15.0  # Base substrate reward
     substrate_multiplier: float = 0.75  # Substrate efficiency multiplier
 
     # Substrate concentration control rewards (Bayesian optimized)
-    substrate_target_reward: float = 50.0  # Reward for maintaining target concentrations
-    substrate_excess_penalty: float = -110.441778832924  # Optimized penalty for exceeding max threshold
+    substrate_target_reward: float = (
+        50.0  # Reward for maintaining target concentrations
+    )
+    substrate_excess_penalty: float = (
+        -110.441778832924
+    )  # Optimized penalty for exceeding max threshold
     substrate_starvation_penalty: float = -75.0  # Penalty for starvation conditions
-    substrate_addition_penalty: float = -15.0  # Higher penalty per unit of substrate added (was -5.0)
+    substrate_addition_penalty: float = (
+        -15.0
+    )  # Higher penalty per unit of substrate added (was -5.0)
 
     # Efficiency optimization weights (Bayesian optimized)
-    efficiency_weight: float = 10.45562341841683  # Optimized weight for substrate efficiency
+    efficiency_weight: float = (
+        10.45562341841683  # Optimized weight for substrate efficiency
+    )
     efficiency_threshold: float = 0.5  # Minimum efficiency threshold (50%)
     efficiency_penalty_multiplier: float = 100.0  # Penalty for low efficiency
 
@@ -74,7 +97,9 @@ class QLearningRewardWeights:
     combined_penalty: float = -100.0  # Combined system failure penalty
 
     # Biofilm specific parameters for sensors
-    biofilm_optimal_thickness_um: float = 30.0  # Optimal thickness for G. sulfurreducens
+    biofilm_optimal_thickness_um: float = (
+        30.0  # Optimal thickness for G. sulfurreducens
+    )
     conductivity_normalization_S_per_m: float = 0.005  # Normalization factor
     mass_growth_rate_factor: float = 10.0  # Growth rate normalization
 
@@ -102,7 +127,9 @@ class QLearningConfig:
     advanced_epsilon_min: float = 0.0042714404222870305  # Optimized minimum epsilon
 
     # Reward weights configuration
-    reward_weights: QLearningRewardWeights = field(default_factory=QLearningRewardWeights)
+    reward_weights: QLearningRewardWeights = field(
+        default_factory=QLearningRewardWeights,
+    )
 
     # State space discretization
     power_bins: int = 10  # Number of bins for power state
@@ -139,50 +166,82 @@ class QLearningConfig:
     sensor_agreement_bins: int = 4  # Sensor agreement bins
 
     # Action space configuration
-    flow_rate_actions: list[int] = field(default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6])
-    substrate_actions: list[float] = field(default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5])
+    flow_rate_actions: list[int] = field(
+        default_factory=lambda: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6],
+    )
+    substrate_actions: list[float] = field(
+        default_factory=lambda: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5],
+    )
 
     # Substrate control thresholds (configurable) - unified target concentrations
-    substrate_target_concentration: float = 25.0  # Universal target concentration for all areas (mM)
-    substrate_target_reservoir: float = 25.0  # Target reservoir concentration (mM) - same as universal
-    substrate_target_outlet: float = 25.0  # Target outlet concentration (mM) - same as universal
-    substrate_target_cell: float = 25.0  # Target per-cell concentration (mM) - same as universal
-    substrate_max_threshold: float = 30.0  # Maximum allowed concentration (mM) - updated
+    substrate_target_concentration: float = (
+        25.0  # Universal target concentration for all areas (mM)
+    )
+    substrate_target_reservoir: float = (
+        25.0  # Target reservoir concentration (mM) - same as universal
+    )
+    substrate_target_outlet: float = (
+        25.0  # Target outlet concentration (mM) - same as universal
+    )
+    substrate_target_cell: float = (
+        25.0  # Target per-cell concentration (mM) - same as universal
+    )
+    substrate_max_threshold: float = (
+        30.0  # Maximum allowed concentration (mM) - updated
+    )
     substrate_min_threshold: float = 2.0  # Minimum starvation threshold (mM)
     substrate_addition_max: float = 5.0  # Maximum addition rate (mmol/h)
 
     # Outlet sensor control parameters (Bayesian optimized)
     outlet_reward_threshold: float = 25.0  # User-configurable threshold for outlet sensor rewards (mM) - same as universal target
-    outlet_penalty_multiplier: float = 1.3541821944867105  # Optimized penalty increase when outlet equals inlet
+    outlet_penalty_multiplier: float = (
+        1.3541821944867105  # Optimized penalty increase when outlet equals inlet
+    )
     outlet_reward_scaling: float = 1.0  # Proportional reward scaling factor
 
     # Advanced substrate control penalties (configurable)
     substrate_excess_penalty_exponent: float = 3.0  # Exponential penalty growth factor
     substrate_severe_threshold: float = 50.0  # Threshold for severe penalties (mM)
-    substrate_severe_penalty_multiplier: float = 1000.0  # Multiplier for severe penalties
-    substrate_penalty_base_multiplier: float = 1.9691383876591164  # Optimized base multiplier for penalty scaling
+    substrate_severe_penalty_multiplier: float = (
+        1000.0  # Multiplier for severe penalties
+    )
+    substrate_penalty_base_multiplier: float = (
+        1.9691383876591164  # Optimized base multiplier for penalty scaling
+    )
 
     # System-wide configuration (configurable)
-    initial_substrate_concentration: float = 25.0  # Initial reservoir concentration (mM)
-    initial_cell_concentration: float = 25.0  # Initial per-cell concentration (mM) - same as reservoir
+    initial_substrate_concentration: float = (
+        25.0  # Initial reservoir concentration (mM)
+    )
+    initial_cell_concentration: float = (
+        25.0  # Initial per-cell concentration (mM) - same as reservoir
+    )
     reservoir_volume_liters: float = 1.0  # Reservoir volume (L)
 
     # MFC cell configuration
     n_cells: int = 5  # Number of MFC cells in the system
 
     # Electrode configurations (comprehensive material and geometry)
-    anode_config: ElectrodeConfiguration = field(default_factory=lambda: DEFAULT_GRAPHITE_PLATE_CONFIG)
+    anode_config: ElectrodeConfiguration = field(
+        default_factory=lambda: DEFAULT_GRAPHITE_PLATE_CONFIG,
+    )
     cathode_config: ElectrodeConfiguration | None = None  # If None, uses same as anode
 
     # Legacy electrode areas (calculated from configurations, for backward compatibility)
     anode_area_per_cell: float = field(init=False)  # Calculated from anode_config
     cathode_area_per_cell: float = field(init=False)  # Calculated from cathode_config
     total_anode_area: float = field(init=False)  # Total anode area (m²) - calculated
-    total_cathode_area: float = field(init=False)  # Total cathode area (m²) - calculated
+    total_cathode_area: float = field(
+        init=False,
+    )  # Total cathode area (m²) - calculated
 
     # Sensor electrode areas (fixed for optimal sensing)
-    eis_sensor_area: float = 1e-4  # EIS sensor electrode area (m²) - 1 cm² for impedance sensing
-    qcm_sensor_area: float = 0.196e-4  # QCM sensor electrode area (m²) - 0.196 cm² for 5mm diameter
+    eis_sensor_area: float = (
+        1e-4  # EIS sensor electrode area (m²) - 1 cm² for impedance sensing
+    )
+    qcm_sensor_area: float = (
+        0.196e-4  # QCM sensor electrode area (m²) - 0.196 cm² for 5mm diameter
+    )
 
     # Legacy compatibility (will be deprecated)
     @property
@@ -191,7 +250,7 @@ class QLearningConfig:
         return self.anode_area_per_cell
 
     @electrode_area_per_cell.setter
-    def electrode_area_per_cell(self, value: float):
+    def electrode_area_per_cell(self, value: float) -> None:
         """Legacy setter for backward compatibility - sets anode area."""
         self.anode_area_per_cell = value
         self.total_anode_area = self.anode_area_per_cell * self.n_cells
@@ -207,7 +266,11 @@ class QLearningConfig:
         self.anode_area_per_cell = self.anode_config.calculate_effective_surface_area()
 
         # Use cathode config if provided, otherwise same as anode
-        cathode_config = self.cathode_config if self.cathode_config is not None else self.anode_config
+        cathode_config = (
+            self.cathode_config
+            if self.cathode_config is not None
+            else self.anode_config
+        )
         self.cathode_area_per_cell = cathode_config.calculate_effective_surface_area()
 
         # Calculate total areas
@@ -218,7 +281,9 @@ class QLearningConfig:
     biofilm_physics: BiofilmPhysicsConfig = field(default_factory=BiofilmPhysicsConfig)
 
     # Unified controller action spaces
-    unified_flow_actions: list[int] = field(default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4])
+    unified_flow_actions: list[int] = field(
+        default_factory=lambda: [-8, -4, -2, -1, 0, 1, 2, 3, 4],
+    )
 
     # Advanced state space configurations
     outlet_error_bins: int = 8  # Outlet error bins
@@ -243,7 +308,9 @@ class QLearningConfig:
 
     # Stability targets
     stability_target_flow_rate: float = 15.0  # Target flow rate for stability (mL/h)
-    stability_target_outlet_concentration: float = 25.0  # Target outlet concentration (mM) - same as universal target
+    stability_target_outlet_concentration: float = (
+        25.0  # Target outlet concentration (mM) - same as universal target
+    )
 
     # Substrate concentration bounds
     substrate_concentration_min: float = 5.0  # mmol/L minimum
@@ -260,7 +327,7 @@ class QLearningConfig:
     stability_weight: float = 0.1  # System stability weight
 
     # State space configuration
-    state_space: 'StateSpaceConfig' = field(default_factory=lambda: StateSpaceConfig())
+    state_space: StateSpaceConfig = field(default_factory=lambda: StateSpaceConfig())
 
 
 @dataclass
@@ -285,10 +352,16 @@ class StateSpaceConfig:
     reservoir_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM)
 
     cell_substrate_bins: int = 6  # Per-cell substrate concentration bins
-    cell_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
+    cell_substrate_range: tuple[float, float] = (
+        0.0,
+        50.0,
+    )  # Range (mM) - same as reservoir
 
     outlet_substrate_bins: int = 6  # Outlet substrate concentration bins
-    outlet_substrate_range: tuple[float, float] = (0.0, 50.0)  # Range (mM) - same as reservoir
+    outlet_substrate_range: tuple[float, float] = (
+        0.0,
+        50.0,
+    )  # Range (mM) - same as reservoir
 
     # EIS sensor state configuration
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins
@@ -303,11 +376,15 @@ class StateSpaceConfig:
     qcm_frequency_bins: int = 6  # QCM frequency bins
     qcm_frequency_max: float = 500.0  # Maximum frequency shift (Hz)
     qcm_dissipation_bins: int = 4  # QCM dissipation bins (from existing code)
-    qcm_dissipation_max: float = 0.01  # Maximum dissipation factor (from sensor_config.py)
+    qcm_dissipation_max: float = (
+        0.01  # Maximum dissipation factor (from sensor_config.py)
+    )
 
     # Sensor fusion state configuration
     sensor_agreement_bins: int = 4  # Sensor agreement bins (from existing code)
-    fusion_confidence_bins: int = 5  # Sensor fusion confidence bins (from existing code)
+    fusion_confidence_bins: int = (
+        5  # Sensor fusion confidence bins (from existing code)
+    )
 
     def get_total_states(self, include_sensors: bool = False) -> int:
         """Calculate total number of discrete states."""
@@ -325,7 +402,7 @@ ENHANCED_QLEARNING_CONFIG = QLearningConfig(
     discount_factor=0.9517,
     epsilon=0.3702,
     sensor_weight=0.3,
-    sensor_confidence_threshold=0.3
+    sensor_confidence_threshold=0.3,
 )
 
 CONSERVATIVE_QLEARNING_CONFIG = QLearningConfig(
@@ -333,7 +410,7 @@ CONSERVATIVE_QLEARNING_CONFIG = QLearningConfig(
     discount_factor=0.99,
     epsilon=0.1,
     epsilon_decay=0.999,
-    epsilon_min=0.01
+    epsilon_min=0.01,
 )
 
 AGGRESSIVE_QLEARNING_CONFIG = QLearningConfig(
@@ -341,5 +418,5 @@ AGGRESSIVE_QLEARNING_CONFIG = QLearningConfig(
     discount_factor=0.9,
     epsilon=0.5,
     epsilon_decay=0.99,
-    epsilon_min=0.2
+    epsilon_min=0.2,
 )

@@ -1,11 +1,10 @@
-"""
-Direct GitLab API call to create HTTPS/SSL enhancement issue
-"""
+"""Direct GitLab API call to create HTTPS/SSL enhancement issue."""
+
 import os
 import sys
 
 # Add tests directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tests"))
 
 from gitlab_issue_manager import (
     GitLabIssueManager,
@@ -17,8 +16,7 @@ from gitlab_issue_manager import (
 
 
 def create_mypy_issue():
-    """Create the mypy type checking issue"""
-
+    """Create the mypy type checking issue."""
     # Create issue data
     issue_data = IssueData(
         title="🔧 TYPE CHECKING: Fix mypy type annotation errors in stability analysis system",
@@ -78,8 +76,15 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         severity=IssueSeverity.MEDIUM,
         urgency=IssueUrgency.MEDIUM,
         issue_type=IssueType.ENHANCEMENT,
-        labels=["type-checking", "code-quality", "mypy", "enhancement", "stability", "maintenance"],
-        component="stability"
+        labels=[
+            "type-checking",
+            "code-quality",
+            "mypy",
+            "enhancement",
+            "stability",
+            "maintenance",
+        ],
+        component="stability",
     )
 
     try:
@@ -87,28 +92,14 @@ mypy src/stability/ tests/test_stability_system.py --ignore-missing-imports --sh
         issue_manager = GitLabIssueManager()
 
         # Create the issue
-        print("🚀 Creating GitLab issue for mypy type checking errors...")
-        created_issue = issue_manager.create_issue(issue_data)
+        return issue_manager.create_issue(issue_data)
 
-        print("\n✅ Successfully created GitLab issue:")
-        print(f"   📝 Title: {created_issue['title']}")
-        print(f"   🔗 URL: {created_issue['web_url']}")
-        print(f"   🆔 Issue ID: #{created_issue['iid']}")
-        print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
-        print(f"   📊 State: {created_issue['state']}")
-
-        print("\n📋 MyPy type checking issue now tracked in GitLab")
-        print("🎯 175 type errors identified across 6 stability analysis files")
-
-        return created_issue
-
-    except Exception as e:
-        print(f"❌ Error creating GitLab issue: {e}")
+    except Exception:
         return None
 
-def create_https_ssl_issue():
-    """Create the HTTPS/SSL enhancement issue"""
 
+def create_https_ssl_issue():
+    """Create the HTTPS/SSL enhancement issue."""
     # Create issue data
     issue_data = IssueData(
         title="HTTPS/SSL Support for Real-time Monitoring System",
@@ -196,8 +187,16 @@ This enhancement is essential for production deployment of the monitoring system
         severity=IssueSeverity.HIGH,
         urgency=IssueUrgency.HIGH,
         issue_type=IssueType.ENHANCEMENT,
-        labels=["enhancement", "monitoring", "security", "production", "https", "ssl", "deployment"],
-        component="monitoring"
+        labels=[
+            "enhancement",
+            "monitoring",
+            "security",
+            "production",
+            "https",
+            "ssl",
+            "deployment",
+        ],
+        component="monitoring",
     )
 
     try:
@@ -205,43 +204,20 @@ This enhancement is essential for production deployment of the monitoring system
         issue_manager = GitLabIssueManager()
 
         # Create the issue
-        print("🚀 Creating GitLab enhancement issue for HTTPS/SSL monitoring system...")
-        created_issue = issue_manager.create_issue(issue_data)
-
-        print("\n✅ Successfully created GitLab issue:")
-        print(f"   📝 Title: {created_issue['title']}")
-        print(f"   🔗 URL: {created_issue['web_url']}")
-        print(f"   🆔 Issue ID: #{created_issue['iid']}")
-        print(f"   🏷️  Labels: {', '.join(created_issue['labels'])}")
-        print(f"   📊 State: {created_issue['state']}")
-
-        print(f"\n📋 Todo item now tracked in GitLab issue #{created_issue['iid']}")
-        print("🎯 The HTTPS/SSL enhancement can be implemented when ready for production deployment")
-
-        return created_issue
+        return issue_manager.create_issue(issue_data)
 
     except Exception as e:
-        print(f"❌ Error creating GitLab issue: {e}")
-
         # Check if it's a configuration issue
         if "GitLab token" in str(e) or "project ID" in str(e):
-            print("\n💡 GitLab configuration may be missing:")
-            print("   - Make sure GITLAB_TOKEN environment variable is set")
-            print("   - Make sure GITLAB_PROJECT_ID environment variable is set")
+            pass
 
         return None
+
 
 if __name__ == "__main__":
     result = create_mypy_issue()
 
     if result:
-        print("\n🎯 Next Steps:")
-        print("1. GitLab issue created and ready for implementation")
-        print("2. Type checking errors can be systematically addressed")
-        print("3. Progress can be tracked through GitLab")
-        print("4. Code quality improvement is now documented")
+        pass
     else:
-        print("\n⚠️  Issue creation failed, but the requirement is documented")
-        print("1. The mypy type checking errors still need to be addressed")
-        print("2. Implementation details have been prepared")
-        print("3. Manual issue creation may be required")
+        pass

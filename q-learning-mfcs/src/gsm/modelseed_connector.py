@@ -1,5 +1,4 @@
-"""
-ModelSEED Database Connector for MFC GSM Integration
+"""ModelSEED Database Connector for MFC GSM Integration.
 
 This module provides integration with the ModelSEED database using the Mackinac library,
 enabling access to genome-scale metabolic models and associated biochemical data.
@@ -12,6 +11,9 @@ ModelSEED provides:
 
 Created: 2025-08-01
 """
+
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass, field
@@ -24,6 +26,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 try:
     import mackinac
+
     MACKINAC_AVAILABLE = True
     logger.info("Mackinac library available for ModelSEED integration")
 except ImportError:
@@ -47,6 +50,7 @@ class ModelSEEDModelInfo:
     reference: str = ""
     description: str = ""
 
+
 @dataclass
 class ModelSEEDReaction:
     """ModelSEED reaction information."""
@@ -61,24 +65,24 @@ class ModelSEEDReaction:
     gene_associations: list[str] = field(default_factory=list)
     subsystem: str = ""
 
+
 class ModelSEEDConnector:
-    """
-    Connector for accessing ModelSEED database through Mackinac.
+    """Connector for accessing ModelSEED database through Mackinac.
 
     Provides methods to search, download, and work with ModelSEED metabolic models.
     """
 
-    def __init__(self, cache_dir: str = "data/modelseed_cache"):
+    def __init__(self, cache_dir: str = "data/modelseed_cache") -> None:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # ModelSEED API endpoints
         self.base_url = "https://modelseed.org/services"
         self.api_endpoints = {
-            'models': f"{self.base_url}/ms-api/models",
-            'reactions': f"{self.base_url}/ms-api/reactions",
-            'compounds': f"{self.base_url}/ms-api/compounds",
-            'genomes': f"{self.base_url}/ms-api/genomes"
+            "models": f"{self.base_url}/ms-api/models",
+            "reactions": f"{self.base_url}/ms-api/reactions",
+            "compounds": f"{self.base_url}/ms-api/compounds",
+            "genomes": f"{self.base_url}/ms-api/genomes",
         }
 
         # Cache for downloaded models
@@ -89,11 +93,13 @@ class ModelSEEDConnector:
         if not MACKINAC_AVAILABLE:
             logger.warning("Mackinac not available. Limited functionality.")
 
-    def search_models(self, organism_name: str | None = None,
-                     genome_id: str | None = None,
-                     limit: int = 50) -> list[ModelSEEDModelInfo]:
-        """
-        Search for ModelSEED models by organism name or genome ID.
+    def search_models(
+        self,
+        organism_name: str | None = None,
+        genome_id: str | None = None,
+        limit: int = 50,
+    ) -> list[ModelSEEDModelInfo]:
+        """Search for ModelSEED models by organism name or genome ID.
 
         Args:
             organism_name: Name of organism to search for
@@ -102,6 +108,7 @@ class ModelSEEDConnector:
 
         Returns:
             List of ModelSEEDModelInfo objects
+
         """
         if not MACKINAC_AVAILABLE:
             logger.error("Mackinac required for ModelSEED model search")
@@ -122,7 +129,7 @@ class ModelSEEDConnector:
                     metabolites_count=656,
                     genes_count=783,
                     biomass_reaction="biomass_reaction",
-                    description="Electroactive bacterium for MFC applications"
+                    description="Electroactive bacterium for MFC applications",
                 ),
                 ModelSEEDModelInfo(
                     model_id="Geobacter_sulfurreducens_PCA",
@@ -132,7 +139,7 @@ class ModelSEEDConnector:
                     metabolites_count=780,
                     genes_count=850,
                     biomass_reaction="biomass_reaction",
-                    description="Direct electron transfer bacterium"
+                    description="Direct electron transfer bacterium",
                 ),
                 ModelSEEDModelInfo(
                     model_id="Pseudomonas_aeruginosa_PAO1",
@@ -142,14 +149,15 @@ class ModelSEEDConnector:
                     metabolites_count=900,
                     genes_count=1100,
                     biomass_reaction="biomass_reaction",
-                    description="Versatile metabolic capabilities"
-                )
+                    description="Versatile metabolic capabilities",
+                ),
             ]
 
             # Filter by organism name if provided
             if organism_name:
                 filtered_models = [
-                    model for model in common_mfc_models
+                    model
+                    for model in common_mfc_models
                     if organism_name.lower() in model.organism_name.lower()
                 ]
                 return filtered_models[:limit]
@@ -157,26 +165,25 @@ class ModelSEEDConnector:
             # Filter by genome ID if provided
             if genome_id:
                 filtered_models = [
-                    model for model in common_mfc_models
-                    if genome_id in model.genome_id
+                    model for model in common_mfc_models if genome_id in model.genome_id
                 ]
                 return filtered_models[:limit]
 
             return common_mfc_models[:limit]
 
         except Exception as e:
-            logger.error(f"Error searching ModelSEED models: {e}")
+            logger.exception(f"Error searching ModelSEED models: {e}")
             return []
 
     def load_model_from_modelseed(self, model_id: str) -> COBRAModelWrapper | None:
-        """
-        Load a model from ModelSEED using Mackinac.
+        """Load a model from ModelSEED using Mackinac.
 
         Args:
             model_id: ModelSEED model identifier
 
         Returns:
             COBRAModelWrapper instance or None if failed
+
         """
         if not MACKINAC_AVAILABLE:
             logger.error("Mackinac required for ModelSEED model loading")
@@ -217,10 +224,10 @@ class ModelSEEDConnector:
 
             # Add model metadata
             wrapper.model_metadata = {
-                'id': model_id,
-                'name': f"ModelSEED model {model_id}",
-                'source': 'ModelSEED',
-                'description': 'Model loaded from ModelSEED database'
+                "id": model_id,
+                "name": f"ModelSEED model {model_id}",
+                "source": "ModelSEED",
+                "description": "Model loaded from ModelSEED database",
             }
 
             # Cache the model
@@ -230,18 +237,21 @@ class ModelSEEDConnector:
             return wrapper
 
         except Exception as e:
-            logger.error(f"Failed to load ModelSEED model {model_id}: {e}")
+            logger.exception(f"Failed to load ModelSEED model {model_id}: {e}")
             return None
 
-    def get_reaction_database(self, pathway_filter: str | None = None) -> list[ModelSEEDReaction]:
-        """
-        Get reactions from ModelSEED biochemical database.
+    def get_reaction_database(
+        self,
+        pathway_filter: str | None = None,
+    ) -> list[ModelSEEDReaction]:
+        """Get reactions from ModelSEED biochemical database.
 
         Args:
             pathway_filter: Filter reactions by pathway (optional)
 
         Returns:
             List of ModelSEEDReaction objects
+
         """
         if not MACKINAC_AVAILABLE:
             logger.error("Mackinac required for reaction database access")
@@ -262,11 +272,11 @@ class ModelSEEDConnector:
                         "nad[c]": -1.0,
                         "pyruvate[c]": 1.0,
                         "nadh[c]": 1.0,
-                        "h[c]": 1.0
+                        "h[c]": 1.0,
                     },
                     pathway="Pyruvate metabolism",
                     ec_numbers=["1.1.1.27"],
-                    subsystem="Central Carbon Metabolism"
+                    subsystem="Central Carbon Metabolism",
                 ),
                 ModelSEEDReaction(
                     reaction_id="rxn00148",
@@ -278,11 +288,11 @@ class ModelSEEDConnector:
                         "nad[c]": -1.0,
                         "accoa[c]": 1.0,
                         "co2[c]": 1.0,
-                        "nadh[c]": 1.0
+                        "nadh[c]": 1.0,
                     },
                     pathway="Pyruvate metabolism",
                     ec_numbers=["1.2.4.1"],
-                    subsystem="Central Carbon Metabolism"
+                    subsystem="Central Carbon Metabolism",
                 ),
                 ModelSEEDReaction(
                     reaction_id="rxn10200",
@@ -293,32 +303,34 @@ class ModelSEEDConnector:
                         "o2[c]": -1.0,
                         "h[c]": -4.0,
                         "cytc3[c]": 4.0,
-                        "h2o[c]": 2.0
+                        "h2o[c]": 2.0,
                     },
                     pathway="Electron transport",
                     ec_numbers=["1.9.3.1"],
-                    subsystem="Electron Transport Chain"
-                )
+                    subsystem="Electron Transport Chain",
+                ),
             ]
 
             # Filter by pathway if specified
             if pathway_filter:
-                filtered_reactions = [
-                    rxn for rxn in mfc_reactions
+                return [
+                    rxn
+                    for rxn in mfc_reactions
                     if pathway_filter.lower() in rxn.pathway.lower()
                 ]
-                return filtered_reactions
 
             return mfc_reactions
 
         except Exception as e:
-            logger.error(f"Error accessing reaction database: {e}")
+            logger.exception(f"Error accessing reaction database: {e}")
             return []
 
-    def create_community_model(self, model_ids: list[str],
-                             community_id: str = "mfc_community") -> COBRAModelWrapper | None:
-        """
-        Create a multi-organism community model from individual ModelSEED models.
+    def create_community_model(
+        self,
+        model_ids: list[str],
+        community_id: str = "mfc_community",
+    ) -> COBRAModelWrapper | None:
+        """Create a multi-organism community model from individual ModelSEED models.
 
         Args:
             model_ids: List of ModelSEED model IDs to combine
@@ -326,6 +338,7 @@ class ModelSEEDConnector:
 
         Returns:
             COBRAModelWrapper containing community model
+
         """
         if not MACKINAC_AVAILABLE or not COBRA_AVAILABLE:
             logger.error("Both Mackinac and COBRApy required for community models")
@@ -354,29 +367,32 @@ class ModelSEEDConnector:
             # Placeholder for community model creation
             community_wrapper = COBRAModelWrapper()
             community_wrapper.model_metadata = {
-                'id': community_id,
-                'name': f"Community model: {', '.join(model_ids)}",
-                'source': 'ModelSEED Community',
-                'organism_count': len(individual_models),
-                'component_models': model_ids
+                "id": community_id,
+                "name": f"Community model: {', '.join(model_ids)}",
+                "source": "ModelSEED Community",
+                "organism_count": len(individual_models),
+                "component_models": model_ids,
             }
 
             logger.info(f"Successfully created community model {community_id}")
             return community_wrapper
 
         except Exception as e:
-            logger.error(f"Error creating community model: {e}")
+            logger.exception(f"Error creating community model: {e}")
             return None
 
-    def validate_model_quality(self, model_wrapper: COBRAModelWrapper) -> dict[str, Any]:
-        """
-        Validate ModelSEED model quality using Mackinac tools.
+    def validate_model_quality(
+        self,
+        model_wrapper: COBRAModelWrapper,
+    ) -> dict[str, Any]:
+        """Validate ModelSEED model quality using Mackinac tools.
 
         Args:
             model_wrapper: COBRAModelWrapper to validate
 
         Returns:
             Dictionary with validation results
+
         """
         if not MACKINAC_AVAILABLE:
             logger.warning("Mackinac not available for model validation")
@@ -385,23 +401,30 @@ class ModelSEEDConnector:
         try:
             validation_results = {
                 "status": "success",
-                "model_id": getattr(model_wrapper, 'model_metadata', {}).get('id', 'unknown'),
+                "model_id": getattr(model_wrapper, "model_metadata", {}).get(
+                    "id",
+                    "unknown",
+                ),
                 "tests": {},
                 "score": 0.0,
-                "recommendations": []
+                "recommendations": [],
             }
 
             # Basic model checks
-            if hasattr(model_wrapper, 'model') and model_wrapper.model:
+            if hasattr(model_wrapper, "model") and model_wrapper.model:
                 model = model_wrapper.model
 
                 # Check for essential components
                 validation_results["tests"]["has_reactions"] = len(model.reactions) > 0
-                validation_results["tests"]["has_metabolites"] = len(model.metabolites) > 0
+                validation_results["tests"]["has_metabolites"] = (
+                    len(model.metabolites) > 0
+                )
                 validation_results["tests"]["has_genes"] = len(model.genes) > 0
 
                 # Check for biomass reaction
-                biomass_reactions = [r for r in model.reactions if 'biomass' in r.id.lower()]
+                biomass_reactions = [
+                    r for r in model.reactions if "biomass" in r.id.lower()
+                ]
                 validation_results["tests"]["has_biomass"] = len(biomass_reactions) > 0
 
                 # Check for exchange reactions
@@ -410,14 +433,20 @@ class ModelSEEDConnector:
                 # Calculate quality score
                 passed_tests = sum(validation_results["tests"].values())
                 total_tests = len(validation_results["tests"])
-                validation_results["score"] = passed_tests / total_tests if total_tests > 0 else 0.0
+                validation_results["score"] = (
+                    passed_tests / total_tests if total_tests > 0 else 0.0
+                )
 
                 # Generate recommendations
                 if not validation_results["tests"]["has_biomass"]:
-                    validation_results["recommendations"].append("Add biomass reaction for growth prediction")
+                    validation_results["recommendations"].append(
+                        "Add biomass reaction for growth prediction",
+                    )
 
                 if validation_results["score"] < 0.8:
-                    validation_results["recommendations"].append("Model may need gap-filling or curation")
+                    validation_results["recommendations"].append(
+                        "Model may need gap-filling or curation",
+                    )
 
             else:
                 validation_results["status"] = "error"
@@ -426,13 +455,15 @@ class ModelSEEDConnector:
             return validation_results
 
         except Exception as e:
-            logger.error(f"Error validating model: {e}")
+            logger.exception(f"Error validating model: {e}")
             return {"status": "error", "message": str(e)}
 
-    def export_model_summary(self, model_wrapper: COBRAModelWrapper,
-                           output_file: str | None = None) -> dict[str, Any]:
-        """
-        Export comprehensive model summary with ModelSEED-specific information.
+    def export_model_summary(
+        self,
+        model_wrapper: COBRAModelWrapper,
+        output_file: str | None = None,
+    ) -> dict[str, Any]:
+        """Export comprehensive model summary with ModelSEED-specific information.
 
         Args:
             model_wrapper: COBRAModelWrapper to summarize
@@ -440,24 +471,27 @@ class ModelSEEDConnector:
 
         Returns:
             Summary dictionary
+
         """
         try:
             summary = {
-                "model_info": getattr(model_wrapper, 'model_metadata', {}),
+                "model_info": getattr(model_wrapper, "model_metadata", {}),
                 "statistics": {},
                 "pathways": [],
                 "electron_transfer_reactions": [],
                 "validation": {},
-                "export_timestamp": pd.Timestamp.now().isoformat()
+                "export_timestamp": pd.Timestamp.now().isoformat(),
             }
 
             # Get model statistics
-            if hasattr(model_wrapper, 'get_model_statistics'):
+            if hasattr(model_wrapper, "get_model_statistics"):
                 summary["statistics"] = model_wrapper.get_model_statistics()
 
             # Get electron transfer reactions
-            if hasattr(model_wrapper, 'find_electron_transfer_reactions'):
-                summary["electron_transfer_reactions"] = model_wrapper.find_electron_transfer_reactions()
+            if hasattr(model_wrapper, "find_electron_transfer_reactions"):
+                summary["electron_transfer_reactions"] = (
+                    model_wrapper.find_electron_transfer_reactions()
+                )
 
             # Validate model
             summary["validation"] = self.validate_model_quality(model_wrapper)
@@ -467,7 +501,7 @@ class ModelSEEDConnector:
                 output_path = Path(output_file)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
 
-                with open(output_path, 'w') as f:
+                with open(output_path, "w") as f:
                     json.dump(summary, f, indent=2, default=str)
 
                 logger.info(f"Model summary exported to {output_path}")
@@ -475,7 +509,7 @@ class ModelSEEDConnector:
             return summary
 
         except Exception as e:
-            logger.error(f"Error exporting model summary: {e}")
+            logger.exception(f"Error exporting model summary: {e}")
             return {"error": str(e)}
 
 
@@ -487,18 +521,21 @@ def get_mfc_relevant_models() -> list[str]:
         "Geobacter_sulfurreducens_PCA",
         "Pseudomonas_aeruginosa_PAO1",
         "Escherichia_coli_str_K12_substr_MG1655",
-        "Bacillus_subtilis_subsp_subtilis_str_168"
+        "Bacillus_subtilis_subsp_subtilis_str_168",
     ]
 
-def setup_mfc_community_from_modelseed(organism_list: list[str] | None = None) -> COBRAModelWrapper | None:
-    """
-    Set up an MFC community model using ModelSEED organisms.
+
+def setup_mfc_community_from_modelseed(
+    organism_list: list[str] | None = None,
+) -> COBRAModelWrapper | None:
+    """Set up an MFC community model using ModelSEED organisms.
 
     Args:
         organism_list: List of organism names or ModelSEED IDs
 
     Returns:
         Community model wrapper
+
     """
     if not organism_list:
         organism_list = get_mfc_relevant_models()[:3]  # Top 3 MFC organisms
@@ -508,71 +545,56 @@ def setup_mfc_community_from_modelseed(organism_list: list[str] | None = None) -
     try:
         community_model = connector.create_community_model(
             model_ids=organism_list,
-            community_id="mfc_community_modelseed"
+            community_id="mfc_community_modelseed",
         )
 
         if community_model:
-            logger.info(f"MFC community model created with {len(organism_list)} organisms")
+            logger.info(
+                f"MFC community model created with {len(organism_list)} organisms",
+            )
             return community_model
-        else:
-            logger.error("Failed to create MFC community model")
-            return None
+        logger.error("Failed to create MFC community model")
+        return None
 
     except Exception as e:
-        logger.error(f"Error setting up MFC community: {e}")
+        logger.exception(f"Error setting up MFC community: {e}")
         return None
 
 
 # Example usage
 if __name__ == "__main__":
-    print("🧬 ModelSEED Connector Example")
-    print("=" * 50)
-
     # Create connector
     connector = ModelSEEDConnector()
 
     if MACKINAC_AVAILABLE:
         # Search for models
-        print("\n🔍 Searching for MFC-relevant models...")
         models = connector.search_models(organism_name="Shewanella")
 
-        for model in models:
-            print(f"  - {model.organism_name} ({model.model_id})")
-            print(f"    Reactions: {model.reactions_count}, Metabolites: {model.metabolites_count}")
+        for _model in models:
+            pass
 
         # Get reaction database
-        print("\n⚗️  Accessing reaction database...")
         reactions = connector.get_reaction_database(pathway_filter="metabolism")
 
-        print(f"  Found {len(reactions)} reactions")
-        for rxn in reactions[:3]:  # Show first 3
-            print(f"  - {rxn.name} ({rxn.reaction_id})")
-            print(f"    {rxn.equation}")
+        for _rxn in reactions[:3]:  # Show first 3
+            pass
 
         # Demonstrate model loading
-        print("\n📥 Loading model from ModelSEED...")
         model_wrapper = connector.load_model_from_modelseed("Shewanella_oneidensis_MR1")
 
         if model_wrapper:
-            print("  ✅ Model loaded successfully")
-
             # Validate model
             validation = connector.validate_model_quality(model_wrapper)
-            print(f"  Validation score: {validation.get('score', 0):.2f}")
 
             # Export summary
             summary = connector.export_model_summary(model_wrapper)
-            print(f"  Summary generated: {len(summary)} sections")
 
-        print("\n🦠 Setting up MFC community...")
         community = setup_mfc_community_from_modelseed()
 
         if community:
-            print("  ✅ Community model created")
+            pass
         else:
-            print("  ❌ Community model creation failed")
+            pass
 
     else:
-        print("❌ Mackinac not available. Install with: pixi install -e gsm-research")
-
-    print("\n✅ ModelSEED connector example completed!")
+        pass

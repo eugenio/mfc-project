@@ -1,11 +1,13 @@
-"""
-PubMed API Connector for Literature Validation
+"""PubMed API Connector for Literature Validation.
 
 This module provides automated literature database queries through the PubMed API
 for parameter validation in the MFC optimization system.
 
 Created: 2025-08-01
 """
+
+from __future__ import annotations
+
 import hashlib
 import json
 import sqlite3
@@ -31,6 +33,7 @@ class PubMedQuery:
     max_results: int = 100
     sort_order: str = "relevance"  # "relevance", "pub_date", "first_author"
 
+
 @dataclass
 class PubMedArticle:
     """Container for PubMed article information."""
@@ -45,21 +48,25 @@ class PubMedArticle:
     mesh_terms: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
 
+
 class PubMedConnector:
-    """
-    PubMed API connector for automated literature searches.
+    """PubMed API connector for automated literature searches.
 
     Provides rate-limited access to PubMed database with caching
     for parameter validation queries.
     """
 
-    def __init__(self, cache_dir: str = "data/pubmed_cache", rate_limit: float = 0.34):
-        """
-        Initialize PubMed connector.
+    def __init__(
+        self,
+        cache_dir: str = "data/pubmed_cache",
+        rate_limit: float = 0.34,
+    ) -> None:
+        """Initialize PubMed connector.
 
         Args:
             cache_dir: Directory for caching query results
             rate_limit: Minimum seconds between API calls (max 3 requests/second)
+
         """
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
         self.rate_limit = rate_limit
@@ -76,9 +83,8 @@ class PubMedConnector:
         self.cache_hits = 0
         self.session = requests.Session()
 
-    def _init_cache_database(self):
+    def _init_cache_database(self) -> None:
         """Initialize SQLite cache database."""
-
         with sqlite3.connect(self.cache_db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS search_cache (
@@ -114,9 +120,8 @@ class PubMedConnector:
                 CREATE INDEX IF NOT EXISTS idx_fetched_at ON article_cache(fetched_at)
             """)
 
-    def _enforce_rate_limit(self):
+    def _enforce_rate_limit(self) -> None:
         """Enforce API rate limiting."""
-
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
 
@@ -128,54 +133,72 @@ class PubMedConnector:
 
     def _generate_query_hash(self, query: PubMedQuery) -> str:
         """Generate hash for query caching."""
-
         query_string = f"{query.search_terms}{query.mesh_terms}{query.date_range}{query.max_results}"
         return hashlib.md5(query_string.encode()).hexdigest()
 
-    def _check_search_cache(self, query_hash: str, max_age_days: int = 7) -> list[str] | None:
+    def _check_search_cache(
+        self,
+        query_hash: str,
+        max_age_days: int = 7,
+    ) -> list[str] | None:
         """Check if search results are cached and recent."""
-
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         with sqlite3.connect(self.cache_db_path) as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT pmids FROM search_cache
                 WHERE query_hash = ? AND created_at > ?
-            """, (query_hash, cutoff_date))
+            """,
+                (query_hash, cutoff_date),
+            )
 
             result = cursor.fetchone()
             if result:
                 self.cache_hits += 1
-                return result[0].split(',') if result[0] else []
+                return result[0].split(",") if result[0] else []
 
         return None
 
-    def _cache_search_results(self, query_hash: str, query: PubMedQuery, pmids: list[str]):
+    def _cache_search_results(
+        self,
+        query_hash: str,
+        query: PubMedQuery,
+        pmids: list[str],
+    ) -> None:
         """Cache search results."""
-
         with sqlite3.connect(self.cache_db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO search_cache
                 (query_hash, query_terms, search_date, result_count, pmids)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                query_hash,
-                json.dumps(query.search_terms),
-                datetime.now().isoformat(),
-                len(pmids),
-                ','.join(pmids)
-            ))
+            """,
+                (
+                    query_hash,
+                    json.dumps(query.search_terms),
+                    datetime.now().isoformat(),
+                    len(pmids),
+                    ",".join(pmids),
+                ),
+            )
 
-    def _check_article_cache(self, pmid: str, max_age_days: int = 30) -> PubMedArticle | None:
+    def _check_article_cache(
+        self,
+        pmid: str,
+        max_age_days: int = 30,
+    ) -> PubMedArticle | None:
         """Check if article details are cached."""
-
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         with sqlite3.connect(self.cache_db_path) as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT * FROM article_cache
                 WHERE pmid = ? AND fetched_at > ?
-            """, (pmid, cutoff_date))
+            """,
+                (pmid, cutoff_date),
+            )
 
             result = cursor.fetchone()
             if result:
@@ -189,42 +212,43 @@ class PubMedConnector:
                     doi=result[5] or "",
                     abstract=result[6] or "",
                     mesh_terms=json.loads(result[7]) if result[7] else [],
-                    keywords=json.loads(result[8]) if result[8] else []
+                    keywords=json.loads(result[8]) if result[8] else [],
                 )
 
         return None
 
-    def _cache_article(self, article: PubMedArticle):
+    def _cache_article(self, article: PubMedArticle) -> None:
         """Cache article details."""
-
         with sqlite3.connect(self.cache_db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO article_cache
                 (pmid, title, authors, journal, publication_date, doi, abstract, mesh_terms, keywords)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                article.pmid,
-                article.title,
-                json.dumps(article.authors),
-                article.journal,
-                article.publication_date,
-                article.doi,
-                article.abstract,
-                json.dumps(article.mesh_terms),
-                json.dumps(article.keywords)
-            ))
+            """,
+                (
+                    article.pmid,
+                    article.title,
+                    json.dumps(article.authors),
+                    article.journal,
+                    article.publication_date,
+                    article.doi,
+                    article.abstract,
+                    json.dumps(article.mesh_terms),
+                    json.dumps(article.keywords),
+                ),
+            )
 
     def search_literature(self, query: PubMedQuery) -> list[str]:
-        """
-        Search PubMed for articles matching query parameters.
+        """Search PubMed for articles matching query parameters.
 
         Args:
             query: PubMed query parameters
 
         Returns:
             List of PMIDs matching the search criteria
-        """
 
+        """
         # Check cache first
         query_hash = self._generate_query_hash(query)
         cached_pmids = self._check_search_cache(query_hash)
@@ -248,7 +272,9 @@ class PubMedConnector:
 
         # Add date range
         if query.date_range[0] and query.date_range[1]:
-            search_terms.append(f'("{query.date_range[0]}"[Date - Publication] : "{query.date_range[1]}"[Date - Publication])')
+            search_terms.append(
+                f'("{query.date_range[0]}"[Date - Publication] : "{query.date_range[1]}"[Date - Publication])',
+            )
 
         search_query = " AND ".join(search_terms)
 
@@ -256,11 +282,11 @@ class PubMedConnector:
         self._enforce_rate_limit()
 
         params = {
-            'db': 'pubmed',
-            'term': search_query,
-            'retmax': query.max_results,
-            'sort': query.sort_order,
-            'retmode': 'json'
+            "db": "pubmed",
+            "term": search_query,
+            "retmax": query.max_results,
+            "sort": query.sort_order,
+            "retmode": "json",
         }
 
         try:
@@ -269,7 +295,7 @@ class PubMedConnector:
             self.api_calls_made += 1
 
             data = response.json()
-            pmids = data.get('esearchresult', {}).get('idlist', [])
+            pmids = data.get("esearchresult", {}).get("idlist", [])
 
             # Cache results
             self._cache_search_results(query_hash, query, pmids)
@@ -281,16 +307,15 @@ class PubMedConnector:
             return []
 
     def fetch_article_details(self, pmids: list[str]) -> list[PubMedArticle]:
-        """
-        Fetch detailed article information for given PMIDs.
+        """Fetch detailed article information for given PMIDs.
 
         Args:
             pmids: List of PubMed IDs
 
         Returns:
             List of PubMedArticle objects with detailed information
-        """
 
+        """
         articles = []
         uncached_pmids = []
 
@@ -305,7 +330,7 @@ class PubMedConnector:
         # Fetch uncached articles in batches
         batch_size = 200  # PubMed recommended batch size
         for i in range(0, len(uncached_pmids), batch_size):
-            batch_pmids = uncached_pmids[i:i + batch_size]
+            batch_pmids = uncached_pmids[i : i + batch_size]
             batch_articles = self._fetch_article_batch(batch_pmids)
             articles.extend(batch_articles)
 
@@ -313,17 +338,12 @@ class PubMedConnector:
 
     def _fetch_article_batch(self, pmids: list[str]) -> list[PubMedArticle]:
         """Fetch a batch of articles from PubMed."""
-
         if not pmids:
             return []
 
         self._enforce_rate_limit()
 
-        params = {
-            'db': 'pubmed',
-            'id': ','.join(pmids),
-            'retmode': 'xml'
-        }
+        params = {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
 
         try:
             response = self.session.get(f"{self.base_url}/efetch.fcgi", params=params)
@@ -338,13 +358,12 @@ class PubMedConnector:
 
     def _parse_pubmed_xml(self, xml_text: str) -> list[PubMedArticle]:
         """Parse PubMed XML response into PubMedArticle objects."""
-
         articles = []
 
         try:
             root = ET.fromstring(xml_text)
 
-            for article_elem in root.findall('.//PubmedArticle'):
+            for article_elem in root.findall(".//PubmedArticle"):
                 article = self._parse_single_article(article_elem)
                 if article:
                     articles.append(article)
@@ -357,21 +376,20 @@ class PubMedConnector:
 
     def _parse_single_article(self, article_elem) -> PubMedArticle | None:
         """Parse single article XML element."""
-
         try:
             # Extract PMID
-            pmid_elem = article_elem.find('.//PMID')
+            pmid_elem = article_elem.find(".//PMID")
             pmid = pmid_elem.text if pmid_elem is not None else ""
 
             # Extract title
-            title_elem = article_elem.find('.//ArticleTitle')
+            title_elem = article_elem.find(".//ArticleTitle")
             title = title_elem.text if title_elem is not None else ""
 
             # Extract authors
             authors = []
-            for author_elem in article_elem.findall('.//Author'):
-                lastname = author_elem.find('LastName')
-                forename = author_elem.find('ForeName')
+            for author_elem in article_elem.findall(".//Author"):
+                lastname = author_elem.find("LastName")
+                forename = author_elem.find("ForeName")
                 if lastname is not None:
                     author_name = lastname.text
                     if forename is not None:
@@ -379,33 +397,33 @@ class PubMedConnector:
                     authors.append(author_name)
 
             # Extract journal
-            journal_elem = article_elem.find('.//Journal/Title')
+            journal_elem = article_elem.find(".//Journal/Title")
             journal = journal_elem.text if journal_elem is not None else ""
 
             # Extract publication date
-            pub_date_elem = article_elem.find('.//PubDate')
+            pub_date_elem = article_elem.find(".//PubDate")
             pub_date = self._extract_publication_date(pub_date_elem)
 
             # Extract DOI
             doi = ""
-            for id_elem in article_elem.findall('.//ArticleId'):
-                id_type = id_elem.get('IdType')
-                if id_type == 'doi':
+            for id_elem in article_elem.findall(".//ArticleId"):
+                id_type = id_elem.get("IdType")
+                if id_type == "doi":
                     doi = id_elem.text
                     break
 
             # Extract abstract
-            abstract_elem = article_elem.find('.//AbstractText')
+            abstract_elem = article_elem.find(".//AbstractText")
             abstract = abstract_elem.text if abstract_elem is not None else ""
 
             # Extract MeSH terms
             mesh_terms = []
-            for mesh_elem in article_elem.findall('.//MeshHeading/DescriptorName'):
+            for mesh_elem in article_elem.findall(".//MeshHeading/DescriptorName"):
                 mesh_terms.append(mesh_elem.text)
 
             # Extract keywords
             keywords = []
-            for keyword_elem in article_elem.findall('.//Keyword'):
+            for keyword_elem in article_elem.findall(".//Keyword"):
                 keywords.append(keyword_elem.text)
 
             return PubMedArticle(
@@ -417,7 +435,7 @@ class PubMedConnector:
                 doi=doi,
                 abstract=abstract,
                 mesh_terms=mesh_terms,
-                keywords=keywords
+                keywords=keywords,
             )
 
         except Exception as e:
@@ -426,13 +444,12 @@ class PubMedConnector:
 
     def _extract_publication_date(self, pub_date_elem) -> str:
         """Extract publication date from PubDate XML element."""
-
         if pub_date_elem is None:
             return ""
 
-        year_elem = pub_date_elem.find('Year')
-        month_elem = pub_date_elem.find('Month')
-        day_elem = pub_date_elem.find('Day')
+        year_elem = pub_date_elem.find("Year")
+        month_elem = pub_date_elem.find("Month")
+        day_elem = pub_date_elem.find("Day")
 
         date_parts = []
         if year_elem is not None:
@@ -444,9 +461,12 @@ class PubMedConnector:
 
         return "-".join(date_parts)
 
-    def search_mfc_parameters(self, parameter_name: str, organism: str = "") -> list[PubMedArticle]:
-        """
-        Search for literature related to specific MFC parameters.
+    def search_mfc_parameters(
+        self,
+        parameter_name: str,
+        organism: str = "",
+    ) -> list[PubMedArticle]:
+        """Search for literature related to specific MFC parameters.
 
         Args:
             parameter_name: Name of the parameter to search for
@@ -454,30 +474,23 @@ class PubMedConnector:
 
         Returns:
             List of relevant articles
-        """
 
+        """
         # Build MFC-specific search terms
-        base_terms = [
-            "microbial fuel cell",
-            parameter_name
-        ]
+        base_terms = ["microbial fuel cell", parameter_name]
 
         if organism:
             base_terms.append(organism)
 
         # Add relevant MeSH terms
-        mesh_terms = [
-            "Bioelectric Energy Sources",
-            "Electrochemistry",
-            "Biofilms"
-        ]
+        mesh_terms = ["Bioelectric Energy Sources", "Electrochemistry", "Biofilms"]
 
         query = PubMedQuery(
             search_terms=base_terms,
             mesh_terms=mesh_terms,
             publication_types=["Journal Article", "Research Support"],
             max_results=50,
-            sort_order="relevance"
+            sort_order="relevance",
         )
 
         pmids = self.search_literature(query)
@@ -485,7 +498,6 @@ class PubMedConnector:
 
     def get_cache_statistics(self) -> dict[str, Any]:
         """Get cache and API usage statistics."""
-
         with sqlite3.connect(self.cache_db_path) as conn:
             # Count cached searches
             cursor = conn.execute("SELECT COUNT(*) FROM search_cache")
@@ -496,49 +508,45 @@ class PubMedConnector:
             cached_articles = cursor.fetchone()[0]
 
         return {
-            'api_calls_made': self.api_calls_made,
-            'cache_hits': self.cache_hits,
-            'cached_searches': cached_searches,
-            'cached_articles': cached_articles,
-            'cache_hit_rate': self.cache_hits / max(self.api_calls_made + self.cache_hits, 1)
+            "api_calls_made": self.api_calls_made,
+            "cache_hits": self.cache_hits,
+            "cached_searches": cached_searches,
+            "cached_articles": cached_articles,
+            "cache_hit_rate": self.cache_hits
+            / max(self.api_calls_made + self.cache_hits, 1),
         }
 
-    def cleanup_old_cache(self, max_age_days: int = 90):
+    def cleanup_old_cache(self, max_age_days: int = 90) -> None:
         """Remove old cache entries."""
-
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
 
         with sqlite3.connect(self.cache_db_path) as conn:
             # Clean search cache
-            conn.execute("DELETE FROM search_cache WHERE created_at < ?", (cutoff_date,))
+            conn.execute(
+                "DELETE FROM search_cache WHERE created_at < ?",
+                (cutoff_date,),
+            )
 
             # Clean article cache
-            conn.execute("DELETE FROM article_cache WHERE fetched_at < ?", (cutoff_date,))
+            conn.execute(
+                "DELETE FROM article_cache WHERE fetched_at < ?",
+                (cutoff_date,),
+            )
 
             conn.commit()
+
+
 if __name__ == "__main__":
     # Example usage
-    print("🔬 PubMed Connector Test")
-    print("=" * 40)
 
     # Initialize connector
     connector = PubMedConnector()
 
     # Search for MFC-related articles
-    print("Searching for MFC biofilm articles...")
     articles = connector.search_mfc_parameters("biofilm", "Shewanella oneidensis")
 
-    print(f"Found {len(articles)} articles")
-
-    for i, article in enumerate(articles[:3]):  # Show first 3
-        print(f"\n{i+1}. {article.title}")
-        print(f"   Authors: {', '.join(article.authors[:3])}{'...' if len(article.authors) > 3 else ''}")
-        print(f"   Journal: {article.journal} ({article.publication_date})")
-        print(f"   DOI: {article.doi}")
+    for _i, _article in enumerate(articles[:3]):  # Show first 3
+        pass
 
     # Show statistics
     stats = connector.get_cache_statistics()
-    print("\n📊 Cache Statistics:")
-    print(f"  API calls: {stats['api_calls_made']}")
-    print(f"  Cache hits: {stats['cache_hits']}")
-    print(f"  Hit rate: {stats['cache_hit_rate']:.2%}")

@@ -1,7 +1,8 @@
-"""
-Substrate-specific configuration classes for MFC applications.
+"""Substrate-specific configuration classes for MFC applications.
 Includes detailed substrate properties, kinetics, and environmental effects.
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 
@@ -24,7 +25,9 @@ class SubstrateKineticsConfig:
     # Inhibition kinetics
     substrate_inhibition_constant: float | None = None  # mmol/L - substrate inhibition
     product_inhibition: dict[str, float] = field(default_factory=dict)  # {product: Ki}
-    competitive_inhibition: dict[str, float] = field(default_factory=dict)  # {inhibitor: Ki}
+    competitive_inhibition: dict[str, float] = field(
+        default_factory=dict,
+    )  # {inhibitor: Ki}
 
     # Environmental effects
     temperature_coefficient: float = 1.07  # Q10 temperature coefficient
@@ -62,16 +65,22 @@ class SubstrateDegradationPathway:
     co2_yield: float = 2.0  # moles CO2 per substrate
 
     # Pathway regulation
-    regulatory_metabolites: dict[str, str] = field(default_factory=dict)  # {metabolite: effect}
-    allosteric_effectors: dict[str, float] = field(default_factory=dict)  # {effector: factor}
+    regulatory_metabolites: dict[str, str] = field(
+        default_factory=dict,
+    )  # {metabolite: effect}
+    allosteric_effectors: dict[str, float] = field(
+        default_factory=dict,
+    )  # {effector: factor}
 
     # Environmental conditions for optimal pathway flux
-    optimal_conditions: dict[str, float] = field(default_factory=lambda: {
-        'temperature': 303.0,  # K
-        'ph': 7.0,
-        'ionic_strength': 0.1,  # M
-        'redox_potential': -0.2  # V vs SHE
-    })
+    optimal_conditions: dict[str, float] = field(
+        default_factory=lambda: {
+            "temperature": 303.0,  # K
+            "ph": 7.0,
+            "ionic_strength": 0.1,  # M
+            "redox_potential": -0.2,  # V vs SHE
+        },
+    )
 
 
 @dataclass
@@ -79,7 +88,9 @@ class SubstrateTransportConfig:
     """Configuration for substrate transport across cell membrane."""
 
     # Transport mechanism
-    transport_type: str = "facilitated_diffusion"  # "active", "passive", "facilitated_diffusion"
+    transport_type: str = (
+        "facilitated_diffusion"  # "active", "passive", "facilitated_diffusion"
+    )
 
     # Transport kinetics
     max_transport_rate: float = 50.0  # mmol/gDW/h
@@ -90,7 +101,9 @@ class SubstrateTransportConfig:
     pmf_cost: float = 1.0  # Protons per substrate (if applicable)
 
     # Regulation
-    transport_regulation: dict[str, float] = field(default_factory=dict)  # {regulator: effect}
+    transport_regulation: dict[str, float] = field(
+        default_factory=dict,
+    )  # {regulator: effect}
 
     # Competition with other substrates
     competitive_substrates: list[str] = field(default_factory=list)
@@ -124,17 +137,25 @@ class ComprehensiveSubstrateConfig:
     diffusion_coefficient_biofilm: float = 5.0e-6  # cm²/s in biofilm
 
     # Biodegradation kinetics (species-specific)
-    species_kinetics: dict[BacterialSpecies, SubstrateKineticsConfig] = field(default_factory=dict)
+    species_kinetics: dict[BacterialSpecies, SubstrateKineticsConfig] = field(
+        default_factory=dict,
+    )
 
     # Degradation pathways
-    degradation_pathways: list[SubstrateDegradationPathway] = field(default_factory=list)
+    degradation_pathways: list[SubstrateDegradationPathway] = field(
+        default_factory=list,
+    )
 
     # Transport configuration
-    transport_config: SubstrateTransportConfig = field(default_factory=SubstrateTransportConfig)
+    transport_config: SubstrateTransportConfig = field(
+        default_factory=SubstrateTransportConfig,
+    )
 
     # Toxicity and inhibition
     toxicity_threshold: float | None = None  # mmol/L - toxic concentration
-    inhibitory_effects: dict[str, float] = field(default_factory=dict)  # {process: IC50}
+    inhibitory_effects: dict[str, float] = field(
+        default_factory=dict,
+    )  # {process: IC50}
 
     # Environmental fate
     biodegradability: float = 1.0  # Fraction biodegradable (0-1)
@@ -152,7 +173,6 @@ class ComprehensiveSubstrateConfig:
 # Pre-configured substrate configurations
 def get_acetate_config() -> ComprehensiveSubstrateConfig:
     """Get comprehensive configuration for acetate."""
-
     # Geobacter acetate kinetics
     geobacter_kinetics = SubstrateKineticsConfig(
         max_uptake_rate=20.0,  # mmol/gDW/h
@@ -164,7 +184,7 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         activation_energy=45.0,  # kJ/mol
         enthalpy_change=-125.0,  # kJ/mol
         entropy_change=-0.12,  # kJ/mol/K
-        reference=LITERATURE_REFERENCES['lovley_2003']
+        reference=LITERATURE_REFERENCES["lovley_2003"],
     )
 
     # Shewanella acetate kinetics (limited)
@@ -178,7 +198,7 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         activation_energy=48.0,  # kJ/mol
         enthalpy_change=-110.0,  # kJ/mol
         entropy_change=-0.10,  # kJ/mol/K
-        reference=LITERATURE_REFERENCES['marsili_2008']
+        reference=LITERATURE_REFERENCES["marsili_2008"],
     )
 
     # Acetate degradation pathway
@@ -194,11 +214,11 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         nadh_yield=4.0,  # NADH produced
         co2_yield=2.0,  # CO2 produced
         optimal_conditions={
-            'temperature': 303.0,  # K
-            'ph': 7.0,
-            'ionic_strength': 0.15,  # M
-            'redox_potential': -0.25  # V vs SHE
-        }
+            "temperature": 303.0,  # K
+            "ph": 7.0,
+            "ionic_strength": 0.15,  # M
+            "redox_potential": -0.25,  # V vs SHE
+        },
     )
 
     # Transport configuration
@@ -209,7 +229,7 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         atp_cost=0.0,  # No energy required
         pmf_cost=1.0,  # One proton per acetate
         competitive_substrates=["propionate", "butyrate"],
-        competition_factors={"propionate": 0.8, "butyrate": 0.6}
+        competition_factors={"propionate": 0.8, "butyrate": 0.6},
     )
 
     return ComprehensiveSubstrateConfig(
@@ -228,7 +248,7 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         diffusion_coefficient_biofilm=6.5e-6,  # cm²/s in biofilm
         species_kinetics={
             BacterialSpecies.GEOBACTER_SULFURREDUCENS: geobacter_kinetics,
-            BacterialSpecies.SHEWANELLA_ONEIDENSIS: shewanella_kinetics
+            BacterialSpecies.SHEWANELLA_ONEIDENSIS: shewanella_kinetics,
         },
         degradation_pathways=[acetate_pathway],
         transport_config=transport_config,
@@ -239,15 +259,14 @@ def get_acetate_config() -> ComprehensiveSubstrateConfig:
         detection_methods=["GC-MS", "HPLC", "IC"],
         quantification_limit=0.01,  # mmol/L
         references=[
-            LITERATURE_REFERENCES['lovley_2003'],
-            LITERATURE_REFERENCES['bond_2002']
-        ]
+            LITERATURE_REFERENCES["lovley_2003"],
+            LITERATURE_REFERENCES["bond_2002"],
+        ],
     )
 
 
 def get_lactate_config() -> ComprehensiveSubstrateConfig:
     """Get comprehensive configuration for lactate."""
-
     # Shewanella lactate kinetics (preferred substrate)
     shewanella_kinetics = SubstrateKineticsConfig(
         max_uptake_rate=30.0,  # mmol/gDW/h
@@ -259,7 +278,7 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         activation_energy=42.0,  # kJ/mol
         enthalpy_change=-135.0,  # kJ/mol
         entropy_change=-0.18,  # kJ/mol/K
-        reference=LITERATURE_REFERENCES['marsili_2008']
+        reference=LITERATURE_REFERENCES["marsili_2008"],
     )
 
     # Geobacter lactate kinetics (limited capability)
@@ -273,7 +292,7 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         activation_energy=52.0,  # kJ/mol
         enthalpy_change=-115.0,  # kJ/mol
         entropy_change=-0.14,  # kJ/mol/K
-        reference=LITERATURE_REFERENCES['lovley_2003']
+        reference=LITERATURE_REFERENCES["lovley_2003"],
     )
 
     # Lactate degradation pathway
@@ -289,11 +308,11 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         nadh_yield=5.0,  # NADH produced
         co2_yield=3.0,  # CO2 produced
         optimal_conditions={
-            'temperature': 308.0,  # K - slightly higher optimal
-            'ph': 7.2,
-            'ionic_strength': 0.12,  # M
-            'redox_potential': -0.18  # V vs SHE
-        }
+            "temperature": 308.0,  # K - slightly higher optimal
+            "ph": 7.2,
+            "ionic_strength": 0.12,  # M
+            "redox_potential": -0.18,  # V vs SHE
+        },
     )
 
     # Transport configuration
@@ -304,7 +323,7 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         atp_cost=0.5,  # ATP required for active transport
         pmf_cost=1.0,  # One proton per lactate
         competitive_substrates=["malate", "succinate"],
-        competition_factors={"malate": 0.7, "succinate": 0.9}
+        competition_factors={"malate": 0.7, "succinate": 0.9},
     )
 
     return ComprehensiveSubstrateConfig(
@@ -323,7 +342,7 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         diffusion_coefficient_biofilm=5.2e-6,  # cm²/s in biofilm
         species_kinetics={
             BacterialSpecies.SHEWANELLA_ONEIDENSIS: shewanella_kinetics,
-            BacterialSpecies.GEOBACTER_SULFURREDUCENS: geobacter_kinetics
+            BacterialSpecies.GEOBACTER_SULFURREDUCENS: geobacter_kinetics,
         },
         degradation_pathways=[lactate_pathway],
         transport_config=transport_config,
@@ -334,15 +353,14 @@ def get_lactate_config() -> ComprehensiveSubstrateConfig:
         detection_methods=["HPLC", "GC-MS", "enzymatic assay"],
         quantification_limit=0.005,  # mmol/L
         references=[
-            LITERATURE_REFERENCES['marsili_2008'],
-            LITERATURE_REFERENCES['torres_2010']
-        ]
+            LITERATURE_REFERENCES["marsili_2008"],
+            LITERATURE_REFERENCES["torres_2010"],
+        ],
     )
 
 
 def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
     """Get comprehensive configuration for pyruvate."""
-
     # Universal pyruvate kinetics (both species can use it well)
     universal_kinetics = SubstrateKineticsConfig(
         max_uptake_rate=35.0,  # mmol/gDW/h
@@ -354,7 +372,7 @@ def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
         activation_energy=38.0,  # kJ/mol - lower barrier
         enthalpy_change=-140.0,  # kJ/mol
         entropy_change=-0.20,  # kJ/mol/K
-        reference=LITERATURE_REFERENCES['torres_2010']
+        reference=LITERATURE_REFERENCES["torres_2010"],
     )
 
     # Pyruvate degradation pathway
@@ -370,11 +388,11 @@ def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
         nadh_yield=4.0,  # NADH produced
         co2_yield=3.0,  # CO2 produced
         optimal_conditions={
-            'temperature': 305.0,  # K
-            'ph': 7.1,
-            'ionic_strength': 0.13,  # M
-            'redox_potential': -0.20  # V vs SHE
-        }
+            "temperature": 305.0,  # K
+            "ph": 7.1,
+            "ionic_strength": 0.13,  # M
+            "redox_potential": -0.20,  # V vs SHE
+        },
     )
 
     # Transport configuration
@@ -385,7 +403,7 @@ def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
         atp_cost=0.0,  # No energy required
         pmf_cost=1.0,  # One proton per pyruvate
         competitive_substrates=["lactate", "malate"],
-        competition_factors={"lactate": 0.8, "malate": 0.7}
+        competition_factors={"lactate": 0.8, "malate": 0.7},
     )
 
     return ComprehensiveSubstrateConfig(
@@ -404,7 +422,7 @@ def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
         diffusion_coefficient_biofilm=4.9e-6,  # cm²/s in biofilm
         species_kinetics={
             BacterialSpecies.GEOBACTER_SULFURREDUCENS: universal_kinetics,
-            BacterialSpecies.SHEWANELLA_ONEIDENSIS: universal_kinetics
+            BacterialSpecies.SHEWANELLA_ONEIDENSIS: universal_kinetics,
         },
         degradation_pathways=[pyruvate_pathway],
         transport_config=transport_config,
@@ -415,15 +433,14 @@ def get_pyruvate_config() -> ComprehensiveSubstrateConfig:
         detection_methods=["HPLC", "enzymatic assay", "GC-MS"],
         quantification_limit=0.002,  # mmol/L
         references=[
-            LITERATURE_REFERENCES['torres_2010'],
-            LITERATURE_REFERENCES['marcus_2007']
-        ]
+            LITERATURE_REFERENCES["torres_2010"],
+            LITERATURE_REFERENCES["marcus_2007"],
+        ],
     )
 
 
 def get_glucose_config() -> ComprehensiveSubstrateConfig:
     """Get comprehensive configuration for glucose (for complex substrates)."""
-
     # Glucose is typically not directly used by exoelectrogens but can be fermented
     fermentation_kinetics = SubstrateKineticsConfig(
         max_uptake_rate=15.0,  # mmol/gDW/h - lower for complex substrate
@@ -450,11 +467,11 @@ def get_glucose_config() -> ComprehensiveSubstrateConfig:
         nadh_yield=2.0,  # NADH produced
         co2_yield=2.0,  # CO2 produced
         optimal_conditions={
-            'temperature': 310.0,  # K
-            'ph': 6.8,
-            'ionic_strength': 0.10,  # M
-            'redox_potential': -0.30  # V vs SHE
-        }
+            "temperature": 310.0,  # K
+            "ph": 6.8,
+            "ionic_strength": 0.10,  # M
+            "redox_potential": -0.30,  # V vs SHE
+        },
     )
 
     # Transport configuration
@@ -465,7 +482,7 @@ def get_glucose_config() -> ComprehensiveSubstrateConfig:
         atp_cost=1.0,  # ATP required for phosphorylation
         pmf_cost=0.0,  # No proton coupling
         competitive_substrates=["fructose", "galactose"],
-        competition_factors={"fructose": 0.9, "galactose": 0.7}
+        competition_factors={"fructose": 0.9, "galactose": 0.7},
     )
 
     return ComprehensiveSubstrateConfig(
@@ -485,7 +502,7 @@ def get_glucose_config() -> ComprehensiveSubstrateConfig:
         species_kinetics={
             BacterialSpecies.GEOBACTER_SULFURREDUCENS: fermentation_kinetics,
             BacterialSpecies.SHEWANELLA_ONEIDENSIS: fermentation_kinetics,
-            BacterialSpecies.MIXED_CULTURE: fermentation_kinetics
+            BacterialSpecies.MIXED_CULTURE: fermentation_kinetics,
         },
         degradation_pathways=[glucose_pathway],
         transport_config=transport_config,
@@ -495,9 +512,7 @@ def get_glucose_config() -> ComprehensiveSubstrateConfig:
         half_life_anaerobic=24.0,  # hours
         detection_methods=["HPLC", "enzymatic assay", "GC-MS"],
         quantification_limit=0.01,  # mmol/L
-        references=[
-            LITERATURE_REFERENCES['torres_2010']
-        ]
+        references=[LITERATURE_REFERENCES["torres_2010"]],
     )
 
 
@@ -506,5 +521,5 @@ DEFAULT_SUBSTRATE_CONFIGS = {
     SubstrateType.ACETATE: get_acetate_config(),
     SubstrateType.LACTATE: get_lactate_config(),
     SubstrateType.PYRUVATE: get_pyruvate_config(),
-    SubstrateType.GLUCOSE: get_glucose_config()
+    SubstrateType.GLUCOSE: get_glucose_config(),
 }

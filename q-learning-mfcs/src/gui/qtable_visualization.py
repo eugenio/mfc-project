@@ -1,5 +1,4 @@
-"""
-Interactive Q-Table Visualization Component
+"""Interactive Q-Table Visualization Component.
 
 This module provides interactive visualizations for Q-learning tables,
 including heatmaps, convergence tracking, and policy analysis.
@@ -27,24 +26,24 @@ from plotly.subplots import make_subplots
 class QTableVisualization:
     """Interactive Q-table visualization component."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Q-table visualization component."""
         self.analyzer = QTABLE_ANALYZER
 
         # Initialize session state
-        if 'selected_qtables' not in st.session_state:
+        if "selected_qtables" not in st.session_state:
             st.session_state.selected_qtables = []
-        if 'qtable_analysis_cache' not in st.session_state:
+        if "qtable_analysis_cache" not in st.session_state:
             st.session_state.qtable_analysis_cache = {}
-        if 'comparison_results' not in st.session_state:
+        if "comparison_results" not in st.session_state:
             st.session_state.comparison_results = {}
 
     def render_qtable_analysis_interface(self) -> dict[str, Any]:
-        """
-        Render the main Q-table analysis interface.
+        """Render the main Q-table analysis interface.
 
         Returns:
             Analysis results and metadata
+
         """
         st.header("🧠 Interactive Q-Table Analysis")
         st.markdown("""
@@ -63,12 +62,12 @@ class QTableVisualization:
             self._render_export_section()
 
         return {
-            'selected_qtables': st.session_state.selected_qtables,
-            'analysis_cache': st.session_state.qtable_analysis_cache,
-            'comparison_results': st.session_state.comparison_results
+            "selected_qtables": st.session_state.selected_qtables,
+            "analysis_cache": st.session_state.qtable_analysis_cache,
+            "comparison_results": st.session_state.comparison_results,
         }
 
-    def _render_file_selection_section(self):
+    def _render_file_selection_section(self) -> None:
         """Render Q-table file selection interface."""
         st.subheader("📁 Q-Table File Selection")
 
@@ -86,10 +85,12 @@ class QTableVisualization:
                     "Select Q-table files for analysis",
                     options=range(len(file_options)),
                     format_func=lambda x: f"{file_names[x]} ({self._get_file_size(available_files[x])})",
-                    help="Select one or more Q-table files to analyze"
+                    help="Select one or more Q-table files to analyze",
                 )
 
-                st.session_state.selected_qtables = [file_options[i] for i in selected_indices]
+                st.session_state.selected_qtables = [
+                    file_options[i] for i in selected_indices
+                ]
             else:
                 st.warning("No Q-table files found in the models directory.")
                 st.info("Expected location: `q_learning_models/*.pkl`")
@@ -105,7 +106,7 @@ class QTableVisualization:
                 else:
                     st.warning("Please select Q-table files first.")
 
-    def _render_analysis_results_section(self):
+    def _render_analysis_results_section(self) -> None:
         """Render analysis results for selected Q-tables."""
         st.subheader("📈 Analysis Results")
 
@@ -119,19 +120,25 @@ class QTableVisualization:
                         st.session_state.qtable_analysis_cache[file_path] = metrics
 
             if file_path in st.session_state.qtable_analysis_cache:
-                analysis_results[file_path] = st.session_state.qtable_analysis_cache[file_path]
+                analysis_results[file_path] = st.session_state.qtable_analysis_cache[
+                    file_path
+                ]
 
         if analysis_results:
             self._display_analysis_summary(analysis_results)
             self._display_detailed_metrics(analysis_results)
 
-    def _display_analysis_summary(self, results: dict[str, QTableMetrics]):
+    def _display_analysis_summary(self, results: dict[str, QTableMetrics]) -> None:
         """Display summary of analysis results."""
         st.markdown("### 📊 Analysis Summary")
 
         # Create summary metrics
         total_files = len(results)
-        converged_files = sum(1 for m in results.values() if m.convergence_status == ConvergenceStatus.CONVERGED)
+        converged_files = sum(
+            1
+            for m in results.values()
+            if m.convergence_status == ConvergenceStatus.CONVERGED
+        )
         avg_convergence = np.mean([m.convergence_score for m in results.values()])
         avg_exploration = np.mean([m.exploration_coverage for m in results.values()])
 
@@ -144,69 +151,76 @@ class QTableVisualization:
             st.metric(
                 "Converged Tables",
                 converged_files,
-                delta=f"{converged_files/total_files:.1%} success rate"
+                delta=f"{converged_files / total_files:.1%} success rate",
             )
 
         with col3:
             st.metric(
                 "Avg Convergence Score",
                 f"{avg_convergence:.3f}",
-                delta="0.900 target"
+                delta="0.900 target",
             )
 
         with col4:
             st.metric(
                 "Avg Exploration Coverage",
                 f"{avg_exploration:.1%}",
-                delta="Higher is better"
+                delta="Higher is better",
             )
 
-    def _display_detailed_metrics(self, results: dict[str, QTableMetrics]):
+    def _display_detailed_metrics(self, results: dict[str, QTableMetrics]) -> None:
         """Display detailed metrics table."""
         st.markdown("### 📋 Detailed Metrics")
 
         # Create detailed metrics table
         rows = []
         for file_path, metrics in results.items():
-            rows.append({
-                'File': Path(file_path).name,
-                'States': metrics.total_states,
-                'Actions': metrics.total_actions,
-                'Convergence Score': f"{metrics.convergence_score:.3f}",
-                'Status': metrics.convergence_status.value.title(),
-                'Policy Entropy': f"{metrics.policy_entropy:.3f}",
-                'Exploration': f"{metrics.exploration_coverage:.1%}",
-                'Sparsity': f"{metrics.sparsity:.1%}",
-                'Q-Value Range': f"{metrics.q_value_range:.3f}"
-            })
+            rows.append(
+                {
+                    "File": Path(file_path).name,
+                    "States": metrics.total_states,
+                    "Actions": metrics.total_actions,
+                    "Convergence Score": f"{metrics.convergence_score:.3f}",
+                    "Status": metrics.convergence_status.value.title(),
+                    "Policy Entropy": f"{metrics.policy_entropy:.3f}",
+                    "Exploration": f"{metrics.exploration_coverage:.1%}",
+                    "Sparsity": f"{metrics.sparsity:.1%}",
+                    "Q-Value Range": f"{metrics.q_value_range:.3f}",
+                },
+            )
 
         df = pd.DataFrame(rows)
 
         # Color code the status column
         def color_status(val):
             colors = {
-                'Converged': 'background-color: #d4edda',
-                'Converging': 'background-color: #fff3cd',
-                'Unstable': 'background-color: #f8d7da',
-                'Diverging': 'background-color: #f5c6cb',
-                'Unknown': 'background-color: #e2e3e5'
+                "Converged": "background-color: #d4edda",
+                "Converging": "background-color: #fff3cd",
+                "Unstable": "background-color: #f8d7da",
+                "Diverging": "background-color: #f5c6cb",
+                "Unknown": "background-color: #e2e3e5",
             }
-            return colors.get(val, '')
+            return colors.get(val, "")
 
-        styled_df = df.style.apply(lambda x: [color_status(val) if x.name == 'Status' else '' for val in x], axis=0)
+        styled_df = df.style.apply(
+            lambda x: [color_status(val) if x.name == "Status" else "" for val in x],
+            axis=0,
+        )
         st.dataframe(styled_df, use_container_width=True)
 
-    def _render_visualization_section(self):
+    def _render_visualization_section(self) -> None:
         """Render interactive visualizations."""
         st.subheader("📊 Interactive Visualizations")
 
         # Visualization type selector
-        viz_tabs = st.tabs([
-            "🔥 Q-Table Heatmap",
-            "📈 Convergence Trends",
-            "🎯 Policy Analysis",
-            "🗺️ State-Action Exploration"
-        ])
+        viz_tabs = st.tabs(
+            [
+                "🔥 Q-Table Heatmap",
+                "📈 Convergence Trends",
+                "🎯 Policy Analysis",
+                "🗺️ State-Action Exploration",
+            ],
+        )
 
         with viz_tabs[0]:
             self._render_qtable_heatmap()
@@ -220,7 +234,7 @@ class QTableVisualization:
         with viz_tabs[3]:
             self._render_exploration_visualization()
 
-    def _render_qtable_heatmap(self):
+    def _render_qtable_heatmap(self) -> None:
         """Render interactive Q-table heatmap."""
         st.markdown("#### 🔥 Q-Table Value Heatmap")
 
@@ -235,7 +249,7 @@ class QTableVisualization:
         selected_file_idx = st.selectbox(
             "Select Q-table for heatmap",
             range(len(file_options)),
-            format_func=lambda x: file_names[x]
+            format_func=lambda x: file_names[x],
         )
 
         selected_file = file_options[selected_file_idx]
@@ -257,10 +271,14 @@ class QTableVisualization:
                 colorscale = st.selectbox(
                     "Color Scale",
                     ["Viridis", "Plasma", "RdYlBu", "Blues", "Reds"],
-                    key="heatmap_colorscale"
+                    key="heatmap_colorscale",
                 )
 
-                show_values = st.checkbox("Show Values", value=False, key="show_heatmap_values")
+                show_values = st.checkbox(
+                    "Show Values",
+                    value=False,
+                    key="show_heatmap_values",
+                )
 
                 # Update heatmap with new settings
                 if st.button("Update Heatmap"):
@@ -268,7 +286,7 @@ class QTableVisualization:
                         qtable,
                         Path(selected_file).name,
                         colorscale=colorscale.lower(),
-                        show_values=show_values
+                        show_values=show_values,
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
@@ -277,32 +295,33 @@ class QTableVisualization:
         qtable: np.ndarray,
         title: str,
         colorscale: str = "viridis",
-        show_values: bool = False
+        show_values: bool = False,
     ) -> go.Figure:
         """Create interactive Q-table heatmap."""
-
-        fig = go.Figure(data=go.Heatmap(
-            z=qtable,
-            x=[f"Action {i}" for i in range(qtable.shape[1])],
-            y=[f"State {i}" for i in range(qtable.shape[0])],
-            colorscale=colorscale,
-            text=qtable if show_values else None,
-            texttemplate="%{text:.3f}" if show_values else None,
-            hoverongaps=False,
-            hovertemplate="State: %{y}<br>Action: %{x}<br>Q-Value: %{z:.4f}<extra></extra>"
-        ))
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=qtable,
+                x=[f"Action {i}" for i in range(qtable.shape[1])],
+                y=[f"State {i}" for i in range(qtable.shape[0])],
+                colorscale=colorscale,
+                text=qtable if show_values else None,
+                texttemplate="%{text:.3f}" if show_values else None,
+                hoverongaps=False,
+                hovertemplate="State: %{y}<br>Action: %{x}<br>Q-Value: %{z:.4f}<extra></extra>",
+            ),
+        )
 
         fig.update_layout(
             title=f"Q-Table Heatmap: {title}",
             xaxis_title="Actions",
             yaxis_title="States",
             height=max(400, min(800, qtable.shape[0] * 20)),
-            font={'size': 12}
+            font={"size": 12},
         )
 
         return fig
 
-    def _render_convergence_trends(self):
+    def _render_convergence_trends(self) -> None:
         """Render convergence trend analysis."""
         st.markdown("#### 📈 Convergence Analysis")
 
@@ -320,18 +339,20 @@ class QTableVisualization:
                 file_name = Path(file_path).name
                 timestamp = self._extract_timestamp_from_filename(file_name)
 
-                trend_data.append({
-                    'file': file_name,
-                    'timestamp': timestamp,
-                    'convergence_score': metrics.convergence_score,
-                    'stability_measure': metrics.stability_measure,
-                    'exploration_coverage': metrics.exploration_coverage,
-                    'policy_entropy': metrics.policy_entropy
-                })
+                trend_data.append(
+                    {
+                        "file": file_name,
+                        "timestamp": timestamp,
+                        "convergence_score": metrics.convergence_score,
+                        "stability_measure": metrics.stability_measure,
+                        "exploration_coverage": metrics.exploration_coverage,
+                        "policy_entropy": metrics.policy_entropy,
+                    },
+                )
 
         if trend_data:
             df = pd.DataFrame(trend_data)
-            df = df.sort_values('timestamp')
+            df = df.sort_values("timestamp")
 
             # Create convergence trend plot
             fig = self._create_convergence_trend_plot(df)
@@ -342,51 +363,82 @@ class QTableVisualization:
 
     def _create_convergence_trend_plot(self, df: pd.DataFrame) -> go.Figure:
         """Create convergence trend plot."""
-
         fig = make_subplots(
-            rows=2, cols=2,
-            subplot_titles=('Convergence Score', 'Stability Measure', 'Exploration Coverage', 'Policy Entropy'),
-            specs=[[{"secondary_y": False}, {"secondary_y": False}],
-                   [{"secondary_y": False}, {"secondary_y": False}]]
+            rows=2,
+            cols=2,
+            subplot_titles=(
+                "Convergence Score",
+                "Stability Measure",
+                "Exploration Coverage",
+                "Policy Entropy",
+            ),
+            specs=[
+                [{"secondary_y": False}, {"secondary_y": False}],
+                [{"secondary_y": False}, {"secondary_y": False}],
+            ],
         )
 
         # Convergence Score
         fig.add_trace(
-            go.Scatter(x=df.index, y=df['convergence_score'], name='Convergence Score',
-                      line={'color': 'blue', 'width': 2}, mode='lines+markers'),
-            row=1, col=1
+            go.Scatter(
+                x=df.index,
+                y=df["convergence_score"],
+                name="Convergence Score",
+                line={"color": "blue", "width": 2},
+                mode="lines+markers",
+            ),
+            row=1,
+            col=1,
         )
 
         # Stability Measure
         fig.add_trace(
-            go.Scatter(x=df.index, y=df['stability_measure'], name='Stability',
-                      line={'color': 'green', 'width': 2}, mode='lines+markers'),
-            row=1, col=2
+            go.Scatter(
+                x=df.index,
+                y=df["stability_measure"],
+                name="Stability",
+                line={"color": "green", "width": 2},
+                mode="lines+markers",
+            ),
+            row=1,
+            col=2,
         )
 
         # Exploration Coverage
         fig.add_trace(
-            go.Scatter(x=df.index, y=df['exploration_coverage'], name='Exploration',
-                      line={'color': 'orange', 'width': 2}, mode='lines+markers'),
-            row=2, col=1
+            go.Scatter(
+                x=df.index,
+                y=df["exploration_coverage"],
+                name="Exploration",
+                line={"color": "orange", "width": 2},
+                mode="lines+markers",
+            ),
+            row=2,
+            col=1,
         )
 
         # Policy Entropy
         fig.add_trace(
-            go.Scatter(x=df.index, y=df['policy_entropy'], name='Policy Entropy',
-                      line={'color': 'red', 'width': 2}, mode='lines+markers'),
-            row=2, col=2
+            go.Scatter(
+                x=df.index,
+                y=df["policy_entropy"],
+                name="Policy Entropy",
+                line={"color": "red", "width": 2},
+                mode="lines+markers",
+            ),
+            row=2,
+            col=2,
         )
 
         fig.update_layout(
             title="Q-Learning Convergence Trends Over Time",
             height=600,
-            showlegend=False
+            showlegend=False,
         )
 
         return fig
 
-    def _render_policy_analysis(self):
+    def _render_policy_analysis(self) -> None:
         """Render policy quality analysis."""
         st.markdown("#### 🎯 Policy Quality Analysis")
 
@@ -397,30 +449,32 @@ class QTableVisualization:
         # Policy quality metrics comparison
         policy_data = []
         for file_path, metrics in st.session_state.qtable_analysis_cache.items():
-            policy_data.append({
-                'File': Path(file_path).name,
-                'Policy Entropy': metrics.policy_entropy,
-                'Action Diversity': metrics.action_diversity,
-                'State Value Variance': metrics.state_value_variance,
-                'Convergence Score': metrics.convergence_score
-            })
+            policy_data.append(
+                {
+                    "File": Path(file_path).name,
+                    "Policy Entropy": metrics.policy_entropy,
+                    "Action Diversity": metrics.action_diversity,
+                    "State Value Variance": metrics.state_value_variance,
+                    "Convergence Score": metrics.convergence_score,
+                },
+            )
 
         df = pd.DataFrame(policy_data)
 
         # Create policy quality plot
         fig = px.scatter(
             df,
-            x='Policy Entropy',
-            y='Action Diversity',
-            size='Convergence Score',
-            color='State Value Variance',
-            hover_name='File',
+            x="Policy Entropy",
+            y="Action Diversity",
+            size="Convergence Score",
+            color="State Value Variance",
+            hover_name="File",
             title="Policy Quality Analysis",
             labels={
-                'Policy Entropy': 'Policy Entropy (Higher = More Diverse)',
-                'Action Diversity': 'Action Diversity Score',
-                'State Value Variance': 'State Value Variance'
-            }
+                "Policy Entropy": "Policy Entropy (Higher = More Diverse)",
+                "Action Diversity": "Action Diversity Score",
+                "State Value Variance": "State Value Variance",
+            },
         )
 
         fig.update_layout(height=500)
@@ -429,7 +483,7 @@ class QTableVisualization:
         # Policy insights
         self._display_policy_insights(df)
 
-    def _render_exploration_visualization(self):
+    def _render_exploration_visualization(self) -> None:
         """Render state-action exploration visualization."""
         st.markdown("#### 🗺️ State-Action Exploration")
 
@@ -445,7 +499,7 @@ class QTableVisualization:
             "Select Q-table for exploration analysis",
             range(len(file_options)),
             format_func=lambda x: file_names[x],
-            key="exploration_file_selector"
+            key="exploration_file_selector",
         )
 
         selected_file = file_options[selected_file_idx]
@@ -455,26 +509,28 @@ class QTableVisualization:
             # Create exploration heatmap (visited vs unvisited states)
             exploration_map = (qtable != 0).astype(int)
 
-            fig = go.Figure(data=go.Heatmap(
-                z=exploration_map,
-                x=[f"Action {i}" for i in range(qtable.shape[1])],
-                y=[f"State {i}" for i in range(qtable.shape[0])],
-                colorscale=[[0, 'lightgray'], [1, 'darkgreen']],
-                text=None,
-                hoverongaps=False,
-                hovertemplate="State: %{y}<br>Action: %{x}<br>Explored: %{z}<extra></extra>",
-                colorbar={
-                    'title': "Exploration Status",
-                    'tickvals': [0, 1],
-                    'ticktext': ['Unexplored', 'Explored']
-                }
-            ))
+            fig = go.Figure(
+                data=go.Heatmap(
+                    z=exploration_map,
+                    x=[f"Action {i}" for i in range(qtable.shape[1])],
+                    y=[f"State {i}" for i in range(qtable.shape[0])],
+                    colorscale=[[0, "lightgray"], [1, "darkgreen"]],
+                    text=None,
+                    hoverongaps=False,
+                    hovertemplate="State: %{y}<br>Action: %{x}<br>Explored: %{z}<extra></extra>",
+                    colorbar={
+                        "title": "Exploration Status",
+                        "tickvals": [0, 1],
+                        "ticktext": ["Unexplored", "Explored"],
+                    },
+                ),
+            )
 
             fig.update_layout(
                 title=f"State-Action Exploration Map: {Path(selected_file).name}",
                 xaxis_title="Actions",
                 yaxis_title="States",
-                height=max(400, min(800, qtable.shape[0] * 15))
+                height=max(400, min(800, qtable.shape[0] * 15)),
             )
 
             st.plotly_chart(fig, use_container_width=True)
@@ -485,13 +541,16 @@ class QTableVisualization:
 
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Exploration Coverage", f"{metrics.exploration_coverage:.1%}")
+                    st.metric(
+                        "Exploration Coverage",
+                        f"{metrics.exploration_coverage:.1%}",
+                    )
                 with col2:
                     st.metric("Visited States", metrics.visited_states)
                 with col3:
                     st.metric("Unvisited States", metrics.unvisited_states)
 
-    def _render_comparison_section(self):
+    def _render_comparison_section(self) -> None:
         """Render Q-table comparison interface."""
         if len(st.session_state.selected_qtables) < 2:
             return
@@ -504,19 +563,30 @@ class QTableVisualization:
         file_names = [Path(f).name for f in file_options]
 
         with col1:
-            table1_idx = st.selectbox("First Q-Table", range(len(file_options)), format_func=lambda x: file_names[x])
+            table1_idx = st.selectbox(
+                "First Q-Table",
+                range(len(file_options)),
+                format_func=lambda x: file_names[x],
+            )
 
         with col2:
-            table2_idx = st.selectbox("Second Q-Table", range(len(file_options)), format_func=lambda x: file_names[x])
+            table2_idx = st.selectbox(
+                "Second Q-Table",
+                range(len(file_options)),
+                format_func=lambda x: file_names[x],
+            )
 
         with col3:
             if st.button("Compare Tables"):
-                self._perform_qtable_comparison(file_options[table1_idx], file_options[table2_idx])
+                self._perform_qtable_comparison(
+                    file_options[table1_idx],
+                    file_options[table2_idx],
+                )
 
         # Display comparison results
         self._display_comparison_results()
 
-    def _render_export_section(self):
+    def _render_export_section(self) -> None:
         """Render export functionality."""
         st.subheader("📤 Export Analysis Results")
 
@@ -538,7 +608,7 @@ class QTableVisualization:
         """Get human-readable file size."""
         try:
             size = float(file_path.stat().st_size)
-            for unit in ['B', 'KB', 'MB', 'GB']:
+            for unit in ["B", "KB", "MB", "GB"]:
                 if size < 1024:
                     return f"{size:.1f} {unit}"
                 size = size / 1024
@@ -546,7 +616,7 @@ class QTableVisualization:
         except OSError:
             return "Unknown"
 
-    def _perform_quick_analysis(self):
+    def _perform_quick_analysis(self) -> None:
         """Perform quick analysis of selected Q-tables."""
         with st.spinner("Performing quick analysis..."):
             for file_path in st.session_state.selected_qtables:
@@ -564,7 +634,7 @@ class QTableVisualization:
         import re
 
         # Pattern for YYYYMMDD_HHMMSS
-        pattern = r'(\d{8}_\d{6})'
+        pattern = r"(\d{8}_\d{6})"
         match = re.search(pattern, filename)
 
         if match:
@@ -573,7 +643,7 @@ class QTableVisualization:
         # Return filename as fallback
         return filename
 
-    def _display_trend_statistics(self, df: pd.DataFrame):
+    def _display_trend_statistics(self, df: pd.DataFrame) -> None:
         """Display trend analysis statistics."""
         st.markdown("**Trend Analysis**")
 
@@ -581,27 +651,31 @@ class QTableVisualization:
 
         with col1:
             if len(df) >= 2:
-                convergence_trend = df['convergence_score'].iloc[-1] - df['convergence_score'].iloc[0]
-                stability_trend = df['stability_measure'].iloc[-1] - df['stability_measure'].iloc[0]
+                convergence_trend = (
+                    df["convergence_score"].iloc[-1] - df["convergence_score"].iloc[0]
+                )
+                stability_trend = (
+                    df["stability_measure"].iloc[-1] - df["stability_measure"].iloc[0]
+                )
 
                 st.metric("Convergence Improvement", f"{convergence_trend:+.3f}")
                 st.metric("Stability Change", f"{stability_trend:+.3f}")
 
         with col2:
-            max_convergence = df['convergence_score'].max()
-            avg_exploration = df['exploration_coverage'].mean()
+            max_convergence = df["convergence_score"].max()
+            avg_exploration = df["exploration_coverage"].mean()
 
             st.metric("Peak Convergence", f"{max_convergence:.3f}")
             st.metric("Avg Exploration", f"{avg_exploration:.1%}")
 
-    def _display_policy_insights(self, df: pd.DataFrame):
+    def _display_policy_insights(self, df: pd.DataFrame) -> None:
         """Display policy analysis insights."""
         st.markdown("**Policy Insights**")
 
         # Find best performing policies
-        best_entropy = df.loc[df['Policy Entropy'].idxmax()]
-        best_diversity = df.loc[df['Action Diversity'].idxmax()]
-        best_convergence = df.loc[df['Convergence Score'].idxmax()]
+        best_entropy = df.loc[df["Policy Entropy"].idxmax()]
+        best_diversity = df.loc[df["Action Diversity"].idxmax()]
+        best_convergence = df.loc[df["Convergence Score"].idxmax()]
 
         col1, col2, col3 = st.columns(3)
 
@@ -620,7 +694,7 @@ class QTableVisualization:
             st.markdown(f"📁 {best_convergence['File']}")
             st.markdown(f"🎯 Score: {best_convergence['Convergence Score']:.3f}")
 
-    def _perform_qtable_comparison(self, file1: str, file2: str):
+    def _perform_qtable_comparison(self, file1: str, file2: str) -> None:
         """Perform Q-table comparison."""
         comparison_key = f"{file1}|{file2}"
 
@@ -633,13 +707,13 @@ class QTableVisualization:
                 else:
                     st.error("Comparison failed - tables may have incompatible shapes")
 
-    def _display_comparison_results(self):
+    def _display_comparison_results(self) -> None:
         """Display Q-table comparison results."""
         if not st.session_state.comparison_results:
             return
 
         for comparison_key, comparison in st.session_state.comparison_results.items():
-            file1, file2 = comparison_key.split('|')
+            file1, file2 = comparison_key.split("|")
 
             st.markdown(f"**Comparison: {Path(file1).name} vs {Path(file2).name}**")
 
@@ -649,7 +723,10 @@ class QTableVisualization:
                 st.metric("Policy Agreement", f"{comparison.policy_agreement:.1%}")
 
             with col2:
-                st.metric("Convergence Change", f"{comparison.convergence_improvement:+.3f}")
+                st.metric(
+                    "Convergence Change",
+                    f"{comparison.convergence_improvement:+.3f}",
+                )
 
             with col3:
                 st.metric("Learning Progress", f"{comparison.learning_progress:+.3f}")
@@ -657,22 +734,24 @@ class QTableVisualization:
             with col4:
                 st.metric("Stability Change", f"{comparison.stability_change:+.3f}")
 
-    def _export_metrics_csv(self):
+    def _export_metrics_csv(self) -> None:
         """Export analysis metrics to CSV."""
         if st.session_state.qtable_analysis_cache:
             results = st.session_state.qtable_analysis_cache
-            output_file = f"qtable_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            output_file = (
+                f"qtable_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            )
 
             self.analyzer.export_analysis_results(results, output_file)
             st.success(f"Metrics exported to {output_file}")
         else:
             st.warning("No analysis results to export")
 
-    def _export_visualizations(self):
+    def _export_visualizations(self) -> None:
         """Export visualizations."""
         st.info("Visualization export functionality coming soon!")
 
-    def _generate_analysis_report(self):
+    def _generate_analysis_report(self) -> None:
         """Generate comprehensive analysis report."""
         st.info("Analysis report generation coming soon!")
 

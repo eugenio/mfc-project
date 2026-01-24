@@ -1,5 +1,4 @@
-"""
-Parameter Sensitivity Analysis Framework
+"""Parameter Sensitivity Analysis Framework.
 
 This module provides comprehensive tools for analyzing parameter sensitivity
 in MFC systems, including local and global sensitivity analysis methods.
@@ -22,13 +21,15 @@ Literature References:
 2. Sobol, I. M. (2001). "Global sensitivity indices for nonlinear mathematical models"
 3. Morris, M. D. (1991). "Factorial sampling plans for preliminary computational experiments"
 4. Iooss, B., & Lemaître, P. (2015). "A review on global sensitivity analysis methods"
+
 """
 
+from __future__ import annotations
+
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,9 +39,13 @@ from scipy.stats import qmc
 # Import configuration classes
 from .visualization_config import VisualizationConfig
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class SensitivityMethod(Enum):
     """Available sensitivity analysis methods."""
+
     ONE_AT_A_TIME = "one_at_a_time"  # Local OAT method
     GRADIENT_BASED = "gradient_based"  # Gradient-based local sensitivity
     MORRIS = "morris"  # Morris elementary effects method
@@ -51,6 +56,7 @@ class SensitivityMethod(Enum):
 
 class SamplingMethod(Enum):
     """Available parameter sampling methods."""
+
     RANDOM = "random"  # Random sampling
     LATIN_HYPERCUBE = "latin_hypercube"  # Latin Hypercube sampling
     SOBOL_SEQUENCE = "sobol_sequence"  # Sobol sequence sampling
@@ -61,6 +67,7 @@ class SamplingMethod(Enum):
 @dataclass
 class ParameterBounds:
     """Parameter bounds definition."""
+
     min_value: float
     max_value: float
     distribution: str = "uniform"  # "uniform", "normal", "lognormal"
@@ -69,19 +76,24 @@ class ParameterBounds:
     def __post_init__(self):
         """Validate parameter bounds."""
         if self.min_value >= self.max_value:
-            raise ValueError("Minimum value must be less than maximum value")
+            msg = "Minimum value must be less than maximum value"
+            raise ValueError(msg)
 
         if self.nominal_value is not None:
             if not (self.min_value <= self.nominal_value <= self.max_value):
-                raise ValueError("Nominal value must be within bounds")
+                msg = "Nominal value must be within bounds"
+                raise ValueError(msg)
 
 
 @dataclass
 class ParameterDefinition:
     """Complete parameter definition for sensitivity analysis."""
+
     name: str
     bounds: ParameterBounds
-    config_path: list[str]  # Path to parameter in configuration (e.g., ["control", "flow_control", "max_flow_rate"])
+    config_path: list[
+        str
+    ]  # Path to parameter in configuration (e.g., ["control", "flow_control", "max_flow_rate"])
     description: str = ""
     units: str = ""
     category: str = "general"  # Parameter category for grouping
@@ -103,7 +115,7 @@ class SensitivityResult:
 
     # Morris method results
     morris_means: dict[str, np.ndarray] | None = None  # Morris μ values
-    morris_stds: dict[str, np.ndarray] | None = None   # Morris σ values
+    morris_stds: dict[str, np.ndarray] | None = None  # Morris σ values
     morris_means_star: dict[str, np.ndarray] | None = None  # Morris μ* values
 
     # OAT results
@@ -126,42 +138,50 @@ class SensitivityResult:
 class ParameterSpace:
     """Parameter space definition and sampling utilities."""
 
-    def __init__(self, parameters: list[ParameterDefinition]):
-        """
-        Initialize parameter space.
+    def __init__(self, parameters: list[ParameterDefinition]) -> None:
+        """Initialize parameter space.
 
         Args:
             parameters: List of parameter definitions
 
         Raises:
             ValueError: If parameters list is empty
+
         """
         if not parameters:
-            raise ValueError("Parameter space cannot be empty")
+            msg = "Parameter space cannot be empty"
+            raise ValueError(msg)
 
         self.parameters = parameters
         self.parameter_names = [p.name for p in parameters]
         self.n_parameters = len(parameters)
 
         # Create bounds matrix for sampling
-        self.bounds_matrix = np.array([
-            [p.bounds.min_value, p.bounds.max_value]
-            for p in parameters
-        ])
+        self.bounds_matrix = np.array(
+            [[p.bounds.min_value, p.bounds.max_value] for p in parameters],
+        )
 
         # Nominal values
-        self.nominal_values = np.array([
-            p.bounds.nominal_value if p.bounds.nominal_value is not None
-            else (p.bounds.min_value + p.bounds.max_value) / 2
-            for p in parameters
-        ])
+        self.nominal_values = np.array(
+            [
+                (
+                    p.bounds.nominal_value
+                    if p.bounds.nominal_value is not None
+                    else (p.bounds.min_value + p.bounds.max_value) / 2
+                )
+                for p in parameters
+            ],
+        )
 
         self.logger = logging.getLogger(__name__)
 
-    def sample(self, n_samples: int, method: SamplingMethod = SamplingMethod.LATIN_HYPERCUBE,
-               seed: int | None = None) -> np.ndarray:
-        """
-        Sample parameters from the parameter space.
+    def sample(
+        self,
+        n_samples: int,
+        method: SamplingMethod = SamplingMethod.LATIN_HYPERCUBE,
+        seed: int | None = None,
+    ) -> np.ndarray:
+        """Sample parameters from the parameter space.
 
         Args:
             n_samples: Number of samples to generate
@@ -170,6 +190,7 @@ class ParameterSpace:
 
         Returns:
             Array of parameter samples (n_samples x n_parameters)
+
         """
         if seed is not None:
             np.random.seed(seed)
@@ -191,18 +212,17 @@ class ParameterSpace:
 
         elif method == SamplingMethod.GRID:
             # Create grid sampling
-            n_per_dim = int(np.ceil(n_samples ** (1/self.n_parameters)))
+            n_per_dim = int(np.ceil(n_samples ** (1 / self.n_parameters)))
             grid_1d = np.linspace(0, 1, n_per_dim)
             grid_nd = np.meshgrid(*[grid_1d] * self.n_parameters)
             samples = np.column_stack([g.ravel() for g in grid_nd])[:n_samples]
 
         else:
-            raise ValueError(f"Unknown sampling method: {method}")
+            msg = f"Unknown sampling method: {method}"
+            raise ValueError(msg)
 
         # Scale samples to parameter bounds
-        scaled_samples = self._scale_samples(samples)
-
-        return scaled_samples
+        return self._scale_samples(samples)
 
     def _scale_samples(self, unit_samples: np.ndarray) -> np.ndarray:
         """Scale unit samples to parameter bounds."""
@@ -212,28 +232,43 @@ class ParameterSpace:
             bounds = param.bounds
 
             if bounds.distribution == "uniform":
-                scaled_samples[:, i] = (bounds.min_value +
-                                       unit_samples[:, i] * (bounds.max_value - bounds.min_value))
+                scaled_samples[:, i] = bounds.min_value + unit_samples[:, i] * (
+                    bounds.max_value - bounds.min_value
+                )
 
             elif bounds.distribution == "normal":
                 # Use inverse CDF for normal distribution
                 mean = (bounds.min_value + bounds.max_value) / 2
                 std = (bounds.max_value - bounds.min_value) / 6  # 3-sigma rule
                 from scipy.stats import norm
+
                 scaled_samples[:, i] = norm.ppf(unit_samples[:, i], loc=mean, scale=std)
 
                 # Clip to bounds
-                scaled_samples[:, i] = np.clip(scaled_samples[:, i], bounds.min_value, bounds.max_value)
+                scaled_samples[:, i] = np.clip(
+                    scaled_samples[:, i],
+                    bounds.min_value,
+                    bounds.max_value,
+                )
 
             elif bounds.distribution == "lognormal":
                 # Use inverse CDF for lognormal distribution
                 from scipy.stats import lognorm
+
                 mu = np.log((bounds.min_value + bounds.max_value) / 2)
                 sigma = (np.log(bounds.max_value) - np.log(bounds.min_value)) / 6
-                scaled_samples[:, i] = lognorm.ppf(unit_samples[:, i], s=sigma, scale=np.exp(mu))
+                scaled_samples[:, i] = lognorm.ppf(
+                    unit_samples[:, i],
+                    s=sigma,
+                    scale=np.exp(mu),
+                )
 
                 # Clip to bounds
-                scaled_samples[:, i] = np.clip(scaled_samples[:, i], bounds.min_value, bounds.max_value)
+                scaled_samples[:, i] = np.clip(
+                    scaled_samples[:, i],
+                    bounds.min_value,
+                    bounds.max_value,
+                )
 
         return scaled_samples
 
@@ -242,22 +277,26 @@ class ParameterSpace:
         for param in self.parameters:
             if param.name == name:
                 return param
-        raise ValueError(f"Parameter not found: {name}")
+        msg = f"Parameter not found: {name}"
+        raise ValueError(msg)
 
 
 class SensitivityAnalyzer:
     """Main sensitivity analysis framework."""
 
-    def __init__(self, parameter_space: ParameterSpace | None,
-                 model_function: Callable[[np.ndarray], dict[str, np.ndarray]] | None,
-                 output_names: list[str]):
-        """
-        Initialize sensitivity analyzer.
+    def __init__(
+        self,
+        parameter_space: ParameterSpace | None,
+        model_function: Callable[[np.ndarray], dict[str, np.ndarray]] | None,
+        output_names: list[str],
+    ) -> None:
+        """Initialize sensitivity analyzer.
 
         Args:
             parameter_space: Parameter space definition
             model_function: Function that takes parameter array and returns output dict
             output_names: Names of model outputs to analyze
+
         """
         self.parameter_space = parameter_space
         self.model_function = model_function
@@ -269,14 +308,14 @@ class SensitivityAnalyzer:
         self.cache_enabled = True
 
     def _evaluate_model(self, parameter_samples: np.ndarray) -> dict[str, np.ndarray]:
-        """
-        Evaluate model with caching support.
+        """Evaluate model with caching support.
 
         Args:
             parameter_samples: Parameter samples array
 
         Returns:
             Dictionary of output arrays
+
         """
         # Check cache if enabled
         if self.cache_enabled:
@@ -294,12 +333,14 @@ class SensitivityAnalyzer:
 
         return outputs
 
-    def analyze_sensitivity(self, method: SensitivityMethod,
-                          n_samples: int = 1000,
-                          sampling_method: SamplingMethod = SamplingMethod.LATIN_HYPERCUBE,
-                          **kwargs) -> SensitivityResult:
-        """
-        Perform sensitivity analysis using specified method.
+    def analyze_sensitivity(
+        self,
+        method: SensitivityMethod,
+        n_samples: int = 1000,
+        sampling_method: SamplingMethod = SamplingMethod.LATIN_HYPERCUBE,
+        **kwargs,
+    ) -> SensitivityResult:
+        """Perform sensitivity analysis using specified method.
 
         Args:
             method: Sensitivity analysis method
@@ -309,11 +350,15 @@ class SensitivityAnalyzer:
 
         Returns:
             Sensitivity analysis results
+
         """
         import time
+
         start_time = time.time()
 
-        self.logger.info(f"Starting {method.value} sensitivity analysis with {n_samples} samples")
+        self.logger.info(
+            f"Starting {method.value} sensitivity analysis with {n_samples} samples",
+        )
 
         if method == SensitivityMethod.ONE_AT_A_TIME:
             result = self._analyze_one_at_a_time(n_samples, **kwargs)
@@ -324,7 +369,8 @@ class SensitivityAnalyzer:
         elif method == SensitivityMethod.SOBOL:
             result = self._analyze_sobol(n_samples, sampling_method, **kwargs)
         else:
-            raise ValueError(f"Method not implemented: {method}")
+            msg = f"Method not implemented: {method}"
+            raise ValueError(msg)
 
         # Set metadata
         result.method = method
@@ -333,14 +379,18 @@ class SensitivityAnalyzer:
         result.n_samples = n_samples
         result.computation_time = time.time() - start_time
 
-        self.logger.info(f"Completed sensitivity analysis in {result.computation_time:.2f} seconds")
+        self.logger.info(
+            f"Completed sensitivity analysis in {result.computation_time:.2f} seconds",
+        )
 
         return result
 
-    def _analyze_one_at_a_time(self, n_samples: int,
-                              perturbation_factor: float = 0.1) -> SensitivityResult:
-        """
-        Perform One-At-a-Time sensitivity analysis.
+    def _analyze_one_at_a_time(
+        self,
+        n_samples: int,
+        perturbation_factor: float = 0.1,
+    ) -> SensitivityResult:
+        """Perform One-At-a-Time sensitivity analysis.
 
         Args:
             n_samples: Number of samples per parameter
@@ -348,28 +398,33 @@ class SensitivityAnalyzer:
 
         Returns:
             Sensitivity analysis results
+
         """
         result = SensitivityResult(
             method=SensitivityMethod.ONE_AT_A_TIME,
             parameter_names=self.parameter_space.parameter_names,
-            output_names=self.output_names
+            output_names=self.output_names,
         )
 
         # Baseline evaluation at nominal values
         baseline_outputs = self._evaluate_model(
-            self.parameter_space.nominal_values.reshape(1, -1)
+            self.parameter_space.nominal_values.reshape(1, -1),
         )
 
         # Initialize sensitivity arrays
         local_sensitivities = {}
         for output_name in self.output_names:
-            local_sensitivities[output_name] = np.zeros(self.parameter_space.n_parameters)
+            local_sensitivities[output_name] = np.zeros(
+                self.parameter_space.n_parameters,
+            )
 
         # Analyze each parameter
         for i, param in enumerate(self.parameter_space.parameters):
             # Create perturbed parameter sets
             nominal = self.parameter_space.nominal_values.copy()
-            perturbation = perturbation_factor * (param.bounds.max_value - param.bounds.min_value)
+            perturbation = perturbation_factor * (
+                param.bounds.max_value - param.bounds.min_value
+            )
 
             # Positive perturbation
             nominal_plus = nominal.copy()
@@ -385,7 +440,10 @@ class SensitivityAnalyzer:
 
             # Calculate local sensitivity
             for output_name in self.output_names:
-                if outputs_plus[output_name].size > 0 and outputs_minus[output_name].size > 0:
+                if (
+                    outputs_plus[output_name].size > 0
+                    and outputs_minus[output_name].size > 0
+                ):
                     dy = outputs_plus[output_name][0] - outputs_minus[output_name][0]
                     dx = nominal_plus[i] - nominal_minus[i]
 
@@ -395,7 +453,9 @@ class SensitivityAnalyzer:
                         x_baseline = nominal[i]
 
                         if y_baseline != 0 and x_baseline != 0:
-                            local_sensitivities[output_name][i] = (dy / y_baseline) / (dx / x_baseline)
+                            local_sensitivities[output_name][i] = (dy / y_baseline) / (
+                                dx / x_baseline
+                            )
                         else:
                             local_sensitivities[output_name][i] = dy / dx
 
@@ -403,19 +463,19 @@ class SensitivityAnalyzer:
         return result
 
     def _analyze_gradient_based(self, step_size: float = 1e-6) -> SensitivityResult:
-        """
-        Perform gradient-based sensitivity analysis.
+        """Perform gradient-based sensitivity analysis.
 
         Args:
             step_size: Finite difference step size
 
         Returns:
             Sensitivity analysis results
+
         """
         result = SensitivityResult(
             method=SensitivityMethod.GRADIENT_BASED,
             parameter_names=self.parameter_space.parameter_names,
-            output_names=self.output_names
+            output_names=self.output_names,
         )
 
         # Calculate gradients using finite differences
@@ -425,7 +485,7 @@ class SensitivityAnalyzer:
 
         # Baseline evaluation
         baseline_outputs = self._evaluate_model(
-            self.parameter_space.nominal_values.reshape(1, -1)
+            self.parameter_space.nominal_values.reshape(1, -1),
         )
 
         # Calculate partial derivatives
@@ -444,7 +504,10 @@ class SensitivityAnalyzer:
             # Calculate gradient
             for output_name in self.output_names:
                 if perturbed_outputs[output_name].size > 0:
-                    dy = perturbed_outputs[output_name][0] - baseline_outputs[output_name][0]
+                    dy = (
+                        perturbed_outputs[output_name][0]
+                        - baseline_outputs[output_name][0]
+                    )
                     dx = perturbed[i] - self.parameter_space.nominal_values[i]
 
                     if dx != 0:
@@ -453,10 +516,13 @@ class SensitivityAnalyzer:
         result.local_sensitivities = gradients
         return result
 
-    def _analyze_morris(self, n_samples: int, n_levels: int = 4,
-                       grid_jump: int = 2) -> SensitivityResult:
-        """
-        Perform Morris elementary effects method.
+    def _analyze_morris(
+        self,
+        n_samples: int,
+        n_levels: int = 4,
+        grid_jump: int = 2,
+    ) -> SensitivityResult:
+        """Perform Morris elementary effects method.
 
         Args:
             n_samples: Number of trajectories
@@ -465,15 +531,20 @@ class SensitivityAnalyzer:
 
         Returns:
             Sensitivity analysis results
+
         """
         result = SensitivityResult(
             method=SensitivityMethod.MORRIS,
             parameter_names=self.parameter_space.parameter_names,
-            output_names=self.output_names
+            output_names=self.output_names,
         )
 
         # Generate Morris trajectories
-        trajectories = self._generate_morris_trajectories(n_samples, n_levels, grid_jump)
+        trajectories = self._generate_morris_trajectories(
+            n_samples,
+            n_levels,
+            grid_jump,
+        )
 
         # Evaluate model for all trajectories
         all_outputs: dict[str, list[float]] = {}
@@ -499,7 +570,10 @@ class SensitivityAnalyzer:
             for traj_idx, trajectory in enumerate(trajectories):
                 for i in range(n_params):
                     # Calculate elementary effect
-                    dy = all_outputs[output_name][output_idx + i + 1] - all_outputs[output_name][output_idx + i]
+                    dy = (
+                        all_outputs[output_name][output_idx + i + 1]
+                        - all_outputs[output_name][output_idx + i]
+                    )
                     dx = trajectory[i + 1, i] - trajectory[i, i]
 
                     if dx != 0:
@@ -518,8 +592,12 @@ class SensitivityAnalyzer:
 
         return result
 
-    def _generate_morris_trajectories(self, n_trajectories: int, n_levels: int,
-                                    grid_jump: int) -> list[np.ndarray]:
+    def _generate_morris_trajectories(
+        self,
+        n_trajectories: int,
+        n_levels: int,
+        grid_jump: int,
+    ) -> list[np.ndarray]:
         """Generate Morris trajectories for elementary effects method."""
         trajectories = []
         n_params = self.parameter_space.n_parameters
@@ -543,18 +621,21 @@ class SensitivityAnalyzer:
             # Scale trajectory to parameter bounds
             scaled_trajectory = np.zeros_like(trajectory, dtype=float)
             for i, param in enumerate(self.parameter_space.parameters):
-                scaled_trajectory[:, i] = (param.bounds.min_value +
-                                         trajectory[:, i] * (param.bounds.max_value - param.bounds.min_value) / (n_levels - 1))
+                scaled_trajectory[:, i] = param.bounds.min_value + trajectory[:, i] * (
+                    param.bounds.max_value - param.bounds.min_value
+                ) / (n_levels - 1)
 
             trajectories.append(scaled_trajectory)
 
         return trajectories
 
-    def _analyze_sobol(self, n_samples: int,
-                      sampling_method: SamplingMethod = SamplingMethod.SOBOL_SEQUENCE,
-                      calc_second_order: bool = False) -> SensitivityResult:
-        """
-        Perform Sobol global sensitivity analysis.
+    def _analyze_sobol(
+        self,
+        n_samples: int,
+        sampling_method: SamplingMethod = SamplingMethod.SOBOL_SEQUENCE,
+        calc_second_order: bool = False,
+    ) -> SensitivityResult:
+        """Perform Sobol global sensitivity analysis.
 
         Args:
             n_samples: Number of samples
@@ -563,11 +644,12 @@ class SensitivityAnalyzer:
 
         Returns:
             Sensitivity analysis results
+
         """
         result = SensitivityResult(
             method=SensitivityMethod.SOBOL,
             parameter_names=self.parameter_space.parameter_names,
-            output_names=self.output_names
+            output_names=self.output_names,
         )
 
         # Generate sample matrices for Sobol analysis
@@ -618,7 +700,7 @@ class SensitivityAnalyzer:
                 y_C = [np.mean(y_c, axis=tuple(range(1, y_c.ndim))) for y_c in y_C]
 
             # Calculate variance
-            y_all = np.concatenate([y_A, y_B] + y_C)
+            y_all = np.concatenate([y_A, y_B, *y_C])
             var_y = np.var(y_all)
 
             if var_y == 0:
@@ -644,22 +726,25 @@ class SensitivityAnalyzer:
 
         result.first_order_indices = first_order
         result.total_order_indices = total_order
-        result.parameter_samples = np.vstack([samples_A, samples_B] + samples_C)
+        result.parameter_samples = np.vstack([samples_A, samples_B, *samples_C])
         result.output_samples = {}
 
         for output_name in self.output_names:
             if output_name in outputs_A:
-                result.output_samples[output_name] = np.concatenate([
-                    outputs_A[output_name],
-                    outputs_B[output_name]
-                ] + [outputs_C[i][output_name] for i in range(n_params)])
+                result.output_samples[output_name] = np.concatenate(
+                    [outputs_A[output_name], outputs_B[output_name]]
+                    + [outputs_C[i][output_name] for i in range(n_params)],
+                )
 
         return result
 
-    def rank_parameters(self, result: SensitivityResult,
-                       output_name: str, metric: str = "total_order") -> list[tuple[str, float]]:
-        """
-        Rank parameters by sensitivity importance.
+    def rank_parameters(
+        self,
+        result: SensitivityResult,
+        output_name: str,
+        metric: str = "total_order",
+    ) -> list[tuple[str, float]]:
+        """Rank parameters by sensitivity importance.
 
         Args:
             result: Sensitivity analysis results
@@ -668,6 +753,7 @@ class SensitivityAnalyzer:
 
         Returns:
             List of (parameter_name, sensitivity_value) tuples, sorted by importance
+
         """
         if metric == "total_order" and result.total_order_indices:
             values = result.total_order_indices[output_name]
@@ -678,7 +764,8 @@ class SensitivityAnalyzer:
         elif metric == "local" and result.local_sensitivities:
             values = np.abs(result.local_sensitivities[output_name])
         else:
-            raise ValueError(f"Metric '{metric}' not available in results")
+            msg = f"Metric '{metric}' not available in results"
+            raise ValueError(msg)
 
         # Create ranking
         ranking = list(zip(result.parameter_names, values, strict=False))
@@ -690,24 +777,31 @@ class SensitivityAnalyzer:
 class SensitivityVisualizer:
     """Visualization tools for sensitivity analysis results."""
 
-    def __init__(self, visualization_config: VisualizationConfig | None = None):
-        """
-        Initialize sensitivity visualizer.
+    def __init__(self, visualization_config: VisualizationConfig | None = None) -> None:
+        """Initialize sensitivity visualizer.
 
         Args:
             visualization_config: Visualization configuration
+
         """
         self.config = visualization_config or VisualizationConfig()
 
         # Apply style configuration
         from .visualization_config import apply_style_config, get_colors_for_scheme
-        apply_style_config(self.config.plot_style)
-        self.colors = get_colors_for_scheme(self.config.color_scheme_type, self.config.color_scheme)
 
-    def plot_sensitivity_indices(self, result: SensitivityResult,
-                                output_name: str, save_path: str | None = None) -> plt.Figure:
-        """
-        Plot sensitivity indices (first-order and total-order).
+        apply_style_config(self.config.plot_style)
+        self.colors = get_colors_for_scheme(
+            self.config.color_scheme_type,
+            self.config.color_scheme,
+        )
+
+    def plot_sensitivity_indices(
+        self,
+        result: SensitivityResult,
+        output_name: str,
+        save_path: str | None = None,
+    ) -> plt.Figure:
+        """Plot sensitivity indices (first-order and total-order).
 
         Args:
             result: Sensitivity analysis results
@@ -716,6 +810,7 @@ class SensitivityVisualizer:
 
         Returns:
             Matplotlib figure
+
         """
         fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -725,34 +820,49 @@ class SensitivityVisualizer:
         # Plot first-order indices
         if result.first_order_indices and output_name in result.first_order_indices:
             s1 = result.first_order_indices[output_name]
-            ax.bar(x_pos - 0.2, s1, 0.4, label='First-order (S₁)',
-                  color=self.colors[0], alpha=0.8)
+            ax.bar(
+                x_pos - 0.2,
+                s1,
+                0.4,
+                label="First-order (S₁)",
+                color=self.colors[0],
+                alpha=0.8,
+            )
 
         # Plot total-order indices
         if result.total_order_indices and output_name in result.total_order_indices:
             st = result.total_order_indices[output_name]
-            ax.bar(x_pos + 0.2, st, 0.4, label='Total-order (Sₜ)',
-                  color=self.colors[1], alpha=0.8)
+            ax.bar(
+                x_pos + 0.2,
+                st,
+                0.4,
+                label="Total-order (Sₜ)",
+                color=self.colors[1],
+                alpha=0.8,
+            )
 
-        ax.set_xlabel('Parameters')
-        ax.set_ylabel('Sensitivity Index')
-        ax.set_title(f'Sobol Sensitivity Indices - {output_name}')
+        ax.set_xlabel("Parameters")
+        ax.set_ylabel("Sensitivity Index")
+        ax.set_title(f"Sobol Sensitivity Indices - {output_name}")
         ax.set_xticks(x_pos)
-        ax.set_xticklabels(param_names, rotation=45, ha='right')
+        ax.set_xticklabels(param_names, rotation=45, ha="right")
         ax.legend()
         ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
 
         if save_path:
-            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+            fig.savefig(save_path, dpi=300, bbox_inches="tight")
 
         return fig
 
-    def plot_morris_results(self, result: SensitivityResult,
-                           output_name: str, save_path: str | None = None) -> plt.Figure:
-        """
-        Plot Morris method results (μ* vs σ).
+    def plot_morris_results(
+        self,
+        result: SensitivityResult,
+        output_name: str,
+        save_path: str | None = None,
+    ) -> plt.Figure:
+        """Plot Morris method results (μ* vs σ).
 
         Args:
             result: Sensitivity analysis results
@@ -761,9 +871,11 @@ class SensitivityVisualizer:
 
         Returns:
             Matplotlib figure
+
         """
         if not (result.morris_means_star and result.morris_stds):
-            raise ValueError("Morris results not available")
+            msg = "Morris results not available"
+            raise ValueError(msg)
 
         fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -772,33 +884,47 @@ class SensitivityVisualizer:
         param_names = result.parameter_names
 
         # Scatter plot
-        ax.scatter(mu_star, sigma, c=self.colors[0],
-                  s=100, alpha=0.7, edgecolors='black')
+        ax.scatter(
+            mu_star,
+            sigma,
+            c=self.colors[0],
+            s=100,
+            alpha=0.7,
+            edgecolors="black",
+        )
 
         # Add parameter labels
         for i, name in enumerate(param_names):
-            ax.annotate(name, (mu_star[i], sigma[i]),
-                       xytext=(5, 5), textcoords='offset points',
-                       fontsize=9, alpha=0.8)
+            ax.annotate(
+                name,
+                (mu_star[i], sigma[i]),
+                xytext=(5, 5),
+                textcoords="offset points",
+                fontsize=9,
+                alpha=0.8,
+            )
 
-        ax.set_xlabel('μ* (Mean of Absolute Elementary Effects)')
-        ax.set_ylabel('σ (Standard Deviation of Elementary Effects)')
-        ax.set_title(f'Morris Method Results - {output_name}')
+        ax.set_xlabel("μ* (Mean of Absolute Elementary Effects)")
+        ax.set_ylabel("σ (Standard Deviation of Elementary Effects)")
+        ax.set_title(f"Morris Method Results - {output_name}")
         ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
 
         if save_path:
-            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+            fig.savefig(save_path, dpi=300, bbox_inches="tight")
 
         return fig
 
-    def plot_parameter_ranking(self, result: SensitivityResult,
-                              output_name: str, metric: str = "total_order",
-                              top_n: int | None = None,
-                              save_path: str | None = None) -> plt.Figure:
-        """
-        Plot parameter ranking by sensitivity.
+    def plot_parameter_ranking(
+        self,
+        result: SensitivityResult,
+        output_name: str,
+        metric: str = "total_order",
+        top_n: int | None = None,
+        save_path: str | None = None,
+    ) -> plt.Figure:
+        """Plot parameter ranking by sensitivity.
 
         Args:
             result: Sensitivity analysis results
@@ -809,6 +935,7 @@ class SensitivityVisualizer:
 
         Returns:
             Matplotlib figure
+
         """
         # Get ranking
         analyzer = SensitivityAnalyzer(None, None, [])  # Dummy instance for ranking
@@ -822,23 +949,27 @@ class SensitivityVisualizer:
         param_names = [r[0] for r in ranking]
         values = [abs(r[1]) for r in ranking]
 
-        bars = ax.barh(range(len(param_names)), values,
-                      color=self.colors[0], alpha=0.8)
+        bars = ax.barh(range(len(param_names)), values, color=self.colors[0], alpha=0.8)
 
         ax.set_yticks(range(len(param_names)))
         ax.set_yticklabels(param_names)
-        ax.set_xlabel(f'Sensitivity ({metric.replace("_", " ").title()})')
-        ax.set_title(f'Parameter Ranking - {output_name}')
-        ax.grid(True, alpha=0.3, axis='x')
+        ax.set_xlabel(f"Sensitivity ({metric.replace('_', ' ').title()})")
+        ax.set_title(f"Parameter Ranking - {output_name}")
+        ax.grid(True, alpha=0.3, axis="x")
 
         # Add value labels on bars
         for _i, (bar, value) in enumerate(zip(bars, values, strict=False)):
-            ax.text(bar.get_width() + max(values) * 0.01, bar.get_y() + bar.get_height()/2,
-                   f'{value:.3f}', va='center', fontsize=9)
+            ax.text(
+                bar.get_width() + max(values) * 0.01,
+                bar.get_y() + bar.get_height() / 2,
+                f"{value:.3f}",
+                va="center",
+                fontsize=9,
+            )
 
         plt.tight_layout()
 
         if save_path:
-            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+            fig.savefig(save_path, dpi=300, bbox_inches="tight")
 
         return fig

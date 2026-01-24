@@ -1,7 +1,8 @@
-"""
-Sensor configuration classes for MFC sensor integration.
+"""Sensor configuration classes for MFC sensor integration.
 Replaces hardcoded values in EIS, QCM, and sensor fusion models.
 """
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
@@ -9,6 +10,7 @@ from enum import Enum
 
 class FusionMethod(Enum):
     """Available sensor fusion methods."""
+
     KALMAN_FILTER = "kalman_filter"
     WEIGHTED_AVERAGE = "weighted_average"
     MAXIMUM_LIKELIHOOD = "maximum_likelihood"
@@ -55,26 +57,28 @@ class EISConfig:
     drift_rate: float = 0.001  # per measurement
 
     # Calibration parameters by species
-    species_calibration: dict[str, dict[str, float | tuple[float, float]]] = field(default_factory=lambda: {
-        'geobacter': {
-            'thickness_slope': 150.0,
-            'thickness_intercept': 2000.0,
-            'max_thickness': 80.0,
-            'sensitivity_range': (5.0, 60.0)
+    species_calibration: dict[str, dict[str, float | tuple[float, float]]] = field(
+        default_factory=lambda: {
+            "geobacter": {
+                "thickness_slope": 150.0,
+                "thickness_intercept": 2000.0,
+                "max_thickness": 80.0,
+                "sensitivity_range": (5.0, 60.0),
+            },
+            "shewanella": {
+                "thickness_slope": 100.0,
+                "thickness_intercept": 1500.0,
+                "max_thickness": 60.0,
+                "sensitivity_range": (3.0, 45.0),
+            },
+            "mixed": {
+                "thickness_slope": 125.0,
+                "thickness_intercept": 1750.0,
+                "max_thickness": 70.0,
+                "sensitivity_range": (4.0, 52.5),
+            },
         },
-        'shewanella': {
-            'thickness_slope': 100.0,
-            'thickness_intercept': 1500.0,
-            'max_thickness': 60.0,
-            'sensitivity_range': (3.0, 45.0)
-        },
-        'mixed': {
-            'thickness_slope': 125.0,
-            'thickness_intercept': 1750.0,
-            'max_thickness': 70.0,
-            'sensitivity_range': (4.0, 52.5)
-        }
-    })
+    )
 
     # Model update parameters
     density_normalization_factor: float = 10.0
@@ -192,36 +196,25 @@ class SensorFusionConfig:
     fwhm_to_sigma_conversion: float = 2.355  # FWHM to sigma conversion
 
     # Species-specific density and porosity
-    species_properties: dict[str, dict[str, float]] = field(default_factory=lambda: {
-        'geobacter': {
-            'density': 1.15,  # g/cm³
-            'porosity': 0.7
+    species_properties: dict[str, dict[str, float]] = field(
+        default_factory=lambda: {
+            "geobacter": {"density": 1.15, "porosity": 0.7},  # g/cm³
+            "shewanella": {"density": 1.08, "porosity": 0.8},  # g/cm³
+            "mixed": {"density": 1.12, "porosity": 0.75},  # g/cm³
         },
-        'shewanella': {
-            'density': 1.08,  # g/cm³
-            'porosity': 0.8
-        },
-        'mixed': {
-            'density': 1.12,  # g/cm³
-            'porosity': 0.75
-        }
-    })
+    )
 
     volume_conversion_factor: float = 100.0  # Volume conversion factor
 
     # Confidence calculation parameters
     confidence_weight_balance: float = 1.0  # Weight balance factor
-    status_scores: dict[str, float] = field(default_factory=lambda: {
-        'good': 1.0,
-        'degraded': 0.6,
-        'failed': 0.1
-    })
+    status_scores: dict[str, float] = field(
+        default_factory=lambda: {"good": 1.0, "degraded": 0.6, "failed": 0.1},
+    )
 
-    confidence_weights: dict[str, float] = field(default_factory=lambda: {
-        'agreement': 0.5,
-        'balance': 0.2,
-        'status': 0.3
-    })
+    confidence_weights: dict[str, float] = field(
+        default_factory=lambda: {"agreement": 0.5, "balance": 0.2, "status": 0.3},
+    )
 
     # Fault detection parameters
     failure_count_divisor: float = 2.0  # Failure count divisor
@@ -267,17 +260,17 @@ HIGH_ACCURACY_SENSOR_CONFIG = SensorConfig(
         process_noise_thickness=0.05,
         process_noise_biomass=0.25,
         measurement_noise_eis_thickness=1.0,
-        measurement_noise_qcm_thickness=0.5
+        measurement_noise_qcm_thickness=0.5,
     ),
     eis_update_interval=30.0,
     qcm_update_interval=15.0,
-    fusion_update_interval=5.0
+    fusion_update_interval=5.0,
 )
 
 ROBUST_SENSOR_CONFIG = SensorConfig(
     fusion=SensorFusionConfig(
         fault_threshold=0.2,  # More sensitive fault detection
         max_disagreement_threshold=5.0,  # Stricter disagreement limit
-        minimum_sensor_weight=0.2  # Higher minimum weight
-    )
+        minimum_sensor_weight=0.2,  # Higher minimum weight
+    ),
 )
