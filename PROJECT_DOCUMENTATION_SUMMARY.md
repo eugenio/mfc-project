@@ -24,7 +24,7 @@ This document provides a comprehensive summary of the newly created documentatio
 - 40-dimensional state space, 15-dimensional action space
 - 97.1% power stability with 100% cell reversal prevention
 
-### 2. System Architecture (`SYSTEM_ARCHITECTURE.md`)
+### 2. System Architecture (`ARCHITECTURE.md`)
 **Purpose**: Detailed technical architecture documentation  
 **Target Audience**: System architects and senior developers  
 **Key Contents**:
