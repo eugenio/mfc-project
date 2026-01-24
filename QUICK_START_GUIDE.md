@@ -21,7 +21,7 @@ This guide provides a rapid introduction to the MFC Q-Learning Control System fo
 ```
 mfc-project/
 ├── 📋 AI_DEVELOPMENT_GUIDE.md     ← Comprehensive guide (read this)
-├── 🏗️  SYSTEM_ARCHITECTURE.md     ← Technical architecture
+├── 🏗️  ARCHITECTURE.md             ← Technical architecture
 ├── 📚 API_REFERENCE.md           ← Complete API documentation
 ├── ⚡ QUICK_START_GUIDE.md        ← This file
 ├── 📖 README.md                   ← Project overview
