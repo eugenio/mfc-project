@@ -272,6 +272,7 @@ def run_file_import_tests():
         'mfc_stack_simulation.py',
         'analyze_pdf_comments.py',
         'run_gpu_simulation.py',
+        'run_simulation.py',
         'mfc_qlearning_demo.py',
         'generate_pdf_report.py'
     ]
