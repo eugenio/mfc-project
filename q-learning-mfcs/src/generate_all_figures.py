@@ -5,8 +5,7 @@ This script consolidates all figure generation functionality from the following 
 - run_gpu_simulation.py
 - generate_performance_graphs.py
 - create_summary_plots.py
-- generate_enhanced_pdf_report.py
-- generate_pdf_report.py
+- generate_pdf_report.py (supports --enhanced flag for advanced reports)
 - energy_sustainability_analysis.py
 - stack_physical_specs.py
 - mfc_100h_simulation.py

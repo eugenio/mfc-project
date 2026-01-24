@@ -274,8 +274,7 @@ def run_file_import_tests():
         'analyze_pdf_comments.py',
         'run_gpu_simulation.py',
         'mfc_qlearning_demo.py',
-        'generate_pdf_report.py',
-        'generate_enhanced_pdf_report.py'
+        'generate_pdf_report.py'
     ]
 
     results = {}
