@@ -91,6 +91,7 @@ class ElectrodeGeometrySpec:
     # For custom geometries
     specific_surface_area: float | None = None  # m²/g - manually specified
     total_surface_area: float | None = None  # m² - manually specified
+    projected_area: float | None = None  # m² - projected/geometric area
 
     # Material density
     density: float | None = None  # kg/m³ - material density
