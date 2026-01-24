@@ -2,7 +2,7 @@
 """Automatic GitLab issue creation system.
 
 This module provides automatic issue creation when bugs or features are described.
-It integrates with the main GitLab integration to provide seamless issue management.
+It integrates with the consolidated GitLab issue manager for seamless issue management.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from .gitlab_integration import create_bug_issue, create_enhancement_issue
+from .gitlab_issue_manager import create_bug_issue, create_enhancement_issue
 
 
 class AutoIssueDetector:

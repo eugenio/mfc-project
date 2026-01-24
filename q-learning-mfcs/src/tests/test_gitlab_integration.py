@@ -5,18 +5,18 @@ Test suite for GitLab integration functionality
 Tests the GitLab API integration and automatic issue creation system.
 """
 
-import unittest
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 # Add src to path for imports
 src_path = Path(__file__).parent.parent
 sys.path.insert(0, str(src_path))
 
 try:
-    from utils.gitlab_integration import GitLabIssueManager
+    from utils.gitlab_issue_manager import GitLabIssueManager
     from utils.gitlab_auto_issue import AutoIssueDetector, analyze_user_input
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -36,7 +36,7 @@ class TestGitLabIntegration(unittest.TestCase):
         self.mock_project = Mock()
         self.mock_gitlab.projects.get.return_value = self.mock_project
         
-    @patch('utils.gitlab_integration.gitlab')
+    @patch('utils.gitlab_issue_manager.gitlab')
     @patch.dict(os.environ, {'GITLAB_TOKEN': 'test_token', 'GITLAB_PROJECT_ID': '123'})
     def test_connection_setup(self, mock_gitlab_module):
         """Test GitLab connection setup."""
@@ -205,7 +205,7 @@ class TestAutoIssueDetection(unittest.TestCase):
         # Note: This tests the analysis, actual todo extraction happens in _create_enhancement_from_analysis
         self.assertEqual(analysis['type'], 'enhancement')
     
-    @patch('utils.gitlab_auto_issue.create_bug_issue')
+    @patch('utils.gitlab_issue_manager.create_bug_issue')
     def test_auto_bug_creation(self, mock_create_bug):
         """Test automatic bug issue creation."""
         mock_create_bug.return_value = 42
@@ -221,7 +221,7 @@ class TestAutoIssueDetection(unittest.TestCase):
         call_args = mock_create_bug.call_args
         self.assertIn('broken', call_args.kwargs['description'])
     
-    @patch('utils.gitlab_auto_issue.create_enhancement_issue')
+    @patch('utils.gitlab_issue_manager.create_enhancement_issue')
     def test_auto_enhancement_creation(self, mock_create_enhancement):
         """Test automatic enhancement issue creation."""
         mock_create_enhancement.return_value = 43

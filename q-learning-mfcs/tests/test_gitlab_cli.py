@@ -6,19 +6,26 @@ Interactive command-line tool for testing GitLab integration functionality.
 """
 
 import argparse
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 try:
-    from utils.gitlab_integration import gitlab_manager
+    from utils.gitlab_issue_manager import GitLabIssueManager
     from utils.gitlab_auto_issue import auto_create_issue, analyze_user_input
+
+    # Create a global manager instance for CLI use
+    try:
+        gitlab_manager = GitLabIssueManager()
+    except (ValueError, ImportError):
+        gitlab_manager = None
     GITLAB_AVAILABLE = True
 except ImportError as e:
-    print(f"❌ Import error: {e}")
+    print(f"Import error: {e}")
+    gitlab_manager = None
     GITLAB_AVAILABLE = False
 
 def check_configuration():
