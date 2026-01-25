@@ -7,25 +7,9 @@ version = "0.1.0"
 
 [tasks]
 # Claude Code Hook Tasks (using hooks-repo submodule)
-pre-tool-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/pre_tool_use.py"
-post-tool-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/post_tool_use.py"
-notification-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/notification.py"
-stop-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/stop.py"
-subagent-stop-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/subagent_stop.py"
-user-prompt-submit-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/user_prompt_submit.py"
-send-event-hook = "PYTHONPATH=/home/uge/mfc-project/.claude/hooks-repo python /home/uge/mfc-project/.claude/hooks-repo/hooks/send_event.py"
 
 # Hook testing and debugging tasks (using original hooks backup for test scripts)
-test-hooks = "cd /home/uge/mfc-project/.claude/hooks-original && python test_hook_simple.py"
-test-chunking = "cd /home/uge/mfc-project/.claude/hooks-original && python test_chunking_system.py"
-test-gitlab-integration = "cd /home/uge/mfc-project/.claude/hooks-original && python test_gitlab_integration.py"
-test-edit-thresholds = "cd /home/uge/mfc-project/.claude/hooks-original && python test_edit_thresholds.py"
-test-file-creation-thresholds = "cd /home/uge/mfc-project/.claude/hooks-original && python test_file_creation_thresholds.py"
-monitor-live = "cd /home/uge/mfc-project/.claude/hooks-original && python test_monitor_live.py"
-trigger-test-monitoring = "cd /home/uge/mfc-project/.claude/hooks-original && python trigger_test_monitoring.py"
 
-# Hook setup and configuration (using original hooks backup)
-setup-intelligent-automation = "cd /home/uge/mfc-project/.claude/hooks-original && python setup_intelligent_automation.py"
 
 # Other tasks
 parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
