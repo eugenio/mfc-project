@@ -402,74 +402,102 @@ class TestLoadConfig:
 
 
 class TestMergeConfigs:
-    """Test merge_configs function."""
+    """Test merge_configs function.
 
-    @dataclass
-    class TestConfig:
-        name: str
-        value: int
-        settings: dict
+    Note: merge_configs takes (base_config, override_dict) where:
+    - base_config: QLearningConfig or SensorConfig instance
+    - override_dict: dict with values to override
+    """
 
     def test_merge_configs_simple(self):
-        """Test merging simple configurations."""
-        base_config = self.TestConfig(
-            name="base",
-            value=10,
-            settings={"debug": True},
+        """Test merging config with override dict."""
+        from src.config.sensor_config import SensorConfig
+
+        base_config = SensorConfig()
+        override_dict = {
+            "enable_eis": False,
+            "sensor_timeout": 600.0,
+        }
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            result = merge_configs(base_config, override_dict)
+
+        assert isinstance(result, SensorConfig)
+        assert result.enable_eis is False
+        assert result.sensor_timeout == 600.0
+        # Unchanged values should remain from base
+        assert result.enable_qcm is True
+
+    def test_merge_configs_nested_dict(self):
+        """Test merging config with nested override dict."""
+        from src.config.sensor_config import SensorConfig
+
+        base_config = SensorConfig()
+        # Override nested config values - use actual EISConfig field names
+        override_dict = {
+            "eis": {
+                "noise_level": 0.05,
+                "drift_rate": 0.002,
+            },
+        }
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            result = merge_configs(base_config, override_dict)
+
+        assert isinstance(result, SensorConfig)
+        assert result.eis.noise_level == 0.05
+        assert result.eis.drift_rate == 0.002
+
+    def test_merge_configs_empty_override(self):
+        """Test merging with empty override dict returns equivalent config."""
+        from src.config.sensor_config import SensorConfig
+
+        base_config = SensorConfig()
+        override_dict = {}
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            result = merge_configs(base_config, override_dict)
+
+        assert isinstance(result, SensorConfig)
+        assert result.enable_eis == base_config.enable_eis
+        assert result.enable_qcm == base_config.enable_qcm
+        assert result.sensor_timeout == base_config.sensor_timeout
+
+    def test_merge_configs_with_qlearning_config(self):
+        """Test merging QLearningConfig with override dict."""
+        from src.config.qlearning_config import QLearningConfig
+
+        base_config = QLearningConfig()
+        override_dict = {
+            "learning_rate": 0.05,
+            "discount_factor": 0.95,
+        }
+
+        with patch("src.config.config_io.validate_qlearning_config"):
+            result = merge_configs(base_config, override_dict)
+
+        assert isinstance(result, QLearningConfig)
+        assert result.learning_rate == 0.05
+        assert result.discount_factor == 0.95
+
+    def test_merge_configs_preserves_unmodified_fields(self):
+        """Test that unmodified fields retain original values."""
+        from src.config.sensor_config import SensorConfig
+
+        base_config = SensorConfig(
+            enable_eis=True,
+            enable_qcm=True,
+            sensor_timeout=300.0,
+            calibration_interval=3600.0,
         )
+        override_dict = {
+            "enable_eis": False,
+        }
 
-        override_config = self.TestConfig(
-            name="override",
-            value=20,
-            settings={"debug": False, "logging": "INFO"},
-        )
+        with patch("src.config.config_io.validate_sensor_config"):
+            result = merge_configs(base_config, override_dict)
 
-        result = merge_configs(base_config, override_config)
-
-        assert isinstance(result, self.TestConfig)
-        assert result.name == "override"
-        assert result.value == 20
-
-    def test_merge_configs_with_none_base(self):
-        """Test merging when base config is None."""
-        override_config = self.TestConfig(
-            name="override",
-            value=20,
-            settings={"debug": False},
-        )
-
-        result = merge_configs(None, override_config)
-
-        assert result is override_config
-
-    def test_merge_configs_with_none_override(self):
-        """Test merging when override config is None."""
-        base_config = self.TestConfig(
-            name="base",
-            value=10,
-            settings={"debug": True},
-        )
-
-        result = merge_configs(base_config, None)
-
-        assert result is base_config
-
-    def test_merge_configs_both_none(self):
-        """Test merging when both configs are None."""
-        result = merge_configs(None, None)
-
-        assert result is None
-
-    def test_merge_configs_different_types(self):
-        """Test merging configs of different types raises error."""
-        @dataclass
-        class DifferentConfig:
-            other_field: str
-
-        base_config = self.TestConfig(name="base", value=10, settings={})
-        different_config = DifferentConfig(other_field="different")
-
-        with pytest.raises(TypeError) as exc_info:
-            merge_configs(base_config, different_config)
-
-        assert "must be instances of the same dataclass type" in str(exc_info.value)
+        assert result.enable_eis is False
+        assert result.enable_qcm is True  # Unchanged
+        assert result.sensor_timeout == 300.0  # Unchanged
+        assert result.calibration_interval == 3600.0  # Unchanged
