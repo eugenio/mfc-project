@@ -41,18 +41,13 @@ class TestSecurityMiddleware:
 
         # Create security configuration
         security_config = SecurityConfig()
-        security_config.session_timeout = 3600  # 1 hour
-        security_config.max_login_attempts = 3
-        security_config.rate_limit_requests = 100
-        security_config.rate_limit_window = 60
+        security_config.session_timeout_minutes = 60  # 1 hour
+        security_config.rate_limit_requests_per_minute = 100
 
         # Create components
         session_manager = SessionManager(security_config)
-        csrf_protection = CSRFProtection()
-        rate_limiter = RateLimiter(
-            max_requests=security_config.rate_limit_requests,
-            window_seconds=security_config.rate_limit_window
-        )
+        csrf_protection = CSRFProtection(security_config)
+        rate_limiter = RateLimiter(security_config)
 
         return {
             "security_config": security_config,
@@ -69,24 +64,24 @@ class TestSecurityMiddleware:
         session_manager = security_system["session_manager"]
 
         # Create session
-        user_data = {"user_id": "test_user", "email": "test@example.com"}
-        session_id = session_manager.create_session(user_data)
+        user_data = {"email": "test@example.com"}
+        session_id = session_manager.create_session("test_user", user_data)
 
         assert session_id is not None
         assert len(session_id) > 10  # Should be a reasonable length
 
         # Validate session
-        session_data = session_manager.get_session(session_id)
+        session_data = session_manager.validate_session(session_id)
         assert session_data is not None
         assert session_data["user_id"] == "test_user"
-        assert session_data["email"] == "test@example.com"
+        assert session_data["user_data"]["email"] == "test@example.com"
 
         # Invalidate session
-        success = session_manager.invalidate_session(session_id)
+        success = session_manager.destroy_session(session_id)
         assert success is True
 
         # Try to get invalidated session
-        invalid_session = session_manager.get_session(session_id)
+        invalid_session = session_manager.validate_session(session_id)
         assert invalid_session is None
 
     @pytest.mark.integration
@@ -96,49 +91,47 @@ class TestSecurityMiddleware:
         csrf_protection = security_system["csrf_protection"]
 
         # Generate CSRF token
-        token = csrf_protection.generate_token("test_session")
+        token = csrf_protection.generate_csrf_token("test_session")
         assert token is not None
         assert len(token) > 16
 
         # Validate token
-        is_valid = csrf_protection.validate_token("test_session", token)
+        is_valid = csrf_protection.validate_csrf_token(token, "test_session")
         assert is_valid is True
 
         # Test invalid token
-        is_invalid = csrf_protection.validate_token("test_session", "invalid_token")
+        is_invalid = csrf_protection.validate_csrf_token("invalid_token", "test_session")
         assert is_invalid is False
 
         # Test token for different session
-        is_cross_session = csrf_protection.validate_token("other_session", token)
+        is_cross_session = csrf_protection.validate_csrf_token(token, "other_session")
         assert is_cross_session is False
 
     @pytest.mark.integration
     @pytest.mark.security
     def test_rate_limiting(self, security_system):
-        """Test rate limiting functionality"""
+        """Test rate limiting functionality."""
         rate_limiter = security_system["rate_limiter"]
-        client_id = "test_client_123"
+        client_ip = "192.168.1.100"
 
-        # Test normal requests
+        # Test normal requests (should not be rate limited initially)
         for _i in range(10):
-            allowed = rate_limiter.is_allowed(client_id)
-            assert allowed is True
+            is_limited = rate_limiter.is_rate_limited(client_ip)
+            assert is_limited is False, "Should not be rate limited for normal request count"
 
         # Test rate limit exceeded (if configured low enough)
-        if rate_limiter.max_requests <= 50:
-            # Make many requests quickly
-            for _i in range(rate_limiter.max_requests + 5):
-                rate_limiter.is_allowed(client_id)
+        max_requests = rate_limiter.config.rate_limit_requests_per_minute
+        if max_requests <= 50:
+            # Make many requests quickly to trigger rate limiting
+            for _i in range(max_requests + 5):
+                rate_limiter.is_rate_limited(client_ip)
 
-            # Should be rate limited now
-            rate_limiter.is_allowed(client_id)
-            # Note: May still be allowed depending on exact timing
-            # This is more of a functional test than strict assertion
+            # Note: Rate limiting behavior depends on exact timing and implementation
 
-        # Test different client
-        other_client = "other_client_456"
-        other_allowed = rate_limiter.is_allowed(other_client)
-        assert other_allowed is True
+        # Test different client (should not be affected by other client's requests)
+        other_client_ip = "192.168.1.101"
+        other_is_limited = rate_limiter.is_rate_limited(other_client_ip)
+        assert other_is_limited is False, "Different client should not be rate limited"
 
 
 class TestSecurityFeatures:
@@ -165,20 +158,22 @@ class TestSecurityFeatures:
         }
 
         # Create authenticated session
-        session_id = session_manager.create_session({
-            "user_id": user_credentials["username"],
-            "email": user_credentials["email"],
-            "authenticated": True,
-            "login_time": datetime.now().isoformat()
-        })
+        session_id = session_manager.create_session(
+            user_credentials["username"],
+            {
+                "email": user_credentials["email"],
+                "authenticated": True,
+                "login_time": datetime.now().isoformat()
+            }
+        )
 
         # Verify session
-        session = session_manager.get_session(session_id)
-        assert session["authenticated"] is True
+        session = session_manager.validate_session(session_id)
+        assert session["user_data"]["authenticated"] is True
         assert session["user_id"] == user_credentials["username"]
 
         # Test session timeout (simulate)
-        expired_session = session_manager.get_session("expired_session_id")
+        expired_session = session_manager.validate_session("expired_session_id")
         assert expired_session is None
 
     @pytest.mark.integration
@@ -314,18 +309,17 @@ yTdEeHWU5tTHRAkNAYiVCJYiGnVJrDqxgW0W7CHIaHVCXfyLgtbStTN8YnYhGqS3
 
         # Test session with security metadata
         session_data = {
-            "user_id": "security_test_user",
             "ip_address": "192.168.1.100",
             "user_agent": "Mozilla/5.0 Test Browser",
             "login_time": datetime.now().isoformat(),
-            "last_activity": datetime.now().isoformat()
         }
 
-        session_id = session_manager.create_session(session_data)
-        retrieved_session = session_manager.get_session(session_id)
+        session_id = session_manager.create_session("security_test_user", session_data)
+        retrieved_session = session_manager.validate_session(session_id)
 
         # Verify security metadata
-        assert retrieved_session["ip_address"] == "192.168.1.100"
-        assert retrieved_session["user_agent"] == "Mozilla/5.0 Test Browser"
-        assert "login_time" in retrieved_session
+        assert retrieved_session["user_data"]["ip_address"] == "192.168.1.100"
+        user_agent = retrieved_session["user_data"]["user_agent"]
+        assert user_agent == "Mozilla/5.0 Test Browser"
+        assert "login_time" in retrieved_session["user_data"]
         assert "last_activity" in retrieved_session
