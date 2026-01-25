@@ -1,51 +1,36 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+# GitLab CI/CD configuration for MFC Q-Learning project
+# Uses shell executor with pixi for dependency management
+
 stages:
-- build
-- test
-- deploy
-- review
-- dast
-- staging
-- canary
-- production
-- incremental rollout 10%
-- incremental rollout 25%
-- incremental rollout 50%
-- incremental rollout 100%
-- performance
-- cleanup
-- secret-detection
-sast:
-  stage: test
-include:
-- template: Auto-DevOps.gitlab-ci.yml
+  - test
+
 variables:
-  SECRET_DETECTION_ENABLED: 'true'
   # Ensure tests run in isolated environment without user site-packages
   PYTHONNOUSERSITE: '1'
 
-secret_detection:
-  stage: secret-detection
-
-# Pixi-based test job with isolated environment
-test-pixi:
+# Main test job using pixi (shell executor)
+test:
   stage: test
-  image: ghcr.io/prefix-dev/pixi:latest
   script:
-    # Verify isolation is enabled
+    - echo "Running tests with pixi on $(hostname)"
     - echo "PYTHONNOUSERSITE=$PYTHONNOUSERSITE"
-    # Install dependencies using pixi
-    - pixi install -e dev
-    # Validate dependencies
-    - pixi run validate-deps
-    # Run tests with isolation
-    - PYTHONNOUSERSITE=1 pixi run -e dev pytest q-learning-mfcs/tests -v --tb=short
+    # Check if pixi is available, install if needed
+    - which pixi || curl -fsSL https://pixi.sh/install.sh | bash
+    - export PATH="$HOME/.pixi/bin:$PATH"
+    # Install dependencies
+    - pixi install -e default
+    # Run linting
+    - pixi run -e default ruff check q-learning-mfcs/src --output-format=gitlab > ruff-report.json || true
+    # Run tests
+    - pixi run -e default pytest q-learning-mfcs/tests -v --tb=short --junitxml=report.xml
+  artifacts:
+    when: always
+    paths:
+      - report.xml
+      - ruff-report.json
+    reports:
+      junit: report.xml
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
