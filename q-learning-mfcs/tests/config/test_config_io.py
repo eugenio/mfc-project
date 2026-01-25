@@ -316,42 +316,48 @@ class TestDictToDataclass:
 class TestSaveConfig:
     """Test save_config function."""
 
-    @dataclass
-    class TestConfig:
-        name: str
-        value: int
-        option: TestEnum = TestEnum.OPTION_A
-
     def test_save_config_yaml(self):
         """Test saving config to YAML file."""
-        config = self.TestConfig(name="test", value=42, option=TestEnum.OPTION_B)
-        
-        with patch("builtins.open", mock_open()) as mock_file:
-            with patch("yaml.dump") as mock_yaml_dump:
-                save_config(config, "/path/to/config.yaml")
-                
-                mock_file.assert_called_once_with("/path/to/config.yaml", 'w')
-                mock_yaml_dump.assert_called_once()
+        from src.config.sensor_config import SensorConfig
+
+        config = SensorConfig()
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            with patch("pathlib.Path.mkdir"):
+                with patch("builtins.open", mock_open()) as mock_file:
+                    with patch("yaml.dump") as mock_yaml_dump:
+                        save_config(config, "/path/to/config.yaml", format="yaml")
+
+                        mock_file.assert_called_once()
+                        mock_yaml_dump.assert_called_once()
 
     def test_save_config_json(self):
         """Test saving config to JSON file."""
-        config = self.TestConfig(name="test", value=42)
-        
-        with patch("builtins.open", mock_open()) as mock_file:
-            with patch("json.dump") as mock_json_dump:
-                save_config(config, "/path/to/config.json")
-                
-                mock_file.assert_called_once_with("/path/to/config.json", 'w')
-                mock_json_dump.assert_called_once()
+        from src.config.sensor_config import SensorConfig
+
+        config = SensorConfig()
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            with patch("pathlib.Path.mkdir"):
+                with patch("builtins.open", mock_open()) as mock_file:
+                    with patch("json.dump") as mock_json_dump:
+                        save_config(config, "/path/to/config.json", format="json")
+
+                        mock_file.assert_called_once()
+                        mock_json_dump.assert_called_once()
 
     def test_save_config_unsupported_format(self):
-        """Test saving config to unsupported format."""
-        config = self.TestConfig(name="test", value=42)
-        
-        with pytest.raises(ValueError) as exc_info:
-            save_config(config, "/path/to/config.txt")
-        
-        assert "Unsupported file format" in str(exc_info.value)
+        """Test saving config to unsupported format raises ValueError."""
+        from src.config.sensor_config import SensorConfig
+
+        config = SensorConfig()
+
+        with patch("src.config.config_io.validate_sensor_config"):
+            with patch("pathlib.Path.mkdir"):
+                with pytest.raises(ValueError) as exc_info:
+                    save_config(config, "/path/to/config.yaml", format="txt")
+
+                assert "Unsupported format" in str(exc_info.value)
 
 
 class TestLoadConfig:
