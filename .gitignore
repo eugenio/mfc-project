@@ -150,8 +150,6 @@ export/
 
 #.claude directory
 .claude/*
-!.claude/hooks-repo
-!.claude/hooks
 .claude/settings.json
 
 protein-models-4-mfc/25d5625117867c5a58670e1bb0c9bc0d7e07e5196e830eab1adfa2e3fe5c01c6
