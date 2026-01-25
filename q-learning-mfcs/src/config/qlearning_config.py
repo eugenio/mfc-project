@@ -144,6 +144,20 @@ class QLearningConfig:
     # Time-based state bins
     time_bins: list[int] = field(default_factory=lambda: [200, 500, 800, 1000])
 
+    # Biofilm deviation state space
+    biofilm_max_deviation: float = 1.0  # Max biofilm deviation for discretization
+    biofilm_deviation_bins: int = 6  # Number of biofilm deviation bins
+
+    # Substrate utilization state space
+    substrate_utilization_max: float = 50.0  # Maximum substrate utilization (mM)
+    substrate_utilization_bins: int = 8  # Number of substrate utilization bins
+
+    # Time phase hours alias (alias for time_bins for controller compatibility)
+    @property
+    def time_phase_hours(self) -> list[int]:
+        """Alias for time_bins for controller compatibility."""
+        return self.time_bins
+
     # Enhanced controller state space (sensor-integrated)
     eis_thickness_bins: int = 8  # EIS biofilm thickness bins
     eis_thickness_max: float = 80.0  # Maximum EIS thickness (μm)
