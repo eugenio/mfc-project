@@ -3,6 +3,7 @@
 
 stages:
   - test
+  - renovate
 
 variables:
   # Ensure tests run in isolated environment without user site-packages
@@ -34,3 +35,25 @@ test:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "push"
+
+# Renovate - Automated dependency updates
+# Requires: RENOVATE_TOKEN variable set in CI/CD settings
+# Schedule: Create a pipeline schedule in Settings > CI/CD > Schedules
+renovate:
+  stage: renovate
+  image: renovate/renovate:latest
+  variables:
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: ${CI_API_V4_URL}
+    RENOVATE_TOKEN: ${RENOVATE_TOKEN}
+    RENOVATE_REPOSITORIES: ${CI_PROJECT_PATH}
+    LOG_LEVEL: info
+  script:
+    - renovate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - if: $RENOVATE_DRY_RUN == "true"
+      when: manual
+  tags:
+    - docker
