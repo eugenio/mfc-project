@@ -179,6 +179,7 @@ debug_*.py
 test_*.py
 *test*.py
 !conftest.py
+!scripts/validate_test_dependencies.py
 suppress_*.py
 verify_*.py
 *_bug_report.md
