@@ -16,9 +16,10 @@ import json
 import sys
 from pathlib import Path
 
-# Add hooks directory to path
+# Add hooks-repo directory to path (hooks migrated to separate repository)
 project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root / '.claude' / 'hooks'))
+sys.path.insert(0, str(project_root / '.claude' / 'hooks-repo'))
+sys.path.insert(0, str(project_root / '.claude' / 'hooks-repo' / 'hooks'))
 
 try:
     import pre_tool_use
