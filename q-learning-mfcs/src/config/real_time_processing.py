@@ -65,7 +65,8 @@ try:
     from scipy.signal import savgol_filter
 
     HAS_SCIPY = True
-except ImportError:
+except (ImportError, TypeError):
+    # TypeError can occur due to numpy/scipy version incompatibility
     HAS_SCIPY = False
     warnings.warn(
         "SciPy not available. Some signal processing features will be limited.",
