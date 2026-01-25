@@ -27,5 +27,25 @@ include:
 - template: Auto-DevOps.gitlab-ci.yml
 variables:
   SECRET_DETECTION_ENABLED: 'true'
+  # Ensure tests run in isolated environment without user site-packages
+  PYTHONNOUSERSITE: '1'
+
 secret_detection:
   stage: secret-detection
+
+# Pixi-based test job with isolated environment
+test-pixi:
+  stage: test
+  image: ghcr.io/prefix-dev/pixi:latest
+  script:
+    # Verify isolation is enabled
+    - echo "PYTHONNOUSERSITE=$PYTHONNOUSERSITE"
+    # Install dependencies using pixi
+    - pixi install -e dev
+    # Validate dependencies
+    - pixi run validate-deps
+    # Run tests with isolation
+    - PYTHONNOUSERSITE=1 pixi run -e dev pytest q-learning-mfcs/tests -v --tb=short
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
