@@ -167,6 +167,10 @@ types-requests = "*"
 types-jsonschema = "*"
 types-seaborn = "*"
 yamllint = ">=1.37.1,<2"
+# Test dependencies identified by US-001 audit
+numba = ">=0.60.0,<1"
+psutil = ">=7.0.0,<8"
+pyarrow = ">=18.0.0,<24"
 
 # Build and documentation tools
 [feature.docs-build.dependencies]
