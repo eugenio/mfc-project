@@ -1,1 +1,1 @@
-# Hook tests - moved from .claude/hooks/tests/
+"""Tests for Claude Code hooks integration with MFC project."""

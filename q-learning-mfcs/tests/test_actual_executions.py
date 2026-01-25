@@ -4,20 +4,27 @@ Unit tests for actual file executions with minimal parameters.
 These tests run actual source files with short durations to verify path outputs.
 """
 
-import unittest
 import os
-import sys
 import subprocess
+import sys
+import unittest
 from pathlib import Path
+
 import matplotlib
+import pytest
+
 matplotlib.use('Agg')
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from path_config import (
-    get_figure_path, get_simulation_data_path, get_model_path,
-    FIGURES_DIR, SIMULATION_DATA_DIR, MODELS_DIR
+    FIGURES_DIR,
+    MODELS_DIR,
+    SIMULATION_DATA_DIR,
+    get_figure_path,
+    get_model_path,
+    get_simulation_data_path,
 )
 
 
@@ -257,7 +264,7 @@ class TestFileOutputPatterns(unittest.TestCase):
             filepath = self.src_dir / filename
             if filepath.exists():
                 with self.subTest(file=filename):
-                    with open(filepath, 'r') as f:
+                    with open(filepath) as f:
                         content = f.read()
 
                     # Check for path_config import
@@ -275,8 +282,16 @@ class TestFileOutputPatterns(unittest.TestCase):
                         self.assertNotIn(pattern, content,
                                        f"{filename} should not contain hardcoded pattern: {pattern}")
 
+    @pytest.mark.skipif(
+        os.environ.get('CI') is not None or os.environ.get('GITLAB_CI') is not None,
+        reason="Skip in CI environment - output directories may be empty without prior simulation runs"
+    )
     def test_expected_output_directories_have_content(self):
-        """Test that output directories contain expected types of files."""
+        """Test that output directories contain expected types of files.
+
+        Note: This test is skipped in CI environments because the output directories
+        are populated by running simulations, which may not have occurred in CI.
+        """
         # Check figures directory
         if FIGURES_DIR.exists():
             png_files = list(FIGURES_DIR.glob('*.png'))

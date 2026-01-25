@@ -4,3 +4,6 @@
 [submodule "KEGG-MCP-Server"]
 	path = KEGG-MCP-Server
 	url = https://github.com/Augmented-Nature/KEGG-MCP-Server.git
+[submodule ".claude/hooks-repo"]
+	path = .claude/hooks-repo
+	url = https://gitlab-runner.tail301d0a.ts.net/uge/claude-code-hooks.git
