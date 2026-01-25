@@ -178,6 +178,7 @@ check_*.py
 debug_*.py
 test_*.py
 *test*.py
+!conftest.py
 suppress_*.py
 verify_*.py
 *_bug_report.md
