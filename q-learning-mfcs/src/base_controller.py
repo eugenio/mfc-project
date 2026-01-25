@@ -25,8 +25,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import torch
-from torch import nn
+from torch_compat import TORCH_AVAILABLE, get_device, nn, torch
 
 if TYPE_CHECKING:
     from adaptive_mfc_controller import SystemState
@@ -110,7 +109,7 @@ class BaseController(ABC):
         logger.info(f"{self.__class__.__name__} initialized on {self.device}")
         logger.info(f"State dim: {state_dim}, Action dim: {action_dim}")
 
-    def _select_device(self, device: str | None) -> torch.device:
+    def _select_device(self, device: str | None) -> Any:
         """Select computing device (GPU/CPU).
 
         This logic is common across all controllers:
@@ -121,12 +120,10 @@ class BaseController(ABC):
             device: Device specification ('cuda', 'cpu', 'auto', or None)
 
         Returns:
-            torch.device: Selected computing device
+            torch.device if PyTorch available, else mock device for CPU fallback
 
         """
-        if device == "auto" or device is None:
-            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        return torch.device(device)
+        return get_device(device)
 
     @property
     def feature_engineer(self):
@@ -226,12 +223,20 @@ class BaseController(ABC):
         Returns:
             Total gradient norm before clipping
 
+        Raises:
+            ImportError: If PyTorch is not available
+
         """
+        if not TORCH_AVAILABLE:
+            raise ImportError(
+                "clip_gradients requires PyTorch. "
+                "Install PyTorch or use pixi -e nvidia-gpu environment.",
+            )
         return torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm).item()
 
     def prepare_state_tensor(
-        self, state: np.ndarray, add_batch_dim: bool = True
-    ) -> torch.Tensor:
+        self, state: np.ndarray, add_batch_dim: bool = True,
+    ) -> Any:
         """Convert state array to tensor on correct device.
 
         This pattern is common across all neural network-based controllers.
@@ -243,7 +248,15 @@ class BaseController(ABC):
         Returns:
             State tensor on the correct device
 
+        Raises:
+            ImportError: If PyTorch is not available
+
         """
+        if not TORCH_AVAILABLE:
+            raise ImportError(
+                "prepare_state_tensor requires PyTorch. "
+                "Install PyTorch or use pixi -e nvidia-gpu environment.",
+            )
         tensor = torch.FloatTensor(state)
         if add_batch_dim:
             tensor = tensor.unsqueeze(0)
@@ -336,11 +349,11 @@ class BaseController(ABC):
 
         if "loss_history" in state_dict:
             self.loss_history = deque(
-                state_dict["loss_history"], maxlen=self._history_maxlen
+                state_dict["loss_history"], maxlen=self._history_maxlen,
             )
         if "reward_history" in state_dict:
             self.reward_history = deque(
-                state_dict["reward_history"], maxlen=self._history_maxlen
+                state_dict["reward_history"], maxlen=self._history_maxlen,
             )
 
     @abstractmethod
