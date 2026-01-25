@@ -47,9 +47,13 @@ renovate:
     RENOVATE_TOKEN: ${RENOVATE_TOKEN}
     LOG_LEVEL: info
   script:
-    - which node || (curl -fsSL https://fnm.vercel.app/install | bash && source ~/.bashrc && fnm install --lts)
-    - export PATH="$HOME/.local/share/fnm:$PATH"
-    - eval "$(fnm env)"
+    - |
+      if ! which node > /dev/null 2>&1; then
+        curl -fsSL https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz | tar -xJ -C /tmp
+        export PATH="/tmp/node-v22.13.1-linux-x64/bin:$PATH"
+      fi
+    - export PATH="/tmp/node-v22.13.1-linux-x64/bin:$PATH"
+    - node --version
     - npx --yes renovate --platform=gitlab --endpoint="${CI_API_V4_URL}" --token="${RENOVATE_TOKEN}" "${CI_PROJECT_PATH}"
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
