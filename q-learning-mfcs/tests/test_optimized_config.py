@@ -1,5 +1,4 @@
-"""
-Test Optimized Q-learning Configuration
+"""Test Optimized Q-learning Configuration.
 
 Loads optimized hyperparameters from Bayesian optimization and runs
 extended simulations to validate substrate control performance.
@@ -7,27 +6,34 @@ extended simulations to validate substrate control performance.
 Created: 2025-07-26
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any, Dict
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from hyperparameter_optimization import apply_optimized_config
-from mfc_recirculation_control import run_mfc_simulation
+try:
+    from hyperparameter_optimization import apply_optimized_config
+    from mfc_recirculation_control import run_mfc_simulation
+except ImportError as e:
+    pytest.skip(
+        f"Hyperparameter optimization requires optuna: {e}",
+        allow_module_level=True,
+    )
 
 
 def load_optimized_config(results_file: str) -> Dict[str, Any]:
     """Load optimized configuration from JSON file."""
-
     if not os.path.exists(results_file):
         raise FileNotFoundError(f"Results file not found: {results_file}")
 
-    with open(results_file, 'r') as f:
+    with open(results_file) as f:
         results = json.load(f)
 
     return results["best_config"]
@@ -37,10 +43,9 @@ def run_validation_simulation(
     best_config: Dict[str, Any],
     duration_hours: int = 1000,
     target_concentration: float = 25.0,
-    n_cells: int = 5
+    n_cells: int = 5,
 ) -> Dict[str, Any]:
-    """
-    Run extended validation simulation with optimized parameters.
+    """Run extended validation simulation with optimized parameters.
     
     Args:
         best_config: Optimized hyperparameters
@@ -50,8 +55,8 @@ def run_validation_simulation(
         
     Returns:
         Simulation results dictionary
-    """
 
+    """
     # Apply optimized configuration
     qlearning_config = apply_optimized_config(best_config)
 
@@ -74,7 +79,7 @@ def run_validation_simulation(
         n_cells=n_cells,
         initial_substrate_concentration=target_concentration,
         user_suffix="optimized_validation",
-        verbose=True
+        verbose=True,
     )
 
     return results
@@ -82,7 +87,6 @@ def run_validation_simulation(
 
 def analyze_validation_results(results: Dict[str, Any], target_concentration: float = 25.0):
     """Analyze and report validation simulation performance."""
-
     reservoir_conc = results.get("reservoir_concentration", [])
     outlet_conc = results.get("outlet_concentration", [])
     power_output = results.get("power_output", [])
@@ -170,7 +174,6 @@ def analyze_validation_results(results: Dict[str, Any], target_concentration: fl
 
 def main():
     """Main function for testing optimized configuration."""
-
     parser = argparse.ArgumentParser(description="Test Optimized Q-learning Configuration")
     parser.add_argument("results_file",
                        help="Path to optimization results JSON file")
@@ -192,7 +195,7 @@ def main():
             best_config=best_config,
             duration_hours=args.duration,
             target_concentration=args.target,
-            n_cells=args.cells
+            n_cells=args.cells,
         )
 
         # Analyze results
