@@ -62,18 +62,15 @@ class TestBoundaryConditions(unittest.TestCase):
         """Test behavior with very large values."""
         if self.gpu is None:
             self.skipTest("GPU acceleration not available")
-        
-        # Test large values (but not overflow)
-        large_array = self.gpu.array([10.0, 50.0, 100.0])
-        
-        # Should handle without overflow
-        try:
-            result = self.gpu.exp(large_array)
-            cpu_result = self.gpu.to_cpu(result)
-            self.assertTrue(np.all(np.isfinite(cpu_result)))
-        except (OverflowError, RuntimeError):
-            # This is acceptable for very large values
-            pass
+
+        # Test large values that are safe for float32 (exp(88) is near float32 max)
+        # float32 max is ~3.4e38, exp(88) ≈ 1.65e38
+        large_array = self.gpu.array([10.0, 50.0, 80.0])
+
+        # Should handle without overflow for float32-safe values
+        result = self.gpu.exp(large_array)
+        cpu_result = self.gpu.to_cpu(result)
+        self.assertTrue(np.all(np.isfinite(cpu_result)))
     
     def test_very_small_values(self):
         """Test behavior with very small values."""
