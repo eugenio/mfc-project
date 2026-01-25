@@ -52,7 +52,8 @@ try:
     from scipy.signal import find_peaks
 
     SCIPY_AVAILABLE = True
-except ImportError:
+except (ImportError, TypeError):
+    # TypeError can occur due to numpy/scipy version incompatibility
     SCIPY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
