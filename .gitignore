@@ -116,6 +116,7 @@ pixi.lock
 *.json
 !package.json
 !pixi.lock
+!renovate.json
 *_data_report.json
 
 # Exclude all data directories completely
