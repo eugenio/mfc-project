@@ -345,6 +345,45 @@ pixi run -e dev pip list
 pixi run -e dev python -c "import sys; print('\n'.join(sys.path))"
 ```
 
+## CI/CD Pipeline Requirements
+
+The GitLab CI pipeline is configured to run tests in an isolated environment:
+
+### Key Configuration (`.gitlab-ci.yml`)
+
+```yaml
+variables:
+  PYTHONNOUSERSITE: '1'  # Ensure isolation from user site-packages
+
+test-pixi:
+  stage: test
+  image: ghcr.io/prefix-dev/pixi:latest
+  script:
+    - pixi install -e dev
+    - pixi run validate-deps        # Check all dependencies are present
+    - PYTHONNOUSERSITE=1 pixi run -e dev pytest q-learning-mfcs/tests -v
+```
+
+### CI Requirements
+
+1. **PYTHONNOUSERSITE=1** must be set to prevent importing from user site-packages
+2. **pixi run -e dev pytest** must be used (not system pytest)
+3. **validate-deps** should pass before running tests
+4. Tests should fail if they depend on packages outside the pixi environment
+
+### Validation Tasks
+
+```bash
+# Validate dependencies before committing
+pixi run validate-deps
+
+# Run full isolated test suite
+PYTHONNOUSERSITE=1 pixi run -e dev pytest q-learning-mfcs/tests -v
+
+# Quick validation
+pixi run validate-mfc
+```
+
 ## Related Documentation
 
 - [Test Suite Documentation](TEST_SUITE_DOCUMENTATION.md)
