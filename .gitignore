@@ -197,3 +197,12 @@ KEGG-MCP-Server/
 
 # Worktrees
 worktrees/
+# Ralph automation tool
+scripts/ralph/
+
+# Serena MCP config
+.serena/
+
+# Temporary task/PRD files
+tasks/prd-*.md
+tasks/user-sitepackages-audit-*.md
