@@ -12,18 +12,24 @@ variables:
 # Main test job using pixi (shell executor)
 test:
   stage: test
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   script:
     - echo "Running tests with pixi on $(hostname)"
     - echo "PYTHONNOUSERSITE=$PYTHONNOUSERSITE"
+    # Initialize/update git submodules
+    - git submodule update --init --recursive
     # Check if pixi is available, install if needed
     - which pixi || curl -fsSL https://pixi.sh/install.sh | bash
     - export PATH="$HOME/.pixi/bin:$PATH"
+    # Set PYTHONPATH to include hooks-repo
+    - export PYTHONPATH="${CI_PROJECT_DIR}/.claude/hooks-repo:${PYTHONPATH}"
     # Install dependencies
     - pixi install -e default
     # Run linting
     - pixi run -e default ruff check q-learning-mfcs/src --output-format=gitlab > ruff-report.json || true
-    # Run tests
-    - pixi run -e default pytest q-learning-mfcs/tests -v --tb=short --junitxml=report.xml
+    # Run tests with PYTHONPATH for hooks
+    - PYTHONPATH="${CI_PROJECT_DIR}/.claude/hooks-repo:${PYTHONPATH}" pixi run -e default pytest q-learning-mfcs/tests -v --tb=short --junitxml=report.xml
   artifacts:
     when: always
     paths:
