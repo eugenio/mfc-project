@@ -274,7 +274,7 @@ class QLearningConfig:
         """Legacy property for backward compatibility - returns total anode area."""
         return self.total_anode_area
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate derived parameters after initialization."""
         # Calculate electrode areas from configurations
         self.anode_area_per_cell = self.anode_config.calculate_effective_surface_area()
