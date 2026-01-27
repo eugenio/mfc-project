@@ -262,13 +262,14 @@ class TestAlertDeduplication(unittest.TestCase):
         # Force an update that will generate alerts (low power)
         dashboard.update_data(force_update=True)
 
-        # Alerts should be in session_state
-        session_alerts = mock_st.session_state["monitoring_alerts"]
+        # Alerts should be in session_state (captured for documentation)
+        _session_alerts = mock_st.session_state["monitoring_alerts"]
         # alert_manager.active_alerts should remain empty (not used for storage)
         manager_alerts = dashboard.alert_manager.active_alerts
 
-        # Session state should have alerts (if any triggered)
+        # Session state may have alerts (if any triggered by conditions)
         # alert_manager should NOT have alerts (we removed the add_alerts call)
+        self.assertIsInstance(_session_alerts, list)
         self.assertEqual(
             len(manager_alerts),
             0,
@@ -359,8 +360,8 @@ class TestAlertDeduplication(unittest.TestCase):
             manager_count, 0, "alert_manager should not store alerts"
         )
         # Session count should be reasonable (alerts accumulate but no dupes)
-        # With 3 updates and potentially multiple alert types per update,
-        # we just verify manager is empty
+        # Verify session_count is tracked (may be 0 or more depending on conditions)
+        self.assertIsInstance(session_count, int)
 
 
 class TestLiveDataGenerator(unittest.TestCase):

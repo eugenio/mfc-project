@@ -273,11 +273,12 @@ class PerformanceMonitor:
         # GPU utilization alert (too low during simulation)
         sim_status = self.get_simulation_status()
         if sim_status.active and metrics.gpu_utilization < 30:
+            gpu_util = metrics.gpu_utilization
             alerts.append(
                 {
                     "type": "info",
                     "title": "Low GPU Utilization",
-                    "message": f"GPU utilization only {metrics.gpu_utilization:.1f}% during simulation",
+                    "message": f"GPU utilization only {gpu_util:.1f}% during sim",
                     "timestamp": metrics.timestamp,
                 },
             )
