@@ -18,6 +18,43 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
+
+class SessionStateMock(dict):
+    """Mock class for st.session_state that supports both dict and attribute access."""
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError as e:
+            raise AttributeError(key) from e
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError as e:
+            raise AttributeError(key) from e
+
+
+def create_default_session_state():
+    """Create a default session state for testing."""
+    return SessionStateMock({
+        "simulation_active": False,
+        "simulation_data": {
+            "phase": "Idle",
+            "progress": 0.0,
+            "current_step": 0,
+            "total_steps": 0,
+            "start_time": None,
+            "performance_metrics": {},
+        },
+        "metrics_history": [],
+        "performance_monitor": None,
+    })
+
+
 # Mock streamlit before importing the module
 mock_st = MagicMock()
 mock_st.columns = MagicMock(return_value=[MagicMock() for _ in range(4)])
@@ -42,19 +79,7 @@ mock_st.expander = MagicMock(
 )
 mock_st.dataframe = MagicMock()
 mock_st.rerun = MagicMock()
-mock_st.session_state = {
-    "simulation_active": False,
-    "simulation_data": {
-        "phase": "Idle",
-        "progress": 0.0,
-        "current_step": 0,
-        "total_steps": 0,
-        "start_time": None,
-        "performance_metrics": {},
-    },
-    "metrics_history": [],
-    "performance_monitor": None,
-}
+mock_st.session_state = create_default_session_state()
 sys.modules["streamlit"] = mock_st
 
 # Mock plotly
@@ -226,8 +251,14 @@ class TestSimulationStateFromSessionState(unittest.TestCase):
 
     These tests verify the fix for the phantom simulation bug where
     np.random.random() was used instead of st.session_state.
-    Note: Tests will pass after US-001 is implemented.
     """
+
+    def setUp(self):
+        """Reset session state and patch the module's st reference."""
+        mock_st.session_state = create_default_session_state()
+        # Patch the module's st reference directly
+        import gui.pages.performance_monitor as pm
+        pm.st = mock_st
 
     def test_simulation_status_structure(self):
         """Test simulation status returns expected structure."""
@@ -239,6 +270,85 @@ class TestSimulationStateFromSessionState(unittest.TestCase):
         # Verify structure exists regardless of implementation
         self.assertIsNotNone(status)
         self.assertIn(status.active, [True, False])
+
+    def test_simulation_inactive_by_default(self):
+        """Test that simulation is inactive when session state is False."""
+        from gui.pages.performance_monitor import PerformanceMonitor
+
+        mock_st.session_state["simulation_active"] = False
+        monitor = PerformanceMonitor()
+        status = monitor.get_simulation_status()
+
+        self.assertFalse(status.active)
+        self.assertEqual(status.phase, "Idle")
+        self.assertEqual(status.progress, 0.0)
+        self.assertEqual(status.current_step, 0)
+
+    def test_simulation_active_from_session_state(self):
+        """Test that simulation is active when session state is True."""
+        from gui.pages.performance_monitor import PerformanceMonitor
+
+        mock_st.session_state["simulation_active"] = True
+        mock_st.session_state["simulation_data"] = {
+            "phase": "Flow Calculation",
+            "progress": 0.45,
+            "current_step": 450,
+            "total_steps": 1000,
+            "start_time": None,
+            "performance_metrics": {"memory_efficiency": 0.9},
+        }
+        monitor = PerformanceMonitor()
+        status = monitor.get_simulation_status()
+
+        self.assertTrue(status.active)
+        self.assertEqual(status.phase, "Flow Calculation")
+        self.assertEqual(status.progress, 0.45)
+        self.assertEqual(status.current_step, 450)
+        self.assertEqual(status.total_steps, 1000)
+
+    def test_simulation_status_consistent_across_calls(self):
+        """Test simulation status is consistent (not random) across calls."""
+        from gui.pages.performance_monitor import PerformanceMonitor
+
+        mock_st.session_state["simulation_active"] = False
+        monitor = PerformanceMonitor()
+
+        # Get status multiple times - should be consistent since it's from state
+        status1 = monitor.get_simulation_status()
+        status2 = monitor.get_simulation_status()
+        status3 = monitor.get_simulation_status()
+
+        self.assertEqual(status1.active, status2.active)
+        self.assertEqual(status2.active, status3.active)
+        self.assertEqual(status1.phase, status2.phase)
+        self.assertEqual(status2.phase, status3.phase)
+
+    def test_simulation_status_uses_performance_metrics_from_state(self):
+        """Test that performance metrics are taken from session state."""
+        from gui.pages.performance_monitor import PerformanceMonitor
+
+        mock_st.session_state["simulation_active"] = True
+        mock_st.session_state["simulation_data"] = {
+            "phase": "Optimization",
+            "progress": 0.8,
+            "current_step": 800,
+            "total_steps": 1000,
+            "start_time": None,
+            "performance_metrics": {
+                "memory_efficiency": 0.95,
+                "convergence_rate": 0.005,
+                "acceleration_factor": 7000,
+            },
+        }
+        monitor = PerformanceMonitor()
+        status = monitor.get_simulation_status()
+
+        self.assertEqual(
+            status.performance_metrics.get("memory_efficiency"),
+            0.95,
+        )
+        self.assertEqual(status.performance_metrics.get("convergence_rate"), 0.005)
+        self.assertEqual(status.performance_metrics.get("acceleration_factor"), 7000)
 
 
 class TestHealthScore(unittest.TestCase):

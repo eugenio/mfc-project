@@ -48,6 +48,16 @@ def create_session_state():
             "monitoring_n_cells": 5,
             "simulation_start_time": datetime.now(),
             "live_monitoring_refresh": 5,
+            # Simulation state keys used by performance_monitor.py
+            "simulation_active": False,
+            "simulation_data": {
+                "phase": "Idle",
+                "progress": 0.0,
+                "current_step": 0,
+                "total_steps": 0,
+                "start_time": None,
+                "performance_metrics": {},
+            },
         },
     )
 
@@ -274,8 +284,11 @@ class TestLiveMonitoringDashboard(unittest.TestCase):
     """Test LiveMonitoringDashboard class."""
 
     def setUp(self):
-        """Reset session state before each test."""
+        """Reset session state and patch module's st reference."""
         mock_st.session_state = create_session_state()
+        # Patch the module's st reference directly to handle cross-module mock issues
+        import gui.live_monitoring_dashboard as lmd
+        lmd.st = mock_st
 
     def test_dashboard_initialization(self):
         """Test LiveMonitoringDashboard initializes correctly."""
