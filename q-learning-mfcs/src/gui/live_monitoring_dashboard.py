@@ -372,10 +372,9 @@ class LiveMonitoringDashboard:
                 metric = self.data_generator.generate_realistic_data(cell_id)
                 new_metrics.append(metric)
 
-                # Check for alerts
+                # Check for alerts - store ONLY in session state to avoid duplicates
                 alerts = self.alert_manager.check_alerts(metric)
                 if alerts:
-                    self.alert_manager.add_alerts(alerts)
                     st.session_state.monitoring_alerts.extend(alerts)
 
             # Add to session state
@@ -621,11 +620,8 @@ class LiveMonitoringDashboard:
         """Render active alerts and notifications."""
         st.markdown("### 🚨 Active Alerts")
 
-        # Get recent alerts
-        recent_alerts = self.alert_manager.get_active_alerts()
-        recent_alerts.extend(
-            st.session_state.monitoring_alerts[-10:],
-        )  # Last 10 session alerts
+        # Get recent alerts ONLY from session state to avoid duplicates
+        recent_alerts = list(st.session_state.monitoring_alerts[-20:])
 
         if not recent_alerts:
             st.success("✅ All systems normal - No active alerts")
