@@ -95,35 +95,38 @@ class PerformanceMonitor:
         )
 
     def get_simulation_status(self) -> SimulationStatus:
-        """Get current simulation status."""
-        # Simulated simulation status
-        is_active = np.random.random() > 0.7  # 30% chance simulation is running
+        """Get current simulation status from session state."""
+        # Get simulation state from session state (fixes phantom simulation bug)
+        is_active_val = st.session_state.get("simulation_active", False)
+        # Ensure is_active is a proper boolean
+        is_active = bool(is_active_val) if is_active_val is not None else False
 
         if is_active:
-            phases = [
-                "Initialization",
-                "Flow Calculation",
-                "Mass Transport",
-                "Biofilm Growth",
-                "Optimization",
-            ]
-            current_phase = np.random.choice(phases)
-            progress = np.random.uniform(0.1, 0.95)
-            current_step = int(progress * 1000)
-            total_steps = 1000
+            # Get simulation data from session state
+            sim_data = st.session_state.get("simulation_data", {})
+            if not isinstance(sim_data, dict):
+                sim_data = {}
+            current_phase = sim_data.get("phase", "Initialization")
+            progress = float(sim_data.get("progress", 0.0))
+            current_step = int(sim_data.get("current_step", 0))
+            total_steps = int(sim_data.get("total_steps", 1000))
+            perf_metrics = sim_data.get("performance_metrics", {})
+            if not isinstance(perf_metrics, dict):
+                perf_metrics = {}
+            start_time = sim_data.get("start_time")
 
-            # Calculate ETA
-            remaining_steps = total_steps - current_step
-            steps_per_second = np.random.uniform(5, 20)
-            eta_seconds = remaining_steps / steps_per_second
-            eta = str(timedelta(seconds=int(eta_seconds)))
-
-            perf_metrics = {
-                "steps_per_second": steps_per_second,
-                "memory_efficiency": np.random.uniform(0.8, 0.98),
-                "convergence_rate": np.random.uniform(0.001, 0.01),
-                "acceleration_factor": np.random.uniform(500, 8400),
-            }
+            # Calculate ETA based on actual progress
+            eta = None
+            if start_time is not None and progress > 0:
+                elapsed = (datetime.now() - start_time).total_seconds()
+                if elapsed > 0:
+                    steps_per_second = current_step / elapsed if elapsed > 0 else 0
+                    if steps_per_second > 0:
+                        remaining_steps = total_steps - current_step
+                        eta_seconds = remaining_steps / steps_per_second
+                        eta = str(timedelta(seconds=int(eta_seconds)))
+                    # Update performance metrics with calculated rate
+                    perf_metrics["steps_per_second"] = steps_per_second
         else:
             current_phase = "Idle"
             progress = 0.0
