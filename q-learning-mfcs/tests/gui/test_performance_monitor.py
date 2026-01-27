@@ -377,8 +377,15 @@ class TestHealthScore(unittest.TestCase):
 class TestSingletonPattern(unittest.TestCase):
     """Test singleton pattern for PerformanceMonitor.
 
-    These tests document expected behavior for US-003.
+    These tests verify the fix for US-003 - Multiple PerformanceMonitor Instances.
     """
+
+    def setUp(self):
+        """Reset session state before each test."""
+        mock_st.session_state = create_default_session_state()
+        # Patch the module's st reference directly
+        import gui.pages.performance_monitor as pm
+        pm.st = mock_st
 
     def test_performance_monitor_exists(self):
         """Test PerformanceMonitor class can be instantiated."""
@@ -386,6 +393,70 @@ class TestSingletonPattern(unittest.TestCase):
 
         monitor = PerformanceMonitor()
         self.assertIsNotNone(monitor)
+
+    def test_get_performance_monitor_function_exists(self):
+        """Test get_performance_monitor helper function exists."""
+        from gui.pages.performance_monitor import get_performance_monitor
+
+        self.assertIsNotNone(get_performance_monitor)
+
+    def test_get_performance_monitor_returns_instance(self):
+        """Test get_performance_monitor returns a PerformanceMonitor instance."""
+        from gui.pages.performance_monitor import (
+            PerformanceMonitor,
+            get_performance_monitor,
+        )
+
+        # Ensure no monitor exists in session state
+        if "performance_monitor" in mock_st.session_state:
+            del mock_st.session_state["performance_monitor"]
+
+        monitor = get_performance_monitor()
+        self.assertIsInstance(monitor, PerformanceMonitor)
+
+    def test_get_performance_monitor_creates_singleton(self):
+        """Test get_performance_monitor stores instance in session state."""
+        from gui.pages.performance_monitor import get_performance_monitor
+
+        # Initially no monitor in session state - delete key if exists
+        if "performance_monitor" in mock_st.session_state:
+            del mock_st.session_state["performance_monitor"]
+
+        monitor = get_performance_monitor()
+
+        # Now monitor should be in session state
+        self.assertIsNotNone(mock_st.session_state.get("performance_monitor"))
+        self.assertIs(mock_st.session_state["performance_monitor"], monitor)
+
+    def test_get_performance_monitor_returns_same_instance(self):
+        """Test get_performance_monitor returns same instance on multiple calls."""
+        from gui.pages.performance_monitor import get_performance_monitor
+
+        monitor1 = get_performance_monitor()
+        monitor2 = get_performance_monitor()
+        monitor3 = get_performance_monitor()
+
+        # All calls should return the exact same instance
+        self.assertIs(monitor1, monitor2)
+        self.assertIs(monitor2, monitor3)
+
+    def test_get_performance_monitor_reuses_existing(self):
+        """Test get_performance_monitor reuses existing instance from state."""
+        from gui.pages.performance_monitor import (
+            PerformanceMonitor,
+            get_performance_monitor,
+        )
+
+        # Pre-create a monitor in session state
+        existing_monitor = PerformanceMonitor()
+        existing_monitor.custom_marker = "test_marker"
+        mock_st.session_state["performance_monitor"] = existing_monitor
+
+        # get_performance_monitor should return the existing instance
+        retrieved_monitor = get_performance_monitor()
+
+        self.assertIs(retrieved_monitor, existing_monitor)
+        self.assertEqual(retrieved_monitor.custom_marker, "test_marker")
 
 
 class TestSimulationStartStop(unittest.TestCase):

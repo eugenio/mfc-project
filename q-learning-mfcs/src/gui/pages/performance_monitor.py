@@ -49,6 +49,22 @@ class SimulationStatus:
     performance_metrics: dict[str, float]
 
 
+def get_performance_monitor() -> PerformanceMonitor:
+    """Get singleton PerformanceMonitor instance from session state.
+
+    Returns the existing PerformanceMonitor from session state if available,
+    otherwise creates a new one and stores it in session state.
+
+    Returns
+    -------
+        PerformanceMonitor: The singleton instance.
+
+    """
+    if "performance_monitor" not in st.session_state:
+        st.session_state.performance_monitor = PerformanceMonitor()
+    return st.session_state.performance_monitor
+
+
 class PerformanceMonitor:
     """Real-time performance monitoring system."""
 
@@ -344,7 +360,7 @@ def create_acceleration_dashboard() -> None:
     """Create GPU acceleration performance dashboard."""
     st.subheader("🚀 GPU Acceleration Performance")
 
-    monitor = PerformanceMonitor()
+    monitor = get_performance_monitor()
     gpu_metrics = monitor.get_gpu_acceleration_metrics()
 
     # Key performance indicators
