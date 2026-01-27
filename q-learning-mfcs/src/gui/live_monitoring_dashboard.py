@@ -43,9 +43,9 @@ Story Points: 13 (High Priority)
 Phase: 3 - Advanced Features
 
 Literature References:
-1. Few, S. (2009). "Information Dashboard Design: The Effective Visual Communication of Data"
+1. Few, S. (2009). "Information Dashboard Design"
 2. Logan, B.E. (2008). "Microbial Fuel Cells: Methodology and Technology"
-3. Rabaey, K. & Verstraete, W. (2005). "Microbial fuel cells: novel biotechnology for energy generation"
+3. Rabaey, K. & Verstraete, W. (2005). "Microbial fuel cells"
 """
 
 from __future__ import annotations
@@ -733,10 +733,13 @@ class LiveMonitoringDashboard:
 
         # Status information
         if st.session_state.monitoring_data:
-            latest_update = max(m.timestamp for m in st.session_state.monitoring_data)
+            latest_update = max(
+                m.timestamp for m in st.session_state.monitoring_data
+            )
             time_ago = (datetime.now() - latest_update).total_seconds()
+            data_count = len(st.session_state.monitoring_data)
             st.caption(
-                f"Last updated: {time_ago:.1f} seconds ago | Data points: {len(st.session_state.monitoring_data)}",
+                f"Last updated: {time_ago:.1f}s ago | Data points: {data_count}",
             )
 
 
