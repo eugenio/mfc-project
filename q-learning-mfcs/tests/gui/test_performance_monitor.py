@@ -462,14 +462,147 @@ class TestSingletonPattern(unittest.TestCase):
 class TestSimulationStartStop(unittest.TestCase):
     """Test simulation start/stop functions.
 
-    These tests document expected functionality for US-004.
+    These tests verify US-004 - Simulation State Management.
     """
+
+    def setUp(self):
+        """Reset session state before each test."""
+        mock_st.session_state = create_default_session_state()
+        # Patch the module's st reference directly
+        import gui.pages.performance_monitor as pm
+        pm.st = mock_st
 
     def test_simulation_status_dataclass_exists(self):
         """Test SimulationStatus dataclass is available."""
         from gui.pages.performance_monitor import SimulationStatus
 
         self.assertIsNotNone(SimulationStatus)
+
+    def test_start_simulation_function_exists(self):
+        """Test start_simulation function is available."""
+        from gui.pages.performance_monitor import start_simulation
+
+        self.assertIsNotNone(start_simulation)
+
+    def test_stop_simulation_function_exists(self):
+        """Test stop_simulation function is available."""
+        from gui.pages.performance_monitor import stop_simulation
+
+        self.assertIsNotNone(stop_simulation)
+
+    def test_start_simulation_sets_active_state(self):
+        """Test start_simulation sets simulation_active to True."""
+        from gui.pages.performance_monitor import start_simulation
+
+        # Initially inactive
+        mock_st.session_state["simulation_active"] = False
+
+        start_simulation()
+
+        self.assertTrue(mock_st.session_state["simulation_active"])
+
+    def test_start_simulation_initializes_simulation_data(self):
+        """Test start_simulation initializes simulation_data with proper structure."""
+        from gui.pages.performance_monitor import start_simulation
+
+        start_simulation(total_steps=500)
+
+        sim_data = mock_st.session_state["simulation_data"]
+        self.assertEqual(sim_data["phase"], "Initialization")
+        self.assertEqual(sim_data["progress"], 0.0)
+        self.assertEqual(sim_data["current_step"], 0)
+        self.assertEqual(sim_data["total_steps"], 500)
+        self.assertIsNotNone(sim_data["start_time"])
+        self.assertIsInstance(sim_data["performance_metrics"], dict)
+
+    def test_start_simulation_default_total_steps(self):
+        """Test start_simulation uses default total_steps of 1000."""
+        from gui.pages.performance_monitor import start_simulation
+
+        start_simulation()
+
+        sim_data = mock_st.session_state["simulation_data"]
+        self.assertEqual(sim_data["total_steps"], 1000)
+
+    def test_start_simulation_records_start_time(self):
+        """Test start_simulation records start_time for ETA calculation."""
+        from gui.pages.performance_monitor import start_simulation
+
+        before = datetime.now()
+        start_simulation()
+        after = datetime.now()
+
+        start_time = mock_st.session_state["simulation_data"]["start_time"]
+        self.assertIsNotNone(start_time)
+        self.assertGreaterEqual(start_time, before)
+        self.assertLessEqual(start_time, after)
+
+    def test_stop_simulation_sets_inactive_state(self):
+        """Test stop_simulation sets simulation_active to False."""
+        from gui.pages.performance_monitor import stop_simulation
+
+        # Initially active
+        mock_st.session_state["simulation_active"] = True
+
+        stop_simulation()
+
+        self.assertFalse(mock_st.session_state["simulation_active"])
+
+    def test_stop_simulation_resets_simulation_data(self):
+        """Test stop_simulation resets simulation_data to idle state."""
+        from gui.pages.performance_monitor import stop_simulation
+
+        # Set up active simulation
+        mock_st.session_state["simulation_active"] = True
+        mock_st.session_state["simulation_data"] = {
+            "phase": "Flow Calculation",
+            "progress": 0.5,
+            "current_step": 500,
+            "total_steps": 1000,
+            "start_time": datetime.now(),
+            "performance_metrics": {"steps_per_second": 10.0},
+        }
+
+        stop_simulation()
+
+        sim_data = mock_st.session_state["simulation_data"]
+        self.assertEqual(sim_data["phase"], "Idle")
+        self.assertEqual(sim_data["progress"], 0.0)
+        self.assertEqual(sim_data["current_step"], 0)
+        self.assertEqual(sim_data["total_steps"], 0)
+        self.assertIsNone(sim_data["start_time"])
+        self.assertEqual(sim_data["performance_metrics"], {})
+
+    def test_start_stop_cycle(self):
+        """Test start and stop simulation cycle works correctly."""
+        from gui.pages.performance_monitor import start_simulation, stop_simulation
+
+        # Initial state
+        self.assertFalse(mock_st.session_state.get("simulation_active", False))
+
+        # Start simulation
+        start_simulation()
+        self.assertTrue(mock_st.session_state["simulation_active"])
+        self.assertEqual(
+            mock_st.session_state["simulation_data"]["phase"], "Initialization"
+        )
+
+        # Stop simulation
+        stop_simulation()
+        self.assertFalse(mock_st.session_state["simulation_active"])
+        self.assertEqual(mock_st.session_state["simulation_data"]["phase"], "Idle")
+
+    def test_start_simulation_initializes_performance_metrics(self):
+        """Test start_simulation initializes performance_metrics with default values."""
+        from gui.pages.performance_monitor import start_simulation
+
+        start_simulation()
+
+        perf = mock_st.session_state["simulation_data"]["performance_metrics"]
+        self.assertEqual(perf["steps_per_second"], 0.0)
+        self.assertEqual(perf["memory_efficiency"], 0.0)
+        self.assertEqual(perf["convergence_rate"], 0.0)
+        self.assertEqual(perf["acceleration_factor"], 1.0)
 
 
 class TestModuleImport(unittest.TestCase):
