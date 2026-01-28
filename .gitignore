@@ -207,3 +207,15 @@ scripts/ralph/
 # Temporary task/PRD files
 tasks/prd-*.md
 tasks/user-sitepackages-audit-*.md
+
+# Model checkpoints and training artifacts
+*.pkl
+q-learning-mfcs/q_learning_models/
+
+# Test results and reports
+test-results.xml
+q-learning-mfcs/tests/test-results.xml
+test_report.md
+
+# Temporary directories
+tmp/
