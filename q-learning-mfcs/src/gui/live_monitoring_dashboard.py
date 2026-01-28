@@ -43,9 +43,9 @@ Story Points: 13 (High Priority)
 Phase: 3 - Advanced Features
 
 Literature References:
-1. Few, S. (2009). "Information Dashboard Design: The Effective Visual Communication of Data"
+1. Few, S. (2009). "Information Dashboard Design"
 2. Logan, B.E. (2008). "Microbial Fuel Cells: Methodology and Technology"
-3. Rabaey, K. & Verstraete, W. (2005). "Microbial fuel cells: novel biotechnology for energy generation"
+3. Rabaey, K. & Verstraete, W. (2005). "Microbial fuel cells"
 """
 
 from __future__ import annotations
@@ -372,10 +372,9 @@ class LiveMonitoringDashboard:
                 metric = self.data_generator.generate_realistic_data(cell_id)
                 new_metrics.append(metric)
 
-                # Check for alerts
+                # Check for alerts - store ONLY in session state to avoid duplicates
                 alerts = self.alert_manager.check_alerts(metric)
                 if alerts:
-                    self.alert_manager.add_alerts(alerts)
                     st.session_state.monitoring_alerts.extend(alerts)
 
             # Add to session state
@@ -621,11 +620,8 @@ class LiveMonitoringDashboard:
         """Render active alerts and notifications."""
         st.markdown("### 🚨 Active Alerts")
 
-        # Get recent alerts
-        recent_alerts = self.alert_manager.get_active_alerts()
-        recent_alerts.extend(
-            st.session_state.monitoring_alerts[-10:],
-        )  # Last 10 session alerts
+        # Get recent alerts ONLY from session state to avoid duplicates
+        recent_alerts = list(st.session_state.monitoring_alerts[-20:])
 
         if not recent_alerts:
             st.success("✅ All systems normal - No active alerts")
@@ -737,10 +733,13 @@ class LiveMonitoringDashboard:
 
         # Status information
         if st.session_state.monitoring_data:
-            latest_update = max(m.timestamp for m in st.session_state.monitoring_data)
+            latest_update = max(
+                m.timestamp for m in st.session_state.monitoring_data
+            )
             time_ago = (datetime.now() - latest_update).total_seconds()
+            data_count = len(st.session_state.monitoring_data)
             st.caption(
-                f"Last updated: {time_ago:.1f} seconds ago | Data points: {len(st.session_state.monitoring_data)}",
+                f"Last updated: {time_ago:.1f}s ago | Data points: {data_count}",
             )
 
 
