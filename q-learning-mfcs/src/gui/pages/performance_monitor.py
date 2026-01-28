@@ -49,6 +49,66 @@ class SimulationStatus:
     performance_metrics: dict[str, float]
 
 
+def get_performance_monitor() -> PerformanceMonitor:
+    """Get singleton PerformanceMonitor instance from session state.
+
+    Returns the existing PerformanceMonitor from session state if available,
+    otherwise creates a new one and stores it in session state.
+
+    Returns
+    -------
+        PerformanceMonitor: The singleton instance.
+
+    """
+    if "performance_monitor" not in st.session_state:
+        st.session_state.performance_monitor = PerformanceMonitor()
+    return st.session_state.performance_monitor
+
+
+def start_simulation(total_steps: int = 1000) -> None:
+    """Start a simulation and initialize simulation state.
+
+    Sets simulation_active to True and initializes simulation_data with
+    proper structure including start_time for ETA calculation.
+
+    Parameters
+    ----------
+    total_steps : int, optional
+        Total number of steps for the simulation. Default is 1000.
+
+    """
+    st.session_state.simulation_active = True
+    st.session_state.simulation_data = {
+        "phase": "Initialization",
+        "progress": 0.0,
+        "current_step": 0,
+        "total_steps": total_steps,
+        "start_time": datetime.now(),
+        "performance_metrics": {
+            "steps_per_second": 0.0,
+            "memory_efficiency": 0.0,
+            "convergence_rate": 0.0,
+            "acceleration_factor": 1.0,
+        },
+    }
+
+
+def stop_simulation() -> None:
+    """Stop the current simulation and reset simulation state.
+
+    Sets simulation_active to False and clears simulation_data to idle state.
+    """
+    st.session_state.simulation_active = False
+    st.session_state.simulation_data = {
+        "phase": "Idle",
+        "progress": 0.0,
+        "current_step": 0,
+        "total_steps": 0,
+        "start_time": None,
+        "performance_metrics": {},
+    }
+
+
 class PerformanceMonitor:
     """Real-time performance monitoring system."""
 
@@ -95,35 +155,38 @@ class PerformanceMonitor:
         )
 
     def get_simulation_status(self) -> SimulationStatus:
-        """Get current simulation status."""
-        # Simulated simulation status
-        is_active = np.random.random() > 0.7  # 30% chance simulation is running
+        """Get current simulation status from session state."""
+        # Get simulation state from session state (fixes phantom simulation bug)
+        is_active_val = st.session_state.get("simulation_active", False)
+        # Ensure is_active is a proper boolean
+        is_active = bool(is_active_val) if is_active_val is not None else False
 
         if is_active:
-            phases = [
-                "Initialization",
-                "Flow Calculation",
-                "Mass Transport",
-                "Biofilm Growth",
-                "Optimization",
-            ]
-            current_phase = np.random.choice(phases)
-            progress = np.random.uniform(0.1, 0.95)
-            current_step = int(progress * 1000)
-            total_steps = 1000
+            # Get simulation data from session state
+            sim_data = st.session_state.get("simulation_data", {})
+            if not isinstance(sim_data, dict):
+                sim_data = {}
+            current_phase = sim_data.get("phase", "Initialization")
+            progress = float(sim_data.get("progress", 0.0))
+            current_step = int(sim_data.get("current_step", 0))
+            total_steps = int(sim_data.get("total_steps", 1000))
+            perf_metrics = sim_data.get("performance_metrics", {})
+            if not isinstance(perf_metrics, dict):
+                perf_metrics = {}
+            start_time = sim_data.get("start_time")
 
-            # Calculate ETA
-            remaining_steps = total_steps - current_step
-            steps_per_second = np.random.uniform(5, 20)
-            eta_seconds = remaining_steps / steps_per_second
-            eta = str(timedelta(seconds=int(eta_seconds)))
-
-            perf_metrics = {
-                "steps_per_second": steps_per_second,
-                "memory_efficiency": np.random.uniform(0.8, 0.98),
-                "convergence_rate": np.random.uniform(0.001, 0.01),
-                "acceleration_factor": np.random.uniform(500, 8400),
-            }
+            # Calculate ETA based on actual progress
+            eta = None
+            if start_time is not None and progress > 0:
+                elapsed = (datetime.now() - start_time).total_seconds()
+                if elapsed > 0:
+                    steps_per_second = current_step / elapsed if elapsed > 0 else 0
+                    if steps_per_second > 0:
+                        remaining_steps = total_steps - current_step
+                        eta_seconds = remaining_steps / steps_per_second
+                        eta = str(timedelta(seconds=int(eta_seconds)))
+                    # Update performance metrics with calculated rate
+                    perf_metrics["steps_per_second"] = steps_per_second
         else:
             current_phase = "Idle"
             progress = 0.0
@@ -210,11 +273,12 @@ class PerformanceMonitor:
         # GPU utilization alert (too low during simulation)
         sim_status = self.get_simulation_status()
         if sim_status.active and metrics.gpu_utilization < 30:
+            gpu_util = metrics.gpu_utilization
             alerts.append(
                 {
                     "type": "info",
                     "title": "Low GPU Utilization",
-                    "message": f"GPU utilization only {metrics.gpu_utilization:.1f}% during simulation",
+                    "message": f"GPU utilization only {gpu_util:.1f}% during sim",
                     "timestamp": metrics.timestamp,
                 },
             )
@@ -341,7 +405,7 @@ def create_acceleration_dashboard() -> None:
     """Create GPU acceleration performance dashboard."""
     st.subheader("🚀 GPU Acceleration Performance")
 
-    monitor = PerformanceMonitor()
+    monitor = get_performance_monitor()
     gpu_metrics = monitor.get_gpu_acceleration_metrics()
 
     # Key performance indicators
@@ -530,13 +594,19 @@ def render_performance_monitor_page() -> None:
                 target_accel = 8400
                 accel_progress = min(1.0, acceleration / target_accel)
                 st.metric("Acceleration Progress", f"{accel_progress:.1%}")
+
+        # Stop simulation button
+        if st.button("🛑 Stop Simulation", type="secondary"):
+            stop_simulation()
+            st.rerun()
     else:
         st.info("💤 No simulation currently running")
 
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🚀 Start Test Simulation", type="primary"):
-                st.info("Test simulation would be started...")
+                start_simulation(total_steps=1000)
+                st.rerun()
 
         with col2:
             if st.button("📂 Load Previous Results"):
