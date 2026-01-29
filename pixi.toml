@@ -6,10 +6,14 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
-# Claude Code Hook Tasks (using hooks-repo submodule)
-
-# Hook testing and debugging tasks (using original hooks backup for test scripts)
-
+# Claude Code Hook Tasks - delegates to claude-code-hooks project
+pre-tool-hook = "pixi run -e default --manifest-path /home/uge/claude-code-hooks/pixi.toml python /home/uge/.claude/hooks/pre_tool_use.py"
+post-tool-hook = "pixi run -e default --manifest-path /home/uge/claude-code-hooks/pixi.toml python /home/uge/.claude/hooks/post_tool_use.py"
+user-prompt-submit-hook = "pixi run -e default --manifest-path /home/uge/claude-code-hooks/pixi.toml python /home/uge/.claude/hooks/user_prompt_submit.py"
+send-event-hook = "pixi run -e default --manifest-path /home/uge/claude-code-hooks/pixi.toml python /home/uge/.claude/hooks/send_event.py"
+notification-hook = "echo 'Notification hook triggered'"
+stop-hook = "echo 'Stop hook triggered'"
+subagent-stop-hook = "echo 'Subagent stop hook triggered'"
 
 # Other tasks
 parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
