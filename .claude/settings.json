@@ -7,10 +7,6 @@
           {
             "type": "command",
             "command": "pixi run pre-tool-hook"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type PreToolUse --summarize"
           }
         ]
       }
@@ -22,10 +18,6 @@
           {
             "type": "command",
             "command": "pixi run post-tool-hook"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type PostToolUse --summarize"
           }
         ]
       }
@@ -37,10 +29,6 @@
           {
             "type": "command",
             "command": "pixi run notification-hook --notify"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type Notification --summarize"
           }
         ]
       }
@@ -52,10 +40,6 @@
           {
             "type": "command",
             "command": "pixi run stop-hook --chat"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type Stop --add-chat"
           }
         ]
       }
@@ -67,10 +51,6 @@
           {
             "type": "command",
             "command": "pixi run subagent-stop-hook"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type SubagentStop"
           }
         ]
       }
@@ -81,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type PreCompact"
+            "command": "echo 'PreCompact event'"
           }
         ]
       }
@@ -92,10 +72,6 @@
           {
             "type": "command",
             "command": "pixi run user-prompt-submit-hook --log-only"
-          },
-          {
-            "type": "command",
-            "command": "pixi run send-event-hook --source-app mfc-project --event-type UserPromptSubmit --summarize"
           }
         ]
       }
