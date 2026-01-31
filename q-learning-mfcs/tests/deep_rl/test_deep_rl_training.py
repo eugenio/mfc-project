@@ -100,7 +100,9 @@ class TestTrainStep:
 
     def test_warmup_returns_zeros(self, state_dim, action_dim, small_config):
         """During warmup, train_step should return zeros."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 2, state_dim)
         metrics = c.train_step()
         assert metrics["loss"] == 0.0
@@ -108,7 +110,9 @@ class TestTrainStep:
 
     def test_returns_metrics_dict(self, state_dim, action_dim, small_config):
         """Train step should return a metrics dictionary."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c.train_step()
         assert "loss" in metrics
@@ -118,21 +122,27 @@ class TestTrainStep:
 
     def test_double_dqn_algorithm(self, state_dim, action_dim, small_config):
         """Test train_step with Double DQN."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DOUBLE_DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DOUBLE_DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c.train_step()
         assert metrics["loss"] >= 0
 
     def test_dueling_dqn_algorithm(self, state_dim, action_dim, small_config):
         """Test train_step with Dueling DQN."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DUELING_DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DUELING_DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c.train_step()
         assert metrics["loss"] >= 0
 
     def test_rainbow_dqn_algorithm(self, state_dim, action_dim, rainbow_config):
         """Test train_step with Rainbow DQN."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c.train_step()
         assert "loss" in metrics
@@ -144,7 +154,9 @@ class TestTrainDQN:
 
     def test_samples_from_buffer(self, state_dim, action_dim, small_config):
         """Training should sample from replay buffer without removing."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         buffer_size = len(c.replay_buffer)
         c._train_dqn()
@@ -152,7 +164,9 @@ class TestTrainDQN:
 
     def test_updates_epsilon(self, state_dim, action_dim, small_config):
         """Training should update epsilon."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         initial_epsilon = c.epsilon
         c._train_dqn()
@@ -160,7 +174,9 @@ class TestTrainDQN:
 
     def test_with_priority_replay(self, state_dim, action_dim, priority_config):
         """Test training with priority replay enabled."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c._train_dqn()
         assert "loss" in metrics
@@ -168,7 +184,9 @@ class TestTrainDQN:
 
     def test_updates_priorities(self, state_dim, action_dim, priority_config):
         """Training should update priorities in replay buffer."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         initial_tree = c.replay_buffer.sum_tree.copy()
         c._train_dqn()
@@ -180,7 +198,9 @@ class TestComputeDQNLoss:
 
     def test_returns_loss_and_td_errors(self, state_dim, action_dim, small_config):
         """Should return loss tensor and TD errors."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -188,14 +208,18 @@ class TestComputeDQNLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.zeros(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, td_errors = c._compute_dqn_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, td_errors = c._compute_dqn_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert isinstance(loss, torch.Tensor)
         assert loss.dim() == 0
         assert td_errors.shape == (bs,)
 
     def test_loss_non_negative(self, state_dim, action_dim, small_config):
         """Loss should be non-negative."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -203,12 +227,16 @@ class TestComputeDQNLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.zeros(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, _ = c._compute_dqn_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, _ = c._compute_dqn_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert loss.item() >= 0
 
     def test_double_dqn_action_selection(self, state_dim, action_dim, small_config):
         """Double DQN should use online network for action selection."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DOUBLE_DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DOUBLE_DQN, small_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -216,12 +244,16 @@ class TestComputeDQNLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.zeros(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, _ = c._compute_dqn_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, _ = c._compute_dqn_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert loss.item() >= 0
 
     def test_terminal_states_handling(self, state_dim, action_dim, small_config):
         """Terminal states should not include future rewards."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -229,7 +261,9 @@ class TestComputeDQNLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.ones(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, _ = c._compute_dqn_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, _ = c._compute_dqn_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert not torch.isnan(loss)
         assert not torch.isinf(loss)
 
@@ -239,7 +273,9 @@ class TestDistributionalLoss:
 
     def test_returns_loss_and_td_errors(self, state_dim, action_dim, rainbow_config):
         """Should return loss tensor and TD errors."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -247,13 +283,17 @@ class TestDistributionalLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.zeros(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, td_errors = c._compute_distributional_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, td_errors = c._compute_distributional_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert isinstance(loss, torch.Tensor)
         assert loss.dim() == 0
 
     def test_terminal_states(self, state_dim, action_dim, rainbow_config):
         """Should handle terminal states correctly."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu"
+        )
         bs = 4
         states = torch.randn(bs, state_dim)
         actions = torch.randint(0, action_dim, (bs,))
@@ -261,7 +301,9 @@ class TestDistributionalLoss:
         next_states = torch.randn(bs, state_dim)
         dones = torch.ones(bs, dtype=torch.bool)
         is_weights = torch.ones(bs)
-        loss, _ = c._compute_distributional_loss(states, actions, rewards, next_states, dones, is_weights)
+        loss, _ = c._compute_distributional_loss(
+            states, actions, rewards, next_states, dones, is_weights
+        )
         assert not torch.isnan(loss)
 
 
@@ -270,14 +312,18 @@ class TestUpdateTargetNetwork:
 
     def test_soft_update(self, state_dim, action_dim, small_config):
         """Soft update should interpolate between networks."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         with torch.no_grad():
             for p in c.q_network.parameters():
                 p.add_(torch.randn_like(p) * 0.1)
         q_params = [p.clone() for p in c.q_network.parameters()]
         target_params = [p.clone() for p in c.target_network.parameters()]
         c._update_target_network()
-        for q_before, t_before, t_after in zip(q_params, target_params, c.target_network.parameters(), strict=False):
+        for q_before, t_before, t_after in zip(
+            q_params, target_params, c.target_network.parameters(), strict=False
+        ):
             expected = c.config.tau * q_before + (1 - c.config.tau) * t_before
             assert torch.allclose(t_after, expected, atol=1e-5)
 
@@ -289,7 +335,9 @@ class TestUpdateTargetNetwork:
             for p in c.q_network.parameters():
                 p.add_(torch.randn_like(p) * 0.5)
         c._update_target_network()
-        for q_param, t_param in zip(c.q_network.parameters(), c.target_network.parameters(), strict=False):
+        for q_param, t_param in zip(
+            c.q_network.parameters(), c.target_network.parameters(), strict=False
+        ):
             assert torch.allclose(q_param, t_param)
 
 
@@ -298,35 +346,45 @@ class TestUpdateExploration:
 
     def test_epsilon_decay(self, state_dim, action_dim, small_config):
         """Epsilon should decrease after update."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         initial_epsilon = c.epsilon
         c._update_exploration()
         assert c.epsilon < initial_epsilon
 
     def test_epsilon_minimum_bound(self, state_dim, action_dim, small_config):
         """Epsilon should not go below minimum."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         c.epsilon = c.config.epsilon_end
         c._update_exploration()
         assert c.epsilon >= c.config.epsilon_end
 
     def test_beta_annealing(self, state_dim, action_dim, priority_config):
         """Beta should increase for priority replay."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu"
+        )
         initial_beta = c.beta
         c._update_exploration()
         assert c.beta > initial_beta
 
     def test_beta_maximum_bound(self, state_dim, action_dim, priority_config):
         """Beta should not exceed 1.0."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu"
+        )
         c.beta = 1.0
         c._update_exploration()
         assert c.beta <= 1.0
 
     def test_rainbow_noise_reset(self, state_dim, action_dim, rainbow_config):
         """Rainbow should reset noise in noisy layers."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.RAINBOW_DQN, rainbow_config, "cpu"
+        )
         c._update_exploration()
 
 
@@ -335,7 +393,9 @@ class TestUpdateWithReward:
 
     def test_stores_experience(self, state_dim, action_dim, small_config):
         """Should store experience in replay buffer."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         mock_prev_state = MagicMock()
         mock_next_state = MagicMock()
         ps = np.random.randn(state_dim).astype(np.float32)
@@ -347,7 +407,9 @@ class TestUpdateWithReward:
 
     def test_triggers_training(self, state_dim, action_dim, small_config):
         """Should trigger training at train_freq intervals."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         c.steps = c.config.train_freq - 1
         mock_prev_state = MagicMock()
@@ -363,7 +425,9 @@ class TestSaveLoad:
 
     def test_save_creates_file(self, state_dim, action_dim, small_config):
         """Save should create a file."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
             c.save_model(f.name)
             assert Path(f.name).exists()
@@ -371,7 +435,9 @@ class TestSaveLoad:
 
     def test_save_has_required_keys(self, state_dim, action_dim, small_config):
         """Save should include all required keys."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
             c.save_model(f.name)
             checkpoint = torch.load(f.name, weights_only=False)
@@ -382,23 +448,31 @@ class TestSaveLoad:
 
     def test_load_restores_state(self, state_dim, action_dim, small_config):
         """Load should restore saved state."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         c.epsilon = 0.5
         c.beta = 0.7
         with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
             c.save_model(f.name)
-            new_c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+            new_c = DeepRLController(
+                state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+            )
             new_c.load_model(f.name)
             assert new_c.epsilon == 0.5
             assert new_c.beta == 0.7
 
     def test_load_preserves_weights(self, state_dim, action_dim, small_config):
         """Load should preserve network weights."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         original_weights = {n: p.clone() for n, p in c.q_network.named_parameters()}
         with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
             c.save_model(f.name)
-            new_c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+            new_c = DeepRLController(
+                state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+            )
             new_c.load_model(f.name)
             for name, param in new_c.q_network.named_parameters():
                 assert torch.allclose(param, original_weights[name])
@@ -409,24 +483,32 @@ class TestPerformanceSummary:
 
     def test_returns_dict(self, state_dim, action_dim, small_config):
         """Should return a dictionary."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         assert isinstance(c.get_performance_summary(), dict)
 
     def test_has_algorithm(self, state_dim, action_dim, small_config):
         """Should include algorithm name."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         summary = c.get_performance_summary()
         assert summary["algorithm"] == DRLAlgorithm.DQN.value
 
     def test_has_steps(self, state_dim, action_dim, small_config):
         """Should include step count."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         c.steps = 100
         assert c.get_performance_summary()["steps"] == 100
 
     def test_has_network_parameters(self, state_dim, action_dim, small_config):
         """Should include network parameter count."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         assert "network_parameters" in c.get_performance_summary()
 
 
@@ -435,14 +517,18 @@ class TestLRScheduling:
 
     def test_get_learning_rate(self, state_dim, action_dim, small_config):
         """Should return current learning rate."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         lr = c.get_learning_rate()
         assert lr > 0
         assert isinstance(lr, float)
 
     def test_scheduler_steps(self, state_dim, action_dim, small_config):
         """Scheduler should step during training."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         for _ in range(10):
             c.train_step()
@@ -454,12 +540,16 @@ class TestGradientClipping:
 
     def test_config_has_gradient_clip(self, state_dim, action_dim, small_config):
         """Config should have gradient_clip parameter."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         assert c.config.gradient_clip > 0
 
     def test_training_with_clipping(self, state_dim, action_dim, small_config):
         """Training should not produce NaN with clipping."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         metrics = c.train_step()
         assert not np.isnan(metrics["loss"])
@@ -467,7 +557,9 @@ class TestGradientClipping:
 
     def test_custom_clip_value(self, state_dim, action_dim):
         """Should work with custom clip value."""
-        config = DRLConfig(hidden_layers=[32, 16], gradient_clip=0.5, batch_norm=False, warmup_steps=5)
+        config = DRLConfig(
+            hidden_layers=[32, 16], gradient_clip=0.5, batch_norm=False, warmup_steps=5
+        )
         c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, config, "cpu")
         fill_buffer(c, 20, state_dim)
         assert not np.isnan(c.train_step()["loss"])
@@ -478,7 +570,9 @@ class TestStoreExperience:
 
     def test_stores_to_deque(self, state_dim, action_dim, small_config):
         """Should store to deque when priority_replay is False."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         state = np.random.randn(state_dim).astype(np.float32)
         next_state = np.random.randn(state_dim).astype(np.float32)
         c.store_experience(state, 0, 1.0, next_state, False)
@@ -486,7 +580,9 @@ class TestStoreExperience:
 
     def test_stores_to_priority_buffer(self, state_dim, action_dim, priority_config):
         """Should store to priority buffer when priority_replay is True."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, priority_config, "cpu"
+        )
         state = np.random.randn(state_dim).astype(np.float32)
         next_state = np.random.randn(state_dim).astype(np.float32)
         c.store_experience(state, 0, 1.0, next_state, False)
@@ -498,7 +594,9 @@ class TestControlStep:
 
     def test_returns_tuple(self, state_dim, action_dim, small_config):
         """Should return (action, info) tuple."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         mock_state = MagicMock()
         features = np.random.randn(state_dim).astype(np.float32)
         with patch.object(c, "extract_state_features", return_value=features):
@@ -508,7 +606,9 @@ class TestControlStep:
 
     def test_returns_valid_action(self, state_dim, action_dim, small_config):
         """Action should be in valid range."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         mock_state = MagicMock()
         features = np.random.randn(state_dim).astype(np.float32)
         with patch.object(c, "extract_state_features", return_value=features):
@@ -518,7 +618,9 @@ class TestControlStep:
 
     def test_info_contains_algorithm(self, state_dim, action_dim, small_config):
         """Info should contain algorithm."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         mock_state = MagicMock()
         features = np.random.randn(state_dim).astype(np.float32)
         with patch.object(c, "extract_state_features", return_value=features):
@@ -528,7 +630,9 @@ class TestControlStep:
 
     def test_increments_steps(self, state_dim, action_dim, small_config):
         """Should increment steps counter."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         mock_state = MagicMock()
         features = np.random.randn(state_dim).astype(np.float32)
         initial_steps = c.steps
@@ -580,13 +684,17 @@ class TestPolicyGradientBug:
     @pytest.mark.xfail(reason="PPO has bug: target_network=None before load_state_dict")
     def test_ppo_init_fails(self, state_dim, action_dim, small_config):
         """PPO initialization fails due to None target_network."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.PPO, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.PPO, small_config, "cpu"
+        )
         assert c.policy_network is not None
 
     @pytest.mark.xfail(reason="A3C has bug: target_network=None before load_state_dict")
     def test_a3c_init_fails(self, state_dim, action_dim, small_config):
         """A3C initialization fails due to None target_network."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.A3C, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.A3C, small_config, "cpu"
+        )
         assert c.policy_network is not None
 
 
@@ -595,27 +703,37 @@ class TestIntegration:
 
     def test_full_training_loop(self, state_dim, action_dim, small_config):
         """Test complete training loop."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         losses = [c.train_step()["loss"] for _ in range(10)]
         assert all(not np.isnan(loss) and not np.isinf(loss) for loss in losses)
 
     def test_save_load_continue_training(self, state_dim, action_dim, small_config):
         """Test save, load, and continue training."""
-        c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+        c = DeepRLController(
+            state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+        )
         fill_buffer(c, 20, state_dim)
         for _ in range(5):
             c.train_step()
         with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
             c.save_model(f.name)
-            new_c = DeepRLController(state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu")
+            new_c = DeepRLController(
+                state_dim, action_dim, DRLAlgorithm.DQN, small_config, "cpu"
+            )
             new_c.load_model(f.name)
             fill_buffer(new_c, 20, state_dim)
             assert "loss" in new_c.train_step()
 
     def test_multiple_algorithms(self, state_dim, action_dim, small_config):
         """Test training with different algorithms."""
-        for algo in [DRLAlgorithm.DQN, DRLAlgorithm.DOUBLE_DQN, DRLAlgorithm.DUELING_DQN]:
+        for algo in [
+            DRLAlgorithm.DQN,
+            DRLAlgorithm.DOUBLE_DQN,
+            DRLAlgorithm.DUELING_DQN,
+        ]:
             c = DeepRLController(state_dim, action_dim, algo, small_config, "cpu")
             fill_buffer(c, 20, state_dim)
             metrics = c.train_step()
