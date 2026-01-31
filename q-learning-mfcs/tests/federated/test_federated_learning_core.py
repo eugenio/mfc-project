@@ -860,7 +860,7 @@ class TestClientSelection:
         self._add_data_to_clients(server)
 
         # Set different losses for clients
-        for i, (client_id, info) in enumerate(server.client_info.items()):
+        for i, (_client_id, info) in enumerate(server.client_info.items()):
             info.local_loss = float(i)  # Higher loss for later clients
 
         selected = server.select_clients(1)
@@ -1100,7 +1100,7 @@ class TestWeightSerialization:
 
         # Verify structure
         assert len(state_dict) > 0
-        for key, value in state_dict.items():
+        for _key, value in state_dict.items():
             assert isinstance(value, torch.Tensor)
 
     def test_state_dict_load(self, simple_model):
@@ -1116,7 +1116,7 @@ class TestWeightSerialization:
         new_model.load_state_dict(state_dict)
 
         # Verify parameters match
-        for (n1, p1), (n2, p2) in zip(
+        for (_n1, p1), (_n2, p2) in zip(
             simple_model.named_parameters(),
             new_model.named_parameters(),
             strict=False,
@@ -1131,7 +1131,7 @@ class TestWeightSerialization:
         }
 
         assert len(model_params) > 0
-        for name, param in model_params.items():
+        for _name, param in model_params.items():
             assert isinstance(param, torch.Tensor)
             assert param.device == torch.device("cpu")
 
@@ -1196,7 +1196,7 @@ class TestIntegration:
 
         # Register and create updates
         updates = []
-        for i, info in enumerate(multiple_client_infos):
+        for _i, info in enumerate(multiple_client_infos):
             server.register_client(info)
             client = server.clients[info.client_id]
 
@@ -1222,5 +1222,5 @@ class TestIntegration:
         server.global_model.load_state_dict(aggregated)
 
         # Verify global model is updated
-        for name, param in server.global_model.named_parameters():
+        for name, _param in server.global_model.named_parameters():
             assert name in aggregated
