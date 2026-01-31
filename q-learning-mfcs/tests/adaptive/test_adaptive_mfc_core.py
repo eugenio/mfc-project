@@ -264,7 +264,6 @@ def create_mock_sensor_fusion(*args, **kwargs):
 def mock_modules():
     """Set up mock modules for testing."""
     mock_biofilm = MagicMock()
-    mock_sensing = MagicMock()
     mock_advanced_fusion = MagicMock()
     mock_sensor_fusion = MagicMock()
     mock_config = MagicMock()
