@@ -25,6 +25,24 @@ test-selenium = "cd q-learning-mfcs/tests && python -m pytest selenium/ -v"
 test-monitoring = "cd q-learning-mfcs/tests && python -m pytest test_monitoring_system.py -v"
 test-config = "cd q-learning-mfcs/tests && python -m pytest config/ -v"
 test-all = "pixi run test && pixi run test-gui && pixi run test-monitoring"
+test-apptest = "cd q-learning-mfcs/tests && python -m pytest apptest/ -v -m apptest"
+test-playwright = "cd q-learning-mfcs/tests && python -m pytest playwright/ -v -m playwright"
+test-e2e-ci = """python -c "
+import subprocess, sys, time, socket
+def port_up(p):
+    with socket.socket() as s: return s.connect_ex(('localhost',p))==0
+proc=None
+if not port_up(8502):
+    proc=subprocess.Popen([sys.executable,'-m','streamlit','run','q-learning-mfcs/src/gui/enhanced_main_app.py','--server.port','8502','--server.headless','true','--browser.gatherUsageStats','false'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    t=time.time()
+    while time.time()-t<30:
+        if port_up(8502): break
+        time.sleep(0.5)
+    else: proc.kill(); sys.exit(1)
+rc=subprocess.call([sys.executable,'-m','pytest','q-learning-mfcs/tests/playwright/','-v','-m','playwright'])
+if proc: proc.terminate()
+sys.exit(rc)
+" """
 
 # Test with coverage
 test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
@@ -139,6 +157,7 @@ fastapi = ">=0.115.14,<0.117"
 uvicorn = ">=0.35.0,<0.36"
 pytest = ">=8.4.1,<9"
 pytest-cov = ">=6.2.1,<7"
+pytest-playwright = ">=0.7.2,<0.8"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]
@@ -211,6 +230,7 @@ pymupdf = "*"
 streamlit-autorefresh = ">=1.0.1, <2"
 selenium = ">=4.34.2, <5"
 webdriver-manager = ">=4.0.2, <5"
+pytest-playwright = ">=0.6.2"
 
 # Core runtime dependencies (pypi)
 [pypi-dependencies]
