@@ -54,7 +54,6 @@ import torch.nn.functional as F
 
 # Import Phase 2 and 3 components
 from adaptive_mfc_controller import SystemState
-from base_controller import BaseController
 from biofilm_health_monitor import HealthMetrics
 from sensing_models.sensor_fusion import BacterialSpecies
 from torch import nn, optim
@@ -388,7 +387,7 @@ class ModelCompression:
             ((tensor - min_val) * scale).round().clamp(0, 2**self.quantization_bits - 1)
         )
 
-        return quantized.cpu().numpy().astype(np.uint8)
+        return quantized.detach().cpu().numpy().astype(np.uint8)
 
     def _dequantize_tensor(self, quantized_array: np.ndarray) -> torch.Tensor:
         """Dequantize array back to tensor."""
