@@ -30,24 +30,19 @@ _SRC_DIR = str(
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-# Modules that need fresh import when mocking streamlit
-_GUI_MODULES_TO_CLEAR = [
-    "gui.data_loaders",
-    "gui.enhanced_components",
-    "gui.core_layout",
-    "gui.scientific_widgets",
-]
+# Clear ALL gui.* modules to prevent cross-test pollution
+_GUI_PREFIX = "gui."
 
 
 @pytest.fixture(autouse=True)
 def _clear_gui_module_cache():
     """Remove cached GUI modules so each test gets a fresh import with its own mock."""
     for mod_name in list(sys.modules):
-        if any(mod_name == m or mod_name.startswith(m + ".") for m in _GUI_MODULES_TO_CLEAR):
+        if mod_name == "gui" or mod_name.startswith(_GUI_PREFIX):
             del sys.modules[mod_name]
     yield
     for mod_name in list(sys.modules):
-        if any(mod_name == m or mod_name.startswith(m + ".") for m in _GUI_MODULES_TO_CLEAR):
+        if mod_name == "gui" or mod_name.startswith(_GUI_PREFIX):
             del sys.modules[mod_name]
 
 
@@ -989,7 +984,8 @@ class TestExportManager:
             import gui.enhanced_components as _ec_mod
             from gui.enhanced_components import ExportManager
 
-            with patch.object(_ec_mod, "st", mock_st):
+            with patch.object(_ec_mod, "st", mock_st), \
+                 patch("pandas.DataFrame.to_parquet"):
                 em = ExportManager()
                 datasets = {
                     "pq_data": pd.DataFrame({"v": [1.0, 2.0]}),
@@ -999,8 +995,7 @@ class TestExportManager:
                     "parquet",
                     include_metadata=True,
                 )
-
-            mock_st.download_button.assert_called_once()
+                mock_st.download_button.assert_called_once()
 
     def test_export_data_parquet_no_metadata(self):
         """Export Parquet without metadata exercises code path."""
@@ -1418,7 +1413,7 @@ class TestCoreLayoutPhaseHeader:
     def test_phase_header_complete_status(self):
         """Phase header shows success for complete status."""
         mock_st = _make_mock_st()
-        cols = self._make_col_mocks(mock_st)
+        self._make_col_mocks(mock_st)
 
         with patch.dict(sys.modules, {"streamlit": mock_st}):
             from gui.core_layout import create_phase_header
@@ -1437,7 +1432,7 @@ class TestCoreLayoutPhaseHeader:
     def test_phase_header_ready_status(self):
         """Phase header shows info for ready status."""
         mock_st = _make_mock_st()
-        cols = self._make_col_mocks(mock_st)
+        self._make_col_mocks(mock_st)
 
         with patch.dict(sys.modules, {"streamlit": mock_st}):
             from gui.core_layout import create_phase_header
@@ -1454,7 +1449,7 @@ class TestCoreLayoutPhaseHeader:
     def test_phase_header_pending_status(self):
         """Phase header shows warning for unknown phase key."""
         mock_st = _make_mock_st()
-        cols = self._make_col_mocks(mock_st)
+        self._make_col_mocks(mock_st)
 
         with patch.dict(sys.modules, {"streamlit": mock_st}):
             from gui.core_layout import create_phase_header
@@ -1471,7 +1466,7 @@ class TestCoreLayoutPhaseHeader:
     def test_phase_header_title_and_caption(self):
         """Phase header displays title and caption in col1."""
         mock_st = _make_mock_st()
-        cols = self._make_col_mocks(mock_st)
+        self._make_col_mocks(mock_st)
 
         with patch.dict(sys.modules, {"streamlit": mock_st}):
             from gui.core_layout import create_phase_header
@@ -1488,7 +1483,7 @@ class TestCoreLayoutPhaseHeader:
     def test_phase_header_metric_in_third_column(self):
         """Phase header displays System Status metric."""
         mock_st = _make_mock_st()
-        cols = self._make_col_mocks(mock_st)
+        self._make_col_mocks(mock_st)
 
         with patch.dict(sys.modules, {"streamlit": mock_st}):
             from gui.core_layout import create_phase_header
