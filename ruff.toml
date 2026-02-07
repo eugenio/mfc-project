@@ -49,6 +49,15 @@ unfixable = []
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
+[lint.per-file-ignores]
+"q-learning-mfcs/tests/**/*" = [
+    "S101", "SLF001", "ANN", "D", "PLC0415", "ARG", "PT",
+    "PLR2004", "PLR0913", "FBT", "E501", "ERA001", "T201",
+    "B011", "INP001", "N802", "RUF012", "TCH", "TRY", "EM",
+    "C901", "PLR0915", "BLE001", "DTZ", "NPY002", "SIM",
+    "PERF", "S108", "S110", "PTH",
+]
+
 [format]
 # Like Black, use double quotes for strings.
 quote-style = "double"

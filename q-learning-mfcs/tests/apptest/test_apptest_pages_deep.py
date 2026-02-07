@@ -343,20 +343,12 @@ class TestPerfMonitorDeepWidgets:
     in AppTest. All tests are marked xfail due to this timeout issue.
     """
 
-    @pytest.mark.xfail(
-        reason="Performance Monitor auto_refresh causes infinite rerun loop",
-        strict=False,
-    )
     def test_perf_title(self) -> None:
         """Performance Monitor title is present."""
         at = _nav(PAGE_LABELS[7])
         titles = [t.value for t in at.title]
         assert any("Performance" in t for t in titles)
 
-    @pytest.mark.xfail(
-        reason="Performance Monitor auto_refresh causes infinite rerun loop",
-        strict=False,
-    )
     def test_perf_auto_refresh_checkbox(self) -> None:
         """Auto Refresh checkbox exists and is checked by default."""
         at = _nav(PAGE_LABELS[7])
@@ -378,16 +370,12 @@ class TestPerfMonitorDeepWidgets:
             at.checkbox[0].set_value(False).run()
             assert len(at.exception) == 0
 
-    @pytest.mark.xfail(
-        reason="Performance Monitor auto_refresh causes infinite rerun loop",
-        strict=False,
-    )
     def test_perf_refresh_rate_selectbox(self) -> None:
         """Refresh Rate selectbox present with expected options."""
         at = _nav(PAGE_LABELS[7])
         found = False
         for sb in at.selectbox:
-            if 1 in sb.options or "1" in [str(o) for o in sb.options]:
+            if 1 in sb.options or "1" in [str(o) for o in sb.options]:  # type: ignore[comparison-overlap]
                 found = True
                 break
         assert found
@@ -400,7 +388,7 @@ class TestPerfMonitorDeepWidgets:
         """Change refresh rate to 5."""
         at = _nav(PAGE_LABELS[7])
         for sb in at.selectbox:
-            if 5 in sb.options:
+            if 5 in sb.options:  # type: ignore[comparison-overlap]
                 sb.set_value(5).run()
                 assert sb.value == 5
                 break
@@ -474,10 +462,6 @@ class TestPerfMonitorDeepExpanders:
         at = _nav(PAGE_LABELS[7])
         assert len(at.expander) >= 1
 
-    @pytest.mark.xfail(
-        reason="Performance Monitor auto_refresh causes infinite rerun loop",
-        strict=False,
-    )
     def test_perf_caption_present(self) -> None:
         """Performance Monitor has descriptive caption."""
         at = _nav(PAGE_LABELS[7])
@@ -493,10 +477,6 @@ class TestPerfMonitorDeepExpanders:
         labels = [m.label for m in at.metric]
         assert any("Memory" in lab for lab in labels)
 
-    @pytest.mark.xfail(
-        reason="Performance Monitor auto_refresh causes infinite rerun loop",
-        strict=False,
-    )
     def test_perf_buttons_present(self) -> None:
         """Performance Monitor has action buttons."""
         at = _nav(PAGE_LABELS[7])
@@ -1096,10 +1076,6 @@ class TestElectrodeDeepMaterialSelection:
 class TestElectrodeDeepGeometryTab:
     """Deep geometry tab tests (may trigger known material_options bug)."""
 
-    @pytest.mark.xfail(
-        reason="Known bug: material_options not defined in geometry tab",
-        strict=False,
-    )
     def test_electrode_geometry_selectbox_options(self) -> None:
         """Geometry selectbox has Rectangular Plate and others."""
         at = _nav(PAGE_LABELS[1])
@@ -1108,10 +1084,6 @@ class TestElectrodeDeepGeometryTab:
                 assert "Cylindrical Rod" in sb.options
                 break
 
-    @pytest.mark.xfail(
-        reason="Known bug: material_options not defined in geometry tab",
-        strict=False,
-    )
     def test_electrode_geometry_number_inputs(self) -> None:
         """Geometry tab has dimension number inputs."""
         at = _nav(PAGE_LABELS[1])
