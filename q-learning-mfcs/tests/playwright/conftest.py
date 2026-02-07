@@ -139,7 +139,7 @@ _REPORT_DIR = Path(__file__).resolve().parent / ".." / ".." / ".." / "tmp"
 _pw_results: list[dict[str, Any]] = []
 
 
-def pytest_runtest_logreport(report: Any) -> None:  # noqa: ANN401
+def pytest_runtest_logreport(report: Any) -> None:
     """Collect test results for report."""
     if report.when != "call":
         return
@@ -156,8 +156,8 @@ def pytest_runtest_logreport(report: Any) -> None:  # noqa: ANN401
 
 
 def pytest_sessionfinish(
-    session: Any,  # noqa: ANN401, ARG001
-    exitstatus: int,  # noqa: ARG001
+    session: Any,
+    exitstatus: int,
 ) -> None:
     """Generate JSON and Markdown E2E reports."""
     results = _pw_results
