@@ -31,7 +31,7 @@ def app() -> AppTest:
 
 
 @pytest.fixture
-def navigate_to(app: AppTest):
+def navigate_to(app: AppTest):  # noqa: ANN201
     """Navigate to a specific page by label.
 
     Usage:
@@ -50,7 +50,7 @@ def navigate_to(app: AppTest):
 
 def _mock_psutil() -> None:
     """Pre-mock psutil to avoid blocking calls."""
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock  # noqa: PLC0415
 
     mock_psutil = MagicMock()
     mock_psutil.cpu_percent.return_value = 45.0

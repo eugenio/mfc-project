@@ -49,38 +49,6 @@ unfixable = []
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-[lint.per-file-ignores]
-"q-learning-mfcs/tests/**/*" = [
-    "S101",    # assert in tests is expected
-    "SLF001",  # private member access needed for testing
-    "ANN",     # type annotations not required in tests
-    "D",       # docstring rules relaxed in tests
-    "PLC0415", # imports inside functions needed for mock isolation
-    "ARG",     # unused arguments common in test fixtures/mocks
-    "PT",      # pytest style preferences
-    "PLR2004", # magic values acceptable in tests
-    "PLR0913", # too many arguments common in parameterized tests
-    "FBT",     # boolean traps acceptable in tests
-    "E501",    # line length relaxed in tests
-    "ERA001",  # commented-out code for test documentation
-    "T201",    # print statements for test debugging
-    "B011",    # assert False usage in tests
-    "INP001",  # implicit namespace packages in test dirs
-    "N802",    # function name conventions relaxed
-    "RUF012",  # mutable class attributes in test classes
-    "TCH",     # type checking blocks not needed in tests
-    "TRY",     # exception handling relaxed in tests
-    "EM",      # exception messages relaxed in tests
-    "C901",    # complexity not checked in tests
-    "PLR0915", # too many statements relaxed in tests
-    "BLE001",  # blind exception catching in tests
-    "DTZ",     # datetime timezone not required in test data
-    "NPY002",  # legacy numpy random acceptable in tests
-    "SIM",     # simplify suggestions optional in tests
-    "PERF",    # performance suggestions optional in tests
-    "S108",    # temp file usage acceptable in tests
-]
-
 [format]
 # Like Black, use double quotes for strings.
 quote-style = "double"
