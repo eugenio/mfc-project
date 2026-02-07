@@ -186,30 +186,13 @@ def render_geometry_configuration() -> None:
                 value=15.0,
             )
 
-            # Calculate anode areas and mass
-            anode_geometric_area = anode_length * anode_width
-            anode_geometric_surface_area = 2 * (anode_length * anode_width + anode_length * anode_thickness + anode_width * anode_thickness)
-
-            # Calculate volume and mass for specific surface area
-            anode_volume_m3 = (anode_length / 100) * (anode_width / 100) * (anode_thickness / 100)
-            anode_mass_kg = anode_volume_m3 * anode_density
-            anode_mass_g = anode_mass_kg * 1000  # Convert kg to g
-
-            # Calculate total surface area using volumetric SSA if provided
-            if anode_volumetric_ssa > 0:
-                # Total surface area = Volumetric SSA × Volume
-                anode_total_surface_area_m2 = anode_volumetric_ssa * anode_volume_m3
-                anode_total_surface_area = anode_total_surface_area_m2 * 10000  # Convert m² to cm²
-            else:
-                # Use geometric surface area
-                anode_total_surface_area = anode_geometric_surface_area
-
-            # Calculate or use measured specific surface area (m²/g)
-            if use_measured_ssa_anode:
-                anode_specific_surface_area = anode_measured_ssa
-            else:
-                anode_total_surface_area_m2 = anode_total_surface_area / 10000  # Convert cm² to m²
-                anode_specific_surface_area = anode_total_surface_area_m2 / anode_mass_g if anode_mass_g > 0 else 0
+            # Calculate cylinder areas
+            radius = diameter / 2
+            _geometric_area = np.pi * radius**2
+            _projected_area = diameter * length
+            _total_surface_area = (
+                np.pi * diameter * length + 2 * np.pi * radius**2
+            )
 
         elif anode_geometry_type == "Cylindrical Rod":
             anode_diameter = st.number_input("Anode Diameter (cm)", min_value=0.1, max_value=10.0, value=2.0, key="anode_diameter")
