@@ -122,10 +122,7 @@ class TestCylindricalRodGeometryType:
         mod = _import_module_with_mock_st(mock_st)
         mod.material_options = _make_material_options()
 
-        # Source bug: line 190 references anode_length from Rectangular Plate
-        # branch when geometry is Cylindrical Rod, causing UnboundLocalError
-        with pytest.raises(UnboundLocalError):
-            mod.render_geometry_configuration()
+        mod.render_geometry_configuration()
 
 
 @pytest.mark.apptest
