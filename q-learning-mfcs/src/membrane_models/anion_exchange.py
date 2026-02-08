@@ -517,6 +517,7 @@ class AnionExchangeMembrane(BaseMembraneModel):
             lifetime_to_50 = -jnp.log(0.5) / deg_rate
             remaining_hours = max(0, lifetime_to_50 - operating_hours)
         else:
+            lifetime_to_50 = float("inf")
             remaining_hours = float("inf")
 
         # Chemical stability indicators
