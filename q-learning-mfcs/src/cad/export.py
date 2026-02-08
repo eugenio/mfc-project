@@ -226,6 +226,69 @@ def generate_bom(config: StackCADConfig) -> dict[str, Any]:
         },
     ]
 
+    # --- extended parts (hydraulics + peripherals) ---
+    barb = config.barb_fitting
+    parts.append({
+        "item": 15,
+        "part": "Barb Fitting",
+        "qty": n * 4,  # 4 per cell (anode in/out + cathode in/out)
+        "material": "Brass",
+        "dimensions_mm": (
+            f"Barb OD {barb.barb_od * 1000:.0f}, "
+            f"Hex AF {barb.hex_af * 1000:.0f}"
+        ),
+    })
+
+    res = config.reservoir
+    parts.append({
+        "item": 16,
+        "part": "Anolyte Reservoir",
+        "qty": 1,
+        "material": "HDPE",
+        "dimensions_mm": (
+            f"OD {res.outer_diameter * 1000:.0f} x "
+            f"H {res.outer_height * 1000:.0f}"
+        ),
+    })
+
+    pump = config.pump_head
+    parts.append({
+        "item": 17,
+        "part": "Peristaltic Pump Head",
+        "qty": 1,
+        "material": "Polycarbonate",
+        "dimensions_mm": (
+            f"{pump.body_width * 1000:.0f}x"
+            f"{pump.body_depth * 1000:.0f}x"
+            f"{pump.body_height * 1000:.0f}"
+        ),
+    })
+
+    tubing_spec = config.tubing
+    parts.append({
+        "item": 18,
+        "part": "Silicone Tubing",
+        "qty": 1,
+        "material": "Silicone (platinum-cured)",
+        "dimensions_mm": (
+            f"ID {tubing_spec.inner_diameter * 1000:.0f} / "
+            f"OD {tubing_spec.outer_diameter * 1000:.0f}"
+        ),
+    })
+
+    sf = config.support_feet
+    parts.append({
+        "item": 19,
+        "part": "Support Foot (U-cradle)",
+        "qty": 2,
+        "material": "Aluminium",
+        "dimensions_mm": (
+            f"{sf.foot_depth * 1000:.0f}x"
+            f"{sf.foot_width * 1000:.0f}x"
+            f"{sf.foot_height * 1000:.0f}"
+        ),
+    })
+
     return {
         "title": f"MFC Stack BOM — {n}-cell series stack",
         "num_cells": n,

@@ -79,6 +79,25 @@ class TestSimulatorToCAD:
         assert warnings == []
 
 
+class TestHydraulicParameters:
+    def test_pipe_dead_volume_present(self, default_config: StackCADConfig) -> None:
+        params = cad_to_simulator(default_config)
+        assert "pipe_dead_volume" in params
+        assert params["pipe_dead_volume"] > 0
+
+    def test_reservoir_volume_present(self, default_config: StackCADConfig) -> None:
+        params = cad_to_simulator(default_config)
+        assert "reservoir_volume" in params
+        # 10 L = 0.01 m³
+        assert params["reservoir_volume"] == pytest.approx(0.01)
+
+    def test_nominal_flow_rate(self, default_config: StackCADConfig) -> None:
+        params = cad_to_simulator(default_config)
+        assert "Q_a_nominal" in params
+        # 68 mL/h ≈ 1.89e-8 m³/s
+        assert params["Q_a_nominal"] == pytest.approx(68e-6 / 3600, rel=0.01)
+
+
 class TestRoundTrip:
     def test_default_config_round_trip(
         self,

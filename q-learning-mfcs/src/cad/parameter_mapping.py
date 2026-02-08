@@ -43,7 +43,13 @@ def cad_to_simulator(config: StackCADConfig) -> dict[str, float]:
     dict
         Keys match ``MFCModel`` struct field names:
         ``V_a``, ``V_c``, ``A_m``, ``d_m``, ``d_cell``, ``n_cells``.
+        Additional keys for hydraulic parameters:
+        ``pipe_dead_volume``, ``reservoir_volume``, ``Q_a_nominal``.
     """
+    from .hydraulics import compute_total_dead_volume
+
+    dead_vol = compute_total_dead_volume(config)
+
     return {
         "V_a": config.semi_cell.chamber_volume,
         "V_c": config.semi_cell.chamber_volume,
@@ -51,6 +57,10 @@ def cad_to_simulator(config: StackCADConfig) -> dict[str, float]:
         "d_m": config.membrane.thickness,
         "d_cell": config.cell_thickness,
         "n_cells": float(config.num_cells),
+        # Hydraulic parameters (scaled from simulator)
+        "pipe_dead_volume": dead_vol,  # m³
+        "reservoir_volume": config.reservoir.volume_liters * 1e-3,  # m³
+        "Q_a_nominal": 68e-6 / 3600,  # m³/s  (68 mL/h scaled from 15 mL/h)
     }
 
 
