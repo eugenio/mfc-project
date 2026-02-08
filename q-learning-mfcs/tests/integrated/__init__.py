@@ -401,7 +401,8 @@ def add_test_methods_to_models():
 
 
 # Initialize test methods
-add_test_methods_to_models()import pytest
+add_test_methods_to_models()
+import pytest
 import numpy as np
 import pandas as pd
 import asyncio

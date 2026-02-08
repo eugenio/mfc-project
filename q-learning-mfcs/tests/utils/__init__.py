@@ -7,13 +7,13 @@ Provides common testing infrastructure including:
 - Mock frameworks
 """
 
-from .streamlit_test_server import (
-    StreamlitTestServer,
-    create_test_server,
-    get_available_port,
-)
+try:
+    from .streamlit_test_server import (
+        StreamlitTestServer,
+        create_test_server,
+        get_available_port,
+    )
 
-# Headless GUI tester temporarily disabled due to missing module
-# from .headless_gui_tester import HeadlessGUITester, StreamlitContextTester, create_headless_tester, run_comprehensive_gui_tests
-
-__all__ = ["StreamlitTestServer", "create_test_server", "get_available_port"]
+    __all__ = ["StreamlitTestServer", "create_test_server", "get_available_port"]
+except (ImportError, ModuleNotFoundError):
+    __all__ = []
