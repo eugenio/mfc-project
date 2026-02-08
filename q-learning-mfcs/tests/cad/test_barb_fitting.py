@@ -8,6 +8,8 @@ import pytest
 
 from cad.cad_config import StackCADConfig
 
+pytest.importorskip("cadquery", reason="CadQuery not installed")
+
 
 class TestBarbFitting:
     def test_build_returns_solid(self, default_config: StackCADConfig) -> None:

@@ -9,6 +9,8 @@ import pytest
 from cad.cad_config import StackCADConfig, TubingSpec
 
 
+
+
 class TestTubingSpec:
     def test_outer_diameter(self) -> None:
         spec = TubingSpec()
@@ -27,6 +29,10 @@ class TestTubingSpec:
 
 
 class TestBuildStraight:
+    @pytest.fixture(autouse=True)
+    def _require_cadquery(self) -> None:
+        pytest.importorskip("cadquery", reason="CadQuery not installed")
+
     def test_returns_solid_and_length(self, default_config: StackCADConfig) -> None:
         from cad.components.tubing import build_straight
 
@@ -59,6 +65,10 @@ class TestBuildStraight:
 
 
 class TestBuildUtube:
+    @pytest.fixture(autouse=True)
+    def _require_cadquery(self) -> None:
+        pytest.importorskip("cadquery", reason="CadQuery not installed")
+
     def test_returns_solid_and_length(self, default_config: StackCADConfig) -> None:
         from cad.components.tubing import build_utube
 

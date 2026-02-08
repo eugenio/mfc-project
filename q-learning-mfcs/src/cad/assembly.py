@@ -6,32 +6,41 @@ and returns a coloured ``cq.Assembly`` for visualisation and export.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
 import cadquery as cq
 
-from .cad_config import CathodeType, FlowConfiguration, StackCADConfig
+from .cad_config import (
+    CathodeType,
+    FlowConfiguration,
+    ReservoirRole,
+    StackCADConfig,
+)
 from .components import (
     anode_frame,
     barb_fitting,
     cathode_frame,
     cathode_frame_gas,
+    conical_bottom,
     current_collector,
     electrode_placeholder,
+    electrovalve,
     end_plate,
+    gas_diffusion,
     manifold,
     membrane_gasket,
     port_label,
     pump_head,
+    pump_support,
     reservoir,
+    reservoir_feet,
+    reservoir_lid,
+    stirring_motor,
     support_feet,
     tie_rod,
     tubing,
 )
-from .hydraulics import compute_port_positions, compute_series_flow_path
-
-if TYPE_CHECKING:
-    pass
+from .hydraulics import compute_port_positions
 
 # Colour palette  (name -> RGB floats 0-1 for cq.Color)
 _COLOURS: dict[str, tuple[float, float, float]] = {
@@ -53,6 +62,17 @@ _COLOURS: dict[str, tuple[float, float, float]] = {
     "tubing_gas": (0.3, 0.8, 0.3),
     "manifold": (0.7, 0.7, 0.7),
     "reservoir": (0.3, 0.7, 0.9),
+    "reservoir_anolyte": (0.3, 0.7, 0.9),
+    "reservoir_catholyte": (0.4, 0.6, 0.8),
+    "reservoir_nutrient": (0.6, 0.8, 0.4),
+    "reservoir_buffer": (0.8, 0.6, 0.4),
+    "reservoir_lid": (0.5, 0.5, 0.55),
+    "conical_bottom": (0.35, 0.65, 0.85),
+    "reservoir_feet": (0.45, 0.45, 0.45),
+    "stirring_motor": (0.4, 0.4, 0.5),
+    "gas_diffuser": (0.7, 0.7, 0.8),
+    "electrovalve": (0.55, 0.55, 0.6),
+    "pump_support": (0.5, 0.5, 0.5),
     "pump": (0.6, 0.6, 0.3),
     "label": (1.0, 1.0, 1.0),
 }
@@ -82,6 +102,7 @@ class MFCStackAssembly:
         Add barb fittings and tubing.
     include_peripherals : bool
         Add reservoir and pump head.
+
     """
 
     def __init__(
@@ -111,12 +132,12 @@ class MFCStackAssembly:
             self.gas_cathode_cells = set()
 
     @classmethod
-    def all_liquid(cls, config: StackCADConfig, **kwargs) -> "MFCStackAssembly":
+    def all_liquid(cls, config: StackCADConfig, **kwargs: Any) -> MFCStackAssembly:
         """Factory for all-liquid cathode assembly."""
         return cls(config, cathode_type=CathodeType.LIQUID, **kwargs)
 
     @classmethod
-    def all_gas(cls, config: StackCADConfig, **kwargs) -> "MFCStackAssembly":
+    def all_gas(cls, config: StackCADConfig, **kwargs: Any) -> MFCStackAssembly:
         """Factory for all-gas cathode assembly."""
         return cls(config, cathode_type=CathodeType.GAS, **kwargs)
 
@@ -262,10 +283,17 @@ class MFCStackAssembly:
         # --- current-collector rods ---
         collector_solid = current_collector.build(cfg)
         for cell_i in range(cfg.num_cells):
-            for rod_j, (cx, cy) in enumerate(cfg.collector_positions):
+            for rod_j, (cx, cy) in enumerate(cfg.anode_collector_positions):
                 asm.add(
                     collector_solid,
-                    name=f"collector_{cell_i}_{rod_j}",
+                    name=f"collector_anode_{cell_i}_{rod_j}",
+                    loc=cq.Location(cq.Vector(_mm(cx), _mm(cy), 0)),
+                    color=cq.Color(*_COLOURS["collector"]),
+                )
+            for rod_j, (cx, cy) in enumerate(cfg.cathode_collector_positions):
+                asm.add(
+                    collector_solid,
+                    name=f"collector_cathode_{cell_i}_{rod_j}",
                     loc=cq.Location(cq.Vector(_mm(cx), _mm(cy), 0)),
                     color=cq.Color(*_COLOURS["collector"]),
                 )
@@ -320,15 +348,22 @@ class MFCStackAssembly:
         """Add 3D text label plates near ports."""
         half_outer = _mm(cfg.outer_side / 2)
         ep = _mm(cfg.end_plate.thickness)
-        label_offset = 5.0  # mm offset from surface
+        gap = 5.0  # mm gap between stack face and label plate edge
 
+        def _label_offset(text: str) -> float:
+            """Dynamic offset: half plate width + gap."""
+            pw, _ = port_label.plate_dimensions(text, cfg)
+            return pw / 2 + gap
+
+        an_z = ep + _mm(cfg.semi_cell.depth / 2)
+        ca_z = ep + _mm(cfg.cell_thickness * 0.75)
         label_specs = [
-            ("AN IN", 0, -(half_outer + label_offset), ep + _mm(cfg.semi_cell.depth / 2)),
-            ("AN OUT", 0, half_outer + label_offset, ep + _mm(cfg.semi_cell.depth / 2)),
-            ("CA IN", -(half_outer + label_offset), 0, ep + _mm(cfg.cell_thickness * 0.75)),
-            ("CA OUT", half_outer + label_offset, 0, ep + _mm(cfg.cell_thickness * 0.75)),
-            ("IN", 0, 0, -label_offset),
-            ("OUT", 0, 0, _mm(cfg.stack_length) + label_offset),
+            ("AN IN", -(half_outer + _label_offset("AN IN")), 0, an_z),
+            ("AN OUT", half_outer + _label_offset("AN OUT"), 0, an_z),
+            ("CA IN", 0, -(half_outer + _label_offset("CA IN")), ca_z),
+            ("CA OUT", 0, half_outer + _label_offset("CA OUT"), ca_z),
+            ("IN", 0, 0, -_label_offset("IN")),
+            ("OUT", 0, 0, _mm(cfg.stack_length) + _label_offset("OUT")),
         ]
 
         for text, lx, ly, lz in label_specs:
@@ -336,7 +371,7 @@ class MFCStackAssembly:
                 solid = port_label.build_label(text, cfg)
                 asm.add(
                     solid,
-                    name=f"label_{text.replace(' ', '_').replace('+', 'p').replace('-', 'm')}",
+                    name=f"label_{text.replace(' ', '_').replace('+', 'p').replace('-', 'm')}",  # noqa: E501
                     loc=cq.Location(cq.Vector(lx, ly, lz)),
                     color=cq.Color(*_COLOURS["label"]),
                 )
@@ -351,7 +386,7 @@ class MFCStackAssembly:
                     solid,
                     name=f"label_{label_text.replace('+', 'p').replace('-', 'm')}",
                     loc=cq.Location(cq.Vector(
-                        sign * (half_outer + label_offset),
+                        sign * (half_outer + _label_offset(label_text)),
                         0,
                         _mm(cfg.stack_length / 2),
                     )),
@@ -362,21 +397,16 @@ class MFCStackAssembly:
 
     def _add_hydraulics(self, asm: cq.Assembly, cfg: StackCADConfig) -> None:
         """Add barb fittings on all ports and tubing between cells."""
-        # Barb fittings on every port
+        # Barb fittings on every port, oriented along port normal
         ports = compute_port_positions(cfg)
-        fitting_solid = barb_fitting.build(cfg)
-        fitting_len = _mm(
-            cfg.barb_fitting.thread_length
-            + cfg.barb_fitting.hex_height
-            + cfg.barb_fitting.barb_length,
-        )
 
         for p in ports:
             if "end_plate" in p.label:
                 continue  # Skip end plate flow ports for fittings
             nx, ny, nz = p.normal
+            oriented = barb_fitting.build_oriented(cfg, p.normal)
             asm.add(
-                fitting_solid,
+                oriented,
                 name=f"fitting_{p.label}",
                 loc=cq.Location(cq.Vector(p.x, p.y, p.z)),
                 color=cq.Color(*_COLOURS["barb_fitting"]),
@@ -397,7 +427,8 @@ class MFCStackAssembly:
         """Add series U-tube segments between adjacent cells."""
         clearance_mm = _mm(cfg.utube_clearance)
 
-        for circuit, colour_key in [("anode", "tubing_anode"), ("cathode", "tubing_cathode")]:
+        circuits = [("anode", "tubing_anode"), ("cathode", "tubing_cathode")]
+        for circuit, colour_key in circuits:
             # Get outlet/inlet ports sorted by Z
             outlets = sorted(
                 [p for p in ports if circuit in p.label and "outlet" in p.label],
@@ -438,64 +469,221 @@ class MFCStackAssembly:
         half_outer = _mm(cfg.outer_side / 2)
         header_solid = manifold.build_header(cfg)
 
-        # Supply manifold (anode inlet side, -Y)
+        # Supply manifold (anode inlet side, -X)
         asm.add(
             header_solid,
             name="manifold_anode_supply",
-            loc=cq.Location(cq.Vector(0, -(half_outer + standoff), 0)),
-            color=cq.Color(*_COLOURS["manifold"]),
-        )
-        # Return manifold (anode outlet side, +Y)
-        asm.add(
-            header_solid,
-            name="manifold_anode_return",
-            loc=cq.Location(cq.Vector(0, half_outer + standoff, 0)),
-            color=cq.Color(*_COLOURS["manifold"]),
-        )
-        # Cathode supply (-X)
-        asm.add(
-            header_solid,
-            name="manifold_cathode_supply",
             loc=cq.Location(cq.Vector(-(half_outer + standoff), 0, 0)),
             color=cq.Color(*_COLOURS["manifold"]),
         )
-        # Cathode return (+X)
+        # Return manifold (anode outlet side, +X)
+        asm.add(
+            header_solid,
+            name="manifold_anode_return",
+            loc=cq.Location(cq.Vector(half_outer + standoff, 0, 0)),
+            color=cq.Color(*_COLOURS["manifold"]),
+        )
+        # Cathode supply (-Y)
+        asm.add(
+            header_solid,
+            name="manifold_cathode_supply",
+            loc=cq.Location(cq.Vector(0, -(half_outer + standoff), 0)),
+            color=cq.Color(*_COLOURS["manifold"]),
+        )
+        # Cathode return (+Y)
         asm.add(
             header_solid,
             name="manifold_cathode_return",
-            loc=cq.Location(cq.Vector(half_outer + standoff, 0, 0)),
+            loc=cq.Location(cq.Vector(0, half_outer + standoff, 0)),
             color=cq.Color(*_COLOURS["manifold"]),
         )
 
     def _add_peripherals(
         self, asm: cq.Assembly, cfg: StackCADConfig, stack_z_end: float,
     ) -> None:
-        """Add reservoir and pump head beside the stack."""
-        half_outer = _mm(cfg.outer_side / 2)
-        res_od = _mm(cfg.reservoir.outer_diameter)
+        """Add 4 reservoir circuits with pumps, valves, motors, feet.
 
-        # Reservoir placed beside stack (+Y, centred along Z)
+        Layout (top-down, looking at outlet face, Z into page):
+            Anolyte(-X)  |  STACK  |  Catholyte(+X)
+            Nutrient near anolyte (-X, -Z inlet side)
+            Buffer near anolyte (-X, +Z outlet side)
+        """
+        half_outer = _mm(cfg.outer_side / 2)
+        stack_foot_h = _mm(cfg.support_feet.foot_height)
+        gap = 80.0  # mm gap between stack edge and reservoir centre
+        stack_z_mid = stack_z_end / 2  # midpoint along Z
+
+        # Role -> (dx, dz) on XZ plane; reservoirs stand vertically on Y
+        layout: dict[ReservoirRole, tuple[int, int]] = {
+            ReservoirRole.ANOLYTE: (-1, 0),    # -X (left)
+            ReservoirRole.CATHOLYTE: (1, 0),   # +X (right)
+            ReservoirRole.NUTRIENT: (-1, -1),  # -X, inlet side
+            ReservoirRole.BUFFER: (-1, 1),     # -X, outlet side
+        }
+
+        for role, (dx, dz) in layout.items():
+            self._add_reservoir_circuit(
+                asm, cfg, role, dx, dz,
+                gap, half_outer, stack_foot_h, stack_z_mid,
+            )
+
+    def _add_reservoir_circuit(
+        self,
+        asm: cq.Assembly,
+        cfg: StackCADConfig,
+        role: ReservoirRole,
+        dx: int,
+        dz: int,
+        gap: float,
+        half_outer: float,
+        stack_foot_h: float,
+        stack_z_mid: float,
+    ) -> None:
+        """Add one reservoir circuit (reservoir+cone+lid+motor+pump+valve+feet).
+
+        Reservoirs stand vertically (local Z -> assembly +Y) using Rx(-90).
+        Ground plane Y = -(half_outer + stack_foot_h).
+        """
+        spec = cfg.reservoir_spec_for_role(role)
+        name = role.value
+        res_od = _mm(spec.outer_diameter)
+        res_oh = _mm(spec.outer_height)
+        cone_h = _mm(cfg.conical_bottom.cone_height)
+        boss_l = _mm(cfg.conical_bottom.drain_boss_length)
+        lid_t = _mm(cfg.reservoir_lid.thickness)
+        feet_h = _mm(cfg.reservoir_feet.foot_height)
+        ring_h = _mm(cfg.reservoir_feet.ring_height)
+
+        # Ground plane: bottom of stack feet
+        ground_y = -(half_outer + stack_foot_h)
+
+        # XZ position on the horizontal plane
+        cx = dx * (half_outer + gap + res_od / 2)
+        z_offset = res_od + 30.0  # mm offset along Z (diameter + 30mm clearance)
+        cz = stack_z_mid + dz * z_offset
+
+        # Vertical (Y) positions for each component, stacking from ground up
+        # Rotation Rx(-90) maps local Z -> assembly +Y
+        rx_neg90 = cq.Vector(1, 0, 0)
+        rx_angle = -90.0
+
+        colour_key = f"reservoir_{name}"
+        if colour_key not in _COLOURS:
+            colour_key = "reservoir"
+
+        # 1. Reservoir feet — bottom on ground, ring top at feet_base_y
+        feet_base_y = ground_y + feet_h + ring_h
         asm.add(
-            reservoir.build(cfg),
-            name="reservoir",
-            loc=cq.Location(cq.Vector(
-                0,
-                half_outer + res_od / 2 + 50,  # 50 mm gap
-                stack_z_end / 2 - _mm(cfg.reservoir.outer_height) / 2,
-            )),
-            color=cq.Color(*_COLOURS["reservoir"]),
+            reservoir_feet.build(cfg, reservoir_spec=spec),
+            name=f"feet_{name}",
+            loc=cq.Location(
+                cq.Vector(cx, feet_base_y, cz), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS["reservoir_feet"]),
         )
 
-        # Pump head placed beside reservoir
+        # 2. Conical bottom — hangs below cylinder (cone top = cyl base)
+        cone_base_y = feet_base_y - cone_h
+        asm.add(
+            conical_bottom.build(cfg, reservoir_spec=spec),
+            name=f"cone_{name}",
+            loc=cq.Location(
+                cq.Vector(cx, cone_base_y, cz), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS["conical_bottom"]),
+        )
+
+        # 3. Reservoir cylinder body — base sits in ring at feet_base_y
+        cyl_base_y = feet_base_y
+        asm.add(
+            reservoir.build(cfg, role=role),
+            name=f"reservoir_{name}",
+            loc=cq.Location(
+                cq.Vector(cx, cyl_base_y, cz), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS[colour_key]),
+        )
+
+        # 4. Lid on top of cylinder
+        lid_y = cyl_base_y + res_oh
+        asm.add(
+            reservoir_lid.build(cfg, reservoir_spec=spec),
+            name=f"lid_{name}",
+            loc=cq.Location(
+                cq.Vector(cx, lid_y, cz), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS["reservoir_lid"]),
+        )
+
+        # 5. Stirring motor on top of lid
+        motor_y = lid_y + lid_t
+        shaft_override = 0.100 if role == ReservoirRole.NUTRIENT else None
+        asm.add(
+            stirring_motor.build(cfg, shaft_length_override=shaft_override),
+            name=f"motor_{name}",
+            loc=cq.Location(
+                cq.Vector(cx, motor_y, cz), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS["stirring_motor"]),
+        )
+
+        # 6. Gas diffusion element (catholyte only)
+        if role == ReservoirRole.CATHOLYTE:
+            gas_y = cyl_base_y + _mm(cfg.gas_diffusion.port_height_from_bottom)
+            asm.add(
+                gas_diffusion.build(cfg),
+                name=f"gas_diffuser_{name}",
+                loc=cq.Location(cq.Vector(cx + res_od / 2, gas_y, cz)),
+                color=cq.Color(*_COLOURS["gas_diffuser"]),
+            )
+
+        # 7. Pump horizontal on ground plane beside reservoir
+        pump_support_h = _mm(cfg.pump_support.foot_height)
+        platform_t = _mm(cfg.pump_support.platform_thickness)
+        pump_body_h = _mm(cfg.pump_head.body_height)
+        pump_body_w = _mm(cfg.pump_head.body_width)
+        valve_body_w = _mm(cfg.electrovalve.body_width)
+        valve_body_h = _mm(cfg.electrovalve.body_height)
+        # At least 100mm clearance between reservoir edge and pump edge
+        pump_x = (
+            cx + dx * (res_od / 2 + 100 + pump_body_w / 2)
+            if dx != 0
+            else cx + res_od / 2 + 100 + pump_body_w / 2
+        )
+        pump_z = cz
+        pump_y = ground_y + pump_support_h + platform_t + pump_body_h / 2
+
+        # Pump support on ground (rotated Rx(-90) so feet point down)
+        pump_support_y = ground_y + pump_support_h + platform_t
+        asm.add(
+            pump_support.build(cfg),
+            name=f"pump_support_{name}",
+            loc=cq.Location(
+                cq.Vector(pump_x, pump_support_y, pump_z), rx_neg90, rx_angle,
+            ),
+            color=cq.Color(*_COLOURS["pump_support"]),
+        )
+
+        # Pump body (horizontal, rotated Rx(-90) so it lies flat)
         asm.add(
             pump_head.build(cfg),
-            name="pump_head",
-            loc=cq.Location(cq.Vector(
-                0,
-                half_outer + res_od + 100,  # further out
-                stack_z_end / 2,
-            )),
+            name=f"pump_{name}",
+            loc=cq.Location(
+                cq.Vector(pump_x, pump_y, pump_z), rx_neg90, rx_angle,
+            ),
             color=cq.Color(*_COLOURS["pump"]),
+        )
+
+        # 8. Electrovalve — 100mm gap between pump edge and valve edge
+        valve_offset = 100.0 + pump_body_w / 2 + valve_body_w / 2
+        valve_x = pump_x + (dx * valve_offset if dx != 0 else valve_offset)
+        valve_z = pump_z
+        valve_y = ground_y + pump_support_h + platform_t + valve_body_h / 2
+        asm.add(
+            electrovalve.build(cfg),
+            name=f"valve_{name}",
+            loc=cq.Location(cq.Vector(valve_x, valve_y, valve_z)),
+            color=cq.Color(*_COLOURS["electrovalve"]),
         )
 
     @property
@@ -514,7 +702,7 @@ class MFCStackAssembly:
         parts += 4  # tie rods
         parts += 8  # nuts (top + bottom × 4)
         parts += 8  # washers (top + bottom × 4)
-        parts += n * n_collectors  # current collector rods
+        parts += n * n_collectors * 2  # current collector rods (anode + cathode)
 
         if self.include_supports:
             parts += 2  # two support feet
@@ -533,6 +721,10 @@ class MFCStackAssembly:
                 parts += 4
 
         if self.include_peripherals:
-            parts += 2  # reservoir + pump head
+            # Per circuit: reservoir+cone+feet+lid+motor+pump_support+pump+valve
+            # 4 circuits = 32
+            parts += 4 * 8
+            # Catholyte gets 1 extra gas diffuser
+            parts += 1
 
         return parts

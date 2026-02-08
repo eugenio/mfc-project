@@ -102,25 +102,25 @@ class TestComputePortPositions:
         assert any("cathode_0_inlet" in lbl for lbl in labels)
         assert any("cathode_0_outlet" in lbl for lbl in labels)
 
-    def test_anode_ports_on_y_walls(self, default_config: StackCADConfig) -> None:
-        """Anode inlet on -Y wall, outlet on +Y wall."""
+    def test_anode_ports_on_x_walls(self, default_config: StackCADConfig) -> None:
+        """Anode inlet on -X wall, outlet on +X wall."""
         ports = compute_port_positions(default_config)
         half_outer = default_config.outer_side / 2 * 1000  # mm
         for p in ports:
             if "anode" in p.label and "inlet" in p.label:
-                assert p.y == pytest.approx(-half_outer, abs=1)
+                assert p.x == pytest.approx(-half_outer, abs=1)
             elif "anode" in p.label and "outlet" in p.label:
-                assert p.y == pytest.approx(half_outer, abs=1)
+                assert p.x == pytest.approx(half_outer, abs=1)
 
-    def test_cathode_ports_on_x_walls(self, default_config: StackCADConfig) -> None:
-        """Cathode inlet on -X wall, outlet on +X wall."""
+    def test_cathode_ports_on_y_walls(self, default_config: StackCADConfig) -> None:
+        """Cathode inlet on -Y wall, outlet on +Y wall."""
         ports = compute_port_positions(default_config)
         half_outer = default_config.outer_side / 2 * 1000  # mm
         for p in ports:
             if "cathode" in p.label and "inlet" in p.label:
-                assert p.x == pytest.approx(-half_outer, abs=1)
+                assert p.y == pytest.approx(-half_outer, abs=1)
             elif "cathode" in p.label and "outlet" in p.label:
-                assert p.x == pytest.approx(half_outer, abs=1)
+                assert p.y == pytest.approx(half_outer, abs=1)
 
     def test_port_z_positions_monotonic(self, default_config: StackCADConfig) -> None:
         """Port Z positions should increase with cell index."""
