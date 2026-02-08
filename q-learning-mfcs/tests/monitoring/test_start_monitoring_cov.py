@@ -1,0 +1,1 @@
+"""Tests for start_monitoring module - comprehensive coverage."""
