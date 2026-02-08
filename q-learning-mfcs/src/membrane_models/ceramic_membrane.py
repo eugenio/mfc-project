@@ -10,7 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import jax.numpy as jnp
+try:
+    import jax.numpy as jnp
+except (ImportError, ModuleNotFoundError):
+    import numpy as jnp  # noqa: ICN001
 
 from .base_membrane import BaseMembraneModel, IonType, MembraneParameters
 
