@@ -6,9 +6,16 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
+from cad.cad_config import StackCADConfig
 
 
 def _mm(m: float) -> float:
@@ -92,3 +99,10 @@ def build_tee(config: StackCADConfig) -> cq.Workplane:
     result = result.cut(bore)
 
     return result
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    _cfg = StackCADConfig()
+    show_object(build_header(_cfg), name="manifold_header")  # type: ignore[name-defined]
+    show_object(build_tee(_cfg), name="manifold_tee")  # type: ignore[name-defined]

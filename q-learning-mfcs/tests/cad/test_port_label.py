@@ -6,6 +6,8 @@ import pytest
 
 from cad.cad_config import StackCADConfig
 
+pytest.importorskip("cadquery", reason="CadQuery not installed")
+
 
 class TestPortLabel:
     def test_build_label_returns_solid(self, default_config: StackCADConfig) -> None:

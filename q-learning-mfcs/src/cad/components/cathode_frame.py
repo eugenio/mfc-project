@@ -6,10 +6,17 @@ on the top/bottom faces for cross-flow configuration.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
-from .oring import compute_face_seal_groove, compute_rod_seal_groove
+from cad.cad_config import StackCADConfig
+from cad.components.oring import compute_face_seal_groove, compute_rod_seal_groove
 
 
 def _mm(m: float) -> float:
@@ -60,22 +67,22 @@ def build(config: StackCADConfig) -> cq.Workplane:
             .hole(_mm(tr.clearance_hole_diameter), depth)
         )
 
-    # --- flow ports (cross-flow: on +X / -X walls) ---
+    # --- flow ports (cross-flow: on +Y / -Y walls) ---
     port_d = _mm(sc.flow_port_diameter)
     plate = (
-        plate.faces("<X")
+        plate.faces("<Y")
         .workplane()
         .hole(port_d, _mm(sc.wall_thickness))
     )
     plate = (
-        plate.faces(">X")
+        plate.faces(">Y")
         .workplane()
         .hole(port_d, _mm(sc.wall_thickness))
     )
 
     # --- current-collector rod passages ---
     cc = config.current_collector
-    for x, y in config.collector_positions:
+    for x, y in config.cathode_collector_positions:
         plate = (
             plate.faces(">Z")
             .workplane()
@@ -84,3 +91,8 @@ def build(config: StackCADConfig) -> cq.Workplane:
         )
 
     return plate
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    show_object(build(StackCADConfig()), name="cathode_frame")  # type: ignore[name-defined]

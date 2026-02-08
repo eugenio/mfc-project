@@ -9,9 +9,16 @@ Shape: U-bracket = base plate + two vertical walls.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
+from cad.cad_config import StackCADConfig
 
 
 def _mm(m: float) -> float:
@@ -74,3 +81,8 @@ def build(config: StackCADConfig) -> cq.Workplane:
         result = result.cut(hole)
 
     return result
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    show_object(build(StackCADConfig()), name="support_foot")  # type: ignore[name-defined]

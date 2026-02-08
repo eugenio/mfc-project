@@ -5,13 +5,22 @@ from __future__ import annotations
 import pytest
 
 from cad.cad_config import (
+    ConicalBottomSpec,
     CurrentCollectorSpec,
     ElectrodeDimensions,
+    ElectrovalveSpec,
     EndPlateSpec,
+    GasDiffusionSpec,
     MembraneDimensions,
     ORingSpec,
+    PumpSupportSpec,
+    ReservoirFeetSpec,
+    ReservoirLidSpec,
+    ReservoirRole,
+    ReservoirSpec,
     SemiCellDimensions,
     StackCADConfig,
+    StirringMotorSpec,
     TieRodSpec,
 )
 
@@ -124,11 +133,30 @@ class TestStackCADConfig:
             assert abs(x) == pytest.approx(abs(positions[0][0]))
             assert abs(y) == pytest.approx(abs(positions[0][1]))
 
-    def test_three_collector_positions(self, default_config: StackCADConfig) -> None:
+    def test_collector_positions_union(self, default_config: StackCADConfig) -> None:
+        """collector_positions is union of anode + cathode (6 total)."""
         positions = default_config.collector_positions
-        assert len(positions) == 3
+        n = default_config.current_collector.count_per_electrode
+        assert len(positions) == 2 * n  # 3 anode + 3 cathode = 6
+        expected_y = default_config.semi_cell.inner_side * 0.3
         for _x, y in positions:
-            assert y == pytest.approx(0.0)
+            assert y == pytest.approx(expected_y)
+
+    def test_anode_collector_positions_left_half(self, default_config: StackCADConfig) -> None:
+        """Anode collectors on left side (negative x)."""
+        positions = default_config.anode_collector_positions
+        n = default_config.current_collector.count_per_electrode
+        assert len(positions) == n
+        for x, _y in positions:
+            assert x < 0  # left half
+
+    def test_cathode_collector_positions_right_half(self, default_config: StackCADConfig) -> None:
+        """Cathode collectors on right side (positive x)."""
+        positions = default_config.cathode_collector_positions
+        n = default_config.current_collector.count_per_electrode
+        assert len(positions) == n
+        for x, _y in positions:
+            assert x > 0  # right half
 
     def test_tie_rod_length(self, default_config: StackCADConfig) -> None:
         rod = default_config.tie_rod
@@ -180,3 +208,107 @@ class TestStackCADConfigValidation:
             ),
         )
         assert any("Gasket thinner" in w for w in cfg.validate())
+
+
+# ---------------------------------------------------------------------------
+# New component specs
+# ---------------------------------------------------------------------------
+class TestConicalBottomSpec:
+    def test_default_values(self) -> None:
+        spec = ConicalBottomSpec()
+        assert spec.cone_height == pytest.approx(0.030)
+        assert spec.drain_fitting_diameter == pytest.approx(0.008)
+
+    def test_frozen(self) -> None:
+        spec = ConicalBottomSpec()
+        with pytest.raises(AttributeError):
+            spec.cone_height = 0.050  # type: ignore[misc]
+
+
+class TestStirringMotorSpec:
+    def test_default_motor_dimensions(self) -> None:
+        spec = StirringMotorSpec()
+        assert spec.motor_diameter == pytest.approx(0.045)
+        assert spec.motor_height == pytest.approx(0.060)
+
+    def test_impeller_params(self) -> None:
+        spec = StirringMotorSpec()
+        assert spec.impeller_diameter == pytest.approx(0.050)
+        assert spec.impeller_turns == pytest.approx(2.0)
+
+
+class TestGasDiffusionSpec:
+    def test_default_values(self) -> None:
+        spec = GasDiffusionSpec()
+        assert spec.element_diameter == pytest.approx(0.020)
+        assert spec.element_length == pytest.approx(0.060)
+        assert spec.port_height_from_bottom == pytest.approx(0.050)
+
+
+class TestReservoirLidSpec:
+    def test_default_values(self) -> None:
+        spec = ReservoirLidSpec()
+        assert spec.thickness == pytest.approx(0.005)
+        assert spec.feed_port_count == 2
+        assert spec.motor_hole_diameter == pytest.approx(0.012)
+
+
+class TestReservoirFeetSpec:
+    def test_default_values(self) -> None:
+        spec = ReservoirFeetSpec()
+        assert spec.foot_count == 3
+        assert spec.foot_height == pytest.approx(0.020)
+        assert spec.foot_width == pytest.approx(0.0375)
+        assert spec.foot_depth == pytest.approx(0.0225)
+
+
+class TestElectrovalveSpec:
+    def test_default_values(self) -> None:
+        spec = ElectrovalveSpec()
+        assert spec.body_width == pytest.approx(0.035)
+        assert spec.body_height == pytest.approx(0.055)
+        assert spec.port_diameter == pytest.approx(0.008)
+
+
+class TestPumpSupportSpec:
+    def test_default_values(self) -> None:
+        spec = PumpSupportSpec()
+        assert spec.platform_width == pytest.approx(0.120)
+        assert spec.foot_count == 4
+
+
+class TestReservoirRole:
+    def test_enum_values(self) -> None:
+        assert ReservoirRole.ANOLYTE.value == "anolyte"
+        assert ReservoirRole.CATHOLYTE.value == "catholyte"
+        assert ReservoirRole.NUTRIENT.value == "nutrient"
+        assert ReservoirRole.BUFFER.value == "buffer"
+
+
+class TestMultiReservoirConfig:
+    def test_backward_compatible_reservoir_property(self) -> None:
+        cfg = StackCADConfig()
+        assert cfg.reservoir is cfg.anolyte_reservoir
+
+    def test_four_reservoir_specs(self) -> None:
+        cfg = StackCADConfig()
+        assert cfg.anolyte_reservoir.volume_liters == pytest.approx(10.0)
+        assert cfg.catholyte_reservoir.volume_liters == pytest.approx(10.0)
+        assert cfg.nutrient_reservoir.volume_liters == pytest.approx(1.0)
+        assert cfg.buffer_reservoir.volume_liters == pytest.approx(5.0)
+
+    def test_reservoir_spec_for_role(self) -> None:
+        cfg = StackCADConfig()
+        for role in ReservoirRole:
+            spec = cfg.reservoir_spec_for_role(role)
+            assert isinstance(spec, ReservoirSpec)
+
+    def test_new_component_specs_present(self) -> None:
+        cfg = StackCADConfig()
+        assert isinstance(cfg.conical_bottom, ConicalBottomSpec)
+        assert isinstance(cfg.reservoir_lid, ReservoirLidSpec)
+        assert isinstance(cfg.reservoir_feet, ReservoirFeetSpec)
+        assert isinstance(cfg.stirring_motor, StirringMotorSpec)
+        assert isinstance(cfg.gas_diffusion, GasDiffusionSpec)
+        assert isinstance(cfg.electrovalve, ElectrovalveSpec)
+        assert isinstance(cfg.pump_support, PumpSupportSpec)

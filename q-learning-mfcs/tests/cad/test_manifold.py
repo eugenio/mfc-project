@@ -8,6 +8,8 @@ import pytest
 
 from cad.cad_config import StackCADConfig
 
+pytest.importorskip("cadquery", reason="CadQuery not installed")
+
 
 class TestBuildHeader:
     def test_returns_solid(self, default_config: StackCADConfig) -> None:

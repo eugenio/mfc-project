@@ -14,37 +14,48 @@ class TestExpectedPartCount:
     """Test the part-count arithmetic independently of CadQuery."""
 
     @staticmethod
-    def _part_count(num_cells: int, n_collectors: int = 3) -> int:
-        """Manual expected-part-count formula."""
+    def _base_parts(num_cells: int, n_collectors: int = 3) -> int:
+        """Manual expected-part-count formula (base stack only)."""
         parts = 0
         parts += 2  # end plates
         parts += num_cells * 5  # anode frame + elec + gasket + cathode frame + elec
         parts += 4  # tie rods
-        parts += 8  # nuts (top + bot × 4)
+        parts += 8  # nuts (top + bot x 4)
         parts += 8  # washers
-        parts += num_cells * n_collectors  # collector rods
+        parts += num_cells * n_collectors * 2  # collector rods (anode + cathode)
         return parts
 
     def test_10_cell_standard(self) -> None:
-        expected = self._part_count(10)
-        assert expected == 2 + 50 + 4 + 8 + 8 + 30  # = 102
+        expected = self._base_parts(10)
+        assert expected == 2 + 50 + 4 + 8 + 8 + 60  # = 132
 
     def test_1_cell(self) -> None:
-        expected = self._part_count(1)
-        assert expected == 2 + 5 + 4 + 8 + 8 + 3  # = 30
+        expected = self._base_parts(1)
+        assert expected == 2 + 5 + 4 + 8 + 8 + 6  # = 33
 
     def test_matches_assembly_class(self) -> None:
-        """Verify that MFCStackAssembly.expected_part_count matches
-        our manual formula (imports assembly lazily to avoid CadQuery)."""
+        """Verify base part count matches."""
         try:
             from cad.assembly import MFCStackAssembly
         except ImportError:
-            pytest.skip("CadQuery not installed — cannot import assembly")
+            pytest.skip("CadQuery not installed -- cannot import assembly")
 
         for n in (1, 5, 10):
             cfg = StackCADConfig(num_cells=n)
             builder = MFCStackAssembly(cfg)
-            assert builder.expected_part_count == self._part_count(n)
+            assert builder.expected_part_count == self._base_parts(n)
+
+    def test_peripherals_count(self) -> None:
+        """Peripherals: 4 circuits x 8 parts + 1 gas diffuser = 33."""
+        try:
+            from cad.assembly import MFCStackAssembly
+        except ImportError:
+            pytest.skip("CadQuery not installed -- cannot import assembly")
+
+        cfg = StackCADConfig(num_cells=1)
+        builder = MFCStackAssembly(cfg, include_peripherals=True)
+        base = self._base_parts(1)
+        assert builder.expected_part_count == base + 33
 
 
 # ---------------------------------------------------------------------------
