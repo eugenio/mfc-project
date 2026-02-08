@@ -25,9 +25,9 @@ test:
     # Run linting
     - pixi run -e default ruff check q-learning-mfcs/src --output-format=gitlab > ruff-report.json || true
     # Run tests
-    # Ignore: hooks (no submodule), apptest/playwright (need browser),
-    # membrane_models/metabolic_model/monitoring/performance (package name
-    # collision with src/ causes collection errors when run together)
+    # Ignore dirs with package name collisions or browser/env requirements.
+    # Visualization tests fail from matplotlib mock cross-contamination
+    # when run together (pass individually).
     - >-
       pixi run -e default pytest q-learning-mfcs/tests -v --tb=short
       --junitxml=report.xml
@@ -39,6 +39,7 @@ test:
       --ignore=q-learning-mfcs/tests/metabolic_model
       --ignore=q-learning-mfcs/tests/monitoring
       --ignore=q-learning-mfcs/tests/performance
+      --ignore=q-learning-mfcs/tests/visualization
   artifacts:
     when: always
     paths:
