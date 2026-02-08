@@ -124,6 +124,10 @@ test-notifications-categories = "cd q-learning-mfcs/tests/notification_system &&
 test-notifications-validate = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --validate"
 test-notifications-ci = "DISABLE_AUDIO=true MOCK_EMAIL=true cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --no-coverage"
 
+# CAD Tasks
+test-cad = "cd q-learning-mfcs && python -m pytest tests/cad/ -v"
+cad-generate = "cd q-learning-mfcs && python -m src.cad.export"
+
 # GUI Tasks
 gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_main_app.py"
 
@@ -259,6 +263,17 @@ python-gitlab = ">=4.0.0"
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
 
+# CAD modelling (CadQuery for parametric 3D design)
+[feature.cad]
+platforms = ["win-64"]
+
+[feature.cad.dependencies]
+python = ">=3.10,<3.12"
+pytest = ">=8.0,<9"
+
+[feature.cad.pypi-dependencies]
+cadquery = ">=2.4.0"
+
 
 
 # GPU acceleration (optional features)
@@ -327,6 +342,10 @@ mojo-dev = ["dev", "modular", "tools"]
 # Note: JAX dependencies are version-frozen for compatibility - see feature definitions above
 amd-gpu = ["amd-gpu", "ml", "api", "gui", "dev"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
+
+# CAD development environment (Linux: full dev+cad, Windows: cad-only)
+cad-dev = ["dev", "cad", "tools"]
+cad-win = {features = ["cad"], no-default-feature = true}
 
 # Complete environment (should be avoided in production)
 complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular"]
