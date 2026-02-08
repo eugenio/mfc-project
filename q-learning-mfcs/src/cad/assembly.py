@@ -25,19 +25,19 @@ from .components import (
 if TYPE_CHECKING:
     pass
 
-# Colour palette  (name -> RGBA hex)
-_COLOURS = {
-    "anode_frame": "#CC3333",  # red
-    "cathode_frame": "#3366CC",  # blue
-    "gas_cathode": "#33AA55",  # green
-    "membrane": "#DDDD33",  # yellow
-    "electrode_anode": "#555555",  # dark grey
-    "electrode_cathode": "#666666",  # slightly lighter
-    "end_plate": "#AAAAAA",  # grey
-    "tie_rod": "#444444",  # dark
-    "nut": "#555555",
-    "washer": "#777777",
-    "collector": "#C0C0C0",  # silver
+# Colour palette  (name -> RGB floats 0-1 for cq.Color)
+_COLOURS: dict[str, tuple[float, float, float]] = {
+    "anode_frame": (0.8, 0.2, 0.2),  # red
+    "cathode_frame": (0.2, 0.4, 0.8),  # blue
+    "gas_cathode": (0.2, 0.67, 0.33),  # green
+    "membrane": (0.87, 0.87, 0.2),  # yellow
+    "electrode_anode": (0.33, 0.33, 0.33),  # dark grey
+    "electrode_cathode": (0.4, 0.4, 0.4),  # slightly lighter
+    "end_plate": (0.67, 0.67, 0.67),  # grey
+    "tie_rod": (0.27, 0.27, 0.27),  # dark
+    "nut": (0.33, 0.33, 0.33),
+    "washer": (0.47, 0.47, 0.47),
+    "collector": (0.75, 0.75, 0.75),  # silver
 }
 
 
@@ -70,7 +70,7 @@ class MFCStackAssembly:
             end_plate.build(cfg, is_inlet=True),
             name="inlet_end_plate",
             loc=cq.Location(cq.Vector(0, 0, z + ep_thickness / 2)),
-            color=cq.Color(_COLOURS["end_plate"]),
+            color=cq.Color(*_COLOURS["end_plate"]),
         )
         z += ep_thickness
 
@@ -84,7 +84,7 @@ class MFCStackAssembly:
                 anode_frame.build(cfg),
                 name=f"anode_frame_{i}",
                 loc=cq.Location(cq.Vector(0, 0, z + anode_depth / 2)),
-                color=cq.Color(_COLOURS["anode_frame"]),
+                color=cq.Color(*_COLOURS["anode_frame"]),
             )
 
             # Anode electrode placeholder
@@ -93,7 +93,7 @@ class MFCStackAssembly:
                 electrode_placeholder.build(cfg),
                 name=f"anode_electrode_{i}",
                 loc=cq.Location(cq.Vector(0, 0, z + anode_depth / 2)),
-                color=cq.Color(_COLOURS["electrode_anode"]),
+                color=cq.Color(*_COLOURS["electrode_anode"]),
             )
             z += anode_depth
 
@@ -102,7 +102,7 @@ class MFCStackAssembly:
                 membrane_gasket.build(cfg),
                 name=f"membrane_gasket_{i}",
                 loc=cq.Location(cq.Vector(0, 0, z + gasket_thick / 2)),
-                color=cq.Color(_COLOURS["membrane"]),
+                color=cq.Color(*_COLOURS["membrane"]),
             )
             z += gasket_thick
 
@@ -115,7 +115,7 @@ class MFCStackAssembly:
                     cathode_frame_gas.build(cfg),
                     name=f"gas_cathode_frame_{i}",
                     loc=cq.Location(cq.Vector(0, 0, z + cathode_depth / 2)),
-                    color=cq.Color(_COLOURS["gas_cathode"]),
+                    color=cq.Color(*_COLOURS["gas_cathode"]),
                 )
             else:
                 cathode_depth = _mm(cfg.semi_cell.depth)
@@ -123,7 +123,7 @@ class MFCStackAssembly:
                     cathode_frame.build(cfg),
                     name=f"cathode_frame_{i}",
                     loc=cq.Location(cq.Vector(0, 0, z + cathode_depth / 2)),
-                    color=cq.Color(_COLOURS["cathode_frame"]),
+                    color=cq.Color(*_COLOURS["cathode_frame"]),
                 )
 
             # Cathode electrode placeholder
@@ -131,7 +131,7 @@ class MFCStackAssembly:
                 electrode_placeholder.build(cfg),
                 name=f"cathode_electrode_{i}",
                 loc=cq.Location(cq.Vector(0, 0, z + cathode_depth / 2)),
-                color=cq.Color(_COLOURS["electrode_cathode"]),
+                color=cq.Color(*_COLOURS["electrode_cathode"]),
             )
             z += cathode_depth
 
@@ -140,7 +140,7 @@ class MFCStackAssembly:
             end_plate.build(cfg, is_inlet=False),
             name="outlet_end_plate",
             loc=cq.Location(cq.Vector(0, 0, z + ep_thickness / 2)),
-            color=cq.Color(_COLOURS["end_plate"]),
+            color=cq.Color(*_COLOURS["end_plate"]),
         )
         z += ep_thickness
 
@@ -156,7 +156,7 @@ class MFCStackAssembly:
                 rod_solid,
                 name=f"tie_rod_{idx}",
                 loc=cq.Location(cq.Vector(xm, ym, 0)),
-                color=cq.Color(_COLOURS["tie_rod"]),
+                color=cq.Color(*_COLOURS["tie_rod"]),
             )
             # Bottom nut + washer
             asm.add(
@@ -165,7 +165,7 @@ class MFCStackAssembly:
                 loc=cq.Location(
                     cq.Vector(xm, ym, -_mm(cfg.tie_rod.washer_thickness)),
                 ),
-                color=cq.Color(_COLOURS["washer"]),
+                color=cq.Color(*_COLOURS["washer"]),
             )
             asm.add(
                 nut_solid,
@@ -180,14 +180,14 @@ class MFCStackAssembly:
                         ),
                     ),
                 ),
-                color=cq.Color(_COLOURS["nut"]),
+                color=cq.Color(*_COLOURS["nut"]),
             )
             # Top nut + washer
             asm.add(
                 washer_solid,
                 name=f"washer_top_{idx}",
                 loc=cq.Location(cq.Vector(xm, ym, z)),
-                color=cq.Color(_COLOURS["washer"]),
+                color=cq.Color(*_COLOURS["washer"]),
             )
             asm.add(
                 nut_solid,
@@ -195,7 +195,7 @@ class MFCStackAssembly:
                 loc=cq.Location(
                     cq.Vector(xm, ym, z + _mm(cfg.tie_rod.washer_thickness)),
                 ),
-                color=cq.Color(_COLOURS["nut"]),
+                color=cq.Color(*_COLOURS["nut"]),
             )
 
         # --- current-collector rods ---
@@ -206,7 +206,7 @@ class MFCStackAssembly:
                     collector_solid,
                     name=f"collector_{cell_i}_{rod_j}",
                     loc=cq.Location(cq.Vector(_mm(cx), _mm(cy), 0)),
-                    color=cq.Color(_COLOURS["collector"]),
+                    color=cq.Color(*_COLOURS["collector"]),
                 )
 
         return asm

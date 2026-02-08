@@ -66,7 +66,8 @@ class TestMFCStackAssembly:
 
         builder = MFCStackAssembly(default_config)
         asm = builder.build()
-        actual = len(asm.objects)
+        # asm.objects includes the root assembly entry (UUID key), subtract 1
+        actual = len(asm.objects) - 1
         assert actual == builder.expected_part_count
 
     def test_single_cell(self, single_cell_config: StackCADConfig) -> None:
@@ -74,7 +75,7 @@ class TestMFCStackAssembly:
 
         builder = MFCStackAssembly(single_cell_config)
         asm = builder.build()
-        assert len(asm.objects) == builder.expected_part_count
+        assert len(asm.objects) - 1 == builder.expected_part_count
 
     def test_gas_cathode_variant(self, default_config: StackCADConfig) -> None:
         from cad.assembly import MFCStackAssembly
@@ -84,4 +85,4 @@ class TestMFCStackAssembly:
             gas_cathode_cells={0, 5},
         )
         asm = builder.build()
-        assert len(asm.objects) == builder.expected_part_count
+        assert len(asm.objects) - 1 == builder.expected_part_count
