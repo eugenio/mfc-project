@@ -1,4 +1,4 @@
-"""Performance Optimization and Benchmarking Module.
+"""Performance Optimization and Benchmarking Module."""
 
 from .gpu_memory_manager import (
     GPUMemoryManager,
@@ -21,9 +21,18 @@ from .performance_metrics import (
 __all__ = [
     "BenchmarkResult",
     "GPUMemoryManager",
+    "MFCMetricsCollector",
     "ManagedGPUContext",
     "MemoryStats",
+    "MetricSummary",
+    "MetricType",
+    "MetricValue",
+    "MetricsCollector",
     "PerformanceBenchmark",
     "PerformanceProfile",
+    "get_default_collector",
+    "record_metric",
     "run_benchmark_demo",
+    "start_metrics_collection",
+    "stop_metrics_collection",
 ]
