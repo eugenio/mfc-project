@@ -7,9 +7,15 @@ CadQuery groove-cutting operations for rectangular face seals.
 from __future__ import annotations
 
 import math
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
-from ..cad_config import ORingSpec, RodSealORingSpec
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
+from cad.cad_config import ORingSpec, RodSealORingSpec
 
 
 @dataclass(frozen=True)

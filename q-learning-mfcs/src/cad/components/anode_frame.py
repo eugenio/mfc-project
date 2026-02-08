@@ -10,12 +10,18 @@ A flat polypropylene plate with:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
 
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
-from .oring import compute_face_seal_groove, compute_rod_seal_groove
+from cad.cad_config import StackCADConfig
+from cad.components.oring import compute_face_seal_groove, compute_rod_seal_groove
 
 if TYPE_CHECKING:
     pass
@@ -81,18 +87,16 @@ def build(config: StackCADConfig) -> cq.Workplane:
 
     # --- flow ports (two on opposite edges, through the wall) ---
     port_d = _mm(sc.flow_port_diameter)
-    port_offset = _mm(sc.flow_port_offset)
-    half_inner = inner / 2
-    # Inlet on -Y wall
+    # Inlet on -X wall
     plate = (
-        plate.faces("<Y")
+        plate.faces("<X")
         .workplane()
         .pushPoints([(0, 0)])
         .hole(port_d, _mm(sc.wall_thickness))
     )
-    # Outlet on +Y wall
+    # Outlet on +X wall
     plate = (
-        plate.faces(">Y")
+        plate.faces(">X")
         .workplane()
         .pushPoints([(0, 0)])
         .hole(port_d, _mm(sc.wall_thickness))
@@ -101,7 +105,7 @@ def build(config: StackCADConfig) -> cq.Workplane:
     # --- current-collector rod passages ---
     cc = config.current_collector
     rod_groove = compute_rod_seal_groove(cc.seal_oring)
-    for x, y in config.collector_positions:
+    for x, y in config.anode_collector_positions:
         plate = (
             plate.faces(">Z")
             .workplane()
@@ -110,3 +114,8 @@ def build(config: StackCADConfig) -> cq.Workplane:
         )
 
     return plate
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    show_object(build(StackCADConfig()), name="anode_frame")  # type: ignore[name-defined]

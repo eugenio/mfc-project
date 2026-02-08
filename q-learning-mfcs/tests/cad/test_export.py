@@ -15,7 +15,7 @@ class TestGenerateBOM:
     def test_default_config(self, default_config: StackCADConfig) -> None:
         bom = generate_bom(default_config)
         assert bom["num_cells"] == 10
-        assert len(bom["parts"]) == 19  # 14 original + 5 extended
+        assert len(bom["parts"]) == 29  # 14 original + 15 extended (multi-reservoir)
 
     def test_part_quantities(self, default_config: StackCADConfig) -> None:
         bom = generate_bom(default_config)

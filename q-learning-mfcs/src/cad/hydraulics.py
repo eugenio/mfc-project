@@ -76,8 +76,8 @@ def compute_port_positions(config: StackCADConfig) -> list[PortPosition]:
     - X, Y: frame face directions
     - Origin: centre of inlet end plate inner face
 
-    Anode ports: -Y wall (inlet), +Y wall (outlet)
-    Cathode ports: -X wall (inlet), +X wall (outlet)
+    Anode ports: -X wall (inlet), +X wall (outlet)
+    Cathode ports: -Y wall (inlet), +Y wall (outlet)
 
     Returns positions in **mm**.
     """
@@ -98,28 +98,28 @@ def compute_port_positions(config: StackCADConfig) -> list[PortPosition]:
         cathode_depth = _mm(config.semi_cell.depth)
         cathode_centre_z = cell_base_z + anode_depth + gasket + cathode_depth / 2
 
-        # Anode inlet (-Y wall)
+        # Anode inlet (-X wall)
         ports.append(PortPosition(
-            x=0.0, y=-half_outer, z=anode_centre_z,
-            normal=(0.0, -1.0, 0.0),
+            x=-half_outer, y=0.0, z=anode_centre_z,
+            normal=(-1.0, 0.0, 0.0),
             label=f"anode_{i}_inlet",
         ))
-        # Anode outlet (+Y wall)
+        # Anode outlet (+X wall)
         ports.append(PortPosition(
-            x=0.0, y=half_outer, z=anode_centre_z,
-            normal=(0.0, 1.0, 0.0),
+            x=half_outer, y=0.0, z=anode_centre_z,
+            normal=(1.0, 0.0, 0.0),
             label=f"anode_{i}_outlet",
         ))
-        # Cathode inlet (-X wall)
+        # Cathode inlet (-Y wall)
         ports.append(PortPosition(
-            x=-half_outer, y=0.0, z=cathode_centre_z,
-            normal=(-1.0, 0.0, 0.0),
+            x=0.0, y=-half_outer, z=cathode_centre_z,
+            normal=(0.0, -1.0, 0.0),
             label=f"cathode_{i}_inlet",
         ))
-        # Cathode outlet (+X wall)
+        # Cathode outlet (+Y wall)
         ports.append(PortPosition(
-            x=half_outer, y=0.0, z=cathode_centre_z,
-            normal=(1.0, 0.0, 0.0),
+            x=0.0, y=half_outer, z=cathode_centre_z,
+            normal=(0.0, 1.0, 0.0),
             label=f"cathode_{i}_outlet",
         ))
 
