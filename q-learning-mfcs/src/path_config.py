@@ -19,6 +19,7 @@ _OUTPUT_SUBDIRS = [
     "data/figures",
     "data/simulation_data",
     "data/logs",
+    "data/cad_models",
     "q_learning_models",
     "reports",
 ]
@@ -84,9 +85,17 @@ SIMULATION_DATA_DIR = PROJECT_ROOT / "data" / "simulation_data"
 LOGS_DIR = PROJECT_ROOT / "data" / "logs"
 MODELS_DIR = PROJECT_ROOT / "q_learning_models"
 REPORTS_DIR = PROJECT_ROOT / "reports"
+CAD_MODELS_DIR = PROJECT_ROOT / "data" / "cad_models"
 
 # Create directories if they don't exist
-for directory in [FIGURES_DIR, SIMULATION_DATA_DIR, LOGS_DIR, MODELS_DIR, REPORTS_DIR]:
+for directory in [
+    FIGURES_DIR,
+    SIMULATION_DATA_DIR,
+    LOGS_DIR,
+    MODELS_DIR,
+    REPORTS_DIR,
+    CAD_MODELS_DIR,
+]:
     directory.mkdir(parents=True, exist_ok=True)
 
 
@@ -121,5 +130,22 @@ def get_model_path(filename: str) -> str:
 def get_report_path(filename: str) -> str:
     """Get the full path for a report file."""
     output_dir = _get_output_dir("reports")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return str(output_dir / filename)
+
+
+def get_cad_model_path(filename: str, subdir: str = "") -> str:
+    """Get the full path for a CAD model file.
+
+    Parameters
+    ----------
+    filename : str
+        Output filename (e.g. ``"anode_frame.step"``).
+    subdir : str, optional
+        Sub-directory under ``data/cad_models/`` such as
+        ``"components"`` or ``"assemblies"``.
+    """
+    base = _get_output_dir("data/cad_models")
+    output_dir = base / subdir if subdir else base
     output_dir.mkdir(parents=True, exist_ok=True)
     return str(output_dir / filename)

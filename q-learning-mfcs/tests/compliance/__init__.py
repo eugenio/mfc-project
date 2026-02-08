@@ -1,5 +1,4 @@
-"""
-Compliance and Regulatory Testing Suite
+"""Compliance and Regulatory Testing Suite.
 
 This module provides comprehensive testing for regulatory compliance including:
 - GDPR/CCPA data privacy compliance
@@ -17,21 +16,22 @@ regulatory requirements across multiple jurisdictions.
 __version__ = "1.0.0"
 __author__ = "TDD Agent 64 - Compliance Testing Specialist"
 
-# Test suite components
-from .test_data_privacy_compliance import *
-from .test_audit_trail_systems import *
-from .test_access_control_compliance import *
-from .test_security_middleware_compliance import *
-from .test_differential_privacy_compliance import *
-from .test_compliance_reporting import *
-from .test_data_retention_policies import *
+# Test suite components - import only if available
+__all__ = []
 
-__all__ = [
-    "DataPrivacyComplianceTests",
-    "AuditTrailSystemsTests", 
-    "AccessControlComplianceTests",
-    "SecurityMiddlewareComplianceTests",
-    "DifferentialPrivacyComplianceTests",
-    "ComplianceReportingTests",
-    "DataRetentionPolicyTests"
+_imports = [
+    ("test_data_privacy_compliance", "DataPrivacyComplianceTests"),
+    ("test_audit_trail_systems", "AuditTrailSystemsTests"),
+    ("test_access_control_compliance", "AccessControlComplianceTests"),
+    ("test_security_middleware_compliance", "SecurityMiddlewareComplianceTests"),
+    ("test_differential_privacy_compliance", "DifferentialPrivacyComplianceTests"),
+    ("test_compliance_reporting", "ComplianceReportingTests"),
+    ("test_data_retention_policies", "DataRetentionPolicyTests"),
 ]
+
+for _mod, _cls in _imports:
+    try:
+        exec(f"from .{_mod} import *")
+        __all__ += [_cls]
+    except (ImportError, ModuleNotFoundError):
+        pass
