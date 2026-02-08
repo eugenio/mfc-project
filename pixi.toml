@@ -264,6 +264,13 @@ ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
 
 # CAD modelling (CadQuery for parametric 3D design)
+[feature.cad]
+platforms = ["win-64"]
+
+[feature.cad.dependencies]
+python = ">=3.10,<3.12"
+pytest = ">=8.0,<9"
+
 [feature.cad.pypi-dependencies]
 cadquery = ">=2.4.0"
 
@@ -336,8 +343,9 @@ mojo-dev = ["dev", "modular", "tools"]
 amd-gpu = ["amd-gpu", "ml", "api", "gui", "dev"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
-# CAD development environment
+# CAD development environment (Linux: full dev+cad, Windows: cad-only)
 cad-dev = ["dev", "cad", "tools"]
+cad-win = {features = ["cad"], no-default-feature = true}
 
 # Complete environment (should be avoided in production)
-complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular", "cad"]
+complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular"]
