@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from enum import Enum
 
 
 @dataclass(frozen=True)
@@ -158,6 +159,145 @@ class EndPlateSpec:
     material: str = "Polypropylene"
 
 
+class CathodeType(Enum):
+    """Assembly variant: all-liquid or all-gas cathodes."""
+
+    LIQUID = "liquid"
+    GAS = "gas"
+
+
+class FlowConfiguration(Enum):
+    """Hydraulic flow path topology."""
+
+    SERIES = "series"
+    PARALLEL = "parallel"
+
+
+@dataclass(frozen=True)
+class SupportFeetSpec:
+    """U-cradle support bracket for horizontal stack orientation."""
+
+    foot_width: float = 0.030  # m (30 mm along Z-axis)
+    foot_height: float = 0.040  # m (40 mm elevation from ground)
+    foot_depth: float = 0.130  # m (matches stack outer_side)
+    wall_thickness: float = 0.005  # m (5 mm)
+    mounting_hole_diameter: float = 0.006  # m (M6)
+
+
+@dataclass(frozen=True)
+class PortLabelSpec:
+    """3D text label plate for port identification."""
+
+    font_size: float = 0.005  # m (5 mm)
+    text_depth: float = 0.001  # m (1 mm emboss height)
+    plate_thickness: float = 0.002  # m (2 mm)
+
+
+@dataclass(frozen=True)
+class BarbFittingSpec:
+    """Hose barb fitting for tubing connections."""
+
+    barb_od: float = 0.010  # m (10 mm)
+    barb_length: float = 0.015  # m (15 mm)
+    hex_af: float = 0.014  # m (14 mm across-flats)
+    hex_height: float = 0.008  # m (8 mm)
+    bore_diameter: float = 0.008  # m (matches port)
+    thread_length: float = 0.010  # m (10 mm)
+
+
+@dataclass(frozen=True)
+class TubingSpec:
+    """Flexible tubing specification."""
+
+    inner_diameter: float = 0.008  # m (8 mm ID)
+    wall_thickness: float = 0.002  # m (2 mm wall)
+    bend_radius_min: float = 0.020  # m (20 mm)
+
+    @property
+    def outer_diameter(self) -> float:
+        """Outer diameter [m]."""
+        return self.inner_diameter + 2 * self.wall_thickness
+
+    @property
+    def cross_section_area(self) -> float:
+        """Inner cross-section area [m²]."""
+        return math.pi * (self.inner_diameter / 2) ** 2
+
+    def dead_volume(self, length: float) -> float:
+        """Dead volume for a given tube length [m³].
+
+        Parameters
+        ----------
+        length : float
+            Tube length in metres.
+        """
+        return self.cross_section_area * length
+
+
+@dataclass(frozen=True)
+class ManifoldSpec:
+    """Parallel-flow header pipe and tee branches."""
+
+    header_od: float = 0.016  # m (16 mm OD)
+    header_id: float = 0.012  # m (12 mm ID)
+    branch_od: float = 0.010  # m (10 mm OD)
+    branch_id: float = 0.008  # m (8 mm ID)
+
+
+@dataclass(frozen=True)
+class ReservoirSpec:
+    """Cylindrical anolyte reservoir vessel.
+
+    Scaled from simulator: 1.0 L -> 10.0 L (9.09x total stack volume ratio).
+    """
+
+    volume_liters: float = 10.0  # L (scaled from 1.0 L)
+    aspect_ratio: float = 2.0  # height / diameter
+    wall_thickness: float = 0.003  # m (3 mm)
+    port_diameter: float = 0.008  # m (8 mm)
+    num_ports: int = 3  # pump delivery, stack feed, stack return
+
+    @property
+    def inner_diameter(self) -> float:
+        """Inner diameter [m]."""
+        vol_m3 = self.volume_liters * 1e-3
+        # V = pi/4 * d² * h, h = aspect * d  =>  V = pi/4 * d³ * aspect
+        d_cubed = vol_m3 / (math.pi / 4 * self.aspect_ratio)
+        return d_cubed ** (1.0 / 3.0)
+
+    @property
+    def inner_height(self) -> float:
+        """Inner height [m]."""
+        return self.aspect_ratio * self.inner_diameter
+
+    @property
+    def outer_diameter(self) -> float:
+        """Outer diameter [m]."""
+        return self.inner_diameter + 2 * self.wall_thickness
+
+    @property
+    def outer_height(self) -> float:
+        """Outer height (includes base, no lid) [m]."""
+        return self.inner_height + self.wall_thickness
+
+
+@dataclass(frozen=True)
+class PumpHeadSpec:
+    """Peristaltic pump head block (visual representation).
+
+    Scaled for flow range 23-227 mL/h (from simulator 5-50 mL/h × 4.55).
+    """
+
+    body_width: float = 0.100  # m (100 mm)
+    body_depth: float = 0.080  # m (80 mm)
+    body_height: float = 0.060  # m (60 mm)
+    port_diameter: float = 0.008  # m (8 mm)
+    port_spacing: float = 0.050  # m (50 mm)
+    mounting_hole_diameter: float = 0.006  # m (M6)
+    mounting_hole_spacing: float = 0.070  # m (70 mm)
+    max_flow_rate: float = 5.0e-4 / 3600  # m³/s (500 mL/h -> m³/s)
+
+
 @dataclass
 class StackCADConfig:
     """Master parametric configuration for the entire MFC stack.
@@ -179,6 +319,28 @@ class StackCADConfig:
         default_factory=CurrentCollectorSpec,
     )
     end_plate: EndPlateSpec = field(default_factory=EndPlateSpec)
+
+    # --- hydraulics & peripherals (all optional, backward-compatible) ----------
+    flow_config: FlowConfiguration = FlowConfiguration.SERIES
+    tubing: TubingSpec = field(default_factory=TubingSpec)
+    barb_fitting: BarbFittingSpec = field(default_factory=BarbFittingSpec)
+    manifold: ManifoldSpec = field(default_factory=ManifoldSpec)
+    support_feet: SupportFeetSpec = field(default_factory=SupportFeetSpec)
+    port_label: PortLabelSpec = field(default_factory=PortLabelSpec)
+    reservoir: ReservoirSpec = field(default_factory=ReservoirSpec)
+    pump_head: PumpHeadSpec = field(default_factory=PumpHeadSpec)
+
+    # Extra tubing lengths (metres)
+    anode_tubing_extra_length: float = 0.10  # m slack per end connection
+    cathode_tubing_extra_length: float = 0.10
+    reservoir_tubing_length: float = 0.50  # m (scaled from 0.30)
+    pump_tubing_length: float = 0.30  # m (scaled from 0.20)
+
+    # U-tube clearance distance from stack face
+    utube_clearance: float = 0.020  # m (20 mm)
+
+    # Manifold standoff distance from stack face
+    manifold_standoff: float = 0.040  # m (40 mm)
 
     # --- derived properties ---------------------------------------------------
 

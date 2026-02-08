@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cad.cad_config import StackCADConfig
+from cad.cad_config import CathodeType, FlowConfiguration, StackCADConfig
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +83,76 @@ class TestMFCStackAssembly:
         builder = MFCStackAssembly(
             default_config,
             gas_cathode_cells={0, 5},
+        )
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_all_liquid_factory(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly.all_liquid(single_cell_config)
+        assert builder.cathode_type == CathodeType.LIQUID
+        assert len(builder.gas_cathode_cells) == 0
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_all_gas_factory(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly.all_gas(single_cell_config)
+        assert builder.cathode_type == CathodeType.GAS
+        assert len(builder.gas_cathode_cells) == 1
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_with_supports(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly(single_cell_config, include_supports=True)
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_with_labels(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly(single_cell_config, include_labels=True)
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_with_peripherals(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly(single_cell_config, include_peripherals=True)
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_with_hydraulics_series(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly(single_cell_config, include_hydraulics=True)
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_with_hydraulics_parallel(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        cfg = StackCADConfig(
+            num_cells=1,
+            flow_config=FlowConfiguration.PARALLEL,
+        )
+        builder = MFCStackAssembly(cfg, include_hydraulics=True)
+        asm = builder.build()
+        assert len(asm.objects) - 1 == builder.expected_part_count
+
+    def test_full_assembly_all_options(self, single_cell_config: StackCADConfig) -> None:
+        from cad.assembly import MFCStackAssembly
+
+        builder = MFCStackAssembly(
+            single_cell_config,
+            include_supports=True,
+            include_labels=True,
+            include_hydraulics=True,
+            include_peripherals=True,
         )
         asm = builder.build()
         assert len(asm.objects) - 1 == builder.expected_part_count
