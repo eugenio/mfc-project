@@ -124,6 +124,10 @@ test-notifications-categories = "cd q-learning-mfcs/tests/notification_system &&
 test-notifications-validate = "cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --validate"
 test-notifications-ci = "DISABLE_AUDIO=true MOCK_EMAIL=true cd q-learning-mfcs/tests/notification_system && python run_notification_tests.py --no-coverage"
 
+# CAD Tasks
+test-cad = "cd q-learning-mfcs && python -m pytest tests/cad/ -v"
+cad-generate = "cd q-learning-mfcs && python -m src.cad.export"
+
 # GUI Tasks
 gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_main_app.py"
 
@@ -259,6 +263,10 @@ python-gitlab = ">=4.0.0"
 ray = {version = ">=2.0.0", extras = ["tune"]}
 scikit-optimize = ">=0.9.0"
 
+# CAD modelling (CadQuery for parametric 3D design)
+[feature.cad.pypi-dependencies]
+cadquery = ">=2.4.0"
+
 
 
 # GPU acceleration (optional features)
@@ -328,5 +336,8 @@ mojo-dev = ["dev", "modular", "tools"]
 amd-gpu = ["amd-gpu", "ml", "api", "gui", "dev"]
 nvidia-gpu = ["nvidia-gpu", "ml"]
 
+# CAD development environment
+cad-dev = ["dev", "cad", "tools"]
+
 # Complete environment (should be avoided in production)
-complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular"]
+complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular", "cad"]
