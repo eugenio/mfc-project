@@ -9,10 +9,17 @@ Features:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
-from .oring import compute_face_seal_groove
+from cad.cad_config import StackCADConfig
+from cad.components.oring import compute_face_seal_groove
 
 
 def _mm(m: float) -> float:
@@ -82,3 +89,8 @@ def build(config: StackCADConfig, is_inlet: bool = True) -> cq.Workplane:
     )
 
     return plate
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    show_object(build(StackCADConfig(), is_inlet=True), name="end_plate")  # type: ignore[name-defined]

@@ -6,9 +6,16 @@ Falls back to a plain plate if CadQuery text rendering fails.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_SRC = str(Path(__file__).resolve().parent.parent.parent)
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
 import cadquery as cq
 
-from ..cad_config import StackCADConfig
+from cad.cad_config import StackCADConfig
 
 
 def _mm(m: float) -> float:
@@ -29,6 +36,7 @@ def build_label(text: str, config: StackCADConfig) -> cq.Workplane:
     -------
     cq.Workplane
         A thin plate, optionally with 3D text on top.
+
     """
     spec = config.port_label
     font_size = _mm(spec.font_size)
@@ -63,3 +71,21 @@ def build_label(text: str, config: StackCADConfig) -> cq.Workplane:
         pass
 
     return plate
+
+
+def plate_dimensions(
+    text: str,
+    config: StackCADConfig,
+) -> tuple[float, float]:
+    """Return (plate_width_mm, plate_height_mm) for the given label text."""
+    spec = config.port_label
+    font_size = _mm(spec.font_size)
+    char_count = max(len(text), 1)
+    plate_width = font_size * char_count * 0.8 + font_size
+    plate_height = font_size * 1.8
+    return plate_width, plate_height
+
+
+# -- CQ-Editor live preview ------------------------------------------------
+if "show_object" in dir():
+    show_object(build_label("AN IN", StackCADConfig()), name="port_label")  # type: ignore[name-defined]

@@ -46,6 +46,7 @@ def export_component(
     -------
     list[Path]
         Paths of exported files.
+
     """
     import cadquery as cq
 
@@ -79,8 +80,6 @@ def export_assembly(
 
     Returns the path of the written file.
     """
-    import cadquery as cq
-
     _ensure_dir(output_dir)
     out = output_dir / f"{name}.step"
     assembly.save(str(out))
@@ -239,23 +238,66 @@ def generate_bom(config: StackCADConfig) -> dict[str, Any]:
         ),
     })
 
-    res = config.reservoir
+    # Multi-reservoir BOM entries
+    reservoir_items = [
+        (16, "Anolyte Reservoir (10L)", config.anolyte_reservoir, 1),
+        (17, "Catholyte Reservoir (10L)", config.catholyte_reservoir, 1),
+        (18, "Nutrient Reservoir (1L)", config.nutrient_reservoir, 1),
+        (19, "Buffer Reservoir (5L)", config.buffer_reservoir, 1),
+    ]
+    for item_n, label, res, qty in reservoir_items:
+        parts.append({
+            "item": item_n,
+            "part": label,
+            "qty": qty,
+            "material": "HDPE",
+            "dimensions_mm": (
+                f"OD {res.outer_diameter * 1000:.0f} x "
+                f"H {res.outer_height * 1000:.0f}"
+            ),
+        })
+
     parts.append({
-        "item": 16,
-        "part": "Anolyte Reservoir",
-        "qty": 1,
+        "item": 20,
+        "part": "Reservoir Lid",
+        "qty": 4,
         "material": "HDPE",
+        "dimensions_mm": f"T {config.reservoir_lid.thickness * 1000:.0f}",
+    })
+
+    parts.append({
+        "item": 21,
+        "part": "Conical Bottom",
+        "qty": 4,
+        "material": "HDPE",
+        "dimensions_mm": f"H {config.conical_bottom.cone_height * 1000:.0f}",
+    })
+
+    parts.append({
+        "item": 22,
+        "part": "Reservoir Feet Assembly",
+        "qty": 4,
+        "material": "Aluminium",
+        "dimensions_mm": f"H {config.reservoir_feet.foot_height * 1000:.0f}",
+    })
+
+    sm = config.stirring_motor
+    parts.append({
+        "item": 23,
+        "part": "Stirring Motor Assembly",
+        "qty": 4,
+        "material": "Mixed",
         "dimensions_mm": (
-            f"OD {res.outer_diameter * 1000:.0f} x "
-            f"H {res.outer_height * 1000:.0f}"
+            f"D {sm.motor_diameter * 1000:.0f} x "
+            f"H {sm.motor_height * 1000:.0f}"
         ),
     })
 
     pump = config.pump_head
     parts.append({
-        "item": 17,
+        "item": 24,
         "part": "Peristaltic Pump Head",
-        "qty": 1,
+        "qty": 4,
         "material": "Polycarbonate",
         "dimensions_mm": (
             f"{pump.body_width * 1000:.0f}x"
@@ -264,9 +306,47 @@ def generate_bom(config: StackCADConfig) -> dict[str, Any]:
         ),
     })
 
+    ps = config.pump_support
+    parts.append({
+        "item": 25,
+        "part": "Pump Support Platform",
+        "qty": 4,
+        "material": "Aluminium",
+        "dimensions_mm": (
+            f"{ps.platform_width * 1000:.0f}x"
+            f"{ps.platform_depth * 1000:.0f}x"
+            f"{ps.platform_thickness * 1000:.0f}"
+        ),
+    })
+
+    ev = config.electrovalve
+    parts.append({
+        "item": 26,
+        "part": "3-Way Electrovalve",
+        "qty": 4,
+        "material": "Brass/Plastic",
+        "dimensions_mm": (
+            f"{ev.body_width * 1000:.0f}x"
+            f"{ev.body_depth * 1000:.0f}x"
+            f"{ev.body_height * 1000:.0f}"
+        ),
+    })
+
+    gd = config.gas_diffusion
+    parts.append({
+        "item": 27,
+        "part": "Gas Diffusion Element",
+        "qty": 1,
+        "material": "Porous ceramic",
+        "dimensions_mm": (
+            f"D {gd.element_diameter * 1000:.0f} x "
+            f"L {gd.element_length * 1000:.0f}"
+        ),
+    })
+
     tubing_spec = config.tubing
     parts.append({
-        "item": 18,
+        "item": 28,
         "part": "Silicone Tubing",
         "qty": 1,
         "material": "Silicone (platinum-cured)",
@@ -278,7 +358,7 @@ def generate_bom(config: StackCADConfig) -> dict[str, Any]:
 
     sf = config.support_feet
     parts.append({
-        "item": 19,
+        "item": 29,
         "part": "Support Foot (U-cradle)",
         "qty": 2,
         "material": "Aluminium",
@@ -335,14 +415,24 @@ def main() -> None:
     asm_dir = base / "assemblies"
 
     # Export individual components
+    from .cad_config import ReservoirRole
     from .components import (
         anode_frame,
         cathode_frame,
         cathode_frame_gas,
+        conical_bottom,
         current_collector,
         electrode_placeholder,
+        electrovalve,
         end_plate,
+        gas_diffusion,
         membrane_gasket,
+        pump_head,
+        pump_support,
+        reservoir,
+        reservoir_feet,
+        reservoir_lid,
+        stirring_motor,
         tie_rod,
     )
 
@@ -358,6 +448,18 @@ def main() -> None:
         "tie_rod_washer": lambda: tie_rod.build_washer(cfg),
         "current_collector": lambda: current_collector.build(cfg),
         "electrode_placeholder": lambda: electrode_placeholder.build(cfg),
+        "reservoir_anolyte": lambda: reservoir.build(cfg, role=ReservoirRole.ANOLYTE),
+        "reservoir_catholyte": lambda: reservoir.build(
+            cfg, role=ReservoirRole.CATHOLYTE,
+        ),
+        "conical_bottom": lambda: conical_bottom.build(cfg),
+        "reservoir_lid": lambda: reservoir_lid.build(cfg),
+        "stirring_motor": lambda: stirring_motor.build(cfg),
+        "gas_diffusion": lambda: gas_diffusion.build(cfg),
+        "electrovalve": lambda: electrovalve.build(cfg),
+        "reservoir_feet": lambda: reservoir_feet.build(cfg),
+        "pump_support": lambda: pump_support.build(cfg),
+        "pump_head": lambda: pump_head.build(cfg),
     }
 
     print(f"Exporting {len(component_builders)} components ...")
@@ -367,9 +469,15 @@ def main() -> None:
         for p in paths:
             print(f"  {p}")
 
-    # Export full assembly
+    # Export full assembly (with all options enabled)
     print("Building full stack assembly ...")
-    asm = MFCStackAssembly(cfg).build()
+    asm = MFCStackAssembly(
+        cfg,
+        include_supports=True,
+        include_labels=True,
+        include_hydraulics=True,
+        include_peripherals=True,
+    ).build()
     asm_path = export_assembly(asm, asm_dir)
     print(f"  {asm_path}")
 

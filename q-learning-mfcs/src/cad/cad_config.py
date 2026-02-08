@@ -178,7 +178,7 @@ class SupportFeetSpec:
     """U-cradle support bracket for horizontal stack orientation."""
 
     foot_width: float = 0.030  # m (30 mm along Z-axis)
-    foot_height: float = 0.040  # m (40 mm elevation from ground)
+    foot_height: float = 0.080  # m (80 mm elevation from ground)
     foot_depth: float = 0.130  # m (matches stack outer_side)
     wall_thickness: float = 0.005  # m (5 mm)
     mounting_hole_diameter: float = 0.006  # m (M6)
@@ -230,6 +230,7 @@ class TubingSpec:
         ----------
         length : float
             Tube length in metres.
+
         """
         return self.cross_section_area * length
 
@@ -263,7 +264,7 @@ class ReservoirSpec:
         vol_m3 = self.volume_liters * 1e-3
         # V = pi/4 * d² * h, h = aspect * d  =>  V = pi/4 * d³ * aspect
         d_cubed = vol_m3 / (math.pi / 4 * self.aspect_ratio)
-        return d_cubed ** (1.0 / 3.0)
+        return float(d_cubed ** (1.0 / 3.0))
 
     @property
     def inner_height(self) -> float:
@@ -279,6 +280,104 @@ class ReservoirSpec:
     def outer_height(self) -> float:
         """Outer height (includes base, no lid) [m]."""
         return self.inner_height + self.wall_thickness
+
+
+@dataclass(frozen=True)
+class ConicalBottomSpec:
+    """Conical frustum bottom for reservoir with drain fitting."""
+
+    cone_height: float = 0.030  # m (30 mm)
+    drain_fitting_diameter: float = 0.008  # m (8 mm)
+    drain_boss_length: float = 0.015  # m (15 mm)
+
+
+@dataclass(frozen=True)
+class StirringMotorSpec:
+    """Magnetic stirrer / overhead stirring motor assembly."""
+
+    motor_diameter: float = 0.045  # m (45 mm)
+    motor_height: float = 0.060  # m (60 mm)
+    shaft_diameter: float = 0.008  # m (8 mm)
+    shaft_length: float = 0.200  # m (200 mm, extends into reservoir)
+    impeller_diameter: float = 0.050  # m (50 mm)
+    impeller_pitch: float = 0.020  # m (20 mm)
+    impeller_turns: float = 2.0
+    blade_width: float = 0.010  # m (10 mm)
+    blade_thickness: float = 0.002  # m (2 mm)
+
+
+@dataclass(frozen=True)
+class GasDiffusionSpec:
+    """Cylindrical porous gas diffusion element."""
+
+    element_diameter: float = 0.020  # m (20 mm)
+    element_length: float = 0.060  # m (60 mm)
+    port_height_from_bottom: float = 0.050  # m (50 mm)
+    boss_diameter: float = 0.012  # m (12 mm)
+    boss_length: float = 0.015  # m (15 mm)
+    bore_diameter: float = 0.006  # m (6 mm)
+
+
+@dataclass(frozen=True)
+class ReservoirLidSpec:
+    """Air-tight reservoir lid with gasket and port holes."""
+
+    thickness: float = 0.005  # m (5 mm)
+    gasket_groove_depth: float = 0.002  # m (2 mm)
+    gasket_groove_width: float = 0.003  # m (3 mm)
+    motor_hole_diameter: float = 0.012  # m (12 mm)
+    seal_boss_height: float = 0.005  # m (5 mm)
+    feed_port_count: int = 2
+    feed_port_diameter: float = 0.008  # m (8 mm)
+    nipple_boss_height: float = 0.008  # m (8 mm)
+
+
+@dataclass(frozen=True)
+class ReservoirFeetSpec:
+    """Triangular support feet pattern for reservoir."""
+
+    foot_count: int = 3
+    foot_height: float = 0.020  # m (20 mm)
+    foot_width: float = 0.0375  # m (37.5 mm) — widened 50 %
+    foot_depth: float = 0.0225  # m (22.5 mm) — widened 50 %
+    ring_thickness: float = 0.003  # m (3 mm)
+    ring_height: float = 0.010  # m (10 mm)
+
+
+@dataclass(frozen=True)
+class ElectrovalveSpec:
+    """3-way solenoid electrovalve."""
+
+    body_width: float = 0.035  # m (35 mm)
+    body_depth: float = 0.035  # m (35 mm)
+    body_height: float = 0.055  # m (55 mm)
+    solenoid_diameter: float = 0.025  # m (25 mm)
+    solenoid_height: float = 0.030  # m (30 mm)
+    port_diameter: float = 0.008  # m (8 mm)
+    port_boss_length: float = 0.010  # m (10 mm)
+
+
+@dataclass(frozen=True)
+class PumpSupportSpec:
+    """Platform with feet for pump mounting."""
+
+    platform_width: float = 0.120  # m (120 mm)
+    platform_depth: float = 0.100  # m (100 mm)
+    platform_thickness: float = 0.005  # m (5 mm)
+    foot_height: float = 0.020  # m (20 mm)
+    foot_diameter: float = 0.015  # m (15 mm)
+    foot_count: int = 4
+    mounting_hole_diameter: float = 0.006  # m (M6)
+    mounting_hole_spacing: float = 0.070  # m (70 mm)
+
+
+class ReservoirRole(Enum):
+    """Role of a reservoir in the MFC system."""
+
+    ANOLYTE = "anolyte"
+    CATHOLYTE = "catholyte"
+    NUTRIENT = "nutrient"
+    BUFFER = "buffer"
 
 
 @dataclass(frozen=True)
@@ -327,8 +426,47 @@ class StackCADConfig:
     manifold: ManifoldSpec = field(default_factory=ManifoldSpec)
     support_feet: SupportFeetSpec = field(default_factory=SupportFeetSpec)
     port_label: PortLabelSpec = field(default_factory=PortLabelSpec)
-    reservoir: ReservoirSpec = field(default_factory=ReservoirSpec)
     pump_head: PumpHeadSpec = field(default_factory=PumpHeadSpec)
+
+    # --- reservoirs (multi-reservoir support) ---------------------------------
+    anolyte_reservoir: ReservoirSpec = field(
+        default_factory=lambda: ReservoirSpec(volume_liters=10.0),
+    )
+    catholyte_reservoir: ReservoirSpec = field(
+        default_factory=lambda: ReservoirSpec(volume_liters=10.0),
+    )
+    nutrient_reservoir: ReservoirSpec = field(
+        default_factory=lambda: ReservoirSpec(volume_liters=1.0, aspect_ratio=1.5),
+    )
+    buffer_reservoir: ReservoirSpec = field(
+        default_factory=lambda: ReservoirSpec(volume_liters=5.0),
+    )
+
+    # --- new component specs --------------------------------------------------
+    conical_bottom: ConicalBottomSpec = field(
+        default_factory=ConicalBottomSpec,
+    )
+    reservoir_lid: ReservoirLidSpec = field(default_factory=ReservoirLidSpec)
+    reservoir_feet: ReservoirFeetSpec = field(default_factory=ReservoirFeetSpec)
+    stirring_motor: StirringMotorSpec = field(default_factory=StirringMotorSpec)
+    gas_diffusion: GasDiffusionSpec = field(default_factory=GasDiffusionSpec)
+    electrovalve: ElectrovalveSpec = field(default_factory=ElectrovalveSpec)
+    pump_support: PumpSupportSpec = field(default_factory=PumpSupportSpec)
+
+    @property
+    def reservoir(self) -> ReservoirSpec:
+        """Backward-compatible alias for anolyte_reservoir."""
+        return self.anolyte_reservoir
+
+    def reservoir_spec_for_role(self, role: ReservoirRole) -> ReservoirSpec:
+        """Return the ReservoirSpec for the given role."""
+        mapping = {
+            ReservoirRole.ANOLYTE: self.anolyte_reservoir,
+            ReservoirRole.CATHOLYTE: self.catholyte_reservoir,
+            ReservoirRole.NUTRIENT: self.nutrient_reservoir,
+            ReservoirRole.BUFFER: self.buffer_reservoir,
+        }
+        return mapping[role]
 
     # Extra tubing lengths (metres)
     anode_tubing_extra_length: float = 0.10  # m slack per end connection
@@ -386,15 +524,30 @@ class StackCADConfig:
         return [(-dx, -dy), (dx, -dy), (dx, dy), (-dx, dy)]
 
     @property
-    def collector_positions(self) -> list[tuple[float, float]]:
-        """(x, y) centres of Ti collector rods across one electrode.
-
-        Three rods evenly spaced along the electrode centre line.
-        """
+    def anode_collector_positions(self) -> list[tuple[float, float]]:
+        """(x, y) centres of anode Ti collector rods — left side of upper wall."""
         n = self.current_collector.count_per_electrode
         side = self.semi_cell.inner_side
-        spacing = side / (n + 1)
-        return [(spacing * (i + 1) - side / 2, 0.0) for i in range(n)]
+        spacing = side / (2 * (n + 1))  # left half only
+        y_offset = side * 0.3
+        return [(-side / 2 + spacing * (i + 1), y_offset) for i in range(n)]
+
+    @property
+    def cathode_collector_positions(self) -> list[tuple[float, float]]:
+        """(x, y) centres of cathode Ti collector rods — right side of upper wall."""
+        n = self.current_collector.count_per_electrode
+        side = self.semi_cell.inner_side
+        spacing = side / (2 * (n + 1))  # right half only
+        y_offset = side * 0.3
+        return [(spacing * (i + 1), y_offset) for i in range(n)]
+
+    @property
+    def collector_positions(self) -> list[tuple[float, float]]:
+        """All collector rod positions (union of anode + cathode).
+
+        Used by membrane_gasket which needs holes for all rods.
+        """
+        return self.anode_collector_positions + self.cathode_collector_positions
 
     @property
     def tie_rod_length(self) -> float:
@@ -428,19 +581,19 @@ class StackCADConfig:
 
         if self.semi_cell.inner_side != self.electrode.side_length:
             warnings.append(
-                "Semi-cell inner_side does not match electrode side_length"
+                "Semi-cell inner_side does not match electrode side_length",
             )
 
         if self.membrane.active_side != self.electrode.side_length:
             warnings.append(
-                "Membrane active_side does not match electrode side_length"
+                "Membrane active_side does not match electrode side_length",
             )
 
         # Tie rod must fit within frame wall
         max_inset = self.semi_cell.wall_thickness - self.tie_rod.washer_od / 2
         if max_inset < 0:
             warnings.append(
-                "Tie-rod washer extends beyond frame wall thickness"
+                "Tie-rod washer extends beyond frame wall thickness",
             )
 
         # O-ring groove must fit in wall thickness

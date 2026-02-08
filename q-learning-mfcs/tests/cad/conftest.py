@@ -11,9 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 import pytest
 
 from cad.cad_config import (
-    CathodeType,
     ElectrodeDimensions,
-    FlowConfiguration,
     MembraneDimensions,
     SemiCellDimensions,
     StackCADConfig,

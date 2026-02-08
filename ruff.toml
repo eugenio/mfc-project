@@ -57,6 +57,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
     "C901", "PLR0915", "BLE001", "DTZ", "NPY002", "SIM",
     "PERF", "S108", "S110", "PTH",
 ]
+"q-learning-mfcs/src/cad/components/*.py" = ["E402", "I001", "F821"]
 
 [format]
 # Like Black, use double quotes for strings.
