@@ -5,9 +5,7 @@ import importlib.util
 import json
 import os
 import signal
-import ssl
 import sys
-import tempfile
 import types
 from datetime import datetime
 from pathlib import Path
@@ -25,7 +23,7 @@ sys.modules.setdefault("pandas", _mock_pd)
 _mock_ws = MagicMock()
 _mock_ws.exceptions = MagicMock()
 _mock_ws.exceptions.ConnectionClosed = type(
-    "ConnectionClosed", (Exception,), {}
+    "ConnectionClosed", (Exception,), {},
 )
 _mock_ws.serve = AsyncMock()
 sys.modules.setdefault("websockets", _mock_ws)
@@ -57,10 +55,10 @@ class _FakeSSLConfig:
 _mock_ssl_config_mod.SSLConfig = _FakeSSLConfig
 _mock_ssl_config_mod.SSLContextManager = MagicMock()
 _mock_ssl_config_mod.load_ssl_config = MagicMock(
-    return_value=_FakeSSLConfig()
+    return_value=_FakeSSLConfig(),
 )
 _mock_ssl_config_mod.initialize_ssl_infrastructure = MagicMock(
-    return_value=(True, _FakeSSLConfig())
+    return_value=(True, _FakeSSLConfig()),
 )
 _mock_ssl_config_mod.test_ssl_connection = MagicMock(return_value=True)
 
@@ -246,7 +244,7 @@ class TestDataStreamManager:
             reservoir_concentration=10.0,
             outlet_concentration=5.0,
             total_power=25.0,
-            biofilm_thicknesses='[10.0, 20.0]',
+            biofilm_thicknesses="[10.0, 20.0]",
             substrate_addition_rate=0.5,
             q_action=1,
             epsilon=0.1,
@@ -277,10 +275,9 @@ class TestDataStreamManager:
             wraps=Path,
         ) as mock_path_cls:
             # Override the specific call Path("../../../data/simulation_data")
-            original_path_init = Path.__new__
 
             def patched_path(*args, **kwargs):
-                p = Path.__new__(Path)
+                Path.__new__(Path)
                 if args and str(args[0]) == "../../../data/simulation_data":
                     return data_dir
                 return Path(*args, **kwargs)
@@ -291,7 +288,6 @@ class TestDataStreamManager:
 
         # Simpler approach: just directly call with the right structure
         # by monkey-patching the hard-coded path
-        original_init = Path.__new__
 
         with patch.object(
             _mod,
@@ -424,7 +420,7 @@ class TestDataStreamManager:
             with patch.object(_mod, "gzip") as mock_gzip:
                 mock_gzip.open.return_value.__enter__ = MagicMock()
                 mock_gzip.open.return_value.__exit__ = MagicMock(
-                    return_value=False
+                    return_value=False,
                 )
                 result = mgr.load_simulation_data()
                 if result is not None:
@@ -553,8 +549,8 @@ class TestDataStreamManager:
         ws = _make_ws_mock()
 
         async def raising_iter():
-            raise _mock_ws.exceptions.ConnectionClosed()
-            yield  # noqa: E501
+            raise _mock_ws.exceptions.ConnectionClosed
+            yield
 
         ws.__aiter__ = lambda self: raising_iter()
         _run(mgr.client_handler(ws, "/"))
@@ -565,7 +561,7 @@ class TestDataStreamManager:
 
         async def raising_iter():
             raise RuntimeError("unexpected")
-            yield  # noqa: E501
+            yield
 
         ws.__aiter__ = lambda self: raising_iter()
         _run(mgr.client_handler(ws, "/"))
@@ -586,13 +582,14 @@ class TestDataStreamManager:
         mgr.load_simulation_data = mock_load
 
         async def run_loop():
-            try:
-                await asyncio.wait_for(
-                    mgr.data_polling_loop(),
-                    timeout=5.0,
-                )
-            except asyncio.TimeoutError:
-                pass
+            with patch("asyncio.sleep", new_callable=AsyncMock):
+                try:
+                    await asyncio.wait_for(
+                        mgr.data_polling_loop(),
+                        timeout=5.0,
+                    )
+                except asyncio.TimeoutError:
+                    pass
 
         _run(run_loop())
         assert len(mgr.data_cache) >= 2
@@ -609,18 +606,18 @@ class TestDataStreamManager:
             call_count[0] += 1
             if call_count[0] >= 2:
                 mgr._stop_event.set()
-            return None
 
         mgr.load_simulation_data = mock_load
 
         async def run_loop():
-            try:
-                await asyncio.wait_for(
-                    mgr.data_polling_loop(),
-                    timeout=5.0,
-                )
-            except asyncio.TimeoutError:
-                pass
+            with patch("asyncio.sleep", new_callable=AsyncMock):
+                try:
+                    await asyncio.wait_for(
+                        mgr.data_polling_loop(),
+                        timeout=5.0,
+                    )
+                except asyncio.TimeoutError:
+                    pass
 
         _run(run_loop())
         assert ws.send.called
@@ -636,18 +633,18 @@ class TestDataStreamManager:
             if call_count[0] == 1:
                 raise RuntimeError("polling error")
             mgr._stop_event.set()
-            return None
 
         mgr.load_simulation_data = mock_load
 
         async def run_loop():
-            try:
-                await asyncio.wait_for(
-                    mgr.data_polling_loop(),
-                    timeout=10.0,
-                )
-            except asyncio.TimeoutError:
-                pass
+            with patch("asyncio.sleep", new_callable=AsyncMock):
+                try:
+                    await asyncio.wait_for(
+                        mgr.data_polling_loop(),
+                        timeout=5.0,
+                    )
+                except asyncio.TimeoutError:
+                    pass
 
         _run(run_loop())
 
@@ -674,7 +671,7 @@ class TestWSSSecurity:
             mock_ctx_cls.return_value = mock_ctx
             result = WSSSecurity.create_ssl_context(cfg)
             mock_ctx.load_cert_chain.assert_called_once_with(
-                cfg.cert_file, cfg.key_file
+                cfg.cert_file, cfg.key_file,
             )
             assert result is mock_ctx
 
@@ -779,14 +776,14 @@ class TestRunWebsocketServer:
         )
         mock_server = AsyncMock()
         mock_server.wait_closed = AsyncMock(
-            side_effect=KeyboardInterrupt()
+            side_effect=KeyboardInterrupt(),
         )
         mock_server.close = MagicMock()
         _mock_ws.serve = AsyncMock(return_value=mock_server)
 
         async def run():
             await _mod.run_websocket_server(
-                host="127.0.0.1", port=9999, ssl_config=cfg
+                host="127.0.0.1", port=9999, ssl_config=cfg,
             )
 
         try:
@@ -805,7 +802,7 @@ class TestRunWebsocketServer:
         )
         mock_server = AsyncMock()
         mock_server.wait_closed = AsyncMock(
-            side_effect=KeyboardInterrupt()
+            side_effect=KeyboardInterrupt(),
         )
         mock_server.close = MagicMock()
         _mock_ws.serve = AsyncMock(return_value=mock_server)
@@ -817,7 +814,7 @@ class TestRunWebsocketServer:
         ):
             async def run():
                 await _mod.run_websocket_server(
-                    host="127.0.0.1", port=9999, ssl_config=cfg
+                    host="127.0.0.1", port=9999, ssl_config=cfg,
                 )
 
             try:
@@ -832,14 +829,14 @@ class TestRunWebsocketServer:
         )
         mock_server = AsyncMock()
         mock_server.wait_closed = AsyncMock(
-            side_effect=KeyboardInterrupt()
+            side_effect=KeyboardInterrupt(),
         )
         mock_server.close = MagicMock()
         _mock_ws.serve = AsyncMock(return_value=mock_server)
 
         async def run():
             await _mod.run_websocket_server(
-                host="127.0.0.1", port=None, ssl_config=None
+                host="127.0.0.1", port=None, ssl_config=None,
             )
 
         try:

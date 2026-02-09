@@ -1,13 +1,9 @@
 """Tests for monitoring/dashboard_frontend.py - targeting 98%+ coverage."""
 import importlib.util
 import os
-import subprocess
 import sys
 import types
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # ---- Mock ALL heavy deps before import ----
 
@@ -137,7 +133,7 @@ _mock_ssl_config_mod.SecurityHeaders = MagicMock()
 _mock_ssl_config_mod.SSLContextManager = MagicMock()
 _mock_ssl_config_mod.load_ssl_config = MagicMock(return_value=_FakeSSLConfig())
 _mock_ssl_config_mod.initialize_ssl_infrastructure = MagicMock(
-    return_value=(True, _FakeSSLConfig())
+    return_value=(True, _FakeSSLConfig()),
 )
 _mock_ssl_config_mod.test_ssl_connection = MagicMock(return_value=True)
 
@@ -185,14 +181,14 @@ class TestSetupHTTPSSession:
 
     def test_session_with_localhost(self):
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig(
-            domain="localhost"
+            domain="localhost",
         )
         result = setup_https_session()
         assert result is not None
 
     def test_session_with_production_domain(self):
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig(
-            domain="example.com"
+            domain="example.com",
         )
         result = setup_https_session()
         assert result is not None
@@ -221,7 +217,7 @@ class TestAPIClient:
         client = self._make_client()
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
-            "ssl_config": {"enabled": True}
+            "ssl_config": {"enabled": True},
         }
         client.session = MagicMock()
         client.session.get.return_value = mock_resp
@@ -233,7 +229,7 @@ class TestAPIClient:
         client = self._make_client()
         client.session = MagicMock()
         client.session.get.side_effect = _mock_requests.exceptions.SSLError(
-            "ssl fail"
+            "ssl fail",
         )
         success, msg = client.test_connection()
         assert success is False
@@ -416,7 +412,7 @@ class TestShowSSLStatus:
         cfg = _FakeSSLConfig()
         client = APIClient()
         client.test_connection = MagicMock(
-            return_value=(True, "Connected")
+            return_value=(True, "Connected"),
         )
         show_ssl_status(cfg, client)
 
@@ -424,14 +420,14 @@ class TestShowSSLStatus:
         cfg = _FakeSSLConfig()
         client = APIClient()
         client.test_connection = MagicMock(
-            return_value=(False, "Failed")
+            return_value=(False, "Failed"),
         )
         show_ssl_status(cfg, client)
 
     def test_without_ssl_config(self):
         client = APIClient()
         client.test_connection = MagicMock(
-            return_value=(False, "No SSL")
+            return_value=(False, "No SSL"),
         )
         show_ssl_status(None, client)
 
@@ -471,13 +467,13 @@ class TestMain:
         }
         mock_client.session = MagicMock()
         mock_client.session.get.return_value = MagicMock(
-            json=MagicMock(return_value={"version": "1.0"})
+            json=MagicMock(return_value={"version": "1.0"}),
         )
         return mock_client
 
     def test_main_with_ssl_not_localhost(self):
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig(
-            domain="example.com"
+            domain="example.com",
         )
         _mock_st.button.return_value = False
         mock_client = self._setup_mock_client()
@@ -492,16 +488,16 @@ class TestMain:
         mock_client.ssl_config = None
         with patch.object(_mod, "APIClient", return_value=mock_client):
             with patch.object(
-                _mod, "get_ssl_config", return_value=None
+                _mod, "get_ssl_config", return_value=None,
             ):
                 with patch.object(
-                    _mod, "get_system_info", return_value=None
+                    _mod, "get_system_info", return_value=None,
                 ):
                     _mod.main()
 
     def test_main_with_localhost(self):
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig(
-            domain="localhost"
+            domain="localhost",
         )
         _mock_st.button.return_value = False
         mock_client = self._setup_mock_client()
@@ -559,10 +555,10 @@ class TestMain:
         _mock_st.button = MagicMock(return_value=False)
         with patch.object(_mod, "APIClient", return_value=mock_client):
             with patch.object(
-                _mod, "get_ssl_config", return_value=None
+                _mod, "get_ssl_config", return_value=None,
             ):
                 with patch.object(
-                    _mod, "get_system_info", return_value=None
+                    _mod, "get_system_info", return_value=None,
                 ):
                     _mod.main()
 
@@ -584,7 +580,14 @@ class TestMain:
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig()
         mock_client = self._setup_mock_client()
         mock_client.start_simulation.return_value = (True, "Started")
-        _mock_st.checkbox = MagicMock(return_value=True)
+
+        def mock_checkbox(label, **kwargs):
+            # Return True for pre-trained checkbox, False for auto-refresh
+            if "Auto-refresh" in str(label):
+                return False
+            return True
+
+        _mock_st.checkbox = mock_checkbox
         _mock_st.number_input = MagicMock(return_value=24)
 
         def mock_button(label, **kwargs):
@@ -603,7 +606,13 @@ class TestMain:
         _mock_ssl_config_mod.load_ssl_config.return_value = _FakeSSLConfig()
         mock_client = self._setup_mock_client()
         mock_client.start_simulation.return_value = (False, "Failed")
-        _mock_st.checkbox = MagicMock(return_value=True)
+
+        def mock_checkbox(label, **kwargs):
+            if "Auto-refresh" in str(label):
+                return False
+            return True
+
+        _mock_st.checkbox = mock_checkbox
         _mock_st.number_input = MagicMock(return_value=24)
 
         def mock_button(label, **kwargs):
@@ -661,17 +670,26 @@ class TestMain:
         _mock_st.checkbox = mock_checkbox
         _mock_st.number_input = MagicMock(return_value=1)
 
-        # Patch time.sleep at module level to avoid delays
-        import time as _time_mod
-
-        with patch.object(_time_mod, "sleep"):
+        # The auto-refresh block does `import time; time.sleep(...)` locally,
+        # then calls st.experimental_rerun().  Mock the time module in
+        # sys.modules so sleep is a no-op, and make experimental_rerun raise
+        # to break the infinite loop.
+        import time as _real_time
+        _mock_time = MagicMock(wraps=_real_time)
+        _mock_time.sleep = MagicMock()
+        _mock_st.experimental_rerun.side_effect = Exception("rerun")
+        with patch.dict("sys.modules", {"time": _mock_time}):
             with patch.object(
-                _mod, "APIClient", return_value=mock_client
+                _mod, "APIClient", return_value=mock_client,
             ):
                 with patch.object(
-                    _mod, "get_system_info", return_value=None
+                    _mod, "get_system_info", return_value=None,
                 ):
-                    _mod.main()
+                    try:
+                        _mod.main()
+                    except Exception:
+                        pass
+        _mock_st.experimental_rerun.side_effect = None
         _mock_st.checkbox = MagicMock(return_value=False)
 
     def test_main_export_buttons(self):
@@ -702,10 +720,10 @@ class TestMain:
         _mock_st.button = mock_button
         with patch.object(_mod, "APIClient", return_value=mock_client):
             with patch.object(
-                _mod, "get_ssl_config", return_value=None
+                _mod, "get_ssl_config", return_value=None,
             ):
                 with patch.object(
-                    _mod, "get_system_info", return_value=None
+                    _mod, "get_system_info", return_value=None,
                 ):
                     _mod.main()
 
