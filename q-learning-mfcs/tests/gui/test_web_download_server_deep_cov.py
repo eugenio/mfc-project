@@ -27,6 +27,12 @@ from web_download_server import (
     FASTAPI_AVAILABLE,
 )
 
+# Clean up mocked sys.modules entries after import to avoid polluting
+# other tests in the full suite (e.g. fastapi, streamlit).
+for _k in list(sys.modules):
+    if _k in ("fastapi", "fastapi.responses", "uvicorn", "streamlit"):
+        del sys.modules[_k]
+
 
 class TestDownloadServer:
     def test_init(self):

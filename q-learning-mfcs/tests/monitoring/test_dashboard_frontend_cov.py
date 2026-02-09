@@ -3,6 +3,7 @@ import importlib.util
 import os
 import subprocess
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -141,7 +142,11 @@ _mock_ssl_config_mod.initialize_ssl_infrastructure = MagicMock(
 _mock_ssl_config_mod.test_ssl_connection = MagicMock(return_value=True)
 
 sys.modules.setdefault("monitoring.ssl_config", _mock_ssl_config_mod)
-sys.modules.setdefault("monitoring", MagicMock())
+# Use a real ModuleType with __path__ so Python treats it as a package
+# (MagicMock lacks __path__, causing "'monitoring' is not a package" errors).
+_monitoring_pkg = types.ModuleType("monitoring")
+_monitoring_pkg.__path__ = [os.path.join(os.path.dirname(__file__), "..", "..", "src", "monitoring")]
+sys.modules.setdefault("monitoring", _monitoring_pkg)
 
 # ---- Load module ----
 
@@ -161,6 +166,7 @@ get_system_info = _mod.get_system_info
 create_real_time_plots = _mod.create_real_time_plots
 show_ssl_status = _mod.show_ssl_status
 run_streamlit_https = _mod.run_streamlit_https
+
 
 
 # ---- Tests ----

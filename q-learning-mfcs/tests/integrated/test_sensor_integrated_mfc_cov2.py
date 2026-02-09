@@ -48,6 +48,18 @@ mock_gpu.get_gpu_accelerator = MagicMock(return_value=MagicMock(
 
 import sensor_integrated_mfc_model as sim_mod
 
+# Clean up mocked sys.modules entries after import to avoid polluting
+# other tests in the full suite (e.g. metabolic_model, sensing_models).
+for _k in list(sys.modules):
+    if _k in (
+        "biofilm_kinetics", "biofilm_kinetics.enhanced_biofilm_model",
+        "integrated_mfc_model", "sensing_enhanced_q_controller",
+        "gpu_acceleration", "mfc_recirculation_control", "path_config",
+        "metabolic_model", "sensing_models", "sensing_models.eis_model",
+        "sensing_models.qcm_model", "sensing_models.sensor_fusion",
+    ):
+        del sys.modules[_k]
+
 
 def _make_model():
     """Create a SensorIntegratedMFCModel with mocked internals."""

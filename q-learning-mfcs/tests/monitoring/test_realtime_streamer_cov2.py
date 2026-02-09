@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import sys
+import types
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -29,8 +30,10 @@ _mock_ssl.load_ssl_config = MagicMock(return_value=None)
 _mock_ssl.test_ssl_connection = MagicMock(return_value=True)
 sys.modules.setdefault("monitoring.ssl_config", _mock_ssl)
 
-# Mock monitoring package __init__ to avoid dashboard_api import chain
-sys.modules.setdefault("monitoring", MagicMock())
+# Use a real ModuleType with __path__ so Python treats it as a package.
+_monitoring_pkg = types.ModuleType("monitoring")
+_monitoring_pkg.__path__ = [os.path.join(os.path.dirname(__file__), "..", "..", "src", "monitoring")]
+sys.modules.setdefault("monitoring", _monitoring_pkg)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 

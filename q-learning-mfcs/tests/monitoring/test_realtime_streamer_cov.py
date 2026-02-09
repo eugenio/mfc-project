@@ -8,6 +8,7 @@ import signal
 import ssl
 import sys
 import tempfile
+import types
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -64,7 +65,10 @@ _mock_ssl_config_mod.initialize_ssl_infrastructure = MagicMock(
 _mock_ssl_config_mod.test_ssl_connection = MagicMock(return_value=True)
 
 sys.modules.setdefault("monitoring.ssl_config", _mock_ssl_config_mod)
-sys.modules.setdefault("monitoring", MagicMock())
+# Use a real ModuleType with __path__ so Python treats it as a package.
+_monitoring_pkg = types.ModuleType("monitoring")
+_monitoring_pkg.__path__ = [os.path.join(os.path.dirname(__file__), "..", "..", "src", "monitoring")]
+sys.modules.setdefault("monitoring", _monitoring_pkg)
 
 # ---- Load the module ----
 
