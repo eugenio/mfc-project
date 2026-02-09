@@ -3,10 +3,10 @@
 Covers IntegratedMFCState, IntegratedMFCModel (init, dynamics,
 reward, simulation, results, save, plot, compatibility).
 """
-import sys
+
 import os
-from unittest.mock import MagicMock, patch, mock_open
-import json
+import sys
+from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
@@ -28,7 +28,7 @@ def model():
     return m
 
 
-from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState
+from integrated_mfc_model import IntegratedMFCModel, IntegratedMFCState  # noqa: E402
 
 
 class TestIntegratedMFCState:
@@ -126,7 +126,10 @@ class TestCalculateReward:
         metabolic_states = [FakeMS(), FakeMS()]
         enhanced_currents = [0.001, 0.001]
         r = model._calculate_integrated_reward(
-            mfc_state, biofilm_states, metabolic_states, enhanced_currents
+            mfc_state,
+            biofilm_states,
+            metabolic_states,
+            enhanced_currents,
         )
         assert isinstance(r, float)
 
@@ -161,8 +164,7 @@ class TestRunSimulation:
 class TestSaveCheckpoint:
     def test_save(self, model):
         model.step_integrated_dynamics(dt=1.0)
-        with patch("builtins.open", mock_open()), \
-             patch("pickle.dump") as mock_dump:
+        with patch("builtins.open", mock_open()), patch("pickle.dump") as mock_dump:
             model._save_checkpoint(1)
             mock_dump.assert_called_once()
 
@@ -171,9 +173,11 @@ class TestSaveResults:
     def test_save(self, model):
         model.step_integrated_dynamics(dt=1.0)
         results = model._compile_results()
-        with patch("builtins.open", mock_open()), \
-             patch("json.dump") as mock_json, \
-             patch("pickle.dump") as mock_pkl:
+        with (
+            patch("builtins.open", mock_open()),
+            patch("json.dump") as mock_json,
+            patch("pickle.dump") as mock_pkl,
+        ):
             mock_df = MagicMock()
             with patch("pandas.DataFrame", return_value=mock_df):
                 model.save_results(results)
@@ -183,8 +187,10 @@ class TestSaveResults:
 
 class _FakeAxes:
     """2D indexable axes container mimicking matplotlib subplots."""
+
     def __init__(self, rows, cols):
         self._data = [[MagicMock() for _ in range(cols)] for _ in range(rows)]
+
     def __getitem__(self, key):
         if isinstance(key, tuple):
             return self._data[key[0]][key[1]]
@@ -225,3 +231,68 @@ class TestPlotResults:
             {"matplotlib": mock_mpl, "matplotlib.pyplot": mock_plt},
         ):
             model.plot_results(results, save_plots=False)
+
+
+class TestMain:
+    def test_main_default(self):
+        """Cover main() with default args (no --plot)."""
+        from integrated_mfc_model import main
+
+        with (
+            patch("sys.argv", ["prog", "--cells", "2", "--hours", "2"]),
+            patch("integrated_mfc_model.IntegratedMFCModel") as mock_model_cls,
+        ):
+            mock_instance = MagicMock()
+            mock_instance.run_simulation.return_value = {"total_energy": 1.0}
+            mock_model_cls.return_value = mock_instance
+
+            main()
+
+            mock_model_cls.assert_called_once_with(
+                n_cells=2,
+                species="mixed",
+                substrate="lactate",
+                use_gpu=False,
+                simulation_hours=2,
+            )
+            mock_instance.run_simulation.assert_called_once()
+            mock_instance.save_results.assert_called_once()
+            mock_instance.plot_results.assert_not_called()
+
+    def test_main_with_plot(self):
+        """Cover main() with --plot flag."""
+        from integrated_mfc_model import main
+
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "prog",
+                    "--cells",
+                    "1",
+                    "--hours",
+                    "1",
+                    "--species",
+                    "geobacter",
+                    "--substrate",
+                    "acetate",
+                    "--gpu",
+                    "--plot",
+                ],
+            ),
+            patch("integrated_mfc_model.IntegratedMFCModel") as mock_model_cls,
+        ):
+            mock_instance = MagicMock()
+            mock_instance.run_simulation.return_value = {"total_energy": 0.5}
+            mock_model_cls.return_value = mock_instance
+
+            main()
+
+            mock_model_cls.assert_called_once_with(
+                n_cells=1,
+                species="geobacter",
+                substrate="acetate",
+                use_gpu=True,
+                simulation_hours=1,
+            )
+            mock_instance.plot_results.assert_called_once()
