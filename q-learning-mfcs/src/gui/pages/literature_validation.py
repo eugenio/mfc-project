@@ -54,7 +54,6 @@ class LiteratureValidator:
     """Literature validation engine for MFC parameters."""
 
     def __init__(self) -> None:
-        """Initialize literature validator with citation database."""
         self.citation_database = self._initialize_citation_database()
         self.parameter_ranges = self._initialize_parameter_ranges()
 

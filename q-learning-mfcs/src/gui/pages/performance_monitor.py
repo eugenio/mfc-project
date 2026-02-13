@@ -113,7 +113,6 @@ class PerformanceMonitor:
     """Real-time performance monitoring system."""
 
     def __init__(self) -> None:
-        """Initialize performance monitor with empty metrics history."""
         self.metrics_history = []
         self.alerts = []
         self.monitoring_active = True
