@@ -1,0 +1,218 @@
+learning_rate: 0.1
+discount_factor: 0.95
+epsilon: 0.3
+epsilon_decay: 0.9995
+epsilon_min: 0.01
+enhanced_learning_rate: 0.010698320638589937
+enhanced_discount_factor: 0.9609992557261428
+enhanced_epsilon: 0.40064536992631566
+advanced_epsilon_decay: 0.9968406902650004
+advanced_epsilon_min: 0.0042714404222870305
+reward_weights:
+  power_weight: 18.450199366779497
+  power_penalty_threshold: 50.0
+  power_penalty_multiplier: 100.0
+  power_base_reward_multiplier: 20.0
+  consumption_weight: 5.0
+  substrate_reward_multiplier: 48.529149002822
+  substrate_penalty_multiplier: 86.3082652695326
+  substrate_base_reward: 15.0
+  substrate_multiplier: 0.75
+  substrate_target_reward: 50.0
+  substrate_excess_penalty: -110.441778832924
+  substrate_starvation_penalty: -75.0
+  substrate_addition_penalty: -15.0
+  efficiency_weight: 10.45562341841683
+  efficiency_threshold: 0.5
+  efficiency_penalty_multiplier: 100.0
+  biofilm_weight: 76.25366956196135
+  biofilm_reward: 25.0
+  biofilm_penalty_factor: 10.0
+  biofilm_steady_state_bonus: 15.0
+  biofilm_penalty: -50.0
+  combined_penalty: -100.0
+  biofilm_optimal_thickness_um: 30.0
+  conductivity_normalization_S_per_m: 0.005
+  mass_growth_rate_factor: 10.0
+power_bins: 10
+power_max: 2.0
+biofilm_bins: 10
+biofilm_max: 1.0
+substrate_bins: 10
+substrate_max: 50.0
+time_bins:
+- 200
+- 500
+- 800
+- 1000
+eis_thickness_bins: 8
+eis_thickness_max: 80.0
+eis_conductivity_bins: 6
+eis_conductivity_max: 0.01
+eis_confidence_bins: 4
+qcm_mass_bins: 8
+qcm_mass_max: 1000.0
+qcm_frequency_bins: 6
+qcm_frequency_max: 500.0
+qcm_dissipation_bins: 4
+qcm_dissipation_max: 0.01
+fusion_confidence_bins: 5
+sensor_agreement_bins: 4
+flow_rate_actions:
+- -12
+- -10
+- -5
+- -2
+- -1
+- 0
+- 1
+- 2
+- 5
+- 6
+substrate_actions:
+- -2.0
+- -1.0
+- -0.5
+- 0.0
+- 0.5
+- 1.0
+- 1.5
+substrate_target_concentration: 25.0
+substrate_target_reservoir: 25.0
+substrate_target_outlet: 25.0
+substrate_target_cell: 25.0
+substrate_max_threshold: 30.0
+substrate_min_threshold: 2.0
+substrate_addition_max: 5.0
+outlet_reward_threshold: 25.0
+outlet_penalty_multiplier: 1.3541821944867105
+outlet_reward_scaling: 1.0
+substrate_excess_penalty_exponent: 3.0
+substrate_severe_threshold: 50.0
+substrate_severe_penalty_multiplier: 1000.0
+substrate_penalty_base_multiplier: 1.9691383876591164
+initial_substrate_concentration: 25.0
+initial_cell_concentration: 25.0
+reservoir_volume_liters: 1.0
+n_cells: 5
+anode_config:
+  material: !!python/object/apply:src.config.electrode_config.ElectrodeMaterial
+  - graphite_plate
+  geometry:
+    geometry_type: !!python/object/apply:src.config.electrode_config.ElectrodeGeometry
+    - rectangular_plate
+    length: 0.05
+    width: 0.05
+    height: null
+    diameter: null
+    thickness: 0.005
+    projected_area: null
+    total_surface_area: null
+  material_properties:
+    specific_conductance: 25000
+    contact_resistance: 0.1
+    surface_charge_density: -0.05
+    hydrophobicity_angle: 75
+    surface_roughness: 1.2
+    biofilm_adhesion_coefficient: 1.0
+    attachment_energy: -12.5
+    specific_surface_area: null
+    porosity: null
+    reference: Logan, B.E. (2008). Microbial Fuel Cells
+  operating_potential: -0.4
+  surface_treatment: none
+  age_hours: 0.0
+cathode_config: null
+anode_area_per_cell: 0.0072000000000000015
+cathode_area_per_cell: 0.0072000000000000015
+total_anode_area: 0.036000000000000004
+total_cathode_area: 0.036000000000000004
+eis_sensor_area: 0.0001
+qcm_sensor_area: 1.96e-05
+biofilm_physics:
+  substrate_diffusivity_biofilm: 6.0e-10
+  substrate_diffusivity_bulk: 1.0e-09
+  biofilm_porosity: 0.8
+  biofilm_tortuosity: 1.5
+  max_specific_growth_rate: 0.05
+  yield_coefficient: 0.4
+  half_saturation_constant: 5.0
+  decay_rate: 0.01
+  biofilm_density: 80.0
+  minimum_thickness: 0.1
+  diffusion_length_scale: 100.0
+unified_flow_actions:
+- -8
+- -4
+- -2
+- -1
+- 0
+- 1
+- 2
+- 3
+- 4
+outlet_error_bins: 8
+outlet_error_range:
+- -10.0
+- 10.0
+flow_rate_bins: 6
+flow_rate_range:
+- 5.0
+- 50.0
+sensor_weight: 0.3
+sensor_confidence_threshold: 0.3
+exploration_boost_factor: 1.5
+optimal_biofilm_thickness: 1.3
+biofilm_deviation_threshold: 0.05
+growth_rate_threshold: 0.01
+flow_rate_min: 5.0
+flow_rate_max: 50.0
+stability_target_flow_rate: 15.0
+stability_target_outlet_concentration: 25.0
+substrate_concentration_min: 5.0
+substrate_concentration_max: 45.0
+flow_adjustment_unit: 1.0e-06
+flow_conversion_factor: 3.6
+power_objective_weight: 0.4
+biofilm_health_weight: 0.3
+sensor_agreement_weight: 0.2
+stability_weight: 0.1
+state_space:
+  power_bins: 8
+  power_range:
+  - 0.0
+  - 2.0
+  biofilm_bins: 6
+  biofilm_range:
+  - 0.0
+  - 1.0
+  substrate_bins: 8
+  substrate_range:
+  - 0.0
+  - 50.0
+  sensor_state_bins: 12
+  reservoir_substrate_bins: 8
+  reservoir_substrate_range:
+  - 0.0
+  - 50.0
+  cell_substrate_bins: 6
+  cell_substrate_range:
+  - 0.0
+  - 50.0
+  outlet_substrate_bins: 6
+  outlet_substrate_range:
+  - 0.0
+  - 50.0
+  eis_thickness_bins: 8
+  eis_thickness_max: 80.0
+  eis_conductivity_bins: 6
+  eis_conductivity_max: 0.01
+  eis_confidence_bins: 4
+  qcm_mass_bins: 8
+  qcm_mass_max: 1000.0
+  qcm_frequency_bins: 6
+  qcm_frequency_max: 500.0
+  qcm_dissipation_bins: 4
+  qcm_dissipation_max: 0.01
+  sensor_agreement_bins: 4
+  fusion_confidence_bins: 5

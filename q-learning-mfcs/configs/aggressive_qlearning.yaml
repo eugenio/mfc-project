@@ -1,0 +1,64 @@
+# Aggressive Q-learning configuration for rapid optimization
+# Higher learning rates and exploration for faster convergence
+
+# Core Q-learning parameters
+learning_rate: 0.3
+discount_factor: 0.9
+epsilon: 0.5
+epsilon_decay: 0.99
+epsilon_min: 0.15
+
+# Enhanced configurations
+enhanced_learning_rate: 0.25
+enhanced_discount_factor: 0.92
+enhanced_epsilon: 0.45
+
+# Advanced decay parameters
+advanced_epsilon_decay: 0.995
+advanced_epsilon_min: 0.12
+
+# State space configuration - finer granularity
+power_bins: 10
+power_max: 2.0
+biofilm_deviation_bins: 8
+biofilm_max_deviation: 1.0
+substrate_utilization_bins: 10
+substrate_utilization_max: 50.0
+time_phase_hours: [100, 300, 600, 900, 1000]
+
+# Action space - larger adjustments
+flow_rate_adjustments_ml_per_h: [-15, -10, -5, -2, 0, 2, 5, 10, 12]
+substrate_actions: [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0]
+
+# Flow rate bounds - wider range
+flow_rate_min: 3.0
+flow_rate_max: 60.0
+
+# Stability targets - more aggressive
+stability_target_flow_rate: 20.0
+stability_target_outlet_concentration: 15.0
+
+# Multi-objective weights - prioritize power
+power_objective_weight: 0.5
+biofilm_health_weight: 0.25
+sensor_agreement_weight: 0.15
+stability_weight: 0.1
+
+# Reward weights configuration
+rewards:
+  # Aggressive power optimization
+  power_weight: 20.0
+  power_penalty_threshold: 40.0
+  power_penalty_multiplier: 150.0
+
+  # Biofilm parameters
+  biofilm_weight: 40.0
+  biofilm_reward: 30.0
+  biofilm_optimal_thickness_um: 35.0
+  conductivity_normalization_S_per_m: 0.006
+  mass_growth_rate_factor: 15.0
+
+  # Substrate utilization
+  consumption_weight: 8.0
+  substrate_reward_multiplier: 40.0
+  substrate_penalty_multiplier: 80.0
