@@ -1,0 +1,6 @@
+[submodule "BMAD-METHOD"]
+	path = BMAD-METHOD
+	url = https://github.com/bmadcode/BMAD-METHOD.git
+[submodule "KEGG-MCP-Server"]
+	path = KEGG-MCP-Server
+	url = https://github.com/Augmented-Nature/KEGG-MCP-Server.git

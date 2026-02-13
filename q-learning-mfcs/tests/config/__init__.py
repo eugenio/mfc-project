@@ -1,0 +1,3 @@
+"""
+Configuration system test suite.
+"""

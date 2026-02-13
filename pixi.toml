@@ -1,0 +1,256 @@
+[workspace]
+authors = ["Eugenio La Cava"]
+channels = ["conda-forge","https://conda.modular.com/max-nightly/", "https://repo.prefix.dev/modular", "https://repo.prefix.dev/mojo", "https://repo.prefix.dev/modular-community"]
+name = "mfc-project"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+# Claude Code Hook Tasks
+pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
+post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
+notification-hook = "cd /home/uge/mfc-project/.claude/hooks && python notification.py"
+stop-hook = "cd /home/uge/mfc-project/.claude/hooks && python stop.py"
+subagent-stop-hook = "cd /home/uge/mfc-project/.claude/hooks && python subagent_stop.py"
+user-prompt-submit-hook = "cd /home/uge/mfc-project/.claude/hooks && python user_prompt_submit.py"
+send-event-hook = "cd /home/uge/mfc-project/.claude/hooks && python send_event.py"
+
+# Hook testing and debugging tasks
+test-hooks = "cd /home/uge/mfc-project/.claude/hooks && python test_hook_simple.py"
+test-chunking = "cd /home/uge/mfc-project/.claude/hooks && python test_chunking_system.py"
+test-gitlab-integration = "cd /home/uge/mfc-project/.claude/hooks && python test_gitlab_integration.py"
+test-edit-thresholds = "cd /home/uge/mfc-project/.claude/hooks && python test_edit_thresholds.py"
+test-file-creation-thresholds = "cd /home/uge/mfc-project/.claude/hooks && python test_file_creation_thresholds.py"
+monitor-live = "cd /home/uge/mfc-project/.claude/hooks && python test_monitor_live.py"
+trigger-test-monitoring = "cd /home/uge/mfc-project/.claude/hooks && python trigger_test_monitoring.py"
+
+# Hook setup and configuration
+setup-intelligent-automation = "cd /home/uge/mfc-project/.claude/hooks && python setup_intelligent_automation.py"
+
+# Other tasks
+parallel-alldir-mdlint = "find . -name '*.md' -print0 | xargs -0 -P 16 -I {} mdformat {}"
+
+# Test execution tasks
+test = "cd q-learning-mfcs/tests && python run_tests.py"
+test-gui = "cd q-learning-mfcs/tests && python -m pytest gui/ -v"
+test-selenium = "cd q-learning-mfcs/tests && python -m pytest selenium/ -v"
+test-monitoring = "cd q-learning-mfcs/tests && python -m pytest test_monitoring_system.py -v"
+test-config = "cd q-learning-mfcs/tests && python -m pytest config/ -v"
+test-all = "pixi run test && pixi run test-gui && pixi run test-monitoring"
+
+# Test with coverage
+test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
+
+# Fast test (unit tests only, skip slow tests)
+test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration and not selenium and not browser' -x"
+
+# CI-friendly test (with XML output)
+test-ci = "cd q-learning-mfcs/tests && python -m pytest . --junitxml=test-results.xml --cov=../src --cov-report=xml"
+
+# Linting and type checking
+ruff-check = "ruff check ."
+ruff-fix = "ruff check . --fix"
+ruff-check-mfc = "ruff check q-learning-mfcs/"
+ruff-fix-mfc = "ruff check q-learning-mfcs/ --fix"
+mypy-check = "mypy ."
+mypy-check-mfc = "mypy q-learning-mfcs/src/"
+black-format = "black ."
+black-format-mfc = "black q-learning-mfcs/"
+
+# Comprehensive validation (tests + linting)
+validate-all = "pixi run ruff-check && pixi run mypy-check && pixi run test-all"
+validate-mfc = "pixi run ruff-check-mfc && pixi run mypy-check-mfc && pixi run test-all"
+
+# GUI Tasks
+gui = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
+gui-enhanced = "cd q-learning-mfcs && streamlit run src/gui/enhanced_mfc_gui.py"
+
+# HTTPS/SSL Management Tasks
+ssl-init = "cd q-learning-mfcs/src/monitoring && python ssl_config.py --init"
+ssl-test = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py --test-ssl"
+cert-monitor = "cd q-learning-mfcs/src/monitoring && python cert_manager.py --monitor"
+cert-renew = "cd q-learning-mfcs/src/monitoring && python cert_manager.py --renew-if-needed"
+test-https = "cd q-learning-mfcs/src/monitoring && python test_https_implementation.py"
+start-monitoring = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py"
+start-monitoring-http = "cd q-learning-mfcs/src/monitoring && python start_monitoring.py --no-ssl"
+
+# Core runtime dependencies - minimal set for production
+[dependencies]
+python = ">=3.12.11,<3.13"
+numpy = ">=2.3.1,<3"
+scipy = ">=1.16.0,<2"
+pandas = ">=2.3.1,<3"
+matplotlib = ">=3.10.3,<4"
+pyyaml = ">=6.0.2,<7"
+streamlit = ">=1.47.1,<2"
+plotly = ">=6.2.0,<7"
+altair = ">=5.5.0,<6"
+selenium = ">=4.34.2,<5"
+webdriver-manager = ">=4.0.2,<5"
+pydantic = ">=2.10.4"
+ruff = ">=0.12.7,<0.13"
+mypy = ">=1.17.1,<2"
+
+# Development tools - testing, linting, formatting
+[feature.dev.dependencies]
+pytest = ">=8.4.1,<9"
+pytest-cov = ">=4.0.0"
+ruff = ">=0.12.4,<0.13"
+mypy = ">=1.17.0,<2"
+black = ">=22.0.0"
+pre-commit = ">=2.0.0"
+bandit = "*"
+safety = "*"
+types-pyyaml = ">=6.0.12.20250516,<7"
+types-psutil = "*"
+types-requests = "*"
+types-jsonschema = "*"
+types-seaborn = "*"
+yamllint = ">=1.37.1,<2"
+
+# Build and documentation tools
+[feature.docs-build.dependencies]
+tectonic = ">=0.15.0,<0.16"
+pandoc = ">=3.7.0.2,<4"
+mdformat = ">=0.7.22,<0.8"
+
+# Version control and project management
+[feature.tools.dependencies]
+git-lfs = ">=3.7.0,<4"
+gh = ">=2.76.0,<3"
+nox = ">=2025.5.1,<2026"
+
+# GUI and visualization
+[feature.gui.dependencies]
+streamlit = ">=1.47.1,<2"
+plotly = ">=6.2.0,<7"
+seaborn = ">=0.13.2,<0.14"
+
+# Machine learning and optimization
+[feature.ml.dependencies]
+optuna = ">=4.4.0,<5"
+
+# Genome-scale metabolic modeling
+[feature.gsm.dependencies]
+# Note: cobra requires specific solver versions
+python = ">=3.12.11,<3.13"  # Ensure Python version
+glpk = ">=5.0"  # Linear programming solver
+
+[feature.gsm.pypi-dependencies]
+cobra = ">=0.29.0"  # COBRApy for metabolic modeling
+mackinac = ">=0.8.4"  # Bridge between ModelSEED and COBRApy
+escher = ">=1.7.0"  # Metabolic pathway visualization
+memote = ">=0.13.0"  # Model testing framework
+swiglpk = ">=5.0.0"  # GLPK bindings for cobra
+
+# Mojo/Modular runtime
+[feature.modular.dependencies]
+modular = "25.4.*"
+magic = ">=8.3.486,<9"
+
+[feature.dev.pypi-dependencies]
+build = "*"
+pip-audit = "*"
+pytest-benchmark = "*"
+detect-secrets = ">=1.5.0, <2"
+mdformat = "*"
+pymupdf = "*"
+streamlit-autorefresh = ">=1.0.1, <2"
+selenium = ">=4.34.2, <5"
+webdriver-manager = ">=4.0.2, <5"
+
+# Core runtime dependencies (pypi)
+[pypi-dependencies]
+requests = ">=2.31.0"
+python-crontab = ">=3.3.0, <4"
+types-python-crontab = ">=3.3.0.20250715, <4"
+pubmedclient = ">=0.2.0, <0.3"
+
+# API and web server components
+[feature.api.pypi-dependencies]
+fastapi = ">=0.104.0, <1.0"
+uvicorn = {version = ">=0.24.0", extras = ["standard"]}
+websockets = ">=12.0"
+cryptography = ">=41.0.0"
+pyjwt = ">=2.8.0"
+python-multipart = ">=0.0.6"
+starlette = ">=0.27.0"
+
+# Project management and CI/CD
+[feature.project.pypi-dependencies]
+python-gitlab = ">=4.0.0"
+
+# Advanced ML and optimization
+[feature.advanced-ml.pypi-dependencies]
+ray = {version = ">=2.0.0", extras = ["tune"]}
+scikit-optimize = ">=0.9.0"
+
+# GPU acceleration (optional features)
+# WARNING: JAX/JAXlib versions are frozen for compatibility between jax and jaxlib
+# AMD GPU environment uses exact versions (==0.5.0) to prevent compatibility issues
+# NVIDIA GPU environment uses minimum versions for flexibility
+#
+# If updating these versions, run JAX tests to avoid regressions:
+#   AMD GPU:    pixi run -e amd-gpu pytest 
+#     q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+#   NVIDIA GPU: pixi run -e nvidia-gpu pytest 
+#     q-learning-mfcs/tests/test_gpu_capability.py::TestGPUCapability::test_jax_gpu_availability -v
+#
+# Known working combinations:
+#   AMD GPU (ROCm): jax==0.5.0 + jaxlib==0.5.0
+#   NVIDIA GPU (CUDA12): jax>=0.4.0 + jaxlib>=0.4.0
+[feature.amd-gpu.pypi-dependencies]
+# JAX with ROCm support - use exact compatible versions
+jax = "==0.5.0"
+jaxlib = "==0.5.0"
+jax-rocm60-plugin = "==0.5.0"
+jax-rocm60-pjrt = "==0.5.0"
+
+[feature.nvidia-gpu.pypi-dependencies]
+jax = { version = ">=0.4.0", extras = ["cuda12"] }
+jaxlib = { version = ">=0.4.0", extras = ["cuda12"] }
+cupy-cuda12x = ">=12.0.0"
+torch = ">=2.0.0"
+nvidia-ml-py3 = ">=7.352.0"
+streamlit-autorefresh = ">=1.0.1, <2"
+
+[feature.nvidia-gpu.dependencies]
+cuda-toolkit = ">=12.0"
+cudnn = ">=8.0"
+
+# Environment configurations optimized for different use cases
+[environments]
+# Minimal runtime environment for production
+runtime = []
+
+# Test runtime environment - minimal testing without hooks
+test-runtime = ["dev"]
+
+# Development environment with testing and linting tools
+dev = ["dev", "tools", "project"]
+
+# Full development environment with docs and build tools
+full-dev = ["dev", "tools", "project", "docs-build"]
+
+# GUI development environment
+gui-dev = ["dev", "gui", "tools"]
+
+# Machine learning research environment
+ml-research = ["dev", "ml", "advanced-ml", "gui"]
+
+# Genome-scale metabolic modeling environment
+gsm-research = ["dev", "gsm", "ml", "gui"]
+
+# API server environment
+api-server = ["api", "project"]
+
+# Modular/Mojo development environment
+mojo-dev = ["dev", "modular", "tools"]
+
+# GPU environments (optional, only when needed)
+# Note: JAX dependencies are version-frozen for compatibility - see feature definitions above
+amd-gpu = ["amd-gpu", "ml", "api", "gui"]
+nvidia-gpu = ["nvidia-gpu", "ml"]
+
+# Complete environment (should be avoided in production)
+complete = ["dev", "gui", "ml", "advanced-ml", "api", "project", "docs-build", "tools", "modular"]
