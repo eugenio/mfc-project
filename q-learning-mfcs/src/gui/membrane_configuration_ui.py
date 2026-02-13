@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Membrane Configuration UI Component
+"""Membrane Configuration UI Component.
 
 Provides comprehensive membrane configuration interface including:
 - Material selection with literature-based properties
@@ -28,6 +27,7 @@ class MembraneConfigurationUI:
     """UI component for membrane configuration."""
 
     def __init__(self):
+        """Initialize membrane configuration UI component."""
         self.initialize_session_state()
 
     def initialize_session_state(self):

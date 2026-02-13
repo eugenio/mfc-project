@@ -15,7 +15,13 @@ from gui.pages.system_configuration import render_system_configuration_page
 
 
 class NavigationController:
+    """Navigation controller for Enhanced MFC Platform pages.
+
+    Manages page routing and rendering for the Streamlit multi-page application.
+    """
+
     def __init__(self) -> None:
+        """Initialize navigation controller with page registry."""
         self.pages = {
             "dashboard": render_dashboard_page,
             "electrode_system": render_enhanced_electrode_page,
@@ -29,6 +35,7 @@ class NavigationController:
         }
 
     def run(self) -> None:
+        """Run the navigation controller and render selected page."""
         apply_enhanced_theme()
         st.set_page_config(page_title="MFC Platform", page_icon="🔬", layout="wide")
 

@@ -18,6 +18,7 @@ def create_spatial_distribution_plots(df, n_cells=5):
 
     Returns:
         Plotly figure with spatial distribution or None if no cell data.
+
     """
     if isinstance(df, dict):
         columns = df.keys()
