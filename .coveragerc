@@ -1,0 +1,103 @@
+[run]
+# Coverage configuration for integrated test suite
+source = 
+    .claude/hooks
+    q-learning-mfcs/src
+
+omit = 
+    # Test files
+    */tests/*
+    *test_*.py
+    
+    # Cache and temporary files
+    */__pycache__/*
+    */.pytest_cache/*
+    */.mypy_cache/*
+    */htmlcov/*
+    
+    # Virtual environments and dependencies
+    */venv/*
+    */env/*
+    */.pixi/*
+    */node_modules/*
+    
+    # External libraries and tools
+    */site-packages/*
+    */dist-packages/*
+    
+    # Backup and generated files
+    *_backup.py
+    *_broken.py
+    *_corrupted.py
+    *_fixed.py
+    *_v2.py
+    
+    # Mojo-specific files (can't be tested with Python coverage)
+    *.mojo
+    *.so
+    
+    # Configuration examples
+    *.example.*
+    
+    # Logs and output files
+    *.log
+    */logs/*
+    
+    # SSL certificates and keys
+    */ssl_certificates/*
+    */certs/*
+    */private/*
+
+[report]
+# Reporting options
+precision = 2
+skip_covered = False
+skip_empty = True
+sort = Cover
+
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+    
+    # Testing and debugging code
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+    @overload
+    
+    # Platform-specific code
+    if sys.platform
+    if platform.system
+    
+    # Exception handling
+    except ImportError:
+    except ModuleNotFoundError:
+    
+    # Development utilities
+    def main():
+    if __name__ == "__main__":
+
+show_missing = True
+
+[html]
+directory = htmlcov
+title = MFC Project Test Coverage Report
+
+[xml]
+output = coverage.xml
+
+[paths]
+# Path mapping for different environments
+source = 
+    .claude/hooks/
+    q-learning-mfcs/src/
+    /home/uge/mfc-project/.claude/hooks/
+    /home/uge/mfc-project/q-learning-mfcs/src/

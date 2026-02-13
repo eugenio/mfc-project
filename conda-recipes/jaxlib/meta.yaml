@@ -1,0 +1,40 @@
+{% set name = "jaxlib" %}
+{% set version = "0.6.0.dev20250728" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ../../conda-packages/jaxlib-0.6.0.dev20250728-cp312-cp312-manylinux2014_x86_64.whl
+
+build:
+  number: 0
+  skip: True  # [not linux64]
+  script: python -m pip install jaxlib-0.6.0.dev20250728-cp312-cp312-manylinux2014_x86_64.whl -vv --no-deps --no-build-isolation
+
+requirements:
+  host:
+    - python =3.12
+    - pip
+  run:
+    - python =3.12
+    - numpy >=1.22
+    - scipy >=1.9
+    - ml_dtypes >=0.2.0
+    - libgcc-ng
+    - libstdcxx-ng
+
+test:
+  imports:
+    - jaxlib
+
+about:
+  home: https://github.com/google/jax
+  license: Apache-2.0
+  license_family: Apache
+  summary: 'XLA library for JAX'
+  description: |
+    JAXlib is XLA, compiled for your CPU and/or GPU.
+  dev_url: https://github.com/google/jax
+  doc_url: https://jax.readthedocs.io/
