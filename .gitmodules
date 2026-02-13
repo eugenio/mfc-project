@@ -1,0 +1,3 @@
+[submodule "claude-code-hooks-multi-agent-observability"]
+	path = claude-code-hooks-multi-agent-observability
+	url = git@github.com:eugenio/claude-code-hooks-multi-agent-observability.git

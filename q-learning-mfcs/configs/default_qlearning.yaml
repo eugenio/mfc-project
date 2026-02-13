@@ -1,0 +1,64 @@
+# Default Q-learning configuration for MFC control
+# This configuration provides balanced parameters suitable for most scenarios
+
+# Core Q-learning parameters
+learning_rate: 0.1
+discount_factor: 0.95
+epsilon: 0.3
+epsilon_decay: 0.995
+epsilon_min: 0.1
+
+# Enhanced configurations for advanced controllers
+enhanced_learning_rate: 0.0987
+enhanced_discount_factor: 0.9517
+enhanced_epsilon: 0.3702
+
+# Advanced decay parameters
+advanced_epsilon_decay: 0.9978
+advanced_epsilon_min: 0.08
+
+# State space configuration
+power_bins: 8
+power_max: 2.0
+biofilm_deviation_bins: 6
+biofilm_max_deviation: 1.0
+substrate_utilization_bins: 8
+substrate_utilization_max: 50.0
+time_phase_hours: [200, 500, 800, 1000]
+
+# Action space configuration
+flow_rate_adjustments_ml_per_h: [-12, -10, -5, -2, -1, 0, 1, 2, 5, 6]
+substrate_actions: [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
+
+# Flow rate bounds
+flow_rate_min: 5.0
+flow_rate_max: 50.0
+
+# Stability targets
+stability_target_flow_rate: 15.0
+stability_target_outlet_concentration: 12.0
+
+# Multi-objective weights
+power_objective_weight: 0.4
+biofilm_health_weight: 0.3
+sensor_agreement_weight: 0.2
+stability_weight: 0.1
+
+# Reward weights configuration
+rewards:
+  # Power optimization
+  power_weight: 10.0
+  power_penalty_threshold: 50.0
+  power_penalty_multiplier: 100.0
+
+  # Biofilm health
+  biofilm_weight: 50.0
+  biofilm_reward: 25.0
+  biofilm_optimal_thickness_um: 30.0
+  conductivity_normalization_S_per_m: 0.005
+  mass_growth_rate_factor: 10.0
+
+  # Substrate utilization
+  consumption_weight: 5.0
+  substrate_reward_multiplier: 30.0
+  substrate_penalty_multiplier: 60.0
