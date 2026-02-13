@@ -1,0 +1,35 @@
+{% set name = "jax_rocm60_plugin" %}
+{% set version = "0.6.0.dev20250728" %}
+
+package:
+  name: {{ name|lower|replace("_", "-") }}
+  version: {{ version }}
+
+source:
+  path: ../../conda-packages/jax_rocm60_plugin-0.6.0.dev20250728-cp312-cp312-manylinux2014_x86_64.whl
+
+build:
+  number: 0
+  skip: True  # [not linux64]
+  script: python -m pip install jax_rocm60_plugin-0.6.0.dev20250728-cp312-cp312-manylinux2014_x86_64.whl -vv --no-deps --no-build-isolation
+
+requirements:
+  host:
+    - python =3.12
+    - pip
+  run:
+    - python =3.12
+    - jaxlib >=0.6.0
+
+test:
+  imports:
+    - jax_plugins.xla_rocm60
+
+about:
+  home: https://github.com/google/jax
+  license: Apache-2.0
+  license_family: Apache
+  summary: 'JAX ROCm 6.0 plugin for AMD GPU support'
+  description: |
+    JAX plugin for ROCm 6.0 AMD GPU acceleration.
+  dev_url: https://github.com/google/jax
