@@ -1,0 +1,18 @@
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120  # More reasonable line length for modern screens
+  trailing-spaces: enable
+  new-line-at-end-of-file: enable
+
+ignore: |
+  .pixi/
+  .venv/
+  .git/
+  node_modules/
+  __pycache__/
+  .pytest_cache/
+  .mypy_cache/
+  .ruff_cache/
+  *.egg-info/

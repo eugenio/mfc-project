@@ -1,0 +1,16 @@
+standalone: true
+pdf-engine: lualatex
+from: markdown+emoji
+variables:
+  documentclass: article
+  fontsize: 11pt
+  geometry: margin=1in
+  mainfont: DejaVu Sans
+  mainfontfallback:
+    - "Noto Color Emoji:mode=harf"
+  sansfont: DejaVu Sans
+  sansfontfallback:
+    - "Noto Color Emoji:mode=harf"
+  monofont: DejaVu Sans Mono
+  monofontfallback:
+    - "Noto Color Emoji:mode=harf"

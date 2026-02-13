@@ -1,0 +1,178 @@
+[workspace]
+authors = ["Eugenio La Cava"]
+channels = ["file:///home/uge/mfc-project/local-channel","conda-forge","https://conda.modular.com/max-nightly/", "https://repo.prefix.dev/modular", "https://repo.prefix.dev/mojo", "https://repo.prefix.dev/modular-community"]
+name = "mojo-practice"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+
+[tasks]
+pre-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python pre_tool_use.py"
+post-tool-hook = "cd /home/uge/mfc-project/.claude/hooks && python post_tool_use.py"
+detect-gpu = "python scripts/detect_gpu.py"
+install-gpu-deps = "python scripts/install_gpu_deps.py"
+
+# GUI tasks
+gui = "cd q-learning-mfcs/src && streamlit run mfc_streamlit_gui.py --server.port 8501 --server.address localhost"
+streamlit = "cd q-learning-mfcs/src && streamlit run mfc_streamlit_gui.py --server.port 8501 --server.address localhost"
+
+# Linting tasks
+lint-code = "ruff check . && mypy . && bandit -r . -f json -o bandit-report.json || (cat bandit-report.json && exit 1)"
+lint-yaml = "yamllint -c .yamllint.yml ."
+lint-markdown = "mdformat --check ."
+secrets-detect = "detect-secrets scan --all-files --disable-plugin AbsolutePathDetectorPlugin --disable-plugin Base64HighEntropyString --disable-plugin HexHighEntropyString"
+
+
+# Documentation build tasks with MiKTeX
+build-docs = "bash ./scripts/build-docs.sh docs"
+
+# Full workflow: build MiKTeX then all documentation
+build-all-docs = "pixi run setup-miktex && pixi run build-docs-miktex"
+
+[feature.amd.activation]
+env = { LLVM_PATH = "/opt/rocm/llvm" }
+
+[dependencies]
+scipy = ">=1.16.0,<2"
+matplotlib = ">=3.10.3,<4"
+python = ">=3.12.11,<3.13"
+numpy = ">=2.3.2,<3"
+modular = ">=25.6.0.dev2025073007,<26"
+magic = ">=8.3.486,<9"
+tectonic = ">=0.15.0,<0.16"
+optuna = ">=4.4.0,<5"
+git-lfs = ">=3.7.0,<4"
+seaborn = ">=0.13.2,<0.14"
+gh = ">=2.76.1,<3"
+mdformat = ">=0.7.22,<0.8"
+pandoc = ">=3.7.0.2,<4"
+pytest = ">=8.4.1,<9"
+ruff = ">=0.12.5,<0.13"
+mypy = ">=1.17.0,<2"
+pandas = ">=2.3.1,<3"
+pyyaml = ">=6.0.2,<7"
+types-pyyaml = ">=6.0.12.20250516,<7"
+yamllint = ">=1.37.1,<2"
+streamlit = ">=1.47.1,<2"
+plotly = ">=6.2.0,<7"
+conda-build = ">=25.5.0,<26"
+cm-unicode = ">=0.7.0,<0.8"
+bison = ">=3.8.2,<4"
+apr = ">=1.7.0,<2"
+libapr = ">=1.7.0,<2"
+libaprutil = ">=1.6.1,<2"
+libgd = ">=2.3.3,<3"
+hunspell = ">=1.7.2,<2"
+liblzma = ">=5.8.1,<6"
+msgpack-python = ">=1.1.1,<2"
+cabextract = ">=1.9.1,<2"
+automake = ">=1.17,<2"
+libtool = ">=2.5.4,<3"
+autoconf = ">=2.72,<3"
+popt = ">=1.16,<2"
+uriparser = ">=0.9.8,<0.10"
+zziplib = ">=0.13.69,<0.14"
+fmt = ">=11.2.0,<12"
+icu = ">=75.1,<76"
+boost-cpp = ">=1.85.0,<2"
+huggingface_hub = ">=0.34.3,<0.35"
+mpfi = ">=1.5.4,<2"
+font-ttf-noto-emoji = ">=2.34,<3"
+font-ttf-twemoji = ">=15.1.0,<16"
+texlive-core = ">=20230313,<20230314"
+font-ttf-noto = ">=20201206,<20201207"
+font-ttf-dejavu = ">=2.37,<3"
+r-fontliberation = ">=0.1.0,<0.2"
+tex-fmt = ">=0.5.5,<0.6"
+libcups = ">=2.3.3,<3"
+vulkan-headers = ">=1.3.231.1,<2"
+libcurl = ">=8.14.1,<9"
+gcc = ">=14.3.0,<15.2"
+ca-certificates = ">=2025.7.14,<2026"
+cmake = ">=4.0.3,<5"
+openlibm = ">=0.8.1,<0.9"
+libopenlibm4 = ">=0.8.1,<0.9"
+gnu-coreutils = ">=9.5,<10"
+libdlfind = ">=0.0.3,<0.0.4"
+glib = ">=2.84.2,<3"
+log4cxx = ">=0.11.0,<0.12"
+sysroot_linux-64 = ">=2.28,<3"
+nodejs = ">=24.4.1,<24.5"
+jupyter_latex_envs = ">=1.4.6,<2"
+r-emojifont = ">=0.5.5,<0.6"
+open-fonts = ">=0.7.0,<0.8"
+r-sysfonts = ">=0.8.9,<0.9"
+latexmk = ">=4.87,<5"
+pyarrow = ">=21.0.0,<22"
+psutil = ">=6.1.1,<8"
+
+[feature.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-cov = ">=4.0.0"
+ruff = ">=0.1.0"
+mypy = ">=1.0.0"
+black = ">=22.0.0"
+pre-commit = ">=2.0.0"
+bandit = "*"
+safety = "*"
+twine = "*"
+pip = "*"
+
+[feature.dev.pypi-dependencies]
+build = "*"
+pip-audit = "*"
+pytest-benchmark = "*"
+detect-secrets = "*"
+mdformat = "*"
+pymupdf = "*"
+streamlit-autorefresh = ">=1.0.1, <2"
+selenium = ">=4.34.2, <5"
+webdriver-manager = ">=4.0.2, <5"
+
+[pypi-dependencies]
+detect-secrets = ">=1.5.0, <2"
+python-gitlab = ">=6.2.0, <7"
+ray = { version = ">=2.48.0, <3", extras = ["tune"] }
+scikit-optimize = ">=0.10.2, <0.11"
+transformers = "*"
+lxml = ">=6.0.0, <7"
+seqeval = ">=1.2.2, <2"
+matplotlib = "*"
+h5py = ">=3.14.0, <4"
+biopython = ">=1.85, <2"
+lmdb = ">=1.7.3, <2"
+accelerate = ">=1.9.0, <2"
+openai = ">=1.97.1, <2"
+
+
+[feature.amd.pypi-dependencies]
+jax = "==0.6.0"
+streamlit-autorefresh = ">=1.0.1, <2"
+jax_rocm60_plugin = { path = "/home/uge/rocm-jax/jax/dist/jax_rocm60_plugin-0.6.0.dev20250728-cp312-cp312-manylinux2014_x86_64.whl" }
+jax_rocm60_pjrt = { path = "/home/uge/rocm-jax/jax/dist/jax_rocm60_pjrt-0.6.0.dev20250728-py3-none-manylinux2014_x86_64.whl" }
+
+[feature.nvidia.pypi-dependencies]
+# NVIDIA CUDA support packages
+jax = {version = ">=0.4.20,<=0.4.31", extras = ["cuda12"]}
+jaxlib = ">=0.4.20,<=0.4.31"
+cupy-cuda12x = ">=12.0.0"
+torch = ">=2.0.0"
+nvidia-ml-py3 = ">=7.352.0"
+streamlit-autorefresh = ">=1.0.1, <2"
+
+[feature.nvidia.dependencies]
+# NVIDIA CUDA runtime libraries
+cuda-toolkit = ">=12.0"
+cudnn = ">=8.0"
+[feature.amd.dependencies]
+jaxlib = "==0.6.0.dev20250728"
+
+[feature.docs.dependencies]
+
+[feature.docs.pypi-dependencies]
+
+[environments]
+dev = ["dev"]
+nvidia = ["nvidia"]
+rocm = ["amd"]
+docs = ["docs"]

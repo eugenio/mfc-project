@@ -1,0 +1,139 @@
+# High accuracy sensor configuration for precise biofilm monitoring
+# Optimized for research and detailed characterization
+
+# EIS Configuration - High accuracy settings
+eis:
+  # Frequency sweep - more points for better resolution
+  start_frequency: 0.001
+  end_frequency: 1000000.0
+  points_per_decade: 20
+
+  # Lower current for better linearity
+  applied_current: 0.0001
+  reference_impedance: 1000.0
+
+  # Electrode configuration
+  electrode_area: 0.01
+  reference_electrode_type: "Ag/AgCl"
+
+  # Model parameters
+  solution_resistance: 10.0
+  double_layer_capacitance: 1.0e-6
+  charge_transfer_resistance: 1000.0
+  warburg_coefficient: 500.0
+
+  # Extended measurement time
+  measurement_time: 120.0
+  stabilization_time: 30.0
+  baseline_uncertainty: 1.0
+
+  # Reduced noise
+  noise_level: 0.01
+  drift_rate: 0.0005
+
+  # More frequent updates
+  measurement_interval: 180
+  calibration_interval: 1800
+
+# QCM Configuration - Enhanced precision
+qcm:
+  # Crystal parameters
+  fundamental_frequency: 5.0e6
+  crystal_area: 1.0
+  overtone_number: 5  # Higher overtone for better mass resolution
+
+  # Material properties
+  shear_modulus: 2.947e11
+  density: 2648.0
+
+  # Biofilm properties
+  biofilm_density: 1050.0
+  biofilm_shear_modulus: 1.0e6
+
+  # High resolution measurement
+  frequency_resolution: 0.01
+  baseline_drift_rate: 0.1
+  temperature_coefficient: -0.087
+  baseline_uncertainty: 0.5
+
+  # Mass sensitivity
+  mass_sensitivity_constant: 17.7
+  mass_sensitivity_factor: 1.0
+
+  # Tight temperature control
+  temperature_setpoint: 25.0
+  temperature_tolerance: 0.05
+
+  # Low noise
+  frequency_noise_level: 0.5
+  dissipation_noise_level: 5.0e-7
+
+  # Frequent updates
+  measurement_interval: 30
+  calibration_interval: 3600
+
+# Sensor Fusion - High accuracy fusion
+fusion:
+  # Use Kalman filter for optimal estimation
+  method: "kalman_filter"
+
+  # Reduced process noise
+  process_noise_covariance: [0.05, 0.2, 5.0e-7, 0.005, 0.02]
+
+  # Lower measurement noise
+  measurement_noise_covariance: [1.0, 0.5, 5.0e-6, 0.05, 0.005]
+
+  # High sensor reliability
+  eis_reliability: 0.98
+  qcm_reliability: 0.99
+
+  # Tight fusion parameters
+  min_sensor_weight: 0.2
+  max_sensor_disagreement: 5.0
+  sensor_fault_threshold: 0.2
+
+  # Rapid updates
+  fusion_update_interval: 30
+  state_prediction_interval: 15
+
+  # Strict cross-validation
+  cross_validation_window: 20
+  agreement_threshold: 0.9
+
+  # Slower adaptation for stability
+  adaptation_rate: 0.005
+  confidence_decay_factor: 0.995
+  reliability_recovery_rate: 0.0005
+
+  # Status scores
+  status_scores:
+    good: 1.0
+    degraded: 0.7
+    failed: 0.3
+    unavailable: 0.0
+
+  # Balanced confidence weights
+  confidence_weights:
+    eis_weight: 0.48
+    qcm_weight: 0.48
+    fusion_weight: 0.04
+
+  # Precise species properties
+  species_properties:
+    geobacter:
+      density: 1100.0
+      conductivity: 0.005
+      growth_rate: 0.1
+    shewanella:
+      density: 1050.0
+      conductivity: 0.003
+      growth_rate: 0.15
+    mixed:
+      density: 1075.0
+      conductivity: 0.004
+      growth_rate: 0.12
+
+# Rapid update intervals (seconds)
+eis_update_interval: 180
+qcm_update_interval: 30
+fusion_update_interval: 30

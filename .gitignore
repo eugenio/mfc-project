@@ -1,0 +1,178 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pixi/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.code-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and runtime data
+logs/
+*.log
+*.txt
+simulation_benchmark_log.txt
+
+# Generated images and plots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.eps
+
+# Allow figures in q-learning-mfcs/figures directory
+!q-learning-mfcs/figures/
+!q-learning-mfcs/figures/*.png
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Documentation build artifacts
+_build/
+.doctrees/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Project-specific ignores
+mfc_*_results.png
+mfc_simulation_comparison.png
+*_benchmark_log.txt
+run_simulation_comparison.py
+
+# Pixi package manager
+pixi.lock
+.pixi/
+
+# Data files and reports  
+*.json
+!package.json
+!pixi.lock
+*_data_report.json
+
+# Exclude all data directories completely
+data/
+q-learning-mfcs/data/
+
+# Include compressed data archive only
+!q-learning-mfcs/simulation_data_archive.tar.gz
+
+# Node.js
+node_modules/
+package-lock.json
+
+# LaTeX build files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
+texput.log
+
+# TeX Live installation
+.pixi/envs/*/texlive*/
+
+# JAX build directory
+jax/
+# MiKTeX build directory
+miktex/
+.miktex/
+
+# CMake build files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Temporary test files
+test.md
+minimal.md
+
+# Twemoji assets
+twemoji/
+# Export files and directories
+export
+export/
+
+# Build and temporary directories
+.conda/
+protein-models-4-mfc/
+
+# PostScript temporary files
+re
+sys
+
+#.claude directory
+.claude/*
+.claude/settings.json
+
