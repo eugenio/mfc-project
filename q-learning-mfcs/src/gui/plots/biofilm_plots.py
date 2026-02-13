@@ -17,7 +17,6 @@ def create_biofilm_analysis_plots(df):
 
     Returns:
         Plotly figure with biofilm analysis or None if no biofilm data.
-
     """
     # Handle both dict and DataFrame inputs
     if isinstance(df, dict):
@@ -78,15 +77,7 @@ def create_biofilm_analysis_plots(df):
 
 
 def _add_biofilm_thickness_plot(fig, data_dict, row, col):
-    """Add biofilm thickness traces to the figure.
-
-    Args:
-        fig: Plotly figure object to add traces to.
-        data_dict: Data dictionary with biofilm thickness arrays.
-        row: Subplot row index.
-        col: Subplot column index.
-
-    """
+    """Add biofilm thickness traces to the figure."""
     if "biofilm_thicknesses" not in data_dict and "biofilm_thickness_per_cell" not in data_dict:
         return
 
@@ -134,15 +125,7 @@ def _add_biofilm_thickness_plot(fig, data_dict, row, col):
 
 
 def _add_biomass_density_plot(fig, data_dict, row, col):
-    """Add biomass density heatmap to the figure.
-
-    Args:
-        fig: Plotly figure object to add traces to.
-        data_dict: Data dictionary with biomass density arrays.
-        row: Subplot row index.
-        col: Subplot column index.
-
-    """
+    """Add biomass density heatmap to the figure."""
     if "biomass_density" not in data_dict and "biomass_density_per_cell" not in data_dict:
         return
 
@@ -188,15 +171,7 @@ def _add_biomass_density_plot(fig, data_dict, row, col):
 
 
 def _add_attachment_plot(fig, data_dict, row, col):
-    """Add attachment fraction plot to the figure.
-
-    Args:
-        fig: Plotly figure object to add traces to.
-        data_dict: Data dictionary with attachment fraction data.
-        row: Subplot row index.
-        col: Subplot column index.
-
-    """
+    """Add attachment fraction plot to the figure."""
     if "attachment_fraction" in data_dict:
         time_data = data_dict.get(
             "time_hours",

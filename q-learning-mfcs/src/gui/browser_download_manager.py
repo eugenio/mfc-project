@@ -1,4 +1,5 @@
-"""Browser Download Manager for MFC Simulation Data.
+"""
+Browser Download Manager for MFC Simulation Data
 
 Implements browser-based download functionality for simulation results,
 eliminating the need for server-side file storage and manual navigation.
@@ -56,12 +57,12 @@ class BrowserDownloadManager:
         data_dict: dict[str, Any],
         simulation_name: str = "mfc_simulation"
     ):
-        """Render the browser download interface.
+        """
+        Render the browser download interface.
         
         Args:
             data_dict: Dictionary of data to download
             simulation_name: Name for the simulation data
-
         """
         st.markdown("### 📥 Browser Downloads")
 
@@ -214,11 +215,11 @@ class BrowserDownloadManager:
         format: str,
         include_metadata: bool
     ) -> tuple[bytes | None, str, str]:
-        """Prepare data for download in specified format.
+        """
+        Prepare data for download in specified format.
         
         Returns:
             Tuple of (file_data, mime_type, extension)
-
         """
         if format not in self.format_handlers:
             return None, '', ''
