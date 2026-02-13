@@ -1,0 +1,156 @@
+# Conservative Control Configuration
+# Stable operation with conservative PID tuning and flow rates
+# Suitable for long-term stable MFC operation
+
+metadata:
+  version: "2.0.0"
+  description: "Conservative control settings for stable operation"
+  environment: "production"
+  created_at: "2025-07-25T08:52:53+02:00"
+
+# Biological Configuration
+biological:
+  species_configs:
+    geobacter:
+      max_growth_rate: 0.08  # Conservative growth rate (1/h)
+      electron_transport_efficiency: 0.80  # Slightly reduced efficiency
+      cytochrome_content: 0.08  # Lower cytochrome content
+      metabolite_concentrations:
+        acetate: 15.0  # mmol/L
+        lactate: 8.0
+        pyruvate: 5.0
+
+    shewanella:
+      max_growth_rate: 0.12  # Conservative growth rate
+      electron_transport_efficiency: 0.75
+      cytochrome_content: 0.06
+      metabolite_concentrations:
+        acetate: 12.0
+        lactate: 10.0
+        glucose: 8.0
+
+  substrate_configs:
+    acetate:
+      molecular_weight: 82.03
+      chemical_formula: "C2H4O2"
+      species_kinetics:
+        geobacter:
+          vmax: 8.0  # Conservative Vmax (mmol/gDW/h)
+          km: 1.2    # Higher Km for stability (mmol/L)
+          ki: 80.0   # Inhibition constant
+        shewanella:
+          vmax: 6.5
+          km: 1.5
+          ki: 75.0
+
+# Control System Configuration
+control:
+  flow_control:
+    min_flow_rate: 8.0  # Higher minimum for stability (mL/h)
+    max_flow_rate: 35.0  # Lower maximum to prevent disturbances
+    nominal_flow_rate: 15.0
+    max_flow_rate_change: 3.0  # Conservative flow rate changes
+    flow_rate_tolerance: 0.8
+    pump_efficiency: 0.95
+    pump_response_time: 3.0  # Slower response for stability
+
+    flow_pid:
+      kp: 1.2  # Conservative proportional gain
+      ki: 0.05  # Low integral gain
+      kd: 0.08  # Low derivative gain
+      output_min: 0.0
+      output_max: 100.0
+      enable_anti_windup: true
+      derivative_on_measurement: true
+
+  substrate_control:
+    target_outlet_concentration: 12.0
+    target_reservoir_concentration: 18.0  # Lower target for stability
+    min_addition_rate: 0.0
+    max_addition_rate: 25.0  # Conservative maximum addition rate
+    nominal_addition_rate: 8.0
+
+    outlet_pid:
+      kp: 1.5  # Conservative tuning
+      ki: 0.04
+      kd: 0.15
+      enable_anti_windup: true
+
+    reservoir_pid:
+      kp: 0.8
+      ki: 0.03
+      kd: 0.1
+
+    starvation_threshold_warning: 6.0  # Higher warning threshold
+    starvation_threshold_critical: 3.0  # Higher critical threshold
+    excess_threshold: 22.0  # Lower excess threshold
+    starvation_boost_factor: 1.5  # Conservative boost
+    critical_boost_factor: 3.0
+
+  recirculation:
+    reservoir_volume: 1.0
+    initial_substrate_concentration: 18.0
+    mixing_time_constant: 0.12  # Slower mixing
+    pump_efficiency: 0.95
+    min_recirculation_rate: 12.0
+    max_recirculation_rate: 80.0  # Lower maximum
+
+  advanced_control:
+    learning_rate: 0.05  # Conservative learning rate
+    discount_factor: 0.94
+    epsilon: 0.15  # Lower exploration
+    epsilon_decay: 0.998
+    epsilon_min: 0.05
+
+    power_bins: 6  # Coarser discretization for stability
+    biofilm_deviation_bins: 5
+    substrate_utilization_bins: 6
+
+    flow_rate_adjustments: [-8.0, -5.0, -2.0, -1.0, 0.0, 1.0, 2.0, 5.0, 8.0]
+    substrate_actions: [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
+
+    # Conservative multi-objective weights
+    power_objective_weight: 0.3  # Lower power priority
+    biofilm_health_weight: 0.4  # Higher biofilm health priority
+    sensor_agreement_weight: 0.2
+    stability_weight: 0.1
+
+    # Conservative reward structure
+    power_reward_weight: 8.0
+    power_penalty_threshold: 60.0  # Higher threshold
+    biofilm_reward_weight: 60.0  # Higher biofilm reward
+    biofilm_optimal_thickness: 28.0  # Conservative target
+    substrate_consumption_weight: 4.0
+
+  # System-wide parameters
+  control_update_interval: 90.0  # Slower updates for stability
+  emergency_shutdown_enabled: true
+  fault_tolerance_enabled: true
+
+# Visualization Configuration
+visualization:
+  plot_style:
+    figure_width: 10.0
+    figure_height: 7.0
+    dpi: 300
+    line_width: 2.0
+    grid_enabled: true
+    grid_alpha: 0.4
+
+  color_scheme_type: "scientific"
+  output_format: "pdf"  # Vector format for publication
+
+  data_processing:
+    time_series_sampling_rate: 200  # Less frequent sampling
+    enable_smoothing: true
+    smoothing_window: 15  # More smoothing
+    enable_outlier_detection: true
+    outlier_threshold: 2.5  # More conservative outlier detection
+
+  layout:
+    n_rows: 2
+    n_cols: 2
+    horizontal_spacing: 0.25
+    vertical_spacing: 0.25
+    legend_position: "best"
+    main_title: "Conservative MFC Operation"
