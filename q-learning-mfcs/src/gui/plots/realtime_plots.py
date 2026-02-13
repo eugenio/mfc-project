@@ -22,7 +22,6 @@ def create_real_time_plots(df):
 
     Returns:
         Plotly figure with comprehensive monitoring dashboard.
-
     """
     # Create subplots - 4x3 grid to accommodate all plots
     fig = make_subplots(
@@ -365,7 +364,6 @@ def create_performance_dashboard(results) -> None:
     Args:
         results: Dictionary containing simulation results with
             'performance_metrics' key.
-
     """
     metrics = results.get("performance_metrics", {})
 

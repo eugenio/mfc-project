@@ -63,7 +63,6 @@ class SystemConfigurator:
     """System configuration management."""
 
     def __init__(self) -> None:
-        """Initialize system configurator and load settings."""
         self.settings = self._load_settings()
         self.export_config = self._load_export_config()
         self.security_settings = self._load_security_settings()
