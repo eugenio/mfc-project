@@ -19,6 +19,7 @@ def create_performance_analysis_plots(df):
 
     Returns:
         Plotly figure with performance analysis.
+
     """
     if isinstance(df, dict):
         data_dict = df
@@ -222,6 +223,7 @@ def create_parameter_correlation_matrix(df):
 
     Returns:
         Plotly figure with correlation heatmap or None if insufficient data.
+
     """
     if isinstance(df, dict):
         columns = df.keys()

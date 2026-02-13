@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""MFC Stack Optimization with Q-Learning Controller
-Q-learning agent controls flow rate to optimize power, biofilm, and substrate utilization
+"""MFC Stack Optimization with Q-Learning Controller.
+
+Q-learning agent controls flow rate to optimize power, biofilm, and substrate utilization.
 Duration: 1000 hours, timestep: 10 seconds.
 """
 
@@ -30,8 +31,21 @@ GPU_AVAILABLE = gpu_accelerator.is_gpu_available()
 
 
 class QLearningFlowController:
+    """Q-Learning controller for MFC flow rate optimization.
+
+    Uses tabular Q-learning to learn optimal flow rate policies that
+    balance power output, biofilm health, and substrate utilization.
+    """
+
     def __init__(self, config: QLearningConfig | None = None) -> None:
-        """Q-Learning controller for flow rate optimization."""
+        """Initialize the Q-Learning flow controller.
+
+        Args:
+            config: Q-learning configuration parameters. Uses defaults if None.
+
+        Raises:
+            ConfigValidationError: If the provided config fails validation.
+        """
         # Use default configuration if not provided
         if config is None:
             config = QLearningConfig()

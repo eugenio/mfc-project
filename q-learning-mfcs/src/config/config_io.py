@@ -1,4 +1,5 @@
 """Configuration I/O utilities for loading and saving configuration files.
+
 Supports YAML and JSON formats with validation.
 """
 
