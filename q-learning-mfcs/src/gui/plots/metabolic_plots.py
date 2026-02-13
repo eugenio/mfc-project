@@ -17,6 +17,7 @@ def create_metabolic_analysis_plots(df):
 
     Returns:
         Plotly figure with metabolic analysis or None if no metabolic data.
+
     """
     if isinstance(df, dict):
         columns = df.keys()
