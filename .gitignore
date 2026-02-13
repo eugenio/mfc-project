@@ -1,0 +1,208 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pixi/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.code-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and runtime data
+logs/
+*.log
+*.txt
+simulation_benchmark_log.txt
+
+# Generated images and plots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.eps
+
+# Allow figures in q-learning-mfcs/figures directory
+!q-learning-mfcs/figures/
+!q-learning-mfcs/figures/*.png
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Documentation build artifacts
+_build/
+.doctrees/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Project-specific ignores
+mfc_*_results.png
+mfc_simulation_comparison.png
+*_benchmark_log.txt
+run_simulation_comparison.py
+
+# Pixi package manager
+pixi.lock
+.pixi/
+
+# Data files and reports  
+*.json
+!package.json
+!pixi.lock
+*_data_report.json
+
+# Exclude all data directories completely
+data/
+q-learning-mfcs/data/
+
+# Include compressed data archive only
+!q-learning-mfcs/simulation_data_archive.tar.gz
+
+# Node.js
+node_modules/
+package-lock.json
+
+# LaTeX build files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
+texput.log
+
+# JAX build directory
+jax/
+
+# Export files and directories
+export
+export/
+
+#.claude directory
+.claude/*
+.claude/settings.json
+
+protein-models-4-mfc/25d5625117867c5a58670e1bb0c9bc0d7e07e5196e830eab1adfa2e3fe5c01c6
+protein-models-4-mfc/25d5625117867c5a58670e1bb0c9bc0d7e07e5196e830eab1adfa2e3fe5c01c6.aria2
+.conda/packages/noarch/.cache/cache.db
+protein-models-4-mfc/alphafold_params_2022-12-06.tar
+protein-models-4-mfc/downstream_datasets.zip
+protein-models-4-mfc/downstream_datasets.zip.aria2
+protein-models-4-mfc/proteindt_model.bin
+.conda/packages/noarch/index.html
+.conda/packages/index.html
+.conda/packages/linux-64/index.html
+.conda/packages/linux-64/.cache/cache.db
+q-learning-mfcs/ssl_certificates/certs/mfc-monitoring.crt
+q-learning-mfcs/ssl_certificates/private/mfc-monitoring.key
+q-learning-mfcs/examples/exports
+q-learning-mfcs/examples/simulation_outputs
+q-learning-mfcs/simulation_outputs
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary debug/test files
+check_*.py
+debug_*.py
+test_*.py
+*test*.py
+!conftest.py
+!scripts/validate_test_dependencies.py
+suppress_*.py
+verify_*.py
+*_bug_report.md
+*_backup.py
+
+# Phase integration files
+*phase*_*.json
+complete_phase*.py
+test_phase*.py
+
+# External project directories
+claude-code-hooks-multi-agent-observability/
+protein-models-4-mfc/ProteinDT/
+KEGG-MCP-Server/
+
+# Worktrees
+worktrees/
+# Ralph automation tool
+scripts/ralph/
+
+# Serena MCP config
+.serena/
+
+# Temporary task/PRD files
+tasks/prd-*.md
+tasks/user-sitepackages-audit-*.md
