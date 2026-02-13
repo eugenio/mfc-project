@@ -43,21 +43,7 @@ def validate_range(
     message_or_inclusive_min: str | bool = True,
     inclusive_max: bool = True,
 ) -> None:
-    """Validate that a value is within the specified range.
-
-    Args:
-        value: The numeric value to validate.
-        min_val: Minimum bound of the range.
-        max_val: Maximum bound of the range.
-        parameter: Name of the parameter (used in error messages).
-        message_or_inclusive_min: Either a custom error message string,
-            or a boolean indicating whether min_val is inclusive.
-        inclusive_max: Whether max_val is inclusive.
-
-    Raises:
-        ConfigValidationError: If value is outside the specified range.
-
-    """
+    """Validate that a value is within the specified range."""
     # Handle both old signature (with booleans) and new signature (with custom message)
     if isinstance(message_or_inclusive_min, str):
         # New signature: custom message provided
@@ -94,18 +80,7 @@ def validate_range(
 
 
 def validate_positive(value: float, parameter: str, allow_zero: bool = False) -> None:
-    """Validate that a value is positive (optionally allowing zero).
-
-    Args:
-        value: The numeric value to validate.
-        parameter: Name of the parameter (used in error messages).
-        allow_zero: If True, zero is accepted as valid.
-
-    Raises:
-        ConfigValidationError: If value is not positive (or non-negative
-            when allow_zero is True).
-
-    """
+    """Validate that a value is positive (optionally allowing zero)."""
     if allow_zero:
         if value < 0:
             raise ConfigValidationError(parameter, value, "must be non-negative")
@@ -114,16 +89,7 @@ def validate_positive(value: float, parameter: str, allow_zero: bool = False) ->
 
 
 def validate_probability(value: float, parameter: str) -> None:
-    """Validate that a value is a valid probability [0, 1].
-
-    Args:
-        value: The numeric value to validate.
-        parameter: Name of the parameter (used in error messages).
-
-    Raises:
-        ConfigValidationError: If value is outside [0, 1].
-
-    """
+    """Validate that a value is a valid probability [0, 1]."""
     validate_range(value, 0.0, 1.0, parameter)
 
 
@@ -377,18 +343,7 @@ def validate_sensor_config(config: SensorConfig) -> bool:
 
 
 def validate_eis_config(config: EISConfig) -> bool:
-    """Validate EIS configuration parameters.
-
-    Args:
-        config: EISConfig instance to validate.
-
-    Returns:
-        bool: True if validation passes.
-
-    Raises:
-        ConfigValidationError: If any parameter is invalid.
-
-    """
+    """Validate EIS configuration parameters."""
     # Frequency range validation
     if config.frequency_range[0] >= config.frequency_range[1]:
         msg = "frequency_range"
@@ -434,18 +389,7 @@ def validate_eis_config(config: EISConfig) -> bool:
 
 
 def validate_qcm_config(config: QCMConfig) -> bool:
-    """Validate QCM configuration parameters.
-
-    Args:
-        config: QCMConfig instance to validate.
-
-    Returns:
-        bool: True if validation passes.
-
-    Raises:
-        ConfigValidationError: If any parameter is invalid.
-
-    """
+    """Validate QCM configuration parameters."""
     # Sensitivity parameters
     validate_positive(config.sensitivity_5mhz, "sensitivity_5mhz", allow_zero=False)
     validate_positive(config.sensitivity_10mhz, "sensitivity_10mhz", allow_zero=False)
@@ -484,18 +428,7 @@ def validate_qcm_config(config: QCMConfig) -> bool:
 
 
 def validate_sensor_fusion_config(config: SensorFusionConfig) -> bool:
-    """Validate sensor fusion configuration parameters.
-
-    Args:
-        config: SensorFusionConfig instance to validate.
-
-    Returns:
-        bool: True if validation passes.
-
-    Raises:
-        ConfigValidationError: If any parameter is invalid.
-
-    """
+    """Validate sensor fusion configuration parameters."""
     # Kalman filter parameters
     validate_positive(
         config.kalman_initial_uncertainty,
