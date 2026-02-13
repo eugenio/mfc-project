@@ -29,6 +29,7 @@ class ElectrodeConfigurationUI:
     """UI component for electrode configuration."""
 
     def __init__(self) -> None:
+        """Initialize electrode configuration UI component."""
         self.initialize_session_state()
 
     def initialize_session_state(self) -> None:
