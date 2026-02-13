@@ -15,7 +15,18 @@ import streamlit as st
 
 @dataclass
 class ParameterSpec:
-    """Scientific parameter specification with validation."""
+    """Scientific parameter specification with validation.
+
+    Attributes:
+        name: Human-readable parameter name.
+        unit: Physical unit of measurement (e.g., "S/m", "kg/m3").
+        min_value: Minimum physically valid value.
+        max_value: Maximum physically valid value.
+        typical_range: Tuple of (min, max) for typical literature values.
+        literature_refs: Citation string for reference source.
+        description: Brief description of parameter meaning.
+
+    """
 
     name: str
     unit: str
@@ -30,11 +41,27 @@ class ScientificParameterWidget:
     """Scientific parameter input widget with validation."""
 
     def __init__(self, param_spec: ParameterSpec, key: str) -> None:
+        """Initialize scientific parameter widget.
+
+        Args:
+            param_spec: Parameter specification with validation rules.
+            key: Unique Streamlit widget key for state management.
+
+        """
         self.param_spec = param_spec
         self.key = key
 
     def render(self, label: str, value: float) -> float:
-        """Render parameter input with validation."""
+        """Render parameter input with validation.
+
+        Args:
+            label: Display label for the input widget.
+            value: Current/default parameter value.
+
+        Returns:
+            User-selected parameter value after validation.
+
+        """
         # Input widget
         input_value = st.number_input(
             label,
@@ -51,7 +78,12 @@ class ScientificParameterWidget:
         return input_value
 
     def _show_validation_feedback(self, value: float) -> None:
-        """Show real-time validation feedback."""
+        """Show real-time validation feedback.
+
+        Args:
+            value: Parameter value to validate against typical ranges.
+
+        """
         min_typical, max_typical = self.param_spec.typical_range
 
         if min_typical <= value <= max_typical:
@@ -75,7 +107,17 @@ def create_parameter_section(
     title: str,
     parameters: dict[str, Any],
 ) -> dict[str, float]:
-    """Create a section of scientific parameters."""
+    """Create a section of scientific parameters.
+
+    Args:
+        title: Section title for display.
+        parameters: Dict mapping parameter names to config dicts with
+            'spec', 'label', and 'default' keys.
+
+    Returns:
+        Dict mapping parameter names to user-selected values.
+
+    """
     st.subheader(title)
     values = {}
 

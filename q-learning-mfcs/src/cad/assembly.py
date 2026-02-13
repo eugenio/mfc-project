@@ -116,6 +116,18 @@ class MFCStackAssembly:
         include_hydraulics: bool = False,
         include_peripherals: bool = False,
     ) -> None:
+        """Initialize MFC stack assembly builder.
+
+        Args:
+            config: Master parametric configuration.
+            cathode_type: LIQUID for all-liquid cathodes, GAS for all-gas.
+            gas_cathode_cells: Explicit cell indices for gas cathodes (legacy).
+            include_supports: Add U-cradle support feet.
+            include_labels: Add 3D port label plates.
+            include_hydraulics: Add barb fittings and tubing.
+            include_peripherals: Add reservoir and pump head.
+
+        """
         self.config = config
         self.cathode_type = cathode_type
         self.include_supports = include_supports
@@ -133,12 +145,12 @@ class MFCStackAssembly:
 
     @classmethod
     def all_liquid(cls, config: StackCADConfig, **kwargs: Any) -> MFCStackAssembly:
-        """Factory for all-liquid cathode assembly."""
+        """Create all-liquid cathode assembly."""
         return cls(config, cathode_type=CathodeType.LIQUID, **kwargs)
 
     @classmethod
     def all_gas(cls, config: StackCADConfig, **kwargs: Any) -> MFCStackAssembly:
-        """Factory for all-gas cathode assembly."""
+        """Create all-gas cathode assembly."""
         return cls(config, cathode_type=CathodeType.GAS, **kwargs)
 
     def build(self) -> cq.Assembly:

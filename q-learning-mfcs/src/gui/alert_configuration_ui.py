@@ -34,6 +34,12 @@ class AlertConfigurationUI:
     """Streamlit UI component for alert configuration."""
 
     def __init__(self, alert_manager: AlertManager) -> None:
+        """Initialize alert configuration UI.
+
+        Args:
+            alert_manager: Alert manager instance for threshold and notification management.
+
+        """
         self.alert_manager = alert_manager
 
         # MFC parameters with metadata
