@@ -196,6 +196,7 @@ class AlertManager:
     """Manages alert rules and notifications."""
 
     def __init__(self) -> None:
+        """Initialize alert manager with default rules."""
         self.rules: list[AlertRule] = self._get_default_rules()
         self.active_alerts: list[dict[str, Any]] = []
 
@@ -301,6 +302,12 @@ class LiveMonitoringDashboard:
     """
 
     def __init__(self, n_cells: int = 5) -> None:
+        """Initialize live monitoring dashboard.
+
+        Args:
+            n_cells: Number of MFC cells in the stack.
+
+        """
         self.n_cells = n_cells
         self.data_generator = LiveDataGenerator({})
         self.alert_manager = AlertManager()

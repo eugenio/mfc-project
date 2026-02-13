@@ -40,6 +40,7 @@ class SimulationRunner:
     """
 
     def __init__(self) -> None:
+        """Initialize simulation runner with queues and buffers."""
         self.simulation = None
         self.is_running = False
         self.should_stop = False
