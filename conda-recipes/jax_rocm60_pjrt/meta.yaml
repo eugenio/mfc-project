@@ -1,0 +1,31 @@
+{% set name = "jax_rocm60_pjrt" %}
+{% set version = "0.6.0.dev20250728" %}
+
+package:
+  name: {{ name|lower|replace("_", "-") }}
+  version: {{ version }}
+
+source:
+  path: ../../conda-packages/jax_rocm60_pjrt-0.6.0.dev20250728-py3-none-manylinux2014_x86_64.whl
+
+build:
+  number: 0
+  skip: True  # [not linux64]
+  script: python -m pip install jax_rocm60_pjrt-0.6.0.dev20250728-py3-none-manylinux2014_x86_64.whl -vv --no-deps --no-build-isolation
+
+requirements:
+  host:
+    - python >=3.8
+    - pip
+  run:
+    - python >=3.8
+    - jaxlib >=0.6.0
+
+about:
+  home: https://github.com/google/jax
+  license: Apache-2.0
+  license_family: Apache
+  summary: 'JAX ROCm 6.0 PJRT runtime for AMD GPU support'
+  description: |
+    JAX PJRT runtime for ROCm 6.0 AMD GPU acceleration.
+  dev_url: https://github.com/google/jax
