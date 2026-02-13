@@ -1,0 +1,62 @@
+# GitLab CI/CD configuration for MFC Q-Learning project
+# Uses shell executor with pixi for dependency management
+
+stages:
+  - test
+  - renovate
+
+variables:
+  # Ensure tests run in isolated environment without user site-packages
+  PYTHONNOUSERSITE: '1'
+
+# Main test job using pixi (shell executor)
+test:
+  stage: test
+  script:
+    - echo "Running tests with pixi on $(hostname)"
+    - echo "PYTHONNOUSERSITE=$PYTHONNOUSERSITE"
+    # Check if pixi is available, install if needed
+    - which pixi || curl -fsSL https://pixi.sh/install.sh | bash
+    - export PATH="$HOME/.pixi/bin:$PATH"
+    # Install dependencies
+    - pixi install -e default
+    # Run linting
+    - pixi run -e default ruff check q-learning-mfcs/src --output-format=gitlab > ruff-report.json || true
+    # Run tests
+    - pixi run -e default pytest q-learning-mfcs/tests -v --tb=short --junitxml=report.xml
+  artifacts:
+    when: always
+    paths:
+      - report.xml
+      - ruff-report.json
+    reports:
+      junit: report.xml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+# Renovate - Automated dependency updates
+# Requires: RENOVATE_TOKEN variable set in CI/CD settings
+# Schedule: Create a pipeline schedule in Settings > CI/CD > Schedules
+renovate:
+  stage: renovate
+  variables:
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: ${CI_API_V4_URL}
+    RENOVATE_TOKEN: ${RENOVATE_TOKEN}
+    LOG_LEVEL: info
+  script:
+    - |
+      if ! which node > /dev/null 2>&1; then
+        curl -fsSL https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz | tar -xJ -C /tmp
+        export PATH="/tmp/node-v22.13.1-linux-x64/bin:$PATH"
+      fi
+    - export PATH="/tmp/node-v22.13.1-linux-x64/bin:$PATH"
+    - node --version
+    - npx --yes renovate --platform=gitlab --endpoint="${CI_API_V4_URL}" --token="${RENOVATE_TOKEN}" "${CI_PROJECT_PATH}"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - if: $RENOVATE_DRY_RUN == "true"
+      when: manual
