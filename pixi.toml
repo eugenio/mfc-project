@@ -44,6 +44,15 @@ if proc: proc.terminate()
 sys.exit(rc)
 " """
 
+# Smoke tests (fast health checks, < 5s each)
+test-smoke = "cd q-learning-mfcs/tests && python -m pytest smoke/ -v -m smoke"
+
+# End-to-end tests (full workflow tests)
+test-e2e = "cd q-learning-mfcs/tests && python -m pytest e2e/ -v -m e2e"
+
+# Smoke + E2E combined
+test-smoke-e2e = "cd q-learning-mfcs/tests && python -m pytest smoke/ e2e/ -v"
+
 # Test with coverage
 test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
 
