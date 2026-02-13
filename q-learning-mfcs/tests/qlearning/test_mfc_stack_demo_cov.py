@@ -11,6 +11,28 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 import matplotlib
 matplotlib.use("Agg")
 
+
+def _make_mock_axes(rows=4, cols=2):
+    """Create a numpy array of mock axes that mimic matplotlib Axes objects."""
+    axes = np.empty((rows, cols), dtype=object)
+    for r in range(rows):
+        for c in range(cols):
+            ax = MagicMock()
+            ax.get_ylim.return_value = (0.0, 1.0)
+            axes[r, c] = ax
+    return axes
+
+
+def _make_subplots_side_effect():
+    """Return a side_effect function for plt.subplots that returns (fig, axes)."""
+    def _side_effect(*args, **kwargs):
+        rows = args[0] if len(args) >= 1 else kwargs.get("nrows", 1)
+        cols = args[1] if len(args) >= 2 else kwargs.get("ncols", 1)
+        fig = MagicMock()
+        axes = _make_mock_axes(rows, cols)
+        return fig, axes
+    return _side_effect
+
 # Mock the mfc_stack_simulation module
 _mock_cell = MagicMock()
 _mock_cell.state = [1.0, 0.05, 1e-4, 0.1, 0.25, 1e-7, 0.05, 0.01, -0.01]
@@ -84,7 +106,8 @@ from mfc_stack_demo import (
 
 class TestRunComprehensiveDemo:
     @patch("matplotlib.pyplot.savefig")
-    def test_demo_runs(self, mock_savefig):
+    @patch("mfc_stack_demo.plt.subplots", side_effect=_make_subplots_side_effect())
+    def test_demo_runs(self, mock_subplots, mock_savefig):
         stack, controller, phase_results = run_comprehensive_demo()
         assert len(phase_results) == 5
         assert phase_results[0]["name"] == "Initialization"
@@ -92,11 +115,10 @@ class TestRunComprehensiveDemo:
         assert phase_results[2]["name"] == "Disturbance Recovery"
         assert phase_results[3]["name"] == "pH Management"
         assert phase_results[4]["name"] == "Long-term Operation"
-        import matplotlib.pyplot as plt
-        plt.close("all")
 
     @patch("matplotlib.pyplot.savefig")
-    def test_demo_phase_data_structure(self, mock_savefig):
+    @patch("mfc_stack_demo.plt.subplots", side_effect=_make_subplots_side_effect())
+    def test_demo_phase_data_structure(self, mock_subplots, mock_savefig):
         _, _, phase_results = run_comprehensive_demo()
         for phase in phase_results:
             assert "name" in phase
@@ -107,13 +129,12 @@ class TestRunComprehensiveDemo:
             assert "reversals" in phase
             assert "rewards" in phase
             assert len(phase["powers"]) > 0
-        import matplotlib.pyplot as plt
-        plt.close("all")
 
 
 class TestPlotComprehensiveResults:
     @patch("matplotlib.pyplot.savefig")
-    def test_plot_results(self, mock_savefig):
+    @patch("mfc_stack_demo.plt.subplots", side_effect=_make_subplots_side_effect())
+    def test_plot_results(self, mock_subplots, mock_savefig):
         stack = _make_mock_stack()
         ctrl = _make_mock_controller()
         phase_results = [
@@ -124,11 +145,10 @@ class TestPlotComprehensiveResults:
         ]
         plot_comprehensive_results(stack, ctrl, phase_results)
         mock_savefig.assert_called_once()
-        import matplotlib.pyplot as plt
-        plt.close("all")
 
     @patch("matplotlib.pyplot.savefig")
-    def test_plot_results_short_rewards(self, mock_savefig):
+    @patch("mfc_stack_demo.plt.subplots", side_effect=_make_subplots_side_effect())
+    def test_plot_results_short_rewards(self, mock_subplots, mock_savefig):
         stack = _make_mock_stack()
         ctrl = _make_mock_controller()
         ctrl.reward_history = [1.0, 2.0, 3.0]  # Less than window_size=20
@@ -137,11 +157,10 @@ class TestPlotComprehensiveResults:
              "voltages": [3.0]*200, "reversals": [0]*200, "rewards": [1.0]*200},
         ]
         plot_comprehensive_results(stack, ctrl, phase_results)
-        import matplotlib.pyplot as plt
-        plt.close("all")
 
     @patch("matplotlib.pyplot.savefig")
-    def test_plot_results_with_reversals(self, mock_savefig):
+    @patch("mfc_stack_demo.plt.subplots", side_effect=_make_subplots_side_effect())
+    def test_plot_results_with_reversals(self, mock_subplots, mock_savefig):
         stack = _make_mock_stack()
         # Add some reversals
         for i in range(5):
@@ -153,5 +172,3 @@ class TestPlotComprehensiveResults:
              "voltages": [3.0]*500, "reversals": [0]*500, "rewards": [1.0]*500},
         ]
         plot_comprehensive_results(stack, ctrl, phase_results)
-        import matplotlib.pyplot as plt
-        plt.close("all")
