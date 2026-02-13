@@ -775,7 +775,7 @@ class ParameterInputComponent:
 
 
 def render_parameter_input_interface():
-    """Render the parameter input interface."""
+    """Main function to render the parameter input interface."""
     component = ParameterInputComponent()
     return component.render_parameter_input_form()
 

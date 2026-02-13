@@ -58,7 +58,6 @@ class GSMIntegrator:
     """Genome-scale metabolic model integrator for MFC optimization."""
 
     def __init__(self) -> None:
-        """Initialize GSM integrator with model database."""
         self.available_models = self._initialize_model_database()
         self.current_model = None
         self.flux_results = None
