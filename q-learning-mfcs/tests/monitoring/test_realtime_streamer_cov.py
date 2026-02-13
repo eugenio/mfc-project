@@ -62,11 +62,16 @@ _mock_ssl_config_mod.initialize_ssl_infrastructure = MagicMock(
 )
 _mock_ssl_config_mod.test_ssl_connection = MagicMock(return_value=True)
 
-sys.modules.setdefault("monitoring.ssl_config", _mock_ssl_config_mod)
-# Use a real ModuleType with __path__ so Python treats it as a package.
+# Force-set mocked monitoring modules even if the real package was already
+# imported by a preceding test file (e.g. test_dashboard_api_deep_cov).
+# Remove all monitoring.* sub-modules first to prevent stale references.
+for _k in list(sys.modules):
+    if _k == "monitoring" or _k.startswith("monitoring."):
+        del sys.modules[_k]
+sys.modules["monitoring.ssl_config"] = _mock_ssl_config_mod
 _monitoring_pkg = types.ModuleType("monitoring")
 _monitoring_pkg.__path__ = [os.path.join(os.path.dirname(__file__), "..", "..", "src", "monitoring")]
-sys.modules.setdefault("monitoring", _monitoring_pkg)
+sys.modules["monitoring"] = _monitoring_pkg
 
 # ---- Load the module ----
 
