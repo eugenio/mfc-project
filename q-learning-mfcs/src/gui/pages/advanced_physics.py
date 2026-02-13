@@ -36,7 +36,6 @@ class AdvancedPhysicsSimulator:
     """Advanced physics simulation engine."""
 
     def __init__(self) -> None:
-        """Initialize advanced physics simulator."""
         self.simulation_active = False
         self.progress = 0.0
 
