@@ -17,6 +17,7 @@ def create_sensing_analysis_plots(df):
 
     Returns:
         Plotly figure with sensing analysis or None if no sensing data.
+
     """
     if isinstance(df, dict):
         columns = df.keys()

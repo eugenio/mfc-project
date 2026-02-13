@@ -47,6 +47,7 @@ class MLOptimizer:
     """Machine Learning Optimization Engine."""
 
     def __init__(self) -> None:
+        """Initialize ML optimizer with empty history."""
         self.optimization_active = False
         self.current_iteration = 0
         self.history = []
