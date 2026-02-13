@@ -15,7 +15,11 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-# Mock matplotlib before import
+# Mock matplotlib + deps before importing the module under test.
+# Save originals and restore IMMEDIATELY after import so that other test files
+# collected in the same session are not polluted.
+_orig_mpl = sys.modules.get("matplotlib")
+_orig_plt = sys.modules.get("matplotlib.pyplot")
 mock_plt = MagicMock()
 sys.modules["matplotlib.pyplot"] = mock_plt
 sys.modules["matplotlib"] = MagicMock()
@@ -25,7 +29,6 @@ mock_path_config = MagicMock()
 mock_path_config.get_figure_path = MagicMock(return_value="/tmp/fig.png")
 mock_path_config.get_simulation_data_path = MagicMock(return_value="/tmp/data.json")
 
-# Persistent mocks (not using context manager)
 if "mfc_stack_simulation" not in sys.modules:
     sys.modules["mfc_stack_simulation"] = mock_mfc_stack
 if "path_config" not in sys.modules:
@@ -33,11 +36,21 @@ if "path_config" not in sys.modules:
 if "odes" not in sys.modules:
     sys.modules["odes"] = MagicMock()
 
-import mfc_100h_simulation as sim_mod
-from mfc_100h_simulation import (
+import mfc_100h_simulation as sim_mod  # noqa: E402
+from mfc_100h_simulation import (  # noqa: E402
     save_simulation_results,
     generate_100h_plots,
 )
+
+# Restore originals immediately — mfc_100h_simulation already cached mock refs
+if _orig_mpl is not None:
+    sys.modules["matplotlib"] = _orig_mpl
+else:
+    sys.modules.pop("matplotlib", None)
+if _orig_plt is not None:
+    sys.modules["matplotlib.pyplot"] = _orig_plt
+else:
+    sys.modules.pop("matplotlib.pyplot", None)
 
 
 class FakeCell:
