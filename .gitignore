@@ -75,6 +75,7 @@ simulation_benchmark_log.txt
 *.tmp
 *.temp
 *.bak
+*.bak2
 *.backup
 *.orig
 
@@ -213,6 +214,15 @@ q-learning-mfcs/q_learning_models/
 test-results.xml
 q-learning-mfcs/tests/test-results.xml
 test_report.md
+
+# Coverage artifacts
+coverage.xml
+*.coverage.*
+
+# Task manager lock/temp files
+tasks/.last-branch
+tasks/.prd.lock
+tasks/locks/
 
 # Temporary directories
 tmp/
