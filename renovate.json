@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "schedule": ["before 9am on monday"],
+  "timezone": "Europe/Rome",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  },
+  "packageRules": [
+    {
+      "description": "Group all conda dependencies",
+      "matchManagers": ["pixi"],
+      "groupName": "conda dependencies",
+      "groupSlug": "conda-deps"
+    },
+    {
+      "description": "Group all PyPI dependencies",
+      "matchManagers": ["pip_requirements", "pep621"],
+      "groupName": "pypi dependencies",
+      "groupSlug": "pypi-deps"
+    },
+    {
+      "description": "Auto-merge patch updates for dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Pin JAX versions - manual update only",
+      "matchPackagePatterns": ["^jax", "^jaxlib"],
+      "enabled": false
+    },
+    {
+      "description": "Group linting tools",
+      "matchPackageNames": ["ruff", "mypy", "black", "bandit"],
+      "groupName": "linting tools"
+    },
+    {
+      "description": "Group testing tools",
+      "matchPackageNames": ["pytest", "pytest-cov", "pytest-benchmark"],
+      "groupName": "testing tools"
+    }
+  ],
+  "ignoreDeps": [
+    "jax",
+    "jaxlib",
+    "jax-rocm60-plugin",
+    "jax-rocm60-pjrt"
+  ],
+  "enabledManagers": [
+    "pixi",
+    "pip_requirements",
+    "pep621",
+    "github-actions"
+  ]
+}
