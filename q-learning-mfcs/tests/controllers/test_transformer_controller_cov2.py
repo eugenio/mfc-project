@@ -174,6 +174,13 @@ mock_torch.nn.utils.clip_grad_norm_ = MagicMock(
 mock_F.softmax = MagicMock(return_value=MagicMock())
 mock_torch.distributions = MagicMock()
 
+_orig_torch = sys.modules.get("torch")
+_orig_torch_nn = sys.modules.get("torch.nn")
+_orig_torch_optim = sys.modules.get("torch.optim")
+_orig_torch_nn_functional = sys.modules.get("torch.nn.functional")
+_orig_torch_utils = sys.modules.get("torch.utils")
+_orig_torch_utils_data = sys.modules.get("torch.utils.data")
+
 sys.modules["torch"] = mock_torch
 sys.modules["torch.nn"] = mock_nn
 sys.modules["torch.optim"] = mock_optim
@@ -193,6 +200,20 @@ from transformer_controller import (
     AttentionType, TransformerConfig, TransformerMFCController,
     TransformerControllerManager, create_transformer_controller,
 )
+
+# Restore original torch modules to prevent cross-contamination
+for _name, _orig in [
+    ("torch", _orig_torch),
+    ("torch.nn", _orig_torch_nn),
+    ("torch.optim", _orig_torch_optim),
+    ("torch.nn.functional", _orig_torch_nn_functional),
+    ("torch.utils", _orig_torch_utils),
+    ("torch.utils.data", _orig_torch_utils_data),
+]:
+    if _orig is not None:
+        sys.modules[_name] = _orig
+    else:
+        sys.modules.pop(_name, None)
 
 
 class TestTransformerMFCController:

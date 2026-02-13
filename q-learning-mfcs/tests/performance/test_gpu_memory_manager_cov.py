@@ -13,6 +13,9 @@ mock_torch.backends.mps.is_available.return_value = False
 cpu_device = MagicMock()
 cpu_device.type = "cpu"
 mock_torch.device.return_value = cpu_device
+
+_orig_torch = sys.modules.get("torch")
+
 sys.modules["torch"] = mock_torch
 
 import pytest
@@ -27,6 +30,12 @@ from performance.gpu_memory_manager import (
     ManagedGPUContext,
     demonstrate_memory_management,
 )
+
+# Restore original torch modules to prevent cross-contamination
+if _orig_torch is not None:
+    sys.modules["torch"] = _orig_torch
+else:
+    sys.modules.pop("torch", None)
 
 
 def _make_stats(gpu_used=0.0, gpu_total=0.0, gpu_util=0.0, sys_used=8.0, sys_total=16.0):

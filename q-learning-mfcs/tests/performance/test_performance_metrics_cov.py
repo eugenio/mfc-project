@@ -10,6 +10,9 @@ mock_torch = MagicMock()
 mock_torch.cuda.is_available.return_value = False
 mock_torch.cuda.device_count.return_value = 0
 mock_torch.device.return_value = MagicMock(type="cpu")
+
+_orig_torch = sys.modules.get("torch")
+
 sys.modules["torch"] = mock_torch
 
 import pytest
@@ -30,6 +33,12 @@ from performance.performance_metrics import (
     stop_metrics_collection,
     record_metric,
 )
+
+# Restore original torch modules to prevent cross-contamination
+if _orig_torch is not None:
+    sys.modules["torch"] = _orig_torch
+else:
+    sys.modules.pop("torch", None)
 
 
 class TestMetricType:

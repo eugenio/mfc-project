@@ -11,6 +11,9 @@ mock_torch.cuda.is_available.return_value = False
 mock_torch.cuda.device_count.return_value = 0
 mock_torch.device.return_value = MagicMock(type="cpu")
 mock_torch.__version__ = "2.0.0"
+
+_orig_torch = sys.modules.get("torch")
+
 sys.modules["torch"] = mock_torch
 
 import pytest
@@ -26,6 +29,12 @@ from performance.benchmarking import (
     quick_performance_test,
     compare_implementations,
 )
+
+# Restore original torch modules to prevent cross-contamination
+if _orig_torch is not None:
+    sys.modules["torch"] = _orig_torch
+else:
+    sys.modules.pop("torch", None)
 
 
 class TestBenchmarkResult:
