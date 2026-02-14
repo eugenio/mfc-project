@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
+@pytest.mark.coverage_extra
 class TestNotificationsImports:
     def test_base_imports(self):
         from notifications.base import NotificationConfig, NotificationHandler, NotificationLevel
@@ -26,6 +27,7 @@ class TestNotificationsImports:
         assert "NotificationConfig" in __all__
 
 
+@pytest.mark.coverage_extra
 class TestConvenienceFunctions:
     def test_notify_function(self):
         try:
@@ -84,6 +86,7 @@ class TestConvenienceFunctions:
             pytest.skip("Manager not available")
 
 
+@pytest.mark.coverage_extra
 class TestImportFallbacks:
     def test_audio_import_fallback(self):
         with patch.dict(sys.modules, {"notifications.audio_manager": None}):

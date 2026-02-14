@@ -22,6 +22,7 @@ def manager(tmp_path):
     yield mgr
 
 
+@pytest.mark.coverage_extra
 class TestHealthCheckerLoop:
     def test_health_check_loop_checks_running(self, manager):
         cfg = ProcessConfig(name="hc_proc", command="echo hi")
@@ -53,6 +54,7 @@ class TestHealthCheckerLoop:
         assert cc[0] >= 1
 
 
+@pytest.mark.coverage_extra
 class TestSignalHandler:
     def test_signal_handler_calls_shutdown(self, manager):
         handler = signal.getsignal(signal.SIGTERM)
@@ -60,6 +62,7 @@ class TestSignalHandler:
             handler(signal.SIGTERM, None)
 
 
+@pytest.mark.coverage_extra
 class TestStartProcessLogFile:
     def test_start_with_log_file(self, manager, tmp_path):
         lf = str(tmp_path / "proc.log")
@@ -70,6 +73,7 @@ class TestStartProcessLogFile:
             assert manager.start_process("lp") is True
 
 
+@pytest.mark.coverage_extra
 class TestMonitorProcessException:
     def test_monitor_process_exception(self, manager):
         cfg = ProcessConfig(name="me", command="echo hi")
@@ -81,6 +85,7 @@ class TestMonitorProcessException:
         assert info.last_error == "wait failed"
 
 
+@pytest.mark.coverage_extra
 class TestStopProcessPsutil:
     def test_stop_process_force_kill(self, manager):
         import psutil
@@ -110,6 +115,7 @@ class TestStopProcessPsutil:
                     assert manager._stop_process_internal(info, 0.2) is True
 
 
+@pytest.mark.coverage_extra
 class TestMainCLI:
     def _run_main(self, argv, extra_patches=None):
         mock_mgr = MagicMock(spec=ProcessManager)

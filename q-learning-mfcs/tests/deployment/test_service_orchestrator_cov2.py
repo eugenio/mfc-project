@@ -38,6 +38,7 @@ def orchestrator(tmp_path):
     orch.shutdown_all()
 
 
+@pytest.mark.coverage_extra
 class TestSignalHandler:
     def test_signal_handler_calls_shutdown(self, orchestrator):
         handler = signal.getsignal(signal.SIGTERM)
@@ -46,6 +47,7 @@ class TestSignalHandler:
             m.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestStartServiceException:
     def test_start_service_internal_exception(self, orchestrator):
         cfg = ServiceConfig(name="exc_svc", startup_command=["echo", "hi"])
@@ -60,6 +62,7 @@ class TestStartServiceException:
         fail_cb.assert_called_once_with(info)
 
 
+@pytest.mark.coverage_extra
 class TestDependencyHealthCheckFail:
     def test_required_dep_health_check_fails(self, orchestrator):
         dep_cfg = ServiceConfig(name="dep_svc", startup_command=["echo", "dep"])
@@ -73,6 +76,7 @@ class TestDependencyHealthCheckFail:
             assert result is False
 
 
+@pytest.mark.coverage_extra
 class TestExecuteStartupNoConfig:
     def test_no_startup_command_no_process_config(self, orchestrator):
         cfg = ServiceConfig.__new__(ServiceConfig)
@@ -82,6 +86,7 @@ class TestExecuteStartupNoConfig:
         assert orchestrator._execute_service_startup(info) is False
 
 
+@pytest.mark.coverage_extra
 class TestExecuteShutdownCommand:
     def test_shutdown_via_process_manager(self, orchestrator):
         pcfg = ServiceConfig(name="sd2", startup_command=["echo","s"],
@@ -104,6 +109,7 @@ class TestExecuteShutdownCommand:
         assert orchestrator._execute_service_shutdown(info, 5.0) is True
 
 
+@pytest.mark.coverage_extra
 class TestShutdownPidKill:
     def test_shutdown_via_pid_kill(self, orchestrator):
         cfg = ServiceConfig(name="pk", startup_command=["echo","s"], shutdown_command=None)
@@ -118,6 +124,7 @@ class TestShutdownPidKill:
                 assert orchestrator._execute_service_shutdown(info, 0.5) is True
 
 
+@pytest.mark.coverage_extra
 class TestRestartStopFails:
     def test_restart_service_stop_fails(self, orchestrator):
         cfg = ServiceConfig(name="rs", startup_command=["echo","hi"])
@@ -127,6 +134,7 @@ class TestRestartStopFails:
             assert orchestrator.restart_service("rs") is False
 
 
+@pytest.mark.coverage_extra
 class TestMonitoringLoopException:
     def test_monitoring_loop_exception_branch(self, orchestrator):
         orchestrator._is_monitoring = True
@@ -141,6 +149,7 @@ class TestMonitoringLoopException:
         assert cc[0] >= 1
 
 
+@pytest.mark.coverage_extra
 class TestHealthCheckErrorDecrement:
     def test_error_count_decrement(self, orchestrator):
         cfg = ServiceConfig(name="hd", startup_command=["echo","hi"])
@@ -151,6 +160,7 @@ class TestHealthCheckErrorDecrement:
         assert info.error_count == 2
 
 
+@pytest.mark.coverage_extra
 class TestHealthCheckCommandException:
     def test_health_check_command_exception(self, orchestrator):
         cfg = ServiceConfig(name="hce", startup_command=["echo","hi"], health_check_command=["false"])
@@ -159,6 +169,7 @@ class TestHealthCheckCommandException:
             assert orchestrator._perform_health_check(info) is False
 
 
+@pytest.mark.coverage_extra
 class TestMainCLI:
     def _run_main(self, argv, tmp_path, extra_patches=None):
         mock_lm = MagicMock(spec=LogManager)

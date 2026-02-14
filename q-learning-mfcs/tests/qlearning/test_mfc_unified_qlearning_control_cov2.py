@@ -19,6 +19,7 @@ def controller():
     return UnifiedQLearningController(target_outlet_conc=12.0)
 
 
+@pytest.mark.coverage_extra
 class TestSelectAction:
     def test_exploration_poor_performance(self, controller):
         controller.performance_history = [-100.0] * 15
@@ -44,6 +45,7 @@ class TestSelectAction:
         assert 0 <= a < len(controller.actions)
 
 
+@pytest.mark.coverage_extra
 class TestCalculateUnifiedReward:
     def test_combined_penalty(self, controller):
         r = controller.calculate_unified_reward(
@@ -73,6 +75,7 @@ class TestCalculateUnifiedReward:
         assert isinstance(r, float)
 
 
+@pytest.mark.coverage_extra
 class TestUpdateQTable:
     def test_adaptive_decay_good(self, controller):
         controller.performance_history = [100.0] * 15
@@ -89,6 +92,7 @@ class TestUpdateQTable:
         assert controller.epsilon < 0.5
 
 
+@pytest.mark.coverage_extra
 class TestGetControlStatistics:
     def test_empty_history(self, controller):
         stats = controller.get_control_statistics()
@@ -100,6 +104,7 @@ class TestGetControlStatistics:
         assert stats["reward_trend"] != 0 or True
 
 
+@pytest.mark.coverage_extra
 class TestAddSubplotLabels:
     def test_lowercase_labels(self):
         import matplotlib.pyplot as plt
@@ -114,6 +119,7 @@ class TestAddSubplotLabels:
         plt.close(fig)
 
 
+@pytest.mark.coverage_extra
 class TestMFCSimulationGPUConversion:
     def test_run_simulation_gpu_false(self):
         sim = MFCUnifiedQLearningSimulation(use_gpu=False, target_outlet_conc=12.0)
@@ -123,6 +129,7 @@ class TestMFCSimulationGPUConversion:
             sim.simulate_step(step)
 
 
+@pytest.mark.coverage_extra
 class TestSimulateStepControlInterval:
     def test_moving_average_window(self):
         sim = MFCUnifiedQLearningSimulation(use_gpu=False, target_outlet_conc=12.0)

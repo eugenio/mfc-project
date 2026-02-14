@@ -12,6 +12,7 @@ from config.statistical_analysis import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestDistributionAnalyzer:
     @pytest.fixture
     def da(self):
@@ -56,6 +57,7 @@ class TestDistributionAnalyzer:
         assert "best_distribution" in result
 
 
+@pytest.mark.coverage_extra
 class TestTimeSeriesAnalyzer:
     @pytest.fixture
     def tsa(self):
@@ -111,6 +113,7 @@ class TestTimeSeriesAnalyzer:
         assert result["trend"] == "Decreasing"
 
 
+@pytest.mark.coverage_extra
 class TestMultipleComparisons:
     @pytest.fixture
     def analyzer(self):

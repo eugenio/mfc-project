@@ -61,6 +61,7 @@ def _simple_obj_func(params):
     return {"obj": -np.sum((params - 0.5) ** 2)}
 
 
+@pytest.mark.coverage_extra
 class TestOptimizationResult:
     """Cover OptimizationResult methods."""
 
@@ -76,6 +77,7 @@ class TestOptimizationResult:
         assert r.get_optimization_time() >= 0.0
 
 
+@pytest.mark.coverage_extra
 class TestParameterOptimizerBase:
     """Cover _evaluate_objectives, _check_constraints, _calculate_overall_score."""
 
@@ -163,6 +165,7 @@ class TestParameterOptimizerBase:
         assert score == -5.0
 
 
+@pytest.mark.coverage_extra
 class TestGeneticOptimizer:
     """Cover GeneticOptimizer methods."""
 
@@ -258,6 +261,7 @@ class TestGeneticOptimizer:
         assert opt._check_convergence(history, window=20) is True
 
 
+@pytest.mark.coverage_extra
 class TestGradientOptimizer:
     """Cover GradientOptimizer methods."""
 
@@ -290,6 +294,7 @@ class TestGradientOptimizer:
         assert isinstance(result, OptimizationResult)
 
 
+@pytest.mark.coverage_extra
 class TestParetoFrontier:
     """Cover calculate_pareto_frontier."""
 
@@ -310,6 +315,7 @@ class TestParetoFrontier:
         assert bool(is_pareto[0]) is True
 
 
+@pytest.mark.coverage_extra
 class TestHypervolumeIndicator:
     """Cover hypervolume_indicator."""
 

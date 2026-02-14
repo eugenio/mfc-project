@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 from email_notification import send_completion_email, setup_email_monitoring
 
 
+@pytest.mark.coverage_extra
 class TestSendCompletionEmail:
     def test_send_email_success(self, tmp_path):
         results = {
@@ -51,6 +52,7 @@ class TestSendCompletionEmail:
             send_completion_email(str(f), "test@test.com")
 
 
+@pytest.mark.coverage_extra
 class TestSetupEmailMonitoring:
     def test_monitoring_pid_not_exists(self, tmp_path):
         pid_file = tmp_path / "test.pid"

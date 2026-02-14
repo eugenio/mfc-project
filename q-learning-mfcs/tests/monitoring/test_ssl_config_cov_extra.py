@@ -19,6 +19,7 @@ _spec.loader.exec_module(_mod)
 SSLConfig = _mod.SSLConfig
 load_ssl_config = _mod.load_ssl_config
 save_ssl_config = _mod.save_ssl_config
+@pytest.mark.coverage_extra
 class TestLoadSSLConfigDevFile:
     """Cover lines 465-467: dev config file exists path."""
 
@@ -72,6 +73,7 @@ class TestLoadSSLConfigDevFile:
             config = load_ssl_config(config_file=None)
             assert config.domain == "envvar.local"
 
+@pytest.mark.coverage_extra
 class TestSaveSSLConfigDefaultPath:
     """Cover line 535: save default path from env var."""
 

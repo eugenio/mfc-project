@@ -106,6 +106,7 @@ def reset_mocks():
     yield
 
 
+@pytest.mark.coverage_extra
 class TestInitializeSessionState:
     def test_init(self):
         ui = ElectrodeConfigurationUI()
@@ -129,6 +130,7 @@ def _real_props():
     return p
 
 
+@pytest.mark.coverage_extra
 class TestRenderMaterialSelector:
     def test_render_non_custom(self):
         mock_st.selectbox.return_value = "Graphite Plate"
@@ -150,6 +152,7 @@ class TestRenderMaterialSelector:
         assert result == "custom"
 
 
+@pytest.mark.coverage_extra
 class TestDisplayMaterialProperties:
     def test_display(self):
         props = MagicMock()
@@ -181,6 +184,7 @@ class TestDisplayMaterialProperties:
         ui._display_material_properties(props, "Steel")
 
 
+@pytest.mark.coverage_extra
 class TestRenderGeometrySelector:
     def test_rectangular(self):
         mock_st.selectbox.return_value = "Rectangular Plate"
@@ -197,6 +201,7 @@ class TestRenderGeometrySelector:
         assert geom == "cylindrical_rod"
 
 
+@pytest.mark.coverage_extra
 class TestRenderDimensionInputs:
     def test_rectangular_plate(self):
         mock_st.number_input.return_value = 5.0
@@ -235,6 +240,7 @@ class TestRenderDimensionInputs:
         assert "total_surface_area" in dims
 
 
+@pytest.mark.coverage_extra
 class TestRenderCustomMaterialProperties:
     def test_non_porous(self):
         mock_st.number_input.return_value = 1000.0
@@ -255,6 +261,7 @@ class TestRenderCustomMaterialProperties:
         mock_elec_cfg.MaterialProperties.assert_called()
 
 
+@pytest.mark.coverage_extra
 class TestCalculateAndDisplayAreas:
     def test_name_error_propagates(self):
         """Source has a bug: undefined 'projected_area'. Verify it raises."""
@@ -278,6 +285,7 @@ class TestCalculateAndDisplayAreas:
         mock_st.error.assert_called()
 
 
+@pytest.mark.coverage_extra
 class TestRenderElectrodeComparison:
     def test_too_few(self):
         mock_st.session_state["electrode_calculations"] = {"anode": {}}
@@ -329,6 +337,7 @@ class TestRenderElectrodeComparison:
             _ui_mod.go = old_go
 
 
+@pytest.mark.coverage_extra
 class TestRenderConfigurationSummary:
     def test_summary(self):
         config = MagicMock()
@@ -347,6 +356,7 @@ class TestRenderConfigurationSummary:
         mock_st.write.assert_called()
 
 
+@pytest.mark.coverage_extra
 class TestRenderFullElectrodeConfiguration:
     def test_full_render(self):
         # selectbox: anode_material, anode_geometry, cathode_material,

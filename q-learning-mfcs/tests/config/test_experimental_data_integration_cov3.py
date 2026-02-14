@@ -52,6 +52,7 @@ def _make_dataset(n=20, with_outliers=False, with_missing=False):
     )
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorClean:
     def test_clean_data(self):
         pp = DataPreprocessor()
@@ -60,6 +61,7 @@ class TestDataPreprocessorClean:
         assert "processed" in result.name
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorOutliers:
     def test_iqr_outlier_detection(self):
         pp = DataPreprocessor()
@@ -78,6 +80,7 @@ class TestDataPreprocessorOutliers:
         assert "voltage_outlier" in result.columns
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorInterpolation:
     def test_linear_interpolation(self):
         pp = DataPreprocessor()
@@ -110,6 +113,7 @@ class TestDataPreprocessorInterpolation:
         assert result["voltage"].isna().sum() < 2
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorSmooth:
     def test_smooth_data(self):
         pp = DataPreprocessor()
@@ -130,6 +134,7 @@ class TestDataPreprocessorSmooth:
         assert (result["voltage_outlier"] == True).all()  # noqa: E712
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorResample:
     def test_resample_with_timestamp(self):
         pp = DataPreprocessor()
@@ -149,6 +154,7 @@ class TestDataPreprocessorResample:
         assert len(result) == 20
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessorQuality:
     def test_quality_score_clean_data(self):
         pp = DataPreprocessor()
@@ -210,6 +216,7 @@ class TestDataPreprocessorQuality:
         assert any("duplicate" in i.lower() for i in issues)
 
 
+@pytest.mark.coverage_extra
 class TestModelCalibrator:
     def test_bayesian_calibration(self):
         mc = ModelCalibrator()
@@ -278,6 +285,7 @@ class TestModelCalibrator:
         assert r2 == 1.0
 
 
+@pytest.mark.coverage_extra
 class TestExperimentalDataManager:
     def test_init_default(self, tmp_path):
         mgr = ExperimentalDataManager(str(tmp_path))
@@ -289,6 +297,7 @@ class TestExperimentalDataManager:
         assert "experimental_data" in str(mgr.data_directory)
 
 
+@pytest.mark.coverage_extra
 class TestDataLoader:
     def test_load_json_list(self, tmp_path):
         loader = DataLoader()
@@ -337,6 +346,7 @@ class TestDataLoader:
             loader.load_data(fp)
 
 
+@pytest.mark.coverage_extra
 class TestPreprocessFullPipeline:
     def test_unknown_operation(self):
         pp = DataPreprocessor()

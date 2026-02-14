@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+@pytest.mark.coverage_extra
 class TestLoadSimulationData:
     def test_loads_csv_gz(self, tmp_path, _mock_streamlit):
         from gui.data_loaders import load_simulation_data
@@ -38,6 +39,7 @@ class TestLoadSimulationData:
         assert result is None
         _mock_streamlit.error.assert_called()
 
+@pytest.mark.coverage_extra
 class TestLoadRecentSimulations:
     def test_no_data_dir(self, _mock_streamlit):
         from gui.data_loaders import load_recent_simulations

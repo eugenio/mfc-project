@@ -98,6 +98,7 @@ def _prepare_dfs():
     return u, nu, r
 
 
+@pytest.mark.coverage_extra
 class TestLoadAndPrepareDataEdge:
     def test_time_hours_computed_from_seconds(self):
         """Test that time_hours is derived from time_seconds when missing."""
@@ -128,6 +129,7 @@ class TestLoadAndPrepareDataEdge:
             assert "time_hours" in result_nu.columns
 
 
+@pytest.mark.coverage_extra
 class TestBiofilmHealthDetailed:
     def test_all_subplots_rendered(self):
         u, nu, r = _prepare_dfs()
@@ -137,6 +139,7 @@ class TestBiofilmHealthDetailed:
         plt.close(fig)
 
 
+@pytest.mark.coverage_extra
 class TestSubstrateManagementDetailed:
     def test_all_subplots_rendered(self):
         u, nu, r = _prepare_dfs()
@@ -146,6 +149,7 @@ class TestSubstrateManagementDetailed:
         plt.close(fig)
 
 
+@pytest.mark.coverage_extra
 class TestSystemPerformanceDetailed:
     def test_all_subplots_rendered(self):
         u, nu, r = _prepare_dfs()
@@ -156,6 +160,7 @@ class TestSystemPerformanceDetailed:
         plt.close(fig)
 
 
+@pytest.mark.coverage_extra
 class TestBreakthroughAnalysisDetailed:
     def test_all_subplots_rendered(self):
         u, nu, r = _prepare_dfs()
@@ -165,6 +170,7 @@ class TestBreakthroughAnalysisDetailed:
         plt.close(fig)
 
 
+@pytest.mark.coverage_extra
 class TestMainEdgeCases:
     def test_main_saves_all_figures(self, tmp_path):
         u = _make_unified()

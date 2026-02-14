@@ -56,7 +56,8 @@ def main():
             "--cov-append",
             "-q",
             "--tb=short",
-            "--no-header"
+            "--no-header",
+            "-p", "no:playwright",
         ]
 
         result = subprocess.run(cmd, capture_output=False)
@@ -81,7 +82,8 @@ def main():
             "--cov-append",
             "-q",
             "--tb=short",
-            "--no-header"
+            "--no-header",
+            "-p", "no:playwright",
         ]
 
         result = subprocess.run(cmd, capture_output=False)

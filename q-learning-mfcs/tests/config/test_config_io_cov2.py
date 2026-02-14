@@ -36,6 +36,7 @@ from config.sensor_config import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestConvertValuesForSerialization:
     def test_enum(self):
         class Color(Enum):
@@ -62,6 +63,7 @@ class TestConvertValuesForSerialization:
         assert convert_values_for_serialization(42) == 42
 
 
+@pytest.mark.coverage_extra
 class TestEnumDictFactory:
     def test_basic(self):
         class C(Enum):
@@ -70,6 +72,7 @@ class TestEnumDictFactory:
         assert result == {"a": "x", "b": 5}
 
 
+@pytest.mark.coverage_extra
 class TestDataclassToDict:
     def test_non_dataclass(self):
         assert dataclass_to_dict("hello") == "hello"
@@ -80,6 +83,7 @@ class TestDataclassToDict:
         assert isinstance(result, dict)
 
 
+@pytest.mark.coverage_extra
 class TestConvertListsToTuples:
     def test_state_space_config(self):
         data = {"power_range": [0.0, 1.0], "other": "val"}
@@ -92,6 +96,7 @@ class TestConvertListsToTuples:
         assert isinstance(result["some_field"], list)
 
 
+@pytest.mark.coverage_extra
 class TestDictToDataclass:
     def test_qlearning_config(self):
         cfg = QLearningConfig()
@@ -113,6 +118,7 @@ class TestDictToDataclass:
         assert isinstance(restored, SensorConfig)
 
 
+@pytest.mark.coverage_extra
 class TestSaveConfig:
     def test_save_yaml(self):
         cfg = QLearningConfig()
@@ -156,6 +162,7 @@ class TestSaveConfig:
             save_config("not_a_config", "/tmp/test.yaml", format="yaml")
 
 
+@pytest.mark.coverage_extra
 class TestLoadConfig:
     def test_load_yaml(self):
         cfg = QLearningConfig()
@@ -205,6 +212,7 @@ class TestLoadConfig:
             os.unlink(path)
 
 
+@pytest.mark.coverage_extra
 class TestMergeConfigs:
     def test_merge_qlearning(self):
         cfg = QLearningConfig()

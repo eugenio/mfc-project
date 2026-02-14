@@ -44,6 +44,7 @@ def sim():
     return s
 
 
+@pytest.mark.coverage_extra
 class TestBiofilmFactorGPU:
     def test_biofilm_factor_cpu(self, sim):
         result = sim.biofilm_factor(1.5)
@@ -55,6 +56,7 @@ class TestBiofilmFactorGPU:
         assert result.shape == (3,)
 
 
+@pytest.mark.coverage_extra
 class TestReactionRateCPU:
     def test_reaction_rate_basic(self, sim):
         rate = sim.reaction_rate(20.0, 1.5)
@@ -65,6 +67,7 @@ class TestReactionRateCPU:
         assert rate > 0
 
 
+@pytest.mark.coverage_extra
 class TestUpdateCell:
     def test_update_cell_basic(self, sim):
         result = sim.update_cell(0, 20.0, 0.01, 1.5)
@@ -85,6 +88,7 @@ class TestUpdateCell:
         assert sim.debug_counter == 5
 
 
+@pytest.mark.coverage_extra
 class TestUpdateBiofilm:
     def test_update_biofilm_step(self, sim):
         sim.biofilm_thickness[0, :] = 1.0
@@ -110,6 +114,7 @@ class TestUpdateBiofilm:
         assert sim.biofilm_thickness[1, 0] >= 0.5
 
 
+@pytest.mark.coverage_extra
 class TestSimulateStep:
     def test_simulate_step_zero(self, sim):
         sim.simulate_step(0)  # Should return early
@@ -155,6 +160,7 @@ class TestSimulateStep:
         assert sim.q_actions[60] != 0 or True
 
 
+@pytest.mark.coverage_extra
 class TestRunSimulation:
     def test_run_simulation_tiny(self):
         """Test run_simulation with a very small step count."""
@@ -202,6 +208,7 @@ class TestRunSimulation:
         assert s.stack_voltages[1] > 0 or True
 
 
+@pytest.mark.coverage_extra
 class TestSaveData:
     def test_save_data(self, sim):
         # Run a couple steps to have data
@@ -221,6 +228,7 @@ class TestSaveData:
             assert isinstance(ts, str)
 
 
+@pytest.mark.coverage_extra
 class TestGeneratePlots:
     def test_generate_plots(self, sim):
         # Need valid data
@@ -245,6 +253,7 @@ class TestGeneratePlots:
             assert mp.savefig.called
 
 
+@pytest.mark.coverage_extra
 class TestGPUConversion:
     def test_gpu_conversion_branch(self):
         """Test the use_gpu=True branch for GPU-to-CPU conversion."""

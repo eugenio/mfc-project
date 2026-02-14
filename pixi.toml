@@ -53,8 +53,9 @@ test-e2e = "cd q-learning-mfcs/tests && python -m pytest e2e/ -v -m e2e"
 # Smoke + E2E combined
 test-smoke-e2e = "cd q-learning-mfcs/tests && python -m pytest smoke/ e2e/ -v"
 
-# Test with coverage
-test-coverage = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
+# Test with coverage (batched per subdirectory to avoid OOM)
+test-coverage = "python scripts/run_coverage_batched.py"
+test-coverage-single = "cd q-learning-mfcs/tests && python -m pytest . --cov=../src --cov-report=html --cov-report=term"
 
 # Fast test (unit tests only, skip slow tests)
 test-fast = "cd q-learning-mfcs/tests && python -m pytest . -k 'not integration and not selenium and not browser' -x"
@@ -172,6 +173,8 @@ pytest = ">=8.4.1,<9"
 pytest-cov = ">=6.2.1,<7"
 pytest-playwright = ">=0.7.2,<0.8"
 cadquery = ">=2.6.1,<3"
+interrogate = ">=1.7.0,<2"
+pytest-xdist = ">=3.8.0,<4"
 
 # Development tools - testing, linting, formatting
 [feature.dev.dependencies]

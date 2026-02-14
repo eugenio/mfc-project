@@ -49,6 +49,7 @@ def _make_plot_config(plot_type=PlotType.SCATTER_3D, title="Test"):
     return PlotConfiguration(plot_type=plot_type, title=title)
 
 
+@pytest.mark.coverage_extra
 class TestEnums:
     def test_plot_type(self):
         assert PlotType.SCATTER_3D.value == "scatter_3d"
@@ -60,6 +61,7 @@ class TestEnums:
         assert InteractionMode.REAL_TIME.value == "real_time"
 
 
+@pytest.mark.coverage_extra
 class TestPlotConfiguration:
     def test_defaults(self):
         pc = PlotConfiguration(plot_type=PlotType.SCATTER_3D, title="T")
@@ -77,6 +79,7 @@ class TestPlotConfiguration:
         assert pc.color_map == "coolwarm"
 
 
+@pytest.mark.coverage_extra
 class TestVisualizationResult:
     def test_defaults(self):
         vr = VisualizationResult(plot_type=PlotType.SCATTER_3D)
@@ -84,6 +87,7 @@ class TestVisualizationResult:
         assert vr.data_points == 0
 
 
+@pytest.mark.coverage_extra
 class TestMultiDimensionalPlotter:
     @pytest.fixture
     def plotter(self):
@@ -210,6 +214,7 @@ class TestMultiDimensionalPlotter:
         plt.close("all")
 
 
+@pytest.mark.coverage_extra
 class TestStatisticalVisualizer:
     @pytest.fixture
     def viz(self):
@@ -271,6 +276,7 @@ class _ConcreteComparisonAnalyzer(ComparisonAnalyzer):
         raise NotImplementedError
 
 
+@pytest.mark.coverage_extra
 class TestComparisonAnalyzer:
     @pytest.fixture
     def analyzer(self):
@@ -332,6 +338,7 @@ class TestComparisonAnalyzer:
         plt.close("all")
 
 
+@pytest.mark.coverage_extra
 class TestInteractiveAnalyzer:
     @pytest.fixture
     def analyzer(self):
@@ -415,6 +422,7 @@ class TestInteractiveAnalyzer:
         plt.close("all")
 
 
+@pytest.mark.coverage_extra
 class TestParetoFrontierPlot:
     def test_2d_pareto(self):
         """Cover create_pareto_frontier_plot with 2 objectives."""
@@ -462,6 +470,7 @@ class TestParetoFrontierPlot:
             )
 
 
+@pytest.mark.coverage_extra
 class TestNoMatplotlibFallbacks:
     """Cover HAS_MATPLOTLIB=False branches (ImportError paths)."""
 
@@ -614,6 +623,7 @@ class TestNoMatplotlibFallbacks:
             assert colors == ["blue"]
 
 
+@pytest.mark.coverage_extra
 class TestSensitivityTornadoPlot:
     def test_basic(self):
         import matplotlib.pyplot as plt

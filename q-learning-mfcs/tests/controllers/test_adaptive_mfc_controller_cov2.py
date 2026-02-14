@@ -179,6 +179,7 @@ def _make_system_state(**kw):
 
 # ---- Tests for AdaptiveMFCController ----
 
+@pytest.mark.coverage_extra
 class TestAdaptiveMFCControllerInit:
     """Cover lines 758-789 (init)."""
 
@@ -201,6 +202,7 @@ class TestAdaptiveMFCControllerInit:
         assert ctrl.current_strategy == ControlStrategy.CONSERVATIVE
 
 
+@pytest.mark.coverage_extra
 class TestAdaptControlStrategy:
     """Cover lines 897-938."""
 
@@ -273,6 +275,7 @@ class TestAdaptControlStrategy:
         assert len(ctrl.strategy_changes) == 0
 
 
+@pytest.mark.coverage_extra
 class TestIdentifyStrategyTrigger:
     """Cover lines 944-961."""
 
@@ -319,6 +322,7 @@ class TestIdentifyStrategyTrigger:
         assert ctrl._identify_strategy_trigger(ss) == "operational_optimization"
 
 
+@pytest.mark.coverage_extra
 class TestEvaluateInterventions:
     """Cover lines 968-979."""
 
@@ -354,6 +358,7 @@ class TestEvaluateInterventions:
         assert ctrl.intervention_active is False
 
 
+@pytest.mark.coverage_extra
 class TestExecuteIntervention:
     """Cover lines 987-1002."""
 
@@ -372,6 +377,7 @@ class TestExecuteIntervention:
         assert outcome["urgency"] == "immediate"
 
 
+@pytest.mark.coverage_extra
 class TestExecuteControlAction:
     """Cover lines 1011-1032."""
 
@@ -437,6 +443,7 @@ class TestExecuteControlAction:
         assert abs(ctrl.system_parameters["inlet_concentration"] - initial * 1.1) < 0.01
 
 
+@pytest.mark.coverage_extra
 class TestGetParameterChanges:
     """Cover line 1042."""
 
@@ -447,6 +454,7 @@ class TestGetParameterChanges:
         assert "inlet_concentration" in changes
 
 
+@pytest.mark.coverage_extra
 class TestUpdateQLearning:
     """Cover lines 1055-1069."""
 
@@ -464,6 +472,7 @@ class TestUpdateQLearning:
         ctrl._update_qlearning(ss, decision, {"execution_success": 0.8})
 
 
+@pytest.mark.coverage_extra
 class TestCalculatePerformanceMetrics:
     """Cover line 1082."""
 
@@ -478,6 +487,7 @@ class TestCalculatePerformanceMetrics:
         assert "control_confidence" in metrics
 
 
+@pytest.mark.coverage_extra
 class TestGetComprehensiveStatus:
     """Cover lines 1093-1098."""
 
@@ -502,6 +512,7 @@ class TestGetComprehensiveStatus:
         assert status["intervention_active"] is False
 
 
+@pytest.mark.coverage_extra
 class TestControlStep:
     """Cover lines 815-893 (full control_step)."""
 
@@ -527,6 +538,7 @@ class TestControlStep:
         assert len(result["health_alerts"]) == 1
 
 
+@pytest.mark.coverage_extra
 class TestFactoryFunction:
     """Cover lines 1146-1156."""
 
@@ -536,6 +548,7 @@ class TestFactoryFunction:
         assert ctrl.current_strategy == ControlStrategy.BALANCED
 
 
+@pytest.mark.coverage_extra
 class TestFallbackActions:
     """Cover line 191 - fallback actions when flow_actions/substrate_actions missing."""
 
@@ -550,6 +563,7 @@ class TestFallbackActions:
         assert len(ctrl2.actions) > 0
 
 
+@pytest.mark.coverage_extra
 class TestDetachmentAndStagnationRisk:
     """Cover lines 575, 577 - detachment_risk and stagnation_risk > 0.7."""
 

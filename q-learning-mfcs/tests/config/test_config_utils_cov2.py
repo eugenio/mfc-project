@@ -29,6 +29,7 @@ from config.config_utils import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestLoadYaml:
     def test_nonexistent(self, tmp_path):
         with pytest.raises(ConfigurationFormatError):
@@ -55,6 +56,7 @@ class TestLoadYaml:
             load_yaml_config(str(f), validate_schema=False)
 
 
+@pytest.mark.coverage_extra
 class TestLoadJson:
     def test_nonexistent(self, tmp_path):
         with pytest.raises(ConfigurationFormatError):
@@ -73,6 +75,7 @@ class TestLoadJson:
         assert r["k"] == "v"
 
 
+@pytest.mark.coverage_extra
 class TestEnvSub:
     def test_default(self):
         r = substitute_environment_variables("${NX:def}")
@@ -89,6 +92,7 @@ class TestEnvSub:
         assert "$NX_S" in r
 
 
+@pytest.mark.coverage_extra
 class TestSchema:
     def test_valid(self):
         r = validate_config_schema({"biological": {}})
@@ -100,6 +104,7 @@ class TestSchema:
         assert r.is_valid is False
 
 
+@pytest.mark.coverage_extra
 class TestDC:
     def test_to_dict(self):
         @dataclass
@@ -133,6 +138,7 @@ class TestDC:
         assert r["d"]["a"]["b"] == 1
 
 
+@pytest.mark.coverage_extra
 class TestMerge:
     def test_yaml(self, tmp_path):
         f1 = tmp_path / "a.yaml"
@@ -156,6 +162,7 @@ class TestMerge:
             merge_config_files(str(f))
 
 
+@pytest.mark.coverage_extra
 class TestSave:
     def test_json(self, tmp_path):
         o = tmp_path / "o.json"
@@ -167,6 +174,7 @@ class TestSave:
             save_config_file({}, str(tmp_path / "o.xml"), format="xml")
 
 
+@pytest.mark.coverage_extra
 class TestLoader:
     def test_cache(self, tmp_path):
         f = tmp_path / "t.yaml"
@@ -205,6 +213,7 @@ class TestLoader:
         assert r["k"] == "v"
 
 
+@pytest.mark.coverage_extra
 class TestConverter:
     def test_legacy(self):
         c = ConfigConverter()
@@ -231,6 +240,7 @@ class TestConverter:
             assert len(w) == 1
 
 
+@pytest.mark.coverage_extra
 class TestUtils:
     def test_get_nested(self):
         assert get_config_value({"a": {"b": {"c": 42}}}, "a.b.c") == 42

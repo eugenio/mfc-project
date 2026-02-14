@@ -72,6 +72,7 @@ IntegratedSystemState = _mod.IntegratedSystemState
 IntegratedModelManager = _mod.IntegratedModelManager
 
 
+@pytest.mark.coverage_extra
 class TestControlSystemBridge:
     def test_init_success(self):
         bridge = ControlSystemBridge({'control': {}})
@@ -120,6 +121,7 @@ class TestControlSystemBridge:
         assert result.flow_rate == 0.01
 
 
+@pytest.mark.coverage_extra
 class TestDataIntegrationPipeline:
     def test_init_with_failures(self):
         old_db = _mod.MFCExperimentalDatabase
@@ -211,6 +213,7 @@ class TestDataIntegrationPipeline:
         pipeline._update_dashboard(state)
 
 
+@pytest.mark.coverage_extra
 class TestMakeSerializable:
     def test_basic_types(self):
         mgr = object.__new__(IntegratedModelManager)

@@ -95,6 +95,7 @@ class FakeController:
         self.q_table = {"s1": [0.1, 0.2], "s2": [0.3, 0.4]}
 
 
+@pytest.mark.coverage_extra
 class TestSaveSimulationResults:
     """Cover lines 373-413."""
 
@@ -123,6 +124,7 @@ class TestSaveSimulationResults:
         assert len(data["final_cell_states"]) == 5
 
 
+@pytest.mark.coverage_extra
 class TestGenerate100hPlots:
     """Cover lines 418-483."""
 
@@ -150,6 +152,7 @@ class TestGenerate100hPlots:
         local_plt.savefig.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestRun100hSimulation:
     """Cover lines 289-367."""
 

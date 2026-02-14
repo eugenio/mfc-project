@@ -242,6 +242,7 @@ def _register_n(server, n=3, with_data=True, **kw):
             server.clients[f"c{i}"].local_data = [1, 2, 3]
 
 
+@pytest.mark.coverage_extra
 class TestFederatedClient:
     def test_init_dp(self):
         client = _make_client(dp=True)
@@ -350,6 +351,7 @@ class TestFederatedClient:
         assert client.client_info.data_samples == 1
 
 
+@pytest.mark.coverage_extra
 class TestFederatedServer:
     def test_init(self):
         server = _make_server()

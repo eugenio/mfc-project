@@ -25,6 +25,7 @@ def log_manager(tmp_path):
     mgr.shutdown()
 
 
+@pytest.mark.coverage_extra
 class TestCompressOldLogs:
     def test_compress_old_logs(self, tmp_path):
         lf = tmp_path / "test.log"
@@ -37,6 +38,7 @@ class TestCompressOldLogs:
         h.close()
 
 
+@pytest.mark.coverage_extra
 class TestSignalHandler:
     def test_signal_handler(self, log_manager):
         handler = signal.getsignal(signal.SIGTERM)
@@ -44,6 +46,7 @@ class TestSignalHandler:
             handler(signal.SIGTERM, None)
 
 
+@pytest.mark.coverage_extra
 class TestMinuteCounter:
     def test_add_to_minute_counter(self, log_manager):
         cm = int(time.time() // 60)
@@ -55,6 +58,7 @@ class TestMinuteCounter:
         log_manager._add_to_minute_counter(counter, int(time.time() // 60))
 
 
+@pytest.mark.coverage_extra
 class TestMonitoringLoopException:
     def test_monitoring_loop_exception(self, log_manager):
         log_manager.monitoring_enabled = True
@@ -69,6 +73,7 @@ class TestMonitoringLoopException:
         assert cc[0] >= 1
 
 
+@pytest.mark.coverage_extra
 class TestExportLogsParseError:
     def test_export_logs_parse_error(self, log_manager):
         ld = Path(log_manager.log_dir)
@@ -77,6 +82,7 @@ class TestExportLogsParseError:
         assert isinstance(logs, list)
 
 
+@pytest.mark.coverage_extra
 class TestParseLogFileTimestampError:
     def test_bad_timestamp_skipped(self, log_manager):
         ld = Path(log_manager.log_dir)
@@ -85,6 +91,7 @@ class TestParseLogFileTimestampError:
         assert len(log_manager._parse_log_file(lf, None, None, None, None)) == 0
 
 
+@pytest.mark.coverage_extra
 class TestParseLogFileFilters:
     def test_end_time_filter(self, log_manager):
         ld = Path(log_manager.log_dir)
@@ -95,6 +102,7 @@ class TestParseLogFileFilters:
         assert len(log_manager._parse_log_file(lf, None, None, None, "nonexistent")) == 0
 
 
+@pytest.mark.coverage_extra
 class TestShutdownHandlerException:
     def test_shutdown_handler_exception(self, log_manager):
         mh = MagicMock(); mh.flush.side_effect = RuntimeError("fail")
@@ -102,6 +110,7 @@ class TestShutdownHandlerException:
         log_manager.shutdown()
 
 
+@pytest.mark.coverage_extra
 class TestMainCLI:
     def _mock_main(self, argv, extra_patches=None):
         mock_mgr = MagicMock(spec=LogManager)

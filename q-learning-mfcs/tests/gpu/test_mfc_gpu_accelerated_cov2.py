@@ -14,6 +14,7 @@ import pytest
 
 import mfc_gpu_accelerated as mga
 
+@pytest.mark.coverage_extra
 class TestDetectGPUBackendEdgeCases:
     """Additional tests for detect_gpu_backend."""
 
@@ -109,6 +110,7 @@ class TestDetectGPUBackendEdgeCases:
             backend, gpu_type = mga.detect_gpu_backend()
             assert backend == "cpu"
 
+@pytest.mark.coverage_extra
 class TestSetupGPUBackendEdgeCases:
     """Additional tests for setup_gpu_backend."""
 
@@ -153,6 +155,7 @@ class TestSetupGPUBackendEdgeCases:
                 assert result[5] == "CPU (NumPy)"
                 assert result[6] is False
 
+@pytest.mark.coverage_extra
 class TestGPUAcceleratedMFCEdgeCases:
     """Additional tests for GPUAcceleratedMFC."""
 
@@ -277,7 +280,7 @@ class TestGPUAcceleratedMFCEdgeCases:
     def test_run_simulation_progress_reporting(self):
         """Cover progress reporting in run_simulation (lines 644-647)."""
         mfc = self._make_mfc()
-        results, metrics = mfc.run_simulation(1.0, "/tmp/test_out")
+        results, metrics = mfc.run_simulation(2.0, "/tmp/test_out")
         assert len(results["time_hours"]) > 0
         assert "final_reservoir_concentration" in metrics
 
@@ -351,6 +354,7 @@ class TestGPUAcceleratedMFCEdgeCases:
                 eps = obj.load_trained_epsilon()
                 assert eps == 0.2  # Fallback to config default
 
+@pytest.mark.coverage_extra
 class TestCalculateMaintenanceRequirementsEdgeCases:
     """Additional edge cases for calculate_maintenance_requirements."""
 
@@ -366,6 +370,7 @@ class TestCalculateMaintenanceRequirementsEdgeCases:
         assert r["substrate"]["annual_refills_needed"] > 0
         assert r["buffer"]["annual_refills_needed"] > 0
 
+@pytest.mark.coverage_extra
 class TestSignalHandlerEdgeCases:
     """Additional tests for signal_handler."""
 
@@ -375,6 +380,7 @@ class TestSignalHandlerEdgeCases:
             mga.signal_handler(2, None)
         assert exc_info.value.code == 0
 
+@pytest.mark.coverage_extra
 class TestRunGPUAcceleratedSimulationEdgeCases:
     """Additional tests for run_gpu_accelerated_simulation."""
 

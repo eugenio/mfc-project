@@ -65,6 +65,7 @@ def _make_mgr():
         return EnhancedCertificateManager(_make_config())
 
 
+@pytest.mark.coverage_extra
 class TestLoadNotificationConfig:
     def test_default(self):
         mgr = _make_mgr()
@@ -85,6 +86,7 @@ class TestLoadNotificationConfig:
         assert mgr.notification_config["enabled"] is False
 
 
+@pytest.mark.coverage_extra
 class TestCheckCertificateExpiry:
     def test_no_expiry(self):
         mgr = _make_mgr()
@@ -109,6 +111,7 @@ class TestCheckCertificateExpiry:
         assert needs is True
 
 
+@pytest.mark.coverage_extra
 class TestSendNotification:
     def test_disabled(self):
         mgr = _make_mgr()
@@ -159,6 +162,7 @@ class TestSendNotification:
             mgr.send_notification("test", "msg")
 
 
+@pytest.mark.coverage_extra
 class TestMonitorCertificate:
     def test_no_cert(self):
         mgr = _make_mgr()
@@ -197,6 +201,7 @@ class TestMonitorCertificate:
         assert r["needs_renewal"]
 
 
+@pytest.mark.coverage_extra
 class TestCheckCronJobExists:
     def test_with_crontab_found(self):
         mgr = _make_mgr()
@@ -231,6 +236,7 @@ class TestCheckCronJobExists:
                 assert mgr._check_cron_job_exists() is False
 
 
+@pytest.mark.coverage_extra
 class TestRenewCertificateIfNeeded:
     def test_not_needed(self):
         mgr = _make_mgr()
@@ -298,6 +304,7 @@ class TestRenewCertificateIfNeeded:
         assert ok is False
 
 
+@pytest.mark.coverage_extra
 class TestCronManagement:
     def test_setup_success(self):
         mgr = _make_mgr()
@@ -330,6 +337,7 @@ class TestCronManagement:
             assert mgr.remove_monitoring_cron() is False
 
 
+@pytest.mark.coverage_extra
 class TestPrintCertificateReport:
     def test_with_expiry_valid(self):
         report = {

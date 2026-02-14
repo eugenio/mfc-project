@@ -15,6 +15,7 @@ from config.membrane_config import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestMembraneConfiguration:
     def _make_props(self):
         return MembraneProperties(
@@ -88,6 +89,7 @@ class TestMembraneConfiguration:
         assert factor > 0
 
 
+@pytest.mark.coverage_extra
 class TestCreateMembraneConfig:
     def test_create_nafion_117(self):
         config = create_membrane_config(MembraneMaterial.NAFION_117, 0.001)
@@ -131,6 +133,7 @@ class TestCreateMembraneConfig:
             create_membrane_config(MembraneMaterial.CUSTOM, 0.001)
 
 
+@pytest.mark.coverage_extra
 class TestMembranePropertiesDatabase:
     def test_database_has_entries(self):
         assert len(MEMBRANE_PROPERTIES_DATABASE) >= 5

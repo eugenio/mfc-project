@@ -18,6 +18,7 @@ from config.uncertainty_quantification import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestUncertaintyResult:
     def test_default_values(self):
         r = UncertaintyResult(
@@ -46,6 +47,7 @@ def _model_fn(params):
     return {"output": params[0] + params[1]}
 
 
+@pytest.mark.coverage_extra
 class TestUncertaintyQuantifierBase:
     def test_sample_parameters(self):
         mc = MonteCarloAnalyzer(_make_params(), random_seed=42)
@@ -123,6 +125,7 @@ class ConcreteBayesianInference(BayesianInference):
         )
 
 
+@pytest.mark.coverage_extra
 class TestBayesianInference:
     def test_init_default_priors(self):
         params = _make_params()
@@ -174,6 +177,7 @@ class TestBayesianInference:
         assert result.posterior_samples.shape == (20, 1)
 
 
+@pytest.mark.coverage_extra
 class TestPolynomialChaosAnalyzer:
     def test_propagate_uncertainty(self):
         params = _make_params()
@@ -227,6 +231,7 @@ class TestPolynomialChaosAnalyzer:
         assert stats["variance"]["out"] > 0
 
 
+@pytest.mark.coverage_extra
 class TestMonteCarloParallel:
     def test_parallel_evaluation(self):
         mc = MonteCarloAnalyzer(_make_params(), random_seed=42)

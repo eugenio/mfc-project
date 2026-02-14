@@ -41,6 +41,7 @@ def analyzer(pspace):
     return SensitivityAnalyzer(pspace, simple_model, ["y"])
 
 
+@pytest.mark.coverage_extra
 class TestParameterBounds:
     def test_invalid_bounds(self):
         with pytest.raises(ValueError):
@@ -51,6 +52,7 @@ class TestParameterBounds:
             ParameterBounds(0.0, 1.0, nominal_value=5.0)
 
 
+@pytest.mark.coverage_extra
 class TestParameterSpace:
     def test_empty_params_raises(self):
         with pytest.raises(ValueError):
@@ -105,6 +107,7 @@ class TestParameterSpace:
             pspace.get_parameter_by_name("nonexistent")
 
 
+@pytest.mark.coverage_extra
 class TestSensitivityAnalyzer:
     def test_oat_analysis(self, analyzer):
         result = analyzer.analyze_sensitivity(SensitivityMethod.ONE_AT_A_TIME, n_samples=10)
@@ -158,6 +161,7 @@ class TestSensitivityAnalyzer:
             analyzer.rank_parameters(result, "y", "nonexistent")
 
 
+@pytest.mark.coverage_extra
 class TestSensitivityVisualizer:
     def test_plot_sensitivity_indices(self, analyzer, tmp_path):
         result = analyzer.analyze_sensitivity(SensitivityMethod.SOBOL, n_samples=16)

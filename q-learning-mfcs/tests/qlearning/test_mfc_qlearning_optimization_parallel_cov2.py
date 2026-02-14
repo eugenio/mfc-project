@@ -16,6 +16,7 @@ from mfc_qlearning_optimization_parallel import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestQLearningFlowControllerEdgeCases:
     def test_discretize_state_negative_values(self):
         ctrl = QLearningFlowController()
@@ -66,6 +67,7 @@ class TestQLearningFlowControllerEdgeCases:
         assert ctrl.epsilon >= ctrl.epsilon_min
 
 
+@pytest.mark.coverage_extra
 class TestSimulationEdgeCases:
     def _make_sim(self, steps=200):
         sim = MFCQLearningSimulationParallel(use_gpu=False)
@@ -140,6 +142,7 @@ class TestSimulationEdgeCases:
         assert sim.objective_values[5] >= 0
 
 
+@pytest.mark.coverage_extra
 class TestAddSubplotLabelsEdge:
     def test_single_subplot(self):
         import matplotlib

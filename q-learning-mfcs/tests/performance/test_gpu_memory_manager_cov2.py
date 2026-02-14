@@ -35,6 +35,7 @@ def manager():
         yield mgr
 
 
+@pytest.mark.coverage_extra
 class TestGPUMemoryManager:
     def test_init_cpu(self, manager):
         assert manager.device.type == "cpu"
@@ -179,6 +180,7 @@ class TestGPUMemoryManager:
         assert "device" in data
 
 
+@pytest.mark.coverage_extra
 class TestManagedGPUContext:
     def test_context_manager(self, manager):
         ctx = ManagedGPUContext(manager, "gsm_analysis")
@@ -205,6 +207,7 @@ class TestManagedGPUContext:
         manager.clear_gpu_cache.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestPerformanceProfile:
     def test_profile_creation(self):
         p = PerformanceProfile(

@@ -58,6 +58,7 @@ def stream_manager():
     return DataStreamManager(ssl_config=None)
 
 
+@pytest.mark.coverage_extra
 class TestDataStreamManager:
     def test_init_no_ssl(self, stream_manager):
         assert stream_manager.ssl_config is None
@@ -171,6 +172,7 @@ class TestDataStreamManager:
         stream_manager.stop_streaming()
 
 
+@pytest.mark.coverage_extra
 class TestHandleClientMessage:
     @pytest.mark.asyncio
     async def test_ping(self, stream_manager):
@@ -224,6 +226,7 @@ class TestHandleClientMessage:
             await stream_manager.handle_client_message(ws, '{"type":"x"}')
 
 
+@pytest.mark.coverage_extra
 class TestWSSSecurity:
     def test_validate_origin_empty(self):
         assert WSSSecurity.validate_origin("", ["http://localhost"]) is False
@@ -238,6 +241,7 @@ class TestWSSSecurity:
         assert WSSSecurity.validate_origin("http://evil.com", ["http://localhost"]) is False
 
 
+@pytest.mark.coverage_extra
 class TestSignalHandler:
     def test_signal_handler_runs(self):
         signal_handler(2, None)

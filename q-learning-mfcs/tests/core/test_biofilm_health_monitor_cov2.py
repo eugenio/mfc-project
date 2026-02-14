@@ -39,6 +39,7 @@ def _make_growth_pattern(**kwargs):
     return gp
 
 
+@pytest.mark.coverage_extra
 class TestBiofimHealthOptimizer:
     def test_init_geobacter(self):
         opt = BiofimHealthOptimizer(BacterialSpecies.GEOBACTER)
@@ -139,6 +140,7 @@ class TestBiofimHealthOptimizer:
         assert s > 0.5
 
 
+@pytest.mark.coverage_extra
 class TestPredictiveHealthMonitor:
     @pytest.fixture
     def monitor(self):
@@ -353,6 +355,7 @@ class TestPredictiveHealthMonitor:
         assert t == 0.0
 
 
+@pytest.mark.coverage_extra
 class TestFactoryFunction:
     def test_create_monitor(self):
         m = create_predictive_health_monitor(BacterialSpecies.GEOBACTER)

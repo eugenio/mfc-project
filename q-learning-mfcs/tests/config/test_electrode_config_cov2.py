@@ -20,6 +20,7 @@ from config.electrode_config import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestElectrodeGeometrySpec:
     def test_rectangular_specific_area(self):
         g = ElectrodeGeometrySpec(
@@ -172,6 +173,7 @@ class TestElectrodeGeometrySpec:
             g.calculate_mass()
 
 
+@pytest.mark.coverage_extra
 class TestElectrodeConfiguration:
     def _make_config(self, porous=False):
         props = MaterialProperties(
@@ -208,6 +210,7 @@ class TestElectrodeConfiguration:
         assert 0 < coeff <= 1.0
 
 
+@pytest.mark.coverage_extra
 class TestCreateElectrodeConfig:
     def test_graphite_plate(self):
         cfg = create_electrode_config(
@@ -241,6 +244,7 @@ class TestCreateElectrodeConfig:
             )
 
 
+@pytest.mark.coverage_extra
 class TestDefaultConfigs:
     def test_graphite_plate_exists(self):
         assert DEFAULT_GRAPHITE_PLATE_CONFIG is not None
@@ -249,6 +253,7 @@ class TestDefaultConfigs:
         assert DEFAULT_CARBON_FELT_CONFIG is not None
 
 
+@pytest.mark.coverage_extra
 class TestMaterialDatabase:
     def test_all_materials_in_db(self):
         expected = [

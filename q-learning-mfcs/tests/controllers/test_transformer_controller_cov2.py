@@ -216,6 +216,7 @@ for _name, _orig in [
         sys.modules.pop(_name, None)
 
 
+@pytest.mark.coverage_extra
 class TestTransformerMFCController:
     def test_init_default(self):
         dims = {"sensor": 32, "health": 16}
@@ -373,6 +374,7 @@ class TestTransformerMFCController:
         assert isinstance(result, dict)
 
 
+@pytest.mark.coverage_extra
 class TestTransformerControllerManager:
     def test_init(self):
         mgr = TransformerControllerManager(state_dim=60, action_dim=15)
@@ -461,6 +463,7 @@ class TestTransformerControllerManager:
         assert "system_features" in mgr.input_dims
 
 
+@pytest.mark.coverage_extra
 class TestCreateTransformerController:
     def test_default(self):
         ctrl = create_transformer_controller(state_dim=60, action_dim=15)

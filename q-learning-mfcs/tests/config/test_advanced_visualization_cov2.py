@@ -37,6 +37,7 @@ def _make_interactive_analyzer():
     return ia
 
 
+@pytest.mark.coverage_extra
 class TestInteractiveAnalyzerPlotly:
     @pytest.fixture
     def ia(self):
@@ -126,6 +127,7 @@ class TestInteractiveAnalyzerPlotly:
                 ia.create_plot(pd.DataFrame({"x": [1]}), pc)
 
 
+@pytest.mark.coverage_extra
 class TestMultiDimensionalPlotterLogic:
     """Test logic paths in MultiDimensionalPlotter without actual plotting."""
 
@@ -145,6 +147,7 @@ class TestMultiDimensionalPlotterLogic:
             plotter.create_plot(df, pc)
 
 
+@pytest.mark.coverage_extra
 class TestStatisticalVisualizerLogic:
     """Test StatisticalVisualizer dispatch logic."""
 

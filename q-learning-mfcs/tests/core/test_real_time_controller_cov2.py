@@ -32,6 +32,7 @@ def controller(timing):
     ctrl.running = False
 
 
+@pytest.mark.coverage_extra
 class TestSchedulerControlLoops:
     def test_scheduler_executes_control_loops(self, controller):
         controller.mode = ControllerMode.AUTOMATIC
@@ -47,6 +48,7 @@ class TestSchedulerControlLoops:
         assert cc[0] >= 1
 
 
+@pytest.mark.coverage_extra
 class TestSchedulerLoopException:
     def test_scheduler_exception_triggers_fault(self, controller):
         controller.running = True; controller.mode = ControllerMode.MANUAL
@@ -62,6 +64,7 @@ class TestSchedulerLoopException:
         assert "SCHEDULER_ERROR" in controller.fault_flags
 
 
+@pytest.mark.coverage_extra
 class TestExecuteScheduledTasks:
     def test_task_skipped_insufficient_time(self, controller):
         task = ControlTask(task_id="slow", priority=TaskPriority.LOW, period_ms=10.0,
@@ -88,6 +91,7 @@ class TestExecuteScheduledTasks:
         assert task.deadline_violations >= 1
 
 
+@pytest.mark.coverage_extra
 class TestControlLoopQlearning:
     def test_qlearning_control_loop(self, controller):
         loop = ControlLoop(loop_id="ql", input_channels=[0], output_channels=[0],
@@ -104,6 +108,7 @@ class TestControlLoopQlearning:
         controller._execute_control_loops()
 
 
+@pytest.mark.coverage_extra
 class TestControlLoopException:
     def test_control_loop_exception_triggers_fault(self, controller):
         loop = ControlLoop(loop_id="el", input_channels=[0], output_channels=[0],
@@ -114,6 +119,7 @@ class TestControlLoopException:
         assert any("CONTROL_LOOP_ERROR" in f for f in controller.fault_flags)
 
 
+@pytest.mark.coverage_extra
 class TestQlearningControl:
     def test_no_action(self, controller):
         loop = ControlLoop(loop_id="q1", input_channels=[0], output_channels=[0],
@@ -131,6 +137,7 @@ class TestQlearningControl:
         assert controller._execute_qlearning_control(loop, {0: 30.0}) == -1.0
 
 
+@pytest.mark.coverage_extra
 class TestWatchdogTimeout:
     def test_watchdog_timeout_triggers_fault(self, controller):
         controller.running = True
@@ -140,6 +147,7 @@ class TestWatchdogTimeout:
         assert "WATCHDOG_TIMEOUT" in controller.fault_flags
 
 
+@pytest.mark.coverage_extra
 class TestPerformanceMetrics:
     def test_update_performance_metrics_no_psutil(self, controller):
         with patch.dict("sys.modules", {"psutil": None}):

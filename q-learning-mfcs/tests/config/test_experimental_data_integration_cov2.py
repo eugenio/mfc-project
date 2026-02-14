@@ -28,6 +28,7 @@ from config.experimental_data_integration import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestEnums:
     def test_data_format(self):
         assert DataFormat.CSV.value == "csv"
@@ -40,6 +41,7 @@ class TestEnums:
         assert CalibrationMethod.LEAST_SQUARES.value == "least_squares"
 
 
+@pytest.mark.coverage_extra
 class TestExperimentalDataset:
     def test_basic(self):
         df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -65,6 +67,7 @@ class TestExperimentalDataset:
         assert ds.duration is not None
 
 
+@pytest.mark.coverage_extra
 class TestDataLoader:
     def test_load_csv(self):
         loader = DataLoader()
@@ -172,6 +175,7 @@ class TestDataLoader:
             os.unlink(path)
 
 
+@pytest.mark.coverage_extra
 class TestDataPreprocessor:
     def test_default_ops(self):
         pp = DataPreprocessor()
@@ -233,6 +237,7 @@ class TestDataPreprocessor:
         assert any("missing" in i.lower() for i in issues)
 
 
+@pytest.mark.coverage_extra
 class TestModelCalibrator:
     def test_r_squared(self):
         mc = ModelCalibrator()
@@ -283,6 +288,7 @@ class TestModelCalibrator:
             )
 
 
+@pytest.mark.coverage_extra
 class TestManager:
     def test_init(self):
         with tempfile.TemporaryDirectory() as d:
@@ -356,6 +362,7 @@ class TestManager:
         assert len(df) == 1
 
 
+@pytest.mark.coverage_extra
 class TestValidationMetrics:
     def test_basic(self):
         o = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -365,6 +372,7 @@ class TestValidationMetrics:
         assert "spearman_r" in m
 
 
+@pytest.mark.coverage_extra
 class TestChangePoints:
     def test_stationary(self):
         np.random.seed(42)
@@ -380,6 +388,7 @@ class TestChangePoints:
         assert isinstance(r, list)
 
 
+@pytest.mark.coverage_extra
 class TestAlignTimeSeries:
     def test_nearest(self):
         t1 = pd.DataFrame({

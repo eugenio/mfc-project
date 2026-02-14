@@ -24,6 +24,7 @@ from config.config_manager import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestConfigManagerLoadProfile:
     """Test load_profile_from_file uncovered branches."""
 
@@ -100,6 +101,7 @@ class TestConfigManagerLoadProfile:
             assert profile.visualization == "string_viz"
 
 
+@pytest.mark.coverage_extra
 class TestConfigManagerSaveProfile:
     def test_save_profile_json(self, tmp_path):
         mgr = ConfigManager(str(tmp_path / "configs"))
@@ -122,6 +124,7 @@ class TestConfigManagerSaveProfile:
             mgr.save_profile_to_file("nope", str(tmp_path / "out.yaml"))
 
 
+@pytest.mark.coverage_extra
 class TestConfigManagerGetConfiguration:
     def test_get_configuration_no_current_profile(self, tmp_path):
         mgr = ConfigManager(str(tmp_path / "configs"))
@@ -180,6 +183,7 @@ class TestConfigManagerGetConfiguration:
             mgr.update_configuration("biological", {}, profile_name="nope")
 
 
+@pytest.mark.coverage_extra
 class TestConfigProfileInheritance:
     def test_get_profile_with_inheritance(self, tmp_path):
         mgr = ConfigManager(str(tmp_path / "configs"))
@@ -190,6 +194,7 @@ class TestConfigProfileInheritance:
         assert result.biological["child_key"] == "child_val"
 
 
+@pytest.mark.coverage_extra
 class TestDeleteProfile:
     def test_delete_active_profile(self, tmp_path):
         mgr = ConfigManager(str(tmp_path / "configs"))
@@ -199,6 +204,7 @@ class TestDeleteProfile:
             mgr.delete_profile("active")
 
 
+@pytest.mark.coverage_extra
 class TestValidateProfile:
     def test_validate_profile_with_control(self, tmp_path):
         mgr = ConfigManager(str(tmp_path / "configs"))
@@ -222,6 +228,7 @@ class TestValidateProfile:
             mgr.validate_profile(profile)
 
 
+@pytest.mark.coverage_extra
 class TestGetConfigManagerSingleton:
     def test_reset_and_get(self, tmp_path):
         reset_config_manager()
@@ -232,6 +239,7 @@ class TestGetConfigManagerSingleton:
         reset_config_manager()
 
 
+@pytest.mark.coverage_extra
 class TestConfigMergerProfiles:
     def test_merge_profiles_base_only_biological(self):
         base = ConfigProfile(biological={"a": 1})

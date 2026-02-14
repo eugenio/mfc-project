@@ -41,6 +41,7 @@ def _make_instance(iid="inst-001", svc="svc", ver="v1", port=8080):
     )
 
 
+@pytest.mark.coverage_extra
 class TestLoadBalancerFallback:
     """Cover line 192 - weighted selection fallback."""
 
@@ -54,6 +55,7 @@ class TestLoadBalancerFallback:
         assert selected is not None
 
 
+@pytest.mark.coverage_extra
 class TestBlueGreenExceptions:
     """Cover lines 304-306, 323-325."""
 
@@ -97,6 +99,7 @@ class TestBlueGreenExceptions:
         assert bg.active_environment == "green"
 
 
+@pytest.mark.coverage_extra
 class TestCanaryExceptions:
     """Cover lines 422-424, 453-455."""
 
@@ -149,6 +152,7 @@ class TestCanaryExceptions:
         assert result is False
 
 
+@pytest.mark.coverage_extra
 class TestDeploymentManagerInit:
     """Cover lines 614-617."""
 
@@ -165,6 +169,7 @@ class TestDeploymentManagerInit:
             assert mgr.docker_client is None
 
 
+@pytest.mark.coverage_extra
 class TestDeploymentManagerDeploy:
     """Cover lines 715-717, 757, 762, 776-778, 816, 830-832."""
 
@@ -186,6 +191,7 @@ class TestDeploymentManagerDeploy:
         assert result["success"] is False
 
 
+@pytest.mark.coverage_extra
 class TestDeployInstances:
     """Cover lines 850-860, 870-872."""
 
@@ -207,6 +213,7 @@ class TestDeployInstances:
         assert result is True
 
 
+@pytest.mark.coverage_extra
 class TestHealthChecks:
     """Cover lines 900-935."""
 
@@ -222,6 +229,7 @@ class TestHealthChecks:
             assert results[0].is_healthy is True
 
 
+@pytest.mark.coverage_extra
 class TestAutoRollback:
     """Cover lines 952-968."""
 
@@ -247,6 +255,7 @@ class TestAutoRollback:
         assert result["success"] is False
 
 
+@pytest.mark.coverage_extra
 class TestScaleService:
     """Cover lines 1062-1066, 1075-1077."""
 
@@ -293,6 +302,7 @@ class TestScaleService:
         assert result["success"] is False
 
 
+@pytest.mark.coverage_extra
 class TestEmergencyStop:
     """Cover lines 1177-1181, 1187-1188, 1196-1198."""
 
@@ -316,6 +326,7 @@ class TestEmergencyStop:
         assert result["success"] is False
 
 
+@pytest.mark.coverage_extra
 class TestImportConfigException:
     """Cover lines 1273-1275."""
 
@@ -327,6 +338,7 @@ class TestImportConfigException:
         assert result["success"] is False
 
 
+@pytest.mark.coverage_extra
 class TestMonitoringLoop:
     """Cover lines 996, 1000-1001."""
 

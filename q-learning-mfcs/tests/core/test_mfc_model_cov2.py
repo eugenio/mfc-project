@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
+@pytest.mark.coverage_extra
 class TestMFCModelConstants:
     def test_all_constants_and_execution(self):
         """Verify y0, t_span, t_eval, constant_i_fc, and solve_ivp call."""

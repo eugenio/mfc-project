@@ -225,6 +225,7 @@ def _make_ctrl(algo=DRLAlgorithm.DQN, priority_replay=False):
     return ctrl
 
 
+@pytest.mark.coverage_extra
 class TestStoreExperience:
     """Cover store_experience lines 850-862."""
 
@@ -241,6 +242,7 @@ class TestStoreExperience:
         assert len(ctrl.replay_buffer) == 1
 
 
+@pytest.mark.coverage_extra
 class TestTrainStep:
     """Cover train_step lines 864-877."""
 
@@ -268,6 +270,7 @@ class TestTrainStep:
         ctrl._train_policy_gradient.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestTrainDQN:
     """Cover _train_dqn lines 879-958."""
 
@@ -320,6 +323,7 @@ class TestTrainDQN:
         ctrl._update_target_network.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestUpdateTargetNetwork:
     """Cover _update_target_network lines 1077-1092."""
 
@@ -340,6 +344,7 @@ class TestUpdateTargetNetwork:
         ctrl.target_network.load_state_dict.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestUpdateExploration:
     """Cover _update_exploration lines 1094-1117."""
 
@@ -376,6 +381,7 @@ class TestUpdateExploration:
         ctrl.target_network.apply.assert_called()
 
 
+@pytest.mark.coverage_extra
 class TestSelectActionPolicyBased:
     """Cover select_action lines 801-848."""
 
@@ -408,6 +414,7 @@ class TestSelectActionPolicyBased:
         action = ctrl.select_action(state, training=True)
 
 
+@pytest.mark.coverage_extra
 class TestSaveLoadModel:
     """Cover save_model/load_model lines 1203-1252."""
 
@@ -449,6 +456,7 @@ class TestSaveLoadModel:
         assert ctrl.epsilon == 0.2
 
 
+@pytest.mark.coverage_extra
 class TestCreateDeepRLController:
     """Cover create_deep_rl_controller lines 1287-1327."""
 
@@ -488,6 +496,7 @@ class TestCreateDeepRLController:
             assert ctrl.config.learning_rate == 0.001
 
 
+@pytest.mark.coverage_extra
 class TestPriorityReplayBufferExtended:
     """Cover PriorityReplayBuffer sample/update_priorities."""
 

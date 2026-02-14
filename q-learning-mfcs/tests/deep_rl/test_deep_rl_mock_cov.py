@@ -3,9 +3,16 @@
 Targets 99%+ statement coverage of all classes and functions.
 """
 import sys
+from collections import deque
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-from collections import deque
+
+import numpy as np
+import pytest
+
+# ---------------------------------------------------------------------------
+# Mock torch BEFORE importing source modules
+# ---------------------------------------------------------------------------
 mock_torch = MagicMock()
 mock_nn = MagicMock()
 mock_optim = MagicMock()
@@ -20,19 +27,45 @@ mock_torch.Tensor = _FakeTensor
 
 
 class MockModule:
-    def __init__(self, *a, **kw): pass
-    def forward(self, x): return x
-    def parameters(self): return []
-    def state_dict(self): return {}
-    def load_state_dict(self, d): pass
-    def train(self, mode=True): return self
-    def eval(self): return self
-    def to(self, device): return self
-    def __call__(self, *a, **kw): return MagicMock()
-    def named_parameters(self): return []
-    def children(self): return []
-    def register_buffer(self, name, tensor): setattr(self, name, tensor)
-    def apply(self, fn): return self
+    def __init__(self, *a, **kw):
+        pass
+
+    def forward(self, x):
+        return x
+
+    def parameters(self):
+        return []
+
+    def state_dict(self):
+        return {}
+
+    def load_state_dict(self, d):
+        pass
+
+    def train(self, mode=True):
+        return self
+
+    def eval(self):
+        return self
+
+    def to(self, device):
+        return self
+
+    def __call__(self, *a, **kw):
+        return MagicMock()
+
+    def named_parameters(self):
+        return []
+
+    def children(self):
+        return []
+
+    def register_buffer(self, name, tensor):
+        setattr(self, name, tensor)
+
+    def apply(self, fn):
+        return self
+
     training = True
 
 
@@ -42,12 +75,17 @@ class _FakeParameter:
         self.requires_grad = requires_grad
         self.grad = None
         self.shape = getattr(data, "shape", (1,))
-    def numel(self): return 0
+
+    def numel(self):
+        return 0
 
 
 class _FakeLinear(MockModule):
-    def __init__(self, in_f=0, out_f=0, *a, **kw): super().__init__()
-    def __call__(self, x): return MagicMock()
+    def __init__(self, in_f=0, out_f=0, *a, **kw):
+        super().__init__()
+
+    def __call__(self, x):
+        return MagicMock()
 
 
 mock_nn.Module = MockModule
@@ -119,45 +157,51 @@ mock_torch.linspace = MagicMock(return_value=MagicMock(
 mock_torch.randn = MagicMock(return_value=MagicMock(
     sign=MagicMock(return_value=MagicMock(
         mul_=MagicMock(return_value=MagicMock())))))
-import numpy as np
-import pytest
 
+# -- Inject mocks into sys.modules BEFORE importing source modules ----------
 _orig = {}
+for _name in ["torch", "torch.nn", "torch.nn.functional", "torch.optim"]:
+    _orig[_name] = sys.modules.get(_name)
+
+sys.modules["torch"] = mock_torch
+sys.modules["torch.nn"] = mock_nn
+sys.modules["torch.nn.functional"] = mock_F
+sys.modules["torch.optim"] = mock_optim
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
 import torch_compat
+
+torch_compat.TORCH_AVAILABLE = True
+torch_compat.torch = mock_torch
+torch_compat.nn = mock_nn
+torch_compat.get_device = MagicMock(return_value="cpu")
+
 from deep_rl_controller import (
-class _FakeTensor:
-    pass
+    A3CNetwork,
+    ActorCriticNetwork,
+    DeepRLController,
+    DRLAlgorithm,
+    DRLConfig,
+    DuelingDQN,
+    NoisyLinear,
+    PPONetwork,
+    PriorityReplayBuffer,
+    RainbowDQN,
+    create_deep_rl_controller,
+)
+
+# -- Restore original sys.modules ------------------------------------------
+for _name, _o in _orig.items():
+    if _o is not None:
+        sys.modules[_name] = _o
+    else:
+        sys.modules.pop(_name, None)
 
 
-class MockModule:
-    def __init__(self, *a, **kw): pass
-    def forward(self, x): return x
-    def parameters(self): return []
-    def state_dict(self): return {}
-    def load_state_dict(self, d): pass
-    def train(self, mode=True): return self
-    def eval(self): return self
-    def to(self, device): return self
-    def __call__(self, *a, **kw): return MagicMock()
-    def named_parameters(self): return []
-    def children(self): return []
-    def register_buffer(self, name, tensor): setattr(self, name, tensor)
-    def apply(self, fn): return self
-    training = True
-
-class _FakeParameter:
-    def __init__(self, data=None, requires_grad=True):
-        self.data = data if data is not None else MagicMock()
-        self.requires_grad = requires_grad
-        self.grad = None
-        self.shape = getattr(data, "shape", (1,))
-    def numel(self): return 0
-
-
-class _FakeLinear(MockModule):
-    def __init__(self, in_f=0, out_f=0, *a, **kw): super().__init__()
-    def __call__(self, x): return MagicMock()
-
+# ===========================================================================
+# Tests
+# ===========================================================================
 
 class TestDRLConfig:
     def test_defaults(self):
@@ -169,6 +213,7 @@ class TestDRLConfig:
         c = DRLConfig(hidden_layers=[64], learning_rate=0.01)
         assert c.hidden_layers == [64]
 
+
 class TestPriorityReplayBuffer:
     def test_lifecycle(self):
         buf = PriorityReplayBuffer(capacity=10)
@@ -179,6 +224,7 @@ class TestPriorityReplayBuffer:
         assert len(batch) == 3
         buf.update_priorities(np.array([0, 1]), np.array([2.0, 5.0]))
         assert buf.max_priority == 5.0
+
 
 class TestNetworkClasses:
     def test_dueling_dqn(self):
@@ -226,31 +272,37 @@ class TestNetworkClasses:
         net.forward(MagicMock())
         net.get_action_and_value(MagicMock())
 
+
 class TestDeepRLController:
     def _make(self, algo=DRLAlgorithm.DQN, priority=False):
-        config = DRLConfig(hidden_layers=[32, 16], priority_replay=priority,
-                           warmup_steps=5, memory_size=100, batch_size=4)
+        config = DRLConfig(
+            hidden_layers=[32, 16], priority_replay=priority,
+            warmup_steps=5, memory_size=100, batch_size=4)
         if algo in (DRLAlgorithm.PPO, DRLAlgorithm.A3C):
             with patch.object(DeepRLController, "_build_networks"):
-                ctrl = DeepRLController(state_dim=10, action_dim=5,
-                                        algorithm=algo, config=config)
+                ctrl = DeepRLController(
+                    state_dim=10, action_dim=5,
+                    algorithm=algo, config=config)
                 ctrl.policy_network = MagicMock(return_value=(
                     MagicMock(), MagicMock(item=MagicMock(return_value=0.5))))
                 ctrl.target_network = None
                 ctrl.q_network = MagicMock()
                 ctrl.optimizer = MagicMock()
-                ctrl.scheduler = MagicMock(get_last_lr=MagicMock(return_value=[1e-4]))
+                ctrl.scheduler = MagicMock(
+                    get_last_lr=MagicMock(return_value=[1e-4]))
                 ctrl.replay_buffer = []
                 ctrl.episode_rewards = deque(maxlen=100)
                 ctrl.episode_lengths = deque(maxlen=100)
                 ctrl.q_value_history = deque(maxlen=1000)
                 ctrl.writer = None
             return ctrl
-        return DeepRLController(state_dim=10, action_dim=5,
-                                algorithm=algo, config=config)
+        return DeepRLController(
+            state_dim=10, action_dim=5,
+            algorithm=algo, config=config)
 
     def test_init_variants(self):
-        for algo in [DRLAlgorithm.DQN, DRLAlgorithm.DOUBLE_DQN, DRLAlgorithm.DUELING_DQN]:
+        for algo in [DRLAlgorithm.DQN, DRLAlgorithm.DOUBLE_DQN,
+                     DRLAlgorithm.DUELING_DQN]:
             ctrl = self._make(algo)
             assert ctrl.algorithm == algo
 
@@ -268,7 +320,8 @@ class TestDeepRLController:
     def test_select_action_ppo(self):
         ctrl = self._make(DRLAlgorithm.PPO)
         mock_dist = MagicMock()
-        mock_dist.sample.return_value = MagicMock(item=MagicMock(return_value=1))
+        mock_dist.sample.return_value = MagicMock(
+            item=MagicMock(return_value=1))
         mock_torch.distributions.Categorical.return_value = mock_dist
         ctrl.select_action(np.zeros(10, dtype=np.float32), True)
         ctrl.select_action(np.zeros(10, dtype=np.float32), False)
@@ -302,7 +355,8 @@ class TestDeepRLController:
         ctrl.save_model("/tmp/m.pt")
         mock_torch.load.return_value = {
             "steps": 10, "episodes": 1, "epsilon": 0.1, "beta": 0.9,
-            "q_network": {}, "target_network": {}, "optimizer": {}, "scheduler": {},
+            "q_network": {}, "target_network": {},
+            "optimizer": {}, "scheduler": {},
         }
         ctrl.load_model("/tmp/m.pt")
         assert ctrl.epsilon == 0.1
@@ -327,6 +381,7 @@ class TestDeepRLController:
         ms.anomalies = []
         action, info = ctrl.control_step(ms)
         assert "algorithm" in info
+
 
 class TestFactory:
     def test_all(self):

@@ -1040,29 +1040,3 @@ class TestCreateFederatedSystem:
                 local_lr=0.001, nonexistent_key=True)
         assert server.config.num_clients == 3
         assert server.config.local_lr == 0.001
-def _make_model():
-    """Create a minimal mock model for tests."""
-    model = MagicMock()
-    model.parameters.return_value = []
-    model.named_parameters.return_value = []
-    model.state_dict.return_value = {}
-    model.load_state_dict = MagicMock()
-    model.train = MagicMock(return_value=model)
-    model.eval = MagicMock(return_value=model)
-    model.to = MagicMock(return_value=model)
-    model.children.return_value = []
-    return model
-
-def _make_client_info(cid="c1", species=BacterialSpecies.GEOBACTER):
-    return ClientInfo(
-        client_id=cid,
-        site_name=f"Site_{cid}",
-        location="TestLab",
-        mfc_type="dual_chamber",
-        bacterial_species=species,
-    )
-
-
-# ===========================================================================
-# Tests - Enums
-# ===========================================================================

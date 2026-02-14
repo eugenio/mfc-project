@@ -96,6 +96,7 @@ def _make_model():
     return model
 
 
+@pytest.mark.coverage_extra
 class TestAggregateSensorData:
     """Cover _aggregate_sensor_data lines 644-715."""
 
@@ -151,6 +152,7 @@ class TestAggregateSensorData:
         assert result["fusion"]["sensor_agreement"] == 0.9
 
 
+@pytest.mark.coverage_extra
 class TestBiofilmCurrentEnhancement:
     """Cover _calculate_biofilm_current_enhancement lines 717-742."""
 
@@ -188,6 +190,7 @@ class TestBiofilmCurrentEnhancement:
         assert result > 0
 
 
+@pytest.mark.coverage_extra
 class TestModelValidationScore:
     """Cover _calculate_model_validation_score lines 744-783."""
 
@@ -217,6 +220,7 @@ class TestModelValidationScore:
         assert score == 0.5
 
 
+@pytest.mark.coverage_extra
 class TestHandleSensorFaults:
     """Cover _handle_sensor_faults lines 785-812."""
 
@@ -249,6 +253,7 @@ class TestHandleSensorFaults:
         assert len(model.sensor_fault_history) == 0
 
 
+@pytest.mark.coverage_extra
 class TestCompileSensorResults:
     """Cover _compile_sensor_results lines 1016-1060."""
 
@@ -283,6 +288,7 @@ class TestCompileSensorResults:
         assert "controller_performance" in result
 
 
+@pytest.mark.coverage_extra
 class TestGetSensorDiagnostics:
     """Cover get_sensor_diagnostics lines 1062-1103."""
 
@@ -311,6 +317,7 @@ class TestGetSensorDiagnostics:
         assert "controller_diagnostics" in diag
 
 
+@pytest.mark.coverage_extra
 class TestSaveSensorCheckpoint:
     """Cover _save_sensor_checkpoint lines 995-1014."""
 
@@ -325,6 +332,7 @@ class TestSaveSensorCheckpoint:
                 mock_dump.assert_called_once()
 
 
+@pytest.mark.coverage_extra
 class TestRunSensorIntegratedSimulation:
     """Cover run_sensor_integrated_simulation lines 954-993."""
 
@@ -351,6 +359,7 @@ class TestRunSensorIntegratedSimulation:
         assert model._save_sensor_checkpoint.call_count >= 1
 
 
+@pytest.mark.coverage_extra
 class TestMain:
     """Cover main() function lines 1106-1181."""
 

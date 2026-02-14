@@ -32,6 +32,7 @@ def engine():
     return ModelInferenceEngine(make_specs())
 
 
+@pytest.mark.coverage_extra
 class TestLoadModelFormats:
     def test_load_pickle(self, tmp_path):
         specs = make_specs(model_format=ModelFormat.PICKLE)
@@ -82,6 +83,7 @@ class TestLoadModelFormats:
         assert eng.model_metadata["version"] == "1.0"
 
 
+@pytest.mark.coverage_extra
 class TestConvertJsonQtable:
     def test_json_dict_format(self, engine):
         data = {"q_table": {"(0,)": [1, 2], "bad_key": [3, 4]}}
@@ -99,6 +101,7 @@ class TestConvertJsonQtable:
         assert result == data
 
 
+@pytest.mark.coverage_extra
 class TestQuantizeModel:
     def test_quantize_float_model(self):
         specs = make_specs(quantization=True)
@@ -109,6 +112,7 @@ class TestQuantizeModel:
         assert hasattr(eng, "quantization_scale")
 
 
+@pytest.mark.coverage_extra
 class TestCreateLookupTables:
     def test_create_lookup_tables(self):
         specs = make_specs(optimization_level=2)
@@ -118,6 +122,7 @@ class TestCreateLookupTables:
         assert hasattr(eng, "state_lookup")
 
 
+@pytest.mark.coverage_extra
 class TestVectorizeOperations:
     def test_vectorize_with_batch(self):
         specs = make_specs(optimization_level=2, batch_processing=True)
@@ -126,6 +131,7 @@ class TestVectorizeOperations:
         assert hasattr(eng, "batch_argmax")
 
 
+@pytest.mark.coverage_extra
 class TestInference:
     def test_infer_with_cache_hit(self, engine):
         engine.model = np.random.rand(100, 5)
@@ -151,6 +157,7 @@ class TestInference:
         assert eng.deadline_violations >= 1
 
 
+@pytest.mark.coverage_extra
 class TestExecuteInference:
     def test_no_model_raises(self, engine):
         with pytest.raises(RuntimeError, match="No model"):
@@ -188,6 +195,7 @@ class TestExecuteInference:
             assert a == 0
 
 
+@pytest.mark.coverage_extra
 class TestInferFromQtableDict:
     def test_state_not_found(self, engine):
         engine.model = {}
@@ -207,6 +215,7 @@ class TestInferFromQtableDict:
         assert a == 1
 
 
+@pytest.mark.coverage_extra
 class TestInferFromQtableArray:
     def test_quantized_model(self):
         specs = make_specs(quantization=True)
@@ -222,6 +231,7 @@ class TestInferFromQtableArray:
         # hash may wrap around, so just check it returns
 
 
+@pytest.mark.coverage_extra
 class TestCalculateConfidence:
     def test_single_value(self, engine):
         assert engine._calculate_confidence(np.array([5.0])) == 1.0
@@ -233,6 +243,7 @@ class TestCalculateConfidence:
         assert engine._calculate_confidence(np.array([3.0, 3.0, 3.0])) == 0.5
 
 
+@pytest.mark.coverage_extra
 class TestBatchInfer:
     def test_batch_no_batch_processing(self, engine):
         engine.model = np.random.rand(100, 5)
@@ -250,6 +261,7 @@ class TestBatchInfer:
         assert len(results) == 5
 
 
+@pytest.mark.coverage_extra
 class TestProcessBatch:
     def test_process_batch_vectorized(self):
         specs = make_specs(batch_processing=True, optimization_level=2)
@@ -267,6 +279,7 @@ class TestProcessBatch:
         assert len(results) == 1
 
 
+@pytest.mark.coverage_extra
 class TestCostAndPower:
     def test_get_power_consumption(self, engine):
         p = engine.get_power_consumption()
@@ -278,6 +291,7 @@ class TestCostAndPower:
         assert "total_cost_per_hour" in ca
 
 
+@pytest.mark.coverage_extra
 class TestPerformanceStats:
     def test_get_performance_stats(self, engine):
         engine.model = np.random.rand(100, 5)
@@ -286,6 +300,7 @@ class TestPerformanceStats:
         assert stats["total_inferences"] >= 1
 
 
+@pytest.mark.coverage_extra
 class TestCreateStandard:
     def test_create_standard_engines(self):
         engines = create_standard_inference_engines()

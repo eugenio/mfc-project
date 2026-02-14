@@ -45,6 +45,7 @@ def _make_objectives(obj_type=ObjectiveType.MAXIMIZE):
     return [OptimizationObjective(name="score", type=obj_type)]
 
 
+@pytest.mark.coverage_extra
 class TestEnums:
     def test_optimization_method(self):
         assert OptimizationMethod.BAYESIAN.value == "bayesian"
@@ -55,6 +56,7 @@ class TestEnums:
         assert ObjectiveType.MAXIMIZE.value == "maximize"
 
 
+@pytest.mark.coverage_extra
 class TestOptimizationObjective:
     def test_defaults(self):
         obj = OptimizationObjective(name="score", type=ObjectiveType.MAXIMIZE)
@@ -62,6 +64,7 @@ class TestOptimizationObjective:
         assert obj.tolerance == 1e-6
 
 
+@pytest.mark.coverage_extra
 class TestOptimizationConstraint:
     def test_basic(self):
         c = OptimizationConstraint(
@@ -71,6 +74,7 @@ class TestOptimizationConstraint:
         assert c.constraint_type == "ineq"
 
 
+@pytest.mark.coverage_extra
 class TestOptimizationResult:
     def test_defaults(self):
         r = OptimizationResult(method=OptimizationMethod.GENETIC)
@@ -92,6 +96,7 @@ class TestOptimizationResult:
         assert r.get_optimization_time() >= 0.0
 
 
+@pytest.mark.coverage_extra
 class TestGeneticOptimizer:
     def test_init(self):
         space = _make_space()
@@ -217,6 +222,7 @@ class TestGeneticOptimizer:
         assert result is not None
 
 
+@pytest.mark.coverage_extra
 class TestGradientOptimizer:
     def test_init(self):
         space = _make_space()
@@ -269,6 +275,7 @@ class TestGradientOptimizer:
         assert result is not None
 
 
+@pytest.mark.coverage_extra
 class TestBayesianOptimizer:
     def test_init(self):
         space = _make_space()
@@ -354,6 +361,7 @@ class TestBayesianOptimizer:
         assert result.total_evaluations > 0
 
 
+@pytest.mark.coverage_extra
 class TestParameterOptimizerBase:
     def test_evaluate_objectives_success(self):
         space = _make_space()
@@ -441,6 +449,7 @@ class TestParameterOptimizerBase:
         assert score == 10.0 * 1.0 - 3.0 * 2.0
 
 
+@pytest.mark.coverage_extra
 class TestParetoFrontier:
     def test_basic(self):
         objectives = np.array([
@@ -459,6 +468,7 @@ class TestParetoFrontier:
         assert is_pareto[0] is True or is_pareto[0]
 
 
+@pytest.mark.coverage_extra
 class TestHypervolumeIndicator:
     def test_empty(self):
         result = hypervolume_indicator(np.array([]).reshape(0, 2), np.array([0.0, 0.0]))

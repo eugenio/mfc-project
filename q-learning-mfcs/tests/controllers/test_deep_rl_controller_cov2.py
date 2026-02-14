@@ -212,6 +212,7 @@ def _make_ctrl_patched(algo=DRLAlgorithm.DQN):
     return ctrl
 
 
+@pytest.mark.coverage_extra
 class TestDuelingDQNClass:
     """Tests for DuelingDQN neural network class."""
 
@@ -273,6 +274,7 @@ class TestDuelingDQNClass:
         net = DuelingDQN(state_dim=10, action_dim=5, config=config)
 
 
+@pytest.mark.coverage_extra
 class TestActorCriticNetwork:
     """Tests for ActorCriticNetwork."""
 
@@ -301,6 +303,7 @@ class TestActorCriticNetwork:
             act = net._get_activation(act_name)
 
 
+@pytest.mark.coverage_extra
 class TestPPONetwork:
     """Tests for PPONetwork."""
 
@@ -325,6 +328,7 @@ class TestPPONetwork:
         result = net.evaluate_actions(MagicMock(), MagicMock())
 
 
+@pytest.mark.coverage_extra
 class TestA3CNetwork:
     """Tests for A3CNetwork."""
 
@@ -344,6 +348,7 @@ class TestA3CNetwork:
         result = net.get_action_and_value(MagicMock())
 
 
+@pytest.mark.coverage_extra
 class TestNoisyLinearClass:
     """Tests for NoisyLinear layer."""
 
@@ -374,6 +379,7 @@ class TestNoisyLinearClass:
         result = nl.forward(MagicMock())
 
 
+@pytest.mark.coverage_extra
 class TestRainbowDQNClass:
     """Tests for RainbowDQN."""
 
@@ -405,6 +411,7 @@ class TestRainbowDQNClass:
         result = net.get_q_values(MagicMock())
 
 
+@pytest.mark.coverage_extra
 class TestDeepRLControllerAdvanced:
     """Advanced tests for DeepRLController."""
 

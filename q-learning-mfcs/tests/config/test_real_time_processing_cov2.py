@@ -18,6 +18,7 @@ from config.real_time_processing import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestDataPointConversion:
     def test_to_dict_and_from_dict(self):
         dp = DataPoint(timestamp=datetime.now(), sensor_id="s1", value=1.5,
@@ -28,6 +29,7 @@ class TestDataPointConversion:
         assert dp2.value == 1.5
 
 
+@pytest.mark.coverage_extra
 class TestStreamBuffer:
     def test_get_sensor_data(self):
         buf = StreamBuffer(100)
@@ -37,6 +39,7 @@ class TestStreamBuffer:
         assert len(buf.get_sensor_data("s1")) == 10
 
 
+@pytest.mark.coverage_extra
 class TestStreamingStats:
     def test_update_stats(self):
         ss = StreamingStats(sensor_id="s1", window_size=100)
@@ -51,6 +54,7 @@ class TestStreamingStats:
         assert ss.quality_score < 1.0
 
 
+@pytest.mark.coverage_extra
 class TestMFCDataStream:
     def test_start_stop(self):
         cfg = {"s1": {"base_value": 10.0, "noise_level": 0.1, "drift": 0, "error_rate": 0}}
@@ -77,6 +81,7 @@ class TestMFCDataStream:
         assert dp.quality == DataQuality.POOR
 
 
+@pytest.mark.coverage_extra
 class TestStreamProcessor:
     def test_smoothing_processor(self):
         proc_cfg = {"pipeline": [{"type": "smoothing", "method": "moving_average", "window_size": 3}]}
@@ -116,6 +121,7 @@ class TestStreamProcessor:
         assert len(result) >= 50
 
 
+@pytest.mark.coverage_extra
 class TestRealTimeAnalyzer:
     def test_analyze_stream_no_data(self):
         cfg = create_sample_alert_config()
@@ -170,6 +176,7 @@ class TestRealTimeAnalyzer:
         assert len(alerts) >= 1
 
 
+@pytest.mark.coverage_extra
 class TestAlertSystem:
     def test_start_stop(self):
         als = AlertSystem({"max_history": 10})
@@ -197,6 +204,7 @@ class TestAlertSystem:
         als.stop()
 
 
+@pytest.mark.coverage_extra
 class TestSampleConfigs:
     def test_create_sample_configs(self):
         assert "power_sensor" in create_sample_mfc_config()

@@ -6,6 +6,7 @@ _run_demo interrupted mid-loop, _save_results pickle failure,
 _generate_plots with all branch variants, main with all CLI flags,
 simplified Q-learning edge cases, and error branches.
 """
+import builtins
 import sys
 import os
 import json
@@ -14,14 +15,33 @@ import signal
 import time
 import argparse
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 import pytest
 from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 
+_real_import = builtins.__import__
+
 # Clean stale path_config mock and force fresh import of run_simulation
+for _mod_name in ['run_simulation', 'path_config']:
+    if _mod_name in sys.modules and hasattr(sys.modules[_mod_name], '_mock_name'):
+        del sys.modules[_mod_name]
+
 from run_simulation import (
+    SimulationConfig,
+    UnifiedSimulationRunner,
+    create_argument_parser,
+    list_modes,
+    main,
+)
+
+
+@pytest.mark.coverage_extra
 class TestRunSimulationCov2ConfigEdgeCases:
     """Cover config edge cases not tested before."""
 
@@ -52,6 +72,7 @@ class TestRunSimulationCov2ConfigEdgeCases:
         assert "100h_simulation" in c1.output_dir
         assert "stack_simulation" in c2.output_dir
 
+@pytest.mark.coverage_extra
 class TestRun100hWithMFCStackImport:
     """Cover _run_100h lines where mfc_stack_simulation imports succeed
     but mfc_100h_simulation import fails (fallback path using MFCStack)."""
@@ -91,7 +112,7 @@ class TestRun100hWithMFCStackImport:
                     raise ImportError("no 100h module")
                 if name == "mfc_stack_simulation":
                     return mock_stack_module
-                return __builtins__.__import__(name, *args, **kwargs)
+                return _real_import(name, *args, **kwargs)
 
             with patch("builtins.__import__", side_effect=fake_import):
                 result = r._run_100h()
@@ -113,7 +134,7 @@ class TestRun100hWithMFCStackImport:
         def fake_import(name, *args, **kwargs):
             if name in ("mfc_stack_simulation", "mfc_100h_simulation"):
                 raise ImportError("mocked")
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_100h()
@@ -155,13 +176,14 @@ class TestRun100hWithMFCStackImport:
                     return mock_stack_mod
                 if name == "mfc_100h_simulation":
                     return mock_100h_mod
-                return __builtins__.__import__(name, *args, **kwargs)
+                return _real_import(name, *args, **kwargs)
 
             with patch("builtins.__import__", side_effect=fake_import):
                 result = r._run_100h()
 
         assert isinstance(result, dict)
 
+@pytest.mark.coverage_extra
 class TestRunGPUWithSuccessfulInit:
     """Cover _run_gpu lines where GPU module loads and runs."""
 
@@ -193,7 +215,7 @@ class TestRunGPUWithSuccessfulInit:
                 return mock_gpu_mod
             if name == "config.qlearning_config":
                 return mock_config_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_gpu()
@@ -225,7 +247,7 @@ class TestRunGPUWithSuccessfulInit:
                 return mock_gpu_mod
             if name == "config.qlearning_config":
                 return mock_config_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_gpu()
@@ -260,7 +282,7 @@ class TestRunGPUWithSuccessfulInit:
                 return mock_gpu_mod
             if name == "config.qlearning_config":
                 return mock_config_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_gpu()
@@ -295,13 +317,14 @@ class TestRunGPUWithSuccessfulInit:
                 return mock_gpu_mod
             if name == "config.qlearning_config":
                 return mock_config_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_gpu()
 
         assert isinstance(result, dict)
 
+@pytest.mark.coverage_extra
 class TestRunStackWithSuccessfulImport:
     """Cover _run_stack lines where mfc_stack_simulation import succeeds."""
 
@@ -337,7 +360,7 @@ class TestRunStackWithSuccessfulImport:
         def fake_import(name, *args, **kwargs):
             if name == "mfc_stack_simulation":
                 return mock_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_stack()
@@ -377,13 +400,14 @@ class TestRunStackWithSuccessfulImport:
         def fake_import(name, *args, **kwargs):
             if name == "mfc_stack_simulation":
                 return mock_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_stack()
 
         assert isinstance(result, dict)
 
+@pytest.mark.coverage_extra
 class TestRunComprehensiveWithSuccessfulImport:
     """Cover _run_comprehensive lines where imports succeed."""
 
@@ -426,7 +450,7 @@ class TestRunComprehensiveWithSuccessfulImport:
                 return mock_sensor_mod
             if name == "sensor_integrated_mfc_model":
                 return mock_sim_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_comprehensive()
@@ -460,7 +484,7 @@ class TestRunComprehensiveWithSuccessfulImport:
                 return mock_sim_mod
             if name in ("mfc_stack_simulation", "mfc_100h_simulation"):
                 raise ImportError("no module")
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_comprehensive()
@@ -502,13 +526,14 @@ class TestRunComprehensiveWithSuccessfulImport:
                 return mock_sensor_mod
             if name == "sensor_integrated_mfc_model":
                 return mock_sim_mod
-            return __builtins__.__import__(name, *args, **kwargs)
+            return _real_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=fake_import):
             result = r._run_comprehensive()
 
         assert "sensor_integration" in result
 
+@pytest.mark.coverage_extra
 class TestSimplifiedQLearningEdgeCases:
     """Cover edge cases in _run_simplified_qlearning."""
 
@@ -542,6 +567,7 @@ class TestSimplifiedQLearningEdgeCases:
         result = r._run_simplified_qlearning()
         assert len(result["time_series"]["time_hours"]) > 0
 
+@pytest.mark.coverage_extra
 class TestSaveResultsEdgeCases:
     """Cover _save_results edge paths."""
 
@@ -578,6 +604,7 @@ class TestSaveResultsEdgeCases:
         with patch.object(r, "_generate_plots", side_effect=Exception("plot fail")):
             r._save_results()  # Should not raise
 
+@pytest.mark.coverage_extra
 class TestGeneratePlotsEdgeCases:
     """Cover _generate_plots edge branches."""
 
@@ -668,6 +695,7 @@ class TestGeneratePlotsEdgeCases:
         }):
             r._generate_plots()
 
+@pytest.mark.coverage_extra
 class TestMainVerboseOutputBranches:
     """Cover main function verbose output branches."""
 
@@ -722,6 +750,7 @@ class TestMainVerboseOutputBranches:
             result = main()
             assert result == 0
 
+@pytest.mark.coverage_extra
 class TestRunDemoInterruptedMidLoop:
     """Cover _run_demo interrupt inside the step loop."""
 
@@ -748,6 +777,7 @@ class TestRunDemoInterruptedMidLoop:
 
         assert len(result["time_series"]["time"]) < 360
 
+@pytest.mark.coverage_extra
 class TestRunExtended:
     """Cover _run_extended method."""
 
@@ -763,6 +793,7 @@ class TestRunExtended:
         result = r._run_extended()
         assert "time_series" in result
 
+@pytest.mark.coverage_extra
 class TestPrepareForJsonNested:
     """Cover nested _prepare_for_json paths."""
 

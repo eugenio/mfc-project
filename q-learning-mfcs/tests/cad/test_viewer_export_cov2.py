@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src", "cad"))
 
 
+@pytest.mark.coverage_extra
 class TestGenerateHtml:
     """Cover _generate_html function."""
 
@@ -48,6 +49,7 @@ class TestGenerateHtml:
         assert "three" in html.lower()
 
 
+@pytest.mark.coverage_extra
 class TestBuildAndExportHtml:
     """Cover build_and_export_html with mock cadquery."""
 

@@ -18,6 +18,7 @@ sys.path.insert(
 from simulation_runner import SimulationRunner
 
 
+@pytest.mark.coverage_extra
 class TestStopSimulation:
     def test_not_running(self):
         sr = SimulationRunner()
@@ -43,6 +44,7 @@ class TestStopSimulation:
         assert result is False
 
 
+@pytest.mark.coverage_extra
 class TestForceCleanup:
     def test_cleanup(self):
         sr = SimulationRunner()
@@ -53,6 +55,7 @@ class TestForceCleanup:
         assert not sr.should_stop
 
 
+@pytest.mark.coverage_extra
 class TestCleanupResources:
     def test_no_deps(self):
         sr = SimulationRunner()
@@ -70,6 +73,7 @@ class TestCleanupResources:
             sr._cleanup_resources()
 
 
+@pytest.mark.coverage_extra
 class TestGetStatus:
     def test_empty_queue(self):
         sr = SimulationRunner()
@@ -82,6 +86,7 @@ class TestGetStatus:
         assert result[0] == "completed"
 
 
+@pytest.mark.coverage_extra
 class TestGetLiveData:
     def test_empty(self):
         sr = SimulationRunner()
@@ -105,6 +110,7 @@ class TestGetLiveData:
         assert len(sr.live_data_buffer) == 1000
 
 
+@pytest.mark.coverage_extra
 class TestGetBufferedData:
     def test_empty(self):
         sr = SimulationRunner()
@@ -121,6 +127,7 @@ class TestGetBufferedData:
         assert len(df) == 2
 
 
+@pytest.mark.coverage_extra
 class TestHasDataChanged:
     def test_no_change(self):
         sr = SimulationRunner()
@@ -136,6 +143,7 @@ class TestHasDataChanged:
         assert sr.metrics_dirty_flag is True
 
 
+@pytest.mark.coverage_extra
 class TestShouldUpdatePlots:
     def test_not_dirty(self):
         sr = SimulationRunner()
@@ -154,6 +162,7 @@ class TestShouldUpdatePlots:
         assert sr.should_update_plots(force=True) is True
 
 
+@pytest.mark.coverage_extra
 class TestShouldUpdateMetrics:
     def test_not_dirty(self):
         sr = SimulationRunner()
@@ -171,6 +180,7 @@ class TestShouldUpdateMetrics:
         assert sr.should_update_metrics(force=True) is True
 
 
+@pytest.mark.coverage_extra
 class TestGetIncrementalUpdateInfo:
     def test_info(self):
         sr = SimulationRunner()
@@ -181,6 +191,7 @@ class TestGetIncrementalUpdateInfo:
         assert "needs_metrics_update" in info
 
 
+@pytest.mark.coverage_extra
 class TestCreateParquetSchema:
     def test_disabled(self):
         sr = SimulationRunner()
@@ -206,6 +217,7 @@ class TestCreateParquetSchema:
         assert sr.enable_parquet is False
 
 
+@pytest.mark.coverage_extra
 class TestInitParquetWriter:
     def test_disabled(self):
         sr = SimulationRunner()
@@ -234,6 +246,7 @@ class TestInitParquetWriter:
         assert sr.enable_parquet is False
 
 
+@pytest.mark.coverage_extra
 class TestWriteParquetBatch:
     def test_disabled(self):
         sr = SimulationRunner()
@@ -258,6 +271,7 @@ class TestWriteParquetBatch:
         sr.close_parquet_writer()
 
 
+@pytest.mark.coverage_extra
 class TestCloseParquetWriter:
     def test_no_writer(self):
         sr = SimulationRunner()
@@ -283,6 +297,7 @@ class TestCloseParquetWriter:
         assert result is False
 
 
+@pytest.mark.coverage_extra
 class TestStartSimulation:
     def test_already_running(self):
         sr = SimulationRunner()

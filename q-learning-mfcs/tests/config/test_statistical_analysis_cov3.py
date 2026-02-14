@@ -23,6 +23,7 @@ from config.statistical_analysis import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestEnums:
     def test_test_type(self):
         assert TestType.PARAMETRIC.value == "parametric"
@@ -39,6 +40,7 @@ class TestEnums:
         assert EffectSizeType.CLIFF_DELTA.value == "cliff_delta"
 
 
+@pytest.mark.coverage_extra
 class TestStatisticalTest:
     def test_valid_config(self):
         st = StatisticalTest(test_type=HypothesisType.ONE_SAMPLE_T)
@@ -66,6 +68,7 @@ class TestStatisticalTest:
         assert st.bootstrap_samples == 5000
 
 
+@pytest.mark.coverage_extra
 class TestTestResult:
     def test_is_significant_true(self):
         r = TestResult(test_name="t-test", statistic=3.0, p_value=0.001)
@@ -86,6 +89,7 @@ class TestTestResult:
         assert "Fail to reject" in interp
 
 
+@pytest.mark.coverage_extra
 class TestDescriptiveStatistics:
     def test_basic_stats(self):
         np.random.seed(42)
@@ -160,6 +164,7 @@ class TestDescriptiveStatistics:
         )
 
 
+@pytest.mark.coverage_extra
 class TestHypothesisTests:
     def test_one_sample_t(self):
         np.random.seed(42)
@@ -352,6 +357,7 @@ class TestHypothesisTests:
             analyzer.hypothesis_test(config, np.array([1.0, 2.0, 3.0]))
 
 
+@pytest.mark.coverage_extra
 class TestMultipleComparisons:
     def test_tukey_fallback(self):
         np.random.seed(42)
@@ -405,6 +411,7 @@ class TestMultipleComparisons:
         assert result["group_names"] == ["Group_1", "Group_2"]
 
 
+@pytest.mark.coverage_extra
 class TestBootstrapTest:
     def test_one_sample(self):
         np.random.seed(42)
@@ -432,6 +439,7 @@ class TestBootstrapTest:
         assert isinstance(result["observed_statistic"], float)
 
 
+@pytest.mark.coverage_extra
 class TestDistributionAnalyzer:
     @pytest.fixture(autouse=True)
     def fix_exponential(self):
@@ -466,6 +474,7 @@ class TestDistributionAnalyzer:
         assert len(da.distributions) > 0
 
 
+@pytest.mark.coverage_extra
 class TestTimeSeriesAnalyzer:
     def test_stationarity_tests(self):
         np.random.seed(42)
@@ -523,6 +532,7 @@ class TestTimeSeriesAnalyzer:
         assert isinstance(result, dict)
 
 
+@pytest.mark.coverage_extra
 class TestEffectSize:
     def test_cohens_d(self):
         d1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -555,6 +565,7 @@ class TestEffectSize:
         assert not np.isnan(result)
 
 
+@pytest.mark.coverage_extra
 class TestInterpretEffectSize:
     def test_negligible(self):
         assert interpret_effect_size(0.1) == "Negligible"
@@ -581,6 +592,7 @@ class TestInterpretEffectSize:
         assert interpret_effect_size(0.5, EffectSizeType.CRAMERS_V) == "Unknown interpretation"
 
 
+@pytest.mark.coverage_extra
 class TestPowerAnalysis:
     def test_two_sample_t(self):
         result = power_analysis(0.8, 60, alpha=0.05, test_type="two_sample_t")

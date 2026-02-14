@@ -67,6 +67,7 @@ from mfc_100h_simulation import (
 )
 
 
+@pytest.mark.coverage_extra
 class TestLongTermMFCStack:
     def test_init(self):
         stack = LongTermMFCStack()
@@ -151,6 +152,7 @@ class TestLongTermMFCStack:
         assert "system_efficiency" in stack.hourly_data
 
 
+@pytest.mark.coverage_extra
 class TestLongTermController:
     def test_init(self):
         stack = LongTermMFCStack()
