@@ -2,284 +2,188 @@
 
 ## Overview
 
-The MFC Q-learning project includes a comprehensive test suite that validates functionality across multiple domains including path configuration, file outputs, GPU capabilities, and simulation execution. This document describes the test suite organization, test categories, and usage instructions.
+The MFC Q-learning project includes a comprehensive test suite with ~492 test files across 44 subdirectories, validating functionality across configuration, controllers, simulation, GPU acceleration, monitoring, deployment, and more. The suite uses **pytest** as its primary test framework with batched coverage collection to manage memory.
 
 ## Test Suite Architecture
 
-The test suite is located in `q-learning-mfcs/tests/` and consists of:
+The test suite is located in `q-learning-mfcs/tests/`:
 
 ```text
 tests/
-├── run_tests.py                   # Main test runner
-├── test_path_config.py           # Path configuration tests
-├── test_file_outputs.py          # File output integration tests
-├── test_actual_executions.py     # Simulation execution tests
-├── test_gpu_capability.py        # GPU hardware detection tests
-└── test_gpu_acceleration.py      # GPU functionality tests
+├── conftest.py                    # Root conftest — sys.modules leak guard
+├── run_tests.py                   # Legacy unittest runner
+├── adaptive/                      # Adaptive controller tests
+├── analysis/                      # Analysis module tests
+├── apptest/                       # Streamlit AppTest tests
+├── biofilm_kinetics/              # Biofilm kinetics tests
+├── cad/                           # CAD export/viewer tests
+├── cathode/                       # Biological cathode tests
+├── compliance/                    # Security & compliance tests
+├── config/                        # Configuration module tests
+├── controllers/                   # Controller tests
+├── core/                          # Core model tests
+├── deep_rl/                       # Deep RL controller tests
+├── deployment/                    # Deployment & service tests
+├── e2e/                           # End-to-end workflow tests
+├── federated/                     # Federated learning tests
+├── gpu/                           # GPU acceleration tests
+├── gui/                           # GUI/Streamlit tests
+├── integrated/                    # Integration tests
+├── mlops/                         # MLOps pipeline tests
+├── monitoring/                    # Monitoring & dashboard tests
+├── notification_system/           # Notification tests
+├── performance/                   # Performance & benchmarking tests
+├── playwright/                    # Playwright E2E browser tests
+├── qlearning/                     # Q-learning optimization tests
+├── simulation/                    # Simulation runner tests
+├── smoke/                         # Fast health-check tests
+├── visualization/                 # Visualization tests
+└── ...                            # + 15 more subdirectories
 ```
 
 ## Running Tests
 
-### From Main Project Directory
+### Recommended Commands (Pixi)
 
 ```bash
-# Run all tests
-python q-learning-mfcs/tests/run_tests.py
+# Run all tests with coverage (batched to avoid OOM)
+pixi run test-coverage
 
-# Run with verbose output
-python q-learning-mfcs/tests/run_tests.py -v
+# Run fast subset (skip coverage-extra tests)
+pixi run -e default python -m pytest -m "not coverage_extra" -q
 
-# Run with quiet output
-python q-learning-mfcs/tests/run_tests.py -q
+# Run a single subdirectory
+pixi run -e default python -m pytest q-learning-mfcs/tests/config/ -v
 
-# Run specific test class
-python q-learning-mfcs/tests/run_tests.py -c <test_class>
+# Run with old single-process mode (may OOM on large suites)
+pixi run test-coverage-single
+
+# Run smoke tests only
+pixi run test-smoke
+
+# Run CI-friendly with XML + coverage output
+pixi run test-ci
 ```
 
-### Available Test Classes
+### Pixi Tasks
 
-- `path_config` - Path configuration and directory structure tests
-- `file_outputs` - File output and data saving tests
-- `imports` - Module import verification tests
-- `executions` - Simulation execution tests
-- `patterns` - File output pattern tests
-- `gpu_capability` - GPU hardware detection tests
-- `gpu_acceleration` - GPU acceleration functionality tests
+| Task | Description |
+|------|-------------|
+| `test` | Run legacy unittest runner |
+| `test-coverage` | Batched coverage run (per-subdirectory, avoids OOM) |
+| `test-coverage-single` | Single-process coverage (may OOM) |
+| `test-fast` | Unit tests only, skip slow/integration/browser |
+| `test-smoke` | Fast health checks |
+| `test-e2e` | End-to-end tests |
+| `test-gui` | GUI tests |
+| `test-config` | Config module tests |
+| `test-cad` | CAD tests |
+| `test-ci` | CI-friendly run with XML + coverage output |
 
-## Test Categories
+## Pytest Markers
 
-### 1. Path Configuration Tests (`test_path_config.py`)
+| Marker | Description | Example |
+|--------|-------------|---------|
+| `unit` | Unit tests | `pytest -m unit` |
+| `integration` | Integration tests | `pytest -m integration` |
+| `coverage_extra` | Supplemental coverage tests (cov2/cov3/cov_extra) | `pytest -m "not coverage_extra"` |
+| `gpu` | GPU-dependent tests | `pytest -m gpu` |
+| `slow` | Long-running tests | `pytest -m "not slow"` |
+| `smoke` | Fast health checks (<5s each) | `pytest -m smoke` |
+| `e2e` | End-to-end workflow tests | `pytest -m e2e` |
+| `apptest` | Streamlit AppTest tests | `pytest -m apptest` |
+| `playwright` | Playwright browser tests | `pytest -m playwright` |
+| `selenium` | Selenium browser tests | `pytest -m selenium` |
+| `gui` | GUI tests | `pytest -m gui` |
+| `performance` | Performance benchmarks | `pytest -m performance` |
+| `mlops` | MLOps integration tests | `pytest -m mlops` |
 
-Tests the centralized path configuration system:
+## Coverage File Naming Convention
 
-- **Directory Existence**: Verifies all required directories exist
-- **Path Generation**: Tests path functions for figures, data, models, logs, reports
-- **Path Consistency**: Ensures paths are consistent across calls
-- **Subdirectory Handling**: Tests path functions with subdirectories
+| Suffix | Meaning |
+|--------|---------|
+| `_cov.py` | Primary coverage tests |
+| `_cov2.py` | Additional coverage (round 2) |
+| `_cov3.py` | Additional coverage (round 3) |
+| `_cov4.py` | Additional coverage (round 4) |
+| `_cov_extra.py` | Supplemental edge-case coverage |
 
-Example test:
+All `_cov2`, `_cov3`, `_cov4`, and `_cov_extra` files are marked with `@pytest.mark.coverage_extra` and can be excluded for faster test runs.
+
+## Memory Management
+
+The test suite uses module-level `sys.modules` mocking to avoid importing heavy dependencies (torch, numpy, pandas, etc.) in coverage tests. Without safeguards, this can cause 3-4+ GB memory usage and OOM. Three mechanisms prevent this:
+
+### 1. Root `conftest.py` — Module Leak Guard
+
+Located at `q-learning-mfcs/tests/conftest.py`, provides two autouse fixtures:
+
+- **`_guard_sys_modules`** (session-scoped): Snapshots `sys.modules` at session start and restores it at session end, removing any MagicMock entries that were added during the session.
+- **`_per_test_mock_cleanup`** (function-scoped): After each test, removes any MagicMock entries added to `sys.modules` during that test, preventing mock leakage between tests.
+
+### 2. Batched Coverage Runner
+
+Located at `scripts/run_coverage_batched.py`, invoked via `pixi run test-coverage`:
+
+1. Clears any existing `.coverage` file
+2. Discovers all subdirectories in `q-learning-mfcs/tests/`
+3. Runs `pytest <subdir> --cov=../src --cov-append -q -p no:playwright` for each
+4. Also runs pytest on any top-level `test_*.py` files
+5. Generates `--cov-report=html --cov-report=term` at the end
+
+This keeps each pytest process to <50 test files and ~900 MB memory.
+
+### 3. Module-Level Cleanup Pattern
+
+Files with `sys.modules` assignments include `_original_modules` snapshot/restore blocks:
 
 ```python
-def test_get_figure_path(self):
-    """Test figure path generation."""
-    fig_path = get_figure_path("test_plot.png")
-    self.assertTrue(fig_path.endswith("data/figures/test_plot.png"))
-    self.assertTrue(os.path.exists(os.path.dirname(fig_path)))
-```
+import sys
+from unittest.mock import MagicMock
 
-### 2. File Output Tests (`test_file_outputs.py`)
+_original_modules = dict(sys.modules)
 
-Tests file creation and data saving functionality:
+sys.modules["torch"] = MagicMock()
+# ... imports ...
 
-- **CSV Output**: Validates CSV data saving to correct paths
-- **JSON Output**: Tests JSON data serialization and saving
-- **Matplotlib Figures**: Tests plot saving functionality
-- **Pickle Models**: Validates model serialization
-- **Multiple Outputs**: Tests simultaneous output creation
-
-### 3. Import Tests (`test_file_outputs.py`)
-
-Verifies all modules import correctly:
-
-- **Main Simulations**: Tests importing core simulation files
-- **Analysis Files**: Validates analysis module imports
-- **Utility Files**: Tests utility module imports
-
-### 4. Execution Tests (`test_actual_executions.py`)
-
-Tests actual code execution:
-
-- **Data Generation**: Tests data generation scripts
-- **Model Saving**: Validates model saving execution
-- **Plotting**: Tests plotting script execution
-- **Minimal Simulations**: Quick simulation runs (skipped by default)
-
-### 5. GPU Capability Tests (`test_gpu_capability.py`)
-
-Comprehensive GPU hardware and software detection:
-
-#### NVIDIA Tests
-
-- **Hardware Detection**: Uses `nvidia-smi` to detect NVIDIA GPUs
-- **CUDA Availability**: Checks CUDA toolkit installation
-- **CuPy Functionality**: Tests CuPy import and GPU operations
-- **PyTorch CUDA**: Validates PyTorch CUDA support
-
-#### AMD Tests
-
-- **Hardware Detection**: Uses `rocm-smi` to detect AMD GPUs
-- **ROCm Availability**: Checks ROCm installation
-- **PyTorch ROCm**: Tests PyTorch with ROCm backend
-- **HIP Detection**: Validates HIP compiler availability
-
-#### Framework Tests
-
-- **TensorFlow GPU**: Tests TensorFlow GPU support
-- **JAX GPU**: Validates JAX GPU backend
-- **Numba CUDA**: Tests Numba CUDA JIT compilation
-
-Example output:
-
-```text
-test_amd_gpu_hardware ... ok
-test_pytorch_rocm_availability ... ok
-  ✅ PyTorch ROCm support detected
-  Device: Radeon RX 7900 XTX
-  HIP Version: 6.0.32831-4b1a4062a
-```
-
-### 6. GPU Acceleration Tests (`test_gpu_acceleration.py`)
-
-Tests the universal GPU acceleration module functionality:
-
-#### Core Tests
-
-- **Initialization**: GPU accelerator initialization
-- **Backend Detection**: Automatic backend selection
-- **Device Info**: Device information retrieval
-
-#### Operation Tests
-
-- **Array Creation**: Array creation on appropriate device
-- **Mathematical Operations**: abs, log, exp, sqrt, power
-- **Conditional Operations**: where, maximum, minimum, clip
-- **Aggregations**: mean, sum
-- **Random Generation**: Normal distribution generation
-
-#### Fallback Tests
-
-- **CPU Fallback**: Tests CPU fallback mode
-- **Error Handling**: Validates graceful degradation
-- **Memory Management**: Tests memory transfer operations
-
-Example test:
-
-```python
-def test_mathematical_operations(self):
-    """Test mathematical operations work correctly."""
-    a = self.gpu_acc.array([1.0, -2.0, 3.0])
-    b = self.gpu_acc.array([4.0, 5.0, -6.0])
-    
-    # Test abs
-    abs_result = self.gpu_acc.abs(a)
-    expected_abs = np.array([1.0, 2.0, 3.0])
-    np.testing.assert_allclose(
-        self.gpu_acc.to_cpu(abs_result), 
-        expected_abs, 
-        rtol=1e-6
-    )
-```
-
-## Test Results Summary
-
-A typical test run produces:
-
-```text
-🧪 MFC Q-Learning Project - Comprehensive Test Suite
-============================================================
-Running tests from: /home/user/mfc-project/q-learning-mfcs/tests
-Source directory: /home/user/mfc-project/q-learning-mfcs/src
-============================================================
-
-[Test execution details...]
-
-============================================================
-📊 TEST SUMMARY
-============================================================
-Tests run: 50
-Successful: 40
-Failures: 0
-Errors: 0
-Skipped: 10
-🎉 ALL TESTS PASSED!
-```
-
-## Test Output Structure
-
-The test suite validates that simulation outputs follow the standardized directory structure:
-
-```text
-q-learning-mfcs/
-├── data/
-│   ├── figures/          # Plot outputs (.png, .pdf)
-│   ├── simulation_data/  # Data files (.csv, .json)
-│   └── logs/            # Log files
-├── q_learning_models/    # Trained models (.pkl)
-└── reports/             # Generated reports
-```
-
-## Continuous Integration
-
-The test suite can be integrated into CI/CD pipelines:
-
-```yaml
-# Example GitHub Actions workflow
-test:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: pixi install
-    - name: Run tests
-      run: python q-learning-mfcs/tests/run_tests.py
+# Restore after imports
+for _k in list(sys.modules):
+    if _k not in _original_modules and isinstance(sys.modules[_k], MagicMock):
+        del sys.modules[_k]
 ```
 
 ## Writing New Tests
 
-To add new tests:
+- Place tests in the appropriate subdirectory
+- Use `@pytest.mark.coverage_extra` for supplemental coverage tests (cov2/cov3/cov_extra variants)
+- If mocking `sys.modules` at module level, use the snapshot/restore pattern shown above
+- Use **pytest** (preferred) or **unittest**, never standalone scripts
+- Structure tests with **Arrange-Act-Assert**
+- Use descriptive names: `test_<behavior>_when_<condition>`
+- Mock at boundaries (DB, HTTP, filesystem), never mock the unit under test
 
-1. Create test class inheriting from `unittest.TestCase`
-1. Add to appropriate test module or create new module
-1. Import in `run_tests.py`
-1. Add to `create_test_suite()` function
+## Continuous Integration
 
-Example:
-
-```python
-class TestNewFeature(unittest.TestCase):
-    def setUp(self):
-        """Set up test fixtures."""
-        self.test_data = create_test_data()
-    
-    def test_feature_functionality(self):
-        """Test new feature works correctly."""
-        result = new_feature(self.test_data)
-        self.assertEqual(result, expected_value)
+```yaml
+# Example CI workflow
+test:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - name: Install pixi
+      uses: prefix-dev/setup-pixi@v0.8.0
+    - name: Install dependencies
+      run: pixi install
+    - name: Run tests with coverage
+      run: pixi run test-ci
 ```
-
-## Best Practices
-
-1. **Use Descriptive Names**: Test method names should clearly describe what is being tested
-1. **Test Isolation**: Each test should be independent and not rely on other tests
-1. **Clean Up**: Use `tearDown()` to clean up test artifacts
-1. **Mock External Dependencies**: Use mocking for external services or hardware
-1. **Test Edge Cases**: Include tests for boundary conditions and error cases
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Import Errors**: Ensure the source directory is in Python path
-1. **GPU Tests Failing**: May indicate missing GPU drivers or libraries
-1. **File Permission Errors**: Check write permissions for output directories
-1. **Skipped Tests**: Some tests are skipped based on available hardware/software
-
-### Debug Mode
-
-Run tests with increased verbosity for debugging:
-
-```bash
-python q-learning-mfcs/tests/run_tests.py -v
-```
-
-## Future Enhancements
-
-1. **Performance Benchmarks**: Add timing tests for critical operations
-1. **Integration Tests**: Test complete workflows end-to-end
-1. **Parametrized Tests**: Use pytest parametrization for test variations
-1. **Coverage Reports**: Add code coverage measurement
-1. **Parallel Execution**: Run tests in parallel for faster execution
+1. **OOM during coverage run**: Use `pixi run test-coverage` (batched) instead of `test-coverage-single`
+2. **Playwright import errors**: The batched runner disables playwright with `-p no:playwright`. If running manually, add this flag.
+3. **Import errors**: Ensure pixi environment is activated or use `pixi run`
+4. **GPU tests failing**: May indicate missing GPU drivers or libraries; these tests are skipped gracefully
+5. **Mock leakage warnings**: The root conftest guards against this, but check for missing `_original_modules` cleanup in new test files

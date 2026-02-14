@@ -1,207 +1,131 @@
 # MFC Q-Learning Project - Test Suite
 
-This directory contains comprehensive unit tests for verifying that all Python files in the `src/` directory output their results to the correct standardized paths.
+Comprehensive test suite for the MFC Q-learning project with ~492 test files across 44 subdirectories.
 
-## Test Structure
+## Quick Start
+
+```bash
+# Run all tests with coverage (batched to avoid OOM)
+pixi run test-coverage
+
+# Run fast subset (skip coverage-extra tests)
+pixi run -e default python -m pytest -m "not coverage_extra" -q
+
+# Run a single subdirectory
+pixi run -e default python -m pytest q-learning-mfcs/tests/config/ -v
+
+# Run with old single-process mode (may OOM on large suites)
+pixi run test-coverage-single
+```
+
+## Directory Structure
 
 ```
 tests/
-├── __init__.py                 # Test package initialization
-├── test_path_config.py         # Tests for path_config module
-├── test_file_outputs.py        # Tests for file output integration
-├── test_actual_executions.py   # Tests for actual script execution
-├── run_tests.py               # Main test runner
-├── run_gui_tests.py           # GUI test runner
-├── gui/                       # GUI-specific tests
-│   ├── __init__.py            # GUI test package initialization
-│   ├── test_gui_simple.py     # HTTP-based GUI tests (no browser)
-│   ├── test_gui_browser.py    # Browser-based GUI tests (Selenium)
-│   ├── test_autorefresh_fix.py # Autorefresh functionality tests
-│   ├── test_data_loading_fix.py # Data loading improvements tests
-│   ├── test_debug_simulation.py # Debug mode functionality tests
-│   ├── test_gui_autorefresh.py # GUI autorefresh stability tests
-│   ├── test_gui_fixes.py      # General GUI bug fixes tests
-│   └── GUI_TEST_SUITE.md      # GUI test documentation
-└── README.md                  # This file
+├── conftest.py                    # Root conftest — sys.modules leak guard
+├── run_tests.py                   # Legacy unittest runner
+├── adaptive/                      # Adaptive controller tests
+├── analysis/                      # Analysis module tests
+├── apptest/                       # Streamlit AppTest tests
+├── biofilm_kinetics/              # Biofilm kinetics tests
+├── cad/                           # CAD export/viewer tests
+├── cathode/                       # Biological cathode tests
+├── compliance/                    # Security & compliance tests
+├── config/                        # Configuration module tests
+├── controllers/                   # Controller tests
+├── core/                          # Core model tests
+├── deep_rl/                       # Deep RL controller tests
+├── deployment/                    # Deployment & service tests
+├── e2e/                           # End-to-end workflow tests
+├── federated/                     # Federated learning tests
+├── gpu/                           # GPU acceleration tests
+├── gui/                           # GUI/Streamlit tests
+├── integrated/                    # Integration tests
+├── mlops/                         # MLOps pipeline tests
+├── monitoring/                    # Monitoring & dashboard tests
+├── notification_system/           # Notification tests
+├── performance/                   # Performance & benchmarking tests
+├── playwright/                    # Playwright E2E browser tests
+├── qlearning/                     # Q-learning optimization tests
+├── simulation/                    # Simulation runner tests
+├── smoke/                         # Fast health-check tests
+├── visualization/                 # Visualization tests
+└── ...                            # + 15 more subdirectories
 ```
 
-## Test Categories
+## Pytest Markers
 
-### 1. Path Configuration Tests (`test_path_config.py`)
+| Marker | Description | Example |
+|--------|-------------|---------|
+| `unit` | Unit tests | `pytest -m unit` |
+| `integration` | Integration tests | `pytest -m integration` |
+| `coverage_extra` | Supplemental coverage tests (cov2/cov3/cov_extra) | `pytest -m "not coverage_extra"` |
+| `gpu` | GPU-dependent tests | `pytest -m gpu` |
+| `slow` | Long-running tests | `pytest -m "not slow"` |
+| `smoke` | Fast health checks (<5s each) | `pytest -m smoke` |
+| `e2e` | End-to-end workflow tests | `pytest -m e2e` |
+| `apptest` | Streamlit AppTest tests | `pytest -m apptest` |
+| `playwright` | Playwright browser tests | `pytest -m playwright` |
+| `selenium` | Selenium browser tests | `pytest -m selenium` |
+| `gui` | GUI tests | `pytest -m gui` |
+| `performance` | Performance benchmarks | `pytest -m performance` |
+| `mlops` | MLOps integration tests | `pytest -m mlops` |
 
-- **TestPathConfig**: Verifies that the `path_config.py` module works correctly
-  - Tests directory existence
-  - Tests path function outputs
-  - Tests path consistency
-  - Tests subdirectory handling
+## Pixi Tasks
 
-### 2. File Output Integration Tests (`test_file_outputs.py`)
+| Task | Description |
+|------|-------------|
+| `test` | Run legacy unittest runner |
+| `test-coverage` | Batched coverage run (per-subdirectory, avoids OOM) |
+| `test-coverage-single` | Single-process coverage (may OOM) |
+| `test-fast` | Unit tests only, skip slow/integration/browser |
+| `test-smoke` | Fast health checks |
+| `test-e2e` | End-to-end tests |
+| `test-gui` | GUI tests |
+| `test-config` | Config module tests |
+| `test-cad` | CAD tests |
+| `test-ci` | CI-friendly run with XML + coverage output |
 
-- **TestFileOutputIntegration**: Tests that different output types work correctly
+## Coverage File Naming Convention
 
-  - Matplotlib figure output to `data/figures/`
-  - CSV data output to `data/simulation_data/`
-  - JSON data output to `data/simulation_data/`
-  - Pickle model output to `q_learning_models/`
-  - Multiple output types simultaneously
+| Suffix | Meaning |
+|--------|---------|
+| `_cov.py` | Primary coverage tests |
+| `_cov2.py` | Additional coverage (round 2) |
+| `_cov3.py` | Additional coverage (round 3) |
+| `_cov4.py` | Additional coverage (round 4) |
+| `_cov_extra.py` | Supplemental edge-case coverage |
 
-- **TestSpecificFileImports**: Tests that modified files can be imported
+All `_cov2`, `_cov3`, `_cov4`, and `_cov_extra` files are marked with `@pytest.mark.coverage_extra` and can be excluded for faster test runs.
 
-  - Main simulation files
-  - Analysis and visualization files
-  - Utility files (excluding Mojo-dependent ones)
+## Memory Management
 
-### 3. Actual Execution Tests (`test_actual_executions.py`)
+The test suite uses module-level `sys.modules` mocking to avoid importing heavy dependencies (torch, numpy, pandas, etc.) in coverage tests. To prevent memory leaks:
 
-- **TestActualFileExecutions**: Tests actual script execution with minimal parameters
+1. **Root `conftest.py`** provides two autouse fixtures:
+   - `_guard_sys_modules` (session-scoped): snapshots and restores `sys.modules`
+   - `_per_test_mock_cleanup` (function-scoped): removes mocks added during each test
 
-  - Simple plotting script execution
-  - Data generation script execution
-  - Model saving script execution
-  - Minimal simulation runs (skipped by default for speed)
+2. **Batched coverage runner** (`scripts/run_coverage_batched.py`): runs pytest per-subdirectory with `--cov-append` to keep each process under ~1 GB memory.
 
-- **TestFileOutputPatterns**: Tests that files follow expected patterns
+3. **Module-level cleanup**: files with `sys.modules` assignments include `_original_modules` snapshot/restore blocks.
 
-  - Verifies files import `path_config`
-  - Checks for absence of hardcoded paths
-  - Verifies output directories contain expected file types
+## Writing New Tests
 
-### 4. GUI Tests (`gui/` directory)
-- **SimpleGUITester** (`test_gui_simple.py`): HTTP-based tests (no browser required)
-  - Page accessibility and health checks
-  - Static resource loading verification
-  - Memory-based data loading functionality
-  - Race condition fixes verification
+- Place tests in the appropriate subdirectory
+- Use `@pytest.mark.coverage_extra` for supplemental coverage tests
+- If mocking `sys.modules` at module level, add the snapshot/restore pattern:
 
-- **StreamlitGUITester** (`test_gui_browser.py`): Browser-based tests (requires Chrome/Selenium)
-  - Page load and tab navigation
-  - Auto-refresh toggle functionality
-  - Simulation start/stop controls
-  - Monitor tab stability during autorefresh
+```python
+from unittest.mock import MagicMock
 
-- **Specific Fix Tests**: Targeted tests for specific bug fixes
-  - Autorefresh stability (no tab jumping)
-  - Data loading improvements (no file corruption)
-  - Debug mode functionality
-  - Memory-based data sharing
+_original_modules = dict(sys.modules)
 
-## Running Tests
+sys.modules["torch"] = MagicMock()
+# ... imports ...
 
-### Run All Tests
-
-```bash
-cd tests/
-python run_tests.py          # Core functionality tests
-python run_gui_tests.py      # GUI-specific tests
+# Restore after imports
+for _k in list(sys.modules):
+    if _k not in _original_modules and isinstance(sys.modules[_k], MagicMock):
+        del sys.modules[_k]
 ```
-
-### Run GUI Tests Only
-```bash
-cd tests/
-python run_gui_tests.py                    # All GUI tests
-python gui/test_gui_simple.py             # Quick HTTP-based tests
-python gui/test_gui_browser.py            # Full browser tests (requires Chrome)
-```
-
-### Run Specific Test Categories
-
-```bash
-# Path configuration tests only
-python run_tests.py --test-class path_config
-
-# File output integration tests only
-python run_tests.py --test-class file_outputs
-
-# Import tests only
-python run_tests.py --test-class imports
-
-# Execution tests only
-python run_tests.py --test-class executions
-
-# Pattern verification tests only
-python run_tests.py --test-class patterns
-```
-
-### Verbosity Options
-
-```bash
-# Verbose output
-python run_tests.py --verbose
-
-# Quiet output
-python run_tests.py --quiet
-```
-
-## Test Results Summary
-
-✅ **All tests passed successfully!**
-
-- **Tests run**: 23
-- **Successful**: 22
-- **Failures**: 0
-- **Errors**: 0
-- **Skipped**: 1 (long-running simulation test)
-
-## What the Tests Verify
-
-1. **Path Configuration Module**:
-
-   - ✅ All required directories exist
-   - ✅ Path functions return correct absolute paths
-   - ✅ Paths point to standardized directories
-
-1. **File Output Integration**:
-
-   - ✅ Matplotlib can save figures to `data/figures/`
-   - ✅ Pandas can save CSV to `data/simulation_data/`
-   - ✅ JSON can be saved to `data/simulation_data/`
-   - ✅ Pickle models can be saved to `q_learning_models/`
-
-1. **Import Verification**:
-
-   - ✅ All modified Python files can be imported without errors
-   - ✅ Files correctly import `path_config` module
-
-1. **Actual Execution**:
-
-   - ✅ Scripts can execute and create outputs in correct directories
-   - ✅ Generated files have appropriate sizes and content
-
-1. **Code Pattern Verification**:
-
-   - ✅ Files use `path_config` imports
-   - ✅ Files don't contain hardcoded path patterns
-   - ✅ Output directories contain expected file types
-
-## Key Modifications Tested
-
-The test suite verifies that all of the following files have been correctly modified to use standardized paths:
-
-- `mfc_unified_qlearning_control.py`
-- `mfc_qlearning_optimization.py`
-- `mfc_qlearning_optimization_parallel.py`
-- `mfc_dynamic_substrate_control.py`
-- `generate_performance_graphs.py`
-- `physics_accurate_biofilm_qcm.py`
-- `eis_qcm_biofilm_correlation.py`
-- `flow_rate_optimization.py`
-- `flow_rate_optimization_realistic.py`
-- `energy_sustainability_analysis.py`
-- `stack_physical_specs.py`
-- `create_summary_plots.py`
-- `three_model_comparison_plots.py`
-- `literature_validation_comparison_plots.py`
-- `mfc_100h_simulation.py`
-- `mfc_stack_simulation.py`
-- `analyze_pdf_comments.py`
-- `run_gpu_simulation.py`
-- `mfc_qlearning_demo.py`
-- `generate_pdf_report.py`
-- `generate_enhanced_pdf_report.py`
-
-## Notes
-
-- One test is skipped by default (`test_minimal_simulation_run`) because it would take too long for regular testing
-- The `mfc_model.py` import test is excluded due to Mojo runtime dependencies
-- All tests use the Agg matplotlib backend to avoid GUI dependencies
-- Test files are automatically cleaned up after each test run
